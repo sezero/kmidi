@@ -120,7 +120,9 @@ static void free_metatext()
 	meta = meta_text_list;
 	meta_text_list = meta->next;
 	free(meta->text);
+	meta->text = NULL;
 	free(meta);
+	meta = NULL;
     }
 }
 
@@ -132,10 +134,11 @@ static int metatext(int type, int leng, char *mess)
     struct meta_text_type *meta, *mlast;
     char *meta_string;
 
+
     if (at > 0 && (type == 1||type == 5||type == 6||type == 7)) {
-	meta = (struct meta_text_type *)malloc(sizeof(struct meta_text_type));
+	meta = (struct meta_text_type *)safe_malloc(sizeof(struct meta_text_type));
 	if (leng > 72) leng = 72;
-	meta_string = (char *)malloc(leng+8);
+	meta_string = (char *)safe_malloc(leng+8);
 	if (!leng) {
 	    continued_flag = 1;
 	    meta_string[leng++] = '\012';
@@ -168,6 +171,7 @@ static int metatext(int type, int leng, char *mess)
 	meta->type = type;
 	meta->text = meta_string;
 	meta->time = at;
+	meta->next = NULL;
 	if (meta_text_list == NULL) {
 	    meta->next = meta_text_list;
 	    meta_text_list = meta;
@@ -175,8 +179,14 @@ static int metatext(int type, int leng, char *mess)
 	else {
 	    for (mlast = meta_text_list; mlast->next != NULL; mlast = mlast->next)
 		if (mlast->next->time > meta->time) break;
-	    meta->next = mlast->next;
-	    mlast->next = meta;
+	    if (mlast == meta_text_list && meta->time < mlast->time) {
+		meta->next = meta_text_list;
+		meta_text_list = meta;
+	    }
+	    else {
+		meta->next = mlast->next;
+		mlast->next = meta;
+	    }
 	}
 	return 1;
     }

@@ -1387,9 +1387,11 @@ static void show_markers(int32 until_time)
     time_sync(-1);
 
     buf[0] = '\0';
+    len = 0;
     while (meta)
 	if (meta->time <= time_expired) {
-	    strcat(buf, meta->text);
+	    len += strlen(meta->text);
+	    if (len < 100) strcat(buf, meta->text);
 	    if (!meta->next) strcat(buf, " \n");
 	    meta = meta->next;
 	}

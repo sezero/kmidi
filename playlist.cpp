@@ -63,15 +63,18 @@ PlaylistDialog::PlaylistDialog(QWidget *parent, const char *name, QStrList *play
 
   snpopup = new QFrame( this ,0, WType_Popup);
   snpopup->setFrameStyle( QFrame::PopupPanel|QFrame::Raised );
-  snpopup->resize(150,100);
+  snpopup->resize(170,75);
   newEdit = new QLineEdit( snpopup, "_editnew" );
+  QLabel *labsavename = new QLabel(snpopup);
+  labsavename->setText("enter new name");
+  newEdit->setGeometry(10,10, 150, 30);
+  labsavename->setGeometry(20,10+30, 150, 30);
   connect( newEdit, SIGNAL( returnPressed() ), this, SLOT( newPlaylist() ) );
-  newEdit->setGeometry(10,10, 130, 30);
   newEdit->setFocus();
-
 
   file->insertItem( i18n("Save"), this, SLOT(saveIt()));
   file->insertItem( i18n("Save as ..."), savenew);
+  file->insertItem( i18n("Append"), this, SLOT(appendIt()));
   file->insertItem( i18n("Remove"), this, SLOT(removeIt()));
   file->insertItem( i18n("Quit"), this, SLOT(reject()));
   
@@ -79,6 +82,7 @@ PlaylistDialog::PlaylistDialog(QWidget *parent, const char *name, QStrList *play
   CHECK_PTR( edit );
   edit->insertItem( i18n("Add"), this, SLOT(addEntry()) );
   edit->insertItem( i18n("Remove"), this, SLOT(removeEntry()) );
+  edit->insertItem( i18n("Clear"), this, SLOT(clearPlist()) );
   
   QPopupMenu *help = new QPopupMenu;
   CHECK_PTR( help );
@@ -206,14 +210,11 @@ void PlaylistDialog::redoDisplay() {
     plistbox->setCurrentItem(*playlist_ptr);
     current_playlist = plistbox->text((uint) *playlist_ptr);
     current_playlist += ".plist";
-//fprintf(stderr,"redoLists: ptr=%d, current_playlist=%s\n", *playlist_ptr, current_playlist.data());
   }
   else {
     current_playlist = "default.plist";
     *playlist_ptr = 0;
   }
-  if (!listbox->count())
-//fprintf(stderr, "No listbox count!\n");
   if (!listbox->count())
     loadPlaylist(current_playlist);
 }
@@ -223,6 +224,11 @@ void PlaylistDialog::redoLists() {
   listbox->clear();
   listbox->insertStrList(songlist,-1);
   redoDisplay();
+}
+
+void PlaylistDialog::clearPlist() {
+
+  listbox->clear();
 }
 
 void  PlaylistDialog::parse_fileinfo(QFileInfo* fi, MyListBoxItem* lbitem){
@@ -300,7 +306,17 @@ void PlaylistDialog::saveIt()
   if ( (i=plistbox->currentItem()) < 0) return;
   QString name = plistbox->text((uint) i);
   name += ".plist";
-  savePlaylistbyName(name);
+  savePlaylistbyName(name, true);
+
+}
+
+void PlaylistDialog::appendIt()
+{
+  int i;
+  if ( (i=plistbox->currentItem()) < 0) return;
+  QString name = plistbox->text((uint) i);
+  name += ".plist";
+  savePlaylistbyName(name, false);
 
 }
 
@@ -447,6 +463,7 @@ void PlaylistDialog::set_local_dir(const QString &dir){
 void PlaylistDialog::setFilter(){
 
 	showmidisonly = filterButton->isOn();
+	set_local_dir(QString(""));    
 }
 
 void PlaylistDialog::addEntry(){
@@ -510,7 +527,7 @@ void PlaylistDialog::resizeEvent(QResizeEvent *e){
 
 
 void PlaylistDialog::editNewPlaylist(){
-    snpopup->move( mapToGlobal( savenew->geometry().bottomLeft() ) );
+    snpopup->move( mapToGlobal( plistbox->geometry().topLeft() ) );
     snpopup->show();
 }
 
@@ -522,24 +539,12 @@ void PlaylistDialog::newPlaylist(){
         QString path = locateLocal("appdata", plf);
 	listsonglist->inSort(path);
 	*playlist_ptr = listsonglist->at();
-//fprintf(stderr,"ptr set to %d\n", *playlist_ptr);
-	//*playlist_ptr = listsonglist->count();
-	savePlaylistbyName(plf);
+	savePlaylistbyName(plf, true);
 	redoDisplay();
-//fprintf(stderr, "new [%s]\n", plf.data());
 }
 
-void PlaylistDialog::openPlaylist(){
 
-}
-
-void PlaylistDialog::savePlaylist(){
-
-  savePlaylistbyName(current_playlist);
-
-}
-
-void PlaylistDialog::savePlaylistbyName(const QString &name) 
+void PlaylistDialog::savePlaylistbyName(const QString &name, bool truncate) 
 {
   if(name.isEmpty())
     return;
@@ -547,7 +552,8 @@ void PlaylistDialog::savePlaylistbyName(const QString &name)
   QString defaultlist = locateLocal("appdata", name);
   QFile f(defaultlist);
 
-  f.open( IO_ReadWrite | IO_Translate|IO_Truncate);
+  if (truncate) f.open( IO_ReadWrite | IO_Translate | IO_Truncate);
+  else f.open( IO_ReadWrite | IO_Translate | IO_Append);
 
   QString tempstring;
 
@@ -561,13 +567,6 @@ void PlaylistDialog::savePlaylistbyName(const QString &name)
 
 }
 
-void PlaylistDialog::saveasPlaylist(){
-
-}
-
-void PlaylistDialog::deletePlaylist(){
-
-}
 
 void PlaylistDialog::loadPlaylist(const QString &name){
      

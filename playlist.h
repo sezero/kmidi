@@ -88,24 +88,22 @@ private:
 
 private slots:
 
-  void openPlaylist();
-  void newPlaylist();
   void editNewPlaylist();
-  void saveasPlaylist();
+  void newPlaylist();
   void help();
-  void savePlaylist();
-  void savePlaylistbyName(const QString &name);
-  void deletePlaylist();
+  void savePlaylistbyName(const QString &name, bool truncate);
   void removeEntry();
   void addEntry();
   void setFilter();
   void checkList();
+  void clearPlist();
   void local_file_selected(int index);
   void loadPlaylist(const QString &name);
   void readPlaylist(int index);
   void selectPlaylist(int index);
   void saveIt();
   void removeIt();
+  void appendIt();
 
 protected:
     void parse_fileinfo(QFileInfo*, MyListBoxItem*);
