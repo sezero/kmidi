@@ -820,7 +820,6 @@ int main(int argc, char **argv)
 #if defined(AU_LINUX) || defined(AU_WIN32)
   int buffer_fragments=-1;
 #endif
-  extern int command_cutoff_allowed;
 #ifdef __WIN32__
 	int evil=0;
 #endif

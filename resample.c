@@ -869,11 +869,14 @@ sample_t *real_resample_voice(int v, uint32 *countptr)
 #define MIN_DATAVAL -32768
 #endif
 
-static void do_nlowpass(uint32 srate, sample_t *buf, uint32 count, int32 freq, FLOAT_T resonance)
+void do_lowpass(uint32 srate, sample_t *buf, uint32 count, int32 freq, FLOAT_T resonance)
 {
 	double A, B, C;
 	sample_t pv1, pv2;
 	int32 i;
+
+	if (resonance && !freq) freq = 6400;
+	if (!freq) return;
 
 	if (freq > srate * 2) {
 		ctl->cmsg(CMSG_ERROR, VERB_NORMAL,
@@ -945,11 +948,11 @@ sample_t *resample_voice(int v, uint32 *countptr)
     sample_t *rs;
 
     rs = real_resample_voice(v, countptr);
+
     if(!(vp->sample->sample_rate) ||
-	 !vp->sample->cutoff_freq ||
 	 (dont_filter && !vp->sample->note_to_use) ) return rs;
 
-    do_nlowpass(vp->sample->sample_rate, rs, *countptr,
+    do_lowpass(vp->sample->sample_rate, rs, *countptr,
 	vp->sample->cutoff_freq, vp->sample->resonance);
 
     return rs;

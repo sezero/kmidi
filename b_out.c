@@ -27,6 +27,7 @@ static unsigned char *bbuf = 0;
 static int bboffset = 0, bbcount = 0, outchunk = 0;
 static int starting_up = 1, flushing = 0;
 static int out_count = 0;
+static int total_bytes = 0;
 
 int b_out_count()
 {
@@ -42,6 +43,7 @@ void b_out(int fd, int *buf, int ocount)
 	starting_up = 1;
 	flushing = 0;
 	output_buffer_full = 100;
+	total_bytes = 0;
 	return;
   }
 
@@ -58,6 +60,18 @@ void b_out(int fd, int *buf, int ocount)
     }
   }
 
+  if (!total_bytes) {
+#ifdef SNDCTL_DSP_GETOSPACE
+    audio_buf_info info;
+    if (ioctl(fd, SNDCTL_DSP_GETOSPACE, &info) != -1) {
+	total_bytes = info.fragstotal * info.fragsize;
+	outchunk = info.fragsize;
+    }
+    else
+#endif /* SNDCTL_DSP_GETOSPACE */
+	total_bytes = AUDIO_BUFFER_SIZE*2;
+
+  }
 
   if (ocount && !outchunk) outchunk = ocount;
   if (starting_up && ocount + bboffset + bbcount >= BB_SIZE) starting_up = 0;
@@ -72,7 +86,7 @@ void b_out(int fd, int *buf, int ocount)
 #endif
 	    samples_queued = 0;
 
-	output_buffer_full = ((bbcount+samples_queued) * 100) / BB_SIZE;
+	output_buffer_full = ((bbcount+samples_queued) * 100) / (BB_SIZE + total_bytes);
   }
 
   ret = 0;

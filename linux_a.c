@@ -69,7 +69,6 @@ PlayMode dpm = {
   purge_output  
 };
 
-static int total_bytes;
 
 /*************************************************************************/
 /* We currently only honor the PE_MONO bit, the sample rate, and the
@@ -80,14 +79,10 @@ static int total_bytes;
 static int open_output(void)
 {
   int fd, tmp, i, warnings=0;
-#ifdef SNDCTL_DSP_GETOSPACE
-    audio_buf_info info;
-#endif /* SNDCTL_DSP_GETOSPACE */
 
   
   /* Open the audio device */
   fd=open(dpm.name, O_RDWR | O_NDELAY);
-  /* fd=open(dpm.name, O_WRONLY | O_NONBLOCK); */
   if (fd<0)
     {
       ctl->cmsg(CMSG_ERROR, VERB_NORMAL, "%s: %s",
@@ -95,9 +90,6 @@ static int open_output(void)
       return -1;
     }
 
-  /* fcntl(fd, F_SETFL, O_NONBLOCK); */
-  /*fcntl(fd, F_SETFL, fcntl(fd, F_GETFL, 0) & ~O_NDELAY);*/
-/* Shouldn't this be: ?? */
   fcntl(fd, F_SETFL, fcntl(fd, F_GETFL, 0) | O_NONBLOCK);
 
   /* They can't mean these */
@@ -200,31 +192,12 @@ static int open_output(void)
     }
 #endif
 
-#ifdef SNDCTL_DSP_GETOSPACE
-    if(ioctl(fd, SNDCTL_DSP_GETOSPACE, &info) != -1)
-	total_bytes = info.fragstotal * info.fragsize;
-    else
-#endif /* SNDCTL_DSP_GETOSPACE */
-	total_bytes = -1; /* Unknown */
-#if 0
-      ctl->cmsg(CMSG_WARNING, VERB_NORMAL, 
-		"%d bytes of buffer space available", total_bytes);
-#endif
 
   dpm.fd=fd;
 
   return warnings;
 }
 
-/*
-#ifdef SNDCTL_DSP_GETODELAY
-      case PM_REQ_GETFILLED:
-	if(total_bytes <= 0 || ioctl(dpm.fd, SNDCTL_DSP_GETODELAY, &i) == -1)
-	    return -1;
-	if(!(dpm.encoding & PE_MONO)) i >>= 1;
-	if(dpm.encoding & PE_16BIT) i >>= 1;
-#endif
-*/
 
 int current_sample_count()
 {
@@ -248,7 +221,7 @@ int current_sample_count()
 #ifdef SNDCTL_DSP_GETOPTR
   if (ioctl(dpm.fd, SNDCTL_DSP_GETOPTR, &auinfo)<0) return samples;
   samples = auinfo.bytes;
-  if (!(dpm.encoding & PE_MONO)) samples >>= 1;
+  /* if (!(dpm.encoding & PE_MONO)) samples >>= 1; */
   if (dpm.encoding & PE_16BIT) samples >>= 1;
 #endif
 #endif

@@ -22,3 +22,4 @@
 
 extern sample_t *resample_voice(int v, uint32 *countptr);
 extern void pre_resample(Sample *sp);
+extern void do_lowpass(uint32 srate, sample_t *buf, uint32 count, int32 freq, FLOAT_T resonance);

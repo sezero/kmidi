@@ -225,6 +225,7 @@ extern void recompute_freq(int v);
 extern int dont_cspline;
 #endif
 extern int dont_filter;
+extern int command_cutoff_allowed;
 
 extern int GM_System_On;
 extern int XG_System_On;

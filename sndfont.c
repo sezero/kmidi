@@ -102,9 +102,6 @@ static void convert_tremolo(Layer *lay, SFInfo *sf, SampleList *sp);
 #ifndef SF_SUPPRESS_VIBRATO
 static void convert_vibrato(Layer *lay, SFInfo *sf, SampleList *sp);
 #endif
-#ifndef SF_SUPPRESS_CUTOFF
-static void do_lowpass(Sample *sp, int32 freq, FLOAT_T resonance);
-#endif
 static void calc_cutoff(Layer *lay, SFInfo *sf, SampleList *sp);
 static void calc_filterQ(Layer *lay, SFInfo *sf, SampleList *sp);
 
@@ -495,57 +492,8 @@ static int load_one_side(SFInsts *rec, SampleList *sp, int sample_count, Sample 
 	   Another problem is that have to reload voices between songs.
 	   The filter really ought to be in resample.c.
 	*/
-#define SF_SUPPRESS_STATIC_CUTOFF
-/*#define STATIC_CUT_DEBUG*/
-
-#ifndef SF_SUPPRESS_STATIC_CUTOFF
-		free_instruments_afterwards=1;
-		if (brightness >= 0 && brightness != 64) {
-			int32 fq = sp->cutoff_freq;
-#ifdef STATIC_CUT_DEBUG
-ctl->cmsg(CMSG_INFO, VERB_NORMAL, "~cutoff from %ld", fq);
-#endif
-			if (brightness > 64) {
-				if (!fq || fq > 8000) fq = 0;
-				else fq += (brightness - 64) * (fq / 80);
-			}
-			else {
-				if (!fq) fq = 6400 + (brightness - 64) * 80;
-				else fq += (brightness - 64) * (fq / 80);
-			}
-			if (fq && fq < 349) fq = 349;
-			else if (fq > 19912) fq = 19912;
-#ifdef STATIC_CUT_DEBUG
-ctl->cmsg(CMSG_INFO, VERB_NORMAL, " to %ld", fq);
-#endif
-			sp->cutoff_freq = fq;
-
-		}
-		if (harmoniccontent >= 0 && harmoniccontent != 64) {
-#ifdef STATIC_CUT_DEBUG
-printf("resonance from %f", sp->resonance);
-#endif
-			sp->resonance = harmoniccontent / 256.0;
-#ifdef STATIC_CUT_DEBUG
-printf(" to %f\n", sp->resonance);
-#endif
-		}
-#endif
-
 		/* do some filtering if necessary */
-#ifndef SF_SUPPRESS_CUTOFF
-#if 0
-		if (sp->cutoff_freq > 0 && cutoff_allowed) {
-			/* restore the normal value */
-			sample->data_length >>= FRACTION_BITS;
-    		        if (!i) ctl->cmsg(CMSG_INFO, VERB_DEBUG, "cutoff = %ld ; resonance = %g",
-				sp->cutoff_freq, sp->resonance);
-			do_lowpass(sample, sp->cutoff_freq, sp->resonance);
-			/* convert again to the fractional value */
-			sample->data_length <<= FRACTION_BITS;
-		}
-#endif
-#endif
+		/* (moved below -- should it be here?) */
 
 #ifdef PSEUDO_STEREO
 	if (amp<-1) {
@@ -581,10 +529,8 @@ printf(" to %f\n", sp->resonance);
 #else
       if (amp!=-1)
 	sample->volume=(double)(amp) / 100.0;
-/*
       else
 	sample->volume=1.0;
-*/
 #endif
 
 
@@ -618,25 +564,11 @@ printf(" to %f\n", sp->resonance);
 		}
 #endif
 
-		if (sp->cutoff_freq > 0 && !sample->sample_rate) {
-			/* restore the normal value */
-			sample->data_length >>= FRACTION_BITS;
+		if (!sample->sample_rate) {
     		        if (!i) ctl->cmsg(CMSG_INFO, VERB_DEBUG, "cutoff = %ld ; resonance = %g",
 				sp->cutoff_freq, sp->resonance);
-			sample->sample_rate = samplerate_save;
-			do_lowpass(sample, sp->cutoff_freq, sp->resonance);
-			sample->sample_rate = 0;
-			/* convert again to the fractional value */
-			sample->data_length <<= FRACTION_BITS;
-		}
-		else if (sp->cutoff_freq > 0 && cutoff_allowed) {
-			/* restore the normal value */
-			sample->data_length >>= FRACTION_BITS;
-    		        if (!i) ctl->cmsg(CMSG_INFO, VERB_DEBUG, "cutoff = %ld ; resonance = %g",
+			do_lowpass(samplerate_save, sample->data, sample->data_length >> FRACTION_BITS,
 				sp->cutoff_freq, sp->resonance);
-			do_lowpass(sample, sp->cutoff_freq, sp->resonance);
-			/* convert again to the fractional value */
-			sample->data_length <<= FRACTION_BITS;
 		}
 /*
 printf("loop start %ld, loop end %ld, len %d\n", sample->loop_start>>FRACTION_BITS, sample->loop_end>>FRACTION_BITS,
@@ -1880,6 +1812,8 @@ static void calc_filterQ(Layer *lay, SFInfo *sf, SampleList *sp)
 		sp->resonance = 0;
 }
 
+#if 0
+/* moved to resample.c */
 
 #ifndef SF_SUPPRESS_CUTOFF
 /*----------------------------------------------------------------
@@ -1902,8 +1836,6 @@ static void calc_filterQ(Layer *lay, SFInfo *sf, SampleList *sp)
 #define MAX_DATAVAL 32767
 #define MIN_DATAVAL -32768
 #endif
-
-#define USE_BUTTERWORTH
 
 #ifdef USE_BUTTERWORTH
 static void do_lowpass_w_res(Sample *sp, int32 freq, FLOAT_T resonance)
@@ -2035,3 +1967,5 @@ printf("\tgain %f , f=%ld : a0=%f a1=%f a2=%f b0=%f b1=%f\n", inputgain, freq, a
 #endif
 
 #endif
+#endif
+

@@ -259,7 +259,7 @@ void KMidi::setToolTips()
 	QToolTip::add( rcb4,		i18n("Verbosity: norm/xtra/off") );
 	QToolTip::add( effectbutton,	i18n("Effects") );
 	QToolTip::add( voicespin,	i18n("Set Polyphony") );
-	QToolTip::add( rbuttond,	i18n("unnassigned") );
+	QToolTip::add( filterbutton,	i18n("Filter") );
     }
     else{
 	QToolTip::remove( aboutPB);
@@ -289,7 +289,7 @@ void KMidi::setToolTips()
 	QToolTip::remove( rcb4 );
 	QToolTip::remove( effectbutton );
 	QToolTip::remove( voicespin );
-	QToolTip::remove( rbuttond );
+	QToolTip::remove( filterbutton );
     }
 
 }
@@ -369,6 +369,8 @@ void MeterWidget::remeter()
 		for (ch = 0; ch < MAXDISPCHAN; ch++) {
 			lastvol[ch] = lastamp[ch] = 0;
 			//Panel->mindex[ch] = Panel->cindex[ch];
+			for (slot = 0; slot < NQUEUE; slot++)
+			    Panel->ctime[slot][ch] = -1;
 		}
 		Panel->reset_panel = 0;
 	}
@@ -742,8 +744,10 @@ void KMidi::drawPanel()
 	     SLOT( meterfudgeChanged(int) ) );
     meterspin->setFont( QFont( "helvetica", 10, QFont::Normal) );
 
-    rbuttond = makeButton( ix +WIDTH/2,     iy, WIDTH/2,   HEIGHT, "" );
-    rbuttond->setFont( QFont( "helvetica", 10, QFont::Normal) );
+    filterbutton = makeButton( ix +WIDTH/2,     iy, WIDTH/2,   HEIGHT, "filt" );
+    filterbutton->setToggleButton( TRUE );
+    filterbutton->setFont( QFont( "helvetica", 10, QFont::Normal) );
+    connect( filterbutton, SIGNAL(toggled(bool)), SLOT(setFilter(bool)) );
 }
  
 void KMidi::plActivated( int index )
@@ -887,6 +891,13 @@ void KMidi::setEffects( bool down )
     else pipe_int_write( 0 );
 }
 
+void KMidi::setFilter( bool down )
+{
+    pipe_int_write(  MOTIF_FILTER );
+    if (down) pipe_int_write( 1 );
+    else pipe_int_write( 0 );
+}
+
 void KMidi::logoClicked(){
 
     if(meter->isVisible()){
@@ -898,7 +909,7 @@ void KMidi::logoClicked(){
 	effectbutton->hide();
 	voicespin->hide();
 	meterspin->hide();
-	rbuttond->hide();
+	filterbutton->hide();
 	if (logwindow->isVisible()) {
 	    logwindow->move(0, regularsize.height());
             resize( regularsize.width(), regularsize.height() + logwindow->height() );
@@ -914,7 +925,7 @@ void KMidi::logoClicked(){
     effectbutton->show();
     voicespin->show();
     meterspin->show();
-    rbuttond->show();
+    filterbutton->show();
     if (logwindow->isVisible()) {
         resize( extendedsize.width(), extendedsize.height() + logwindow->height() );
 	logwindow->move(0, extendedsize.height());
@@ -1140,7 +1151,7 @@ void KMidi::speedupslot(){
     effectbutton->hide();
     voicespin->hide();
     meterspin->hide();
-    rbuttond->hide();
+    filterbutton->hide();
 
     logwindow->move(0, regularsize.height());
     logwindow->show();
@@ -1955,7 +1966,7 @@ void KMidi::resizeEvent(QResizeEvent *e){
 	effectbutton->show();
 	voicespin->show();
 	meterspin->show();
-	rbuttond->show();
+	filterbutton->show();
     }
     if (h > extendedsize.height() + logwindow->height() - 10 && meter->isVisible() && !logwindow->isVisible()) {
 	logwindow->show();
@@ -1972,7 +1983,7 @@ void KMidi::resizeEvent(QResizeEvent *e){
 	    effectbutton->hide();
 	    voicespin->hide();
 	    meterspin->hide();
-	    rbuttond->hide();
+	    filterbutton->hide();
 	}
     }
     if (h < extendedsize.height() + 10 && meter->isVisible() && logwindow->isVisible()) {

@@ -480,6 +480,7 @@ static int ctl_blocking_read(int32 *valp)
   int new_volume;
   int new_centiseconds;
   int arg, argopt;
+  int pausing = 0;
 
   pipe_int_read(&command);
   
@@ -546,6 +547,12 @@ static int ctl_blocking_read(int32 *valp)
 		  effect_activate(arg);
 		  return RC_NONE;
 
+	      case MOTIF_FILTER:
+		  pipe_int_read(&arg);
+		  *valp= arg;
+		  command_cutoff_allowed = arg;
+		  return RC_NONE;
+
 	      case MOTIF_CHANGE_VOICES:
 		  pipe_int_read(&arg);
 		  change_in_voices =
@@ -581,8 +588,9 @@ static int ctl_blocking_read(int32 *valp)
 			ctl.verbosity = argopt;
 			break;
 		  }
-		  return RC_NONE;
-		  
+		  if (!pausing) return RC_NONE;
+		  pipe_int_read(&command); /* Blocking reading => Sleep ! */
+		  break;
 
 	      case TRY_OPEN_DEVICE:
 		  return RC_TRY_OPEN_DEVICE;
@@ -592,9 +600,16 @@ static int ctl_blocking_read(int32 *valp)
 	  if (command==MOTIF_PAUSE)
 	      {
 		  ctl_reset();
-		  pipe_int_read(&command); /* Blocking reading => Sleep ! */
-		  if (command==MOTIF_PAUSE)
+		  if (pausing) {
+		      pausing = 0;
 		      return RC_NONE; /* Resume where we stopped */
+		  }
+		  pausing = 1;
+		  pipe_int_read(&command); /* Blocking reading => Sleep ! */
+		  if (command==MOTIF_PAUSE) {
+		      pausing = 0;
+		      return RC_NONE; /* Resume where we stopped */
+		  }
 	      }
 	  else 
 	      {

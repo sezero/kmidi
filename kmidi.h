@@ -137,7 +137,7 @@ public:
 	QPushButton 	*effectbutton;
 	QSpinBox 	*meterspin;
 	QSpinBox 	*voicespin;
-	QPushButton 	*rbuttond;
+	QPushButton 	*filterbutton;
 	MeterWidget	*meter;
 	QSize		regularsize;
 	QSize		extendedsize;
@@ -260,6 +260,7 @@ public slots:
 	void		volChanged( int );
 	void		setPatch( int );
 	void		setEffects( bool );
+	void		setFilter( bool );
 	void		setSong( int );
 	void		voicesChanged( int );
 	void		meterfudgeChanged( int );

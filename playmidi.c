@@ -1176,12 +1176,13 @@ static void check_quality()
 if (!debug_count) {
 	if (dont_cspline) fprintf(stderr,"[%d-%d]", output_buffer_full, current_polyphony);
 	else fprintf(stderr,"{%d-%d}", output_buffer_full, current_polyphony);
-	debug_count = 50;
+	debug_count = 30;
 }
 debug_count--;
 #endif
 
-  if (obf < 1) voice_reserve = voices / 2;
+  if (obf < 1) voice_reserve = (2*voices) / 3;
+  else if (obf <  5) voice_reserve = voices / 2;
   else if (obf < 10) voice_reserve = voices / 3;
   else if (obf < 20) voice_reserve = voices / 4;
   else if (obf < 30) voice_reserve = voices / 5;
@@ -1195,6 +1196,8 @@ debug_count--;
   if (obf < 20) dont_filter = 1;
   else if (obf > 80) dont_filter = 0;
 */
+  if (command_cutoff_allowed) dont_filter = 0;
+  else dont_filter = 1;
 
 }
 
