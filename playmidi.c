@@ -410,7 +410,9 @@ void recompute_freq(int v)
 	     FRACTION_BITS);
 
   /* what to do if incr is 0? --gl */
-  if (!a) a++;
+  /* if (!a) a++; */
+  a += 0.5;
+  if (!(int32)(a)) a = 1;
 
   if (sign) 
     a = -a; /* need to preserve the loop direction */

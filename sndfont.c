@@ -200,6 +200,7 @@ void init_soundfont(char *fname, int oldbank, int newbank)
 #ifdef ADAGIO
 	play_mode->rate = setting_dsp_rate;  /*output_rate;*/
 #endif
+
 	control_ratio = play_mode->rate / CONTROLS_PER_SECOND;
 	if(control_ratio<1)
 		 control_ratio=1;
@@ -1037,14 +1038,23 @@ if (strip_loop == 1) {
 			sp->v.scale_tuning = lay->val[SF_scaleTuning];
 	}
 /** --gl **/
+#if 0
 	sp->v.freq_scale = 1024;
 	sp->v.freq_center = 60;
+#endif
+	if (sp->v.scale_tuning == 100) sp->v.freq_scale = 1024;
+	else sp->v.freq_scale = (sp->v.scale_tuning * 1024) / 100;
+
+	/* sp->v.freq_center = 60; set in calc_root_pitch */
 	sp->v.attenuation = 0;
 /**  **/
 
 	/* root pitch */
 	sp->v.root_freq = calc_root_pitch(lay, sf, sp);
-
+/*
+if (banknum < 128 && (preset == 16 || preset == 17))
+fprintf(stderr, "preset %d, root_freq %ld\n", preset, sp->v.root_freq);
+*/
 	sp->v.modes = MODES_16BIT;
 
 	/* volume envelope & total volume */
@@ -1172,6 +1182,8 @@ static int32 calc_root_pitch(Layer *lay, SFInfo *sf, SampleList *sp)
 	sample = &sf->sampleinfo[lay->val[SF_sampleId]];
 
 	root = sample->originalPitch;
+	/* sp->v.freq_center = root; */
+
 	tune = sample->pitchCorrection;
 	if (sf->version == 1) {
 		if (lay->set[SF_samplePitch]) {
@@ -1196,7 +1208,7 @@ static int32 calc_root_pitch(Layer *lay, SFInfo *sf, SampleList *sp)
 		if (lay->set[SF_rootKey])
 			root = lay->val[SF_rootKey];
 		/* tuning */
-#ifdef tplussbkuse
+#ifdef tplussbk
 		tune += lay->val[SF_coarseTune] * sp->v.scale_tuning
 			+ (int)lay->val[SF_fineTune] * (int)sp->v.scale_tuning / 100;
 #else
@@ -1217,6 +1229,12 @@ static int32 calc_root_pitch(Layer *lay, SFInfo *sf, SampleList *sp)
 		root--;
 		tune -= 100;
 	}
+
+    if (root > 0) sp->v.freq_center = root;
+    else sp->v.freq_center = 60;
+/* have to adjust for rate ... */
+	/* sp->v.sample_rate */
+	/* play_mode->rate */
 #ifdef tplussbkuse
 
     /* -100 < tune <= 0 */
@@ -1231,6 +1249,7 @@ static int32 calc_root_pitch(Layer *lay, SFInfo *sf, SampleList *sp)
 				  bend_coarse[-root] * bend_fine[tune]);
     else
 	return (int32)((FLOAT_T)freq_table[root] * bend_fine[tune]);
+
 #else
 	return (int32)((double)freq_table[root] * bend_fine[(-tune*255)/100]);
 #endif
@@ -1358,8 +1377,9 @@ static int32 calc_rate(int diff, int time)
 #define TO_MHZ(abscents) (int32)(8176.0 * pow(2.0,(double)(abscents)/1200.0))
 #define TO_HZ(abscents) (int32)(8.176 * pow(2.0,(double)(abscents)/1200.0))
 #define TO_LINEAR(centibel) pow(10.0, -(double)(centibel)/200.0)
-#define TO_VOLUME(centibel) (uint8)(255 * (1.0 - (centibel) / (1200.0 * log10(2.0))));
 #endif
+/* #define TO_VOLUME(centibel) (uint8)(255 * (1.0 - (centibel) / (1200.0 * log10(2.0)))); */
+#define TO_VOLUME(level)  (uint8)(255.0 - (level) * (255.0/1000.0))
 
 /* convert the value to milisecs */
 static int32 to_msec(Layer *lay, SFInfo *sf, int index)
@@ -1401,7 +1421,7 @@ static FLOAT_T calc_volume(Layer *lay, SFInfo *sf)
 /* convert sustain volume to linear volume */
 static int32 calc_sustain(Layer *lay, SFInfo *sf)
 {
-#ifdef tplussbk
+#ifdef tplussbkuse
 /*
  * Sustain level
  * sf: centibels
