@@ -2104,11 +2104,9 @@ static int apply_controls(void)
       case RC_LOAD_FILE:	  
       case RC_NEXT: /* >>| */
       case RC_REALLY_PREVIOUS: /* |<< */
-#ifdef KMIDI
       case RC_PATCHCHANGE:
       case RC_CHANGE_VOICES:
       case RC_STOP:
-#endif
 	play_mode->purge_output();
 	return rc;
 	
@@ -3097,9 +3095,6 @@ int play_midi_file(const char *fn)
       free_instruments();
   
   free(event);
-#ifdef KMIDI
-/*if (rc==RC_PATCHCHANGE) fprintf(stderr,"kernel returning PATCHCHANGE\n");*/
-#endif
   return rc;
 }
 #endif

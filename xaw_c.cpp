@@ -622,9 +622,24 @@ static int ctl_blocking_read(int32 *valp) {
   }
 }
 
-static int ctl_read(int32 *valp) {
-  if (a_pipe_ready()<=0) return RC_NONE;
-  return ctl_blocking_read(valp);
+static int ctl_read(int32 *valp)
+{
+	int num;
+
+	if (last_rc_command)
+	  {
+		*valp = last_rc_arg;
+		num = last_rc_command;
+		last_rc_command = 0;
+		return num;
+	  }
+	/* We don't wan't to lock on reading  */
+	num=a_pipe_ready(); 
+
+	if (num<=0)
+		return RC_NONE;
+  
+	return(ctl_blocking_read(valp));
 }
 
 static void shuffle(int n,int *a) {
@@ -804,6 +819,9 @@ static void ctl_pass_playing_list(int init_number_of_files,
         }
         /* Play the next */
       } else if (command==RC_NEXT) {
+/* next 2 lines just added --gl */
+        sprintf(local_buf,"T 00:00");
+        a_pipe_write(local_buf);
         if (current_no+1<number_of_files) current_no++;
         command=RC_LOAD_FILE;
         continue;
@@ -962,25 +980,6 @@ ctl_xaw_note(int status, int ch, int note, int velocity)
 }
 
 #ifndef ORIG_XAW
-#if 0
-static void ctl_note(int v)
-{
-	int ch, note, vel;
-
-	if (!ctl.trace_playing) 
-		return;
-
-	if (voice[v].clone_type != 0) return;
-
-	ch = voice[v].channel;
-	ch &= 0x1f;
-	if (ch < 0 || ch >= MAXCHAN) return;
-
-	note = voice[v].note;
-	vel = voice[v].velocity;
-	ctl_xaw_note(voice[v].status, ch, note, vel);
-}
-#else
 static void ctl_note(int v)
 {
   int i, n;
@@ -1021,7 +1020,6 @@ static void ctl_note_display(void)
   trailing_pointer = v;
 }
 
-#endif
 #endif
 
 #ifdef ORIG_XAW

@@ -1,3 +1,8 @@
+2000-02-29  Greg Lee  <lee@hawaii.edu>
+
+	* fix motif & xaw hanging after next
+	* fix tk sync
+
 2000-02-28  Greg Lee  <lee@hawaii.edu>
 
 	* fix glib configuration

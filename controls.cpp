@@ -44,11 +44,9 @@ int check_for_rc(void) {
       case RC_LOAD_FILE:	  
       case RC_NEXT: /* >>| */
       case RC_REALLY_PREVIOUS: /* |<< */
-#ifdef KMIDI
       case RC_PATCHCHANGE:
       case RC_CHANGE_VOICES:
       case RC_STOP:
-#endif
 	return rc;
       default:
 	return 0;

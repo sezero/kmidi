@@ -371,15 +371,22 @@ static int ctl_blocking_read(int32 *valp)
  */
 static int ctl_read(int32 *valp)
 {
-  int num;
+	int num;
 
-  /* We don't wan't to lock on reading  */
-  num=motif_pipe_read_ready(); 
+	if (last_rc_command)
+	  {
+		*valp = last_rc_arg;
+		num = last_rc_command;
+		last_rc_command = 0;
+		return num;
+	  }
+	/* We don't wan't to lock on reading  */
+	num=motif_pipe_read_ready(); 
 
-  if (num==0)
-      return RC_NONE;
+	if (num==0)
+		return RC_NONE;
   
-  return(ctl_blocking_read(valp));
+	return(ctl_blocking_read(valp));
 }
 
 static void ctl_pass_playing_list(int number_of_files, const char *list_of_files[])

@@ -39,6 +39,7 @@ static void ctl_master_volume(int mv);
 static void ctl_file_name(char *name);
 static void ctl_current_time(uint32 ct);
 static void ctl_note(int v);
+static void ctl_note_display(void);
 static void ctl_program(int ch, int val, const char *name);
 static void ctl_volume(int ch, int val);
 static void ctl_expression(int ch, int val);
@@ -99,6 +100,17 @@ typedef struct {
 	Channel channel[MAX_MIDI_CHANNELS];
 } PanelInfo;
 
+extern MidiEvent *current_event;
+
+typedef struct {
+  uint8 status, channel, note, velocity, voices;
+  uint32 time;
+} OldVoice;
+#define MAX_OLD_NOTES 500
+static OldVoice old_note[MAX_OLD_NOTES];
+static int leading_pointer=0, trailing_pointer=0;
+static uint32 current_centiseconds = 0;
+static int songoffset = 0, current_voices = 0;
 
 /**********************************************/
 
@@ -174,11 +186,15 @@ static int cmsg(int type, int verbosity_level, const char *fmt, ...)
 
 static void ctl_refresh(void)
 {
+	ctl_note_display();
 }
 
 static void ctl_total_time(uint32 tt)
 {
 	int centisecs=(int)tt/(play_mode->rate/100);
+    ctl_current_time(0);
+    songoffset = 0;
+    current_centiseconds = 0;
 	pipe_printf("TIME %d", centisecs);
 }
 
@@ -194,7 +210,16 @@ static void ctl_file_name(char *name)
 
 static void ctl_current_time(uint32 ct)
 {
-	Panel->cur_time = (int)ct / (play_mode->rate/100) / 100;  /* sec order */
+    int centisecs, realct, sec;
+    realct = play_mode->output_count(ct);
+    if (realct < 0) realct = 0;
+    else realct += songoffset;
+    centisecs = realct / (play_mode->rate/100);
+    current_centiseconds = (uint32)centisecs;
+    sec = centisecs / 100;
+
+/*	Panel->cur_time = (int)ct / (play_mode->rate/100) / 100;*/  /* sec order */
+	Panel->cur_time = sec;
 }
 
 
@@ -214,6 +239,7 @@ static void ctl_channel_note(int ch, int note, int vel)
 	}
 }
 
+#if 0
 static void ctl_note(int v)
 {
 	int ch, note, vel;
@@ -231,6 +257,57 @@ static void ctl_note(int v)
 	else
 		vel = voice[v].velocity;
 	ctl_channel_note(ch, note, vel);
+}
+#endif
+
+static void ctl_tk_note(int status, int ch, int note, int vel)
+{
+
+	if (ch < 0 || ch >= MAX_MIDI_CHANNELS) return;
+
+	if (status != VOICE_ON)
+		vel = 0;
+	ctl_channel_note(ch, note, vel);
+}
+
+static void ctl_note(int v)
+{
+  int i, n;
+  if (!ctl.trace_playing)
+    return;
+  if (voice[v].clone_type != 0) return;
+
+  old_note[leading_pointer].status = voice[v].status;
+  old_note[leading_pointer].channel = voice[v].channel;
+  old_note[leading_pointer].note = voice[v].note;
+  old_note[leading_pointer].velocity = voice[v].velocity;
+  old_note[leading_pointer].time = current_event->time / (play_mode->rate/100);
+  n=0;
+  i=voices;
+  while (i--)
+    if (voice[i].status!=VOICE_FREE) n++;
+  old_note[leading_pointer].voices = n;
+  leading_pointer++;
+  if (leading_pointer == MAX_OLD_NOTES) leading_pointer = 0;
+
+}
+
+static void ctl_note_display(void)
+{
+  int v = trailing_pointer;
+  uint32 then;
+
+  then = old_note[v].time;
+
+  while (then <= current_centiseconds && v != leading_pointer)
+    {
+	ctl_tk_note(old_note[v].status, old_note[v].channel, old_note[v].note, old_note[v].velocity);
+        current_voices = old_note[v].voices;
+        v++;
+        if (v == MAX_OLD_NOTES) v = 0;
+        then = old_note[v].time;
+    }
+  trailing_pointer = v;
 }
 
 static void ctl_program(int ch, int val, const char *name)
@@ -299,6 +376,11 @@ static void ctl_reset(void)
 		ctl_pitch_bend(i, channel[i].pitchbend);
 		ctl_channel_note(i, Panel->cnote[i], 0);
 	}
+  for (i=0; i<MAX_OLD_NOTES; i++)
+    {
+      old_note[i].time = 0;
+    }
+  leading_pointer = trailing_pointer = current_voices = 0;
 }
 
 /***********************************************************************/
@@ -413,6 +495,13 @@ static int ctl_read(int32 *valp)
 {
 	int num;
 
+	if (last_rc_command)
+	  {
+		*valp = last_rc_arg;
+		num = last_rc_command;
+		last_rc_command = 0;
+		return num;
+	  }
 	/* We don't wan't to lock on reading  */
 	num=pipe_read_ready(); 
 
