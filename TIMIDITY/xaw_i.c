@@ -622,7 +622,7 @@ enum {
     ID_OPTIONS,
     ID_LINE2,
     ID_ABOUT,
-    ID_QUIT,
+    ID_QUIT
 };
 #define IDS_SAVECONFIG  "101"
 #define IDS_HIDETXT     "102"
