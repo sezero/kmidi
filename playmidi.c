@@ -1,4 +1,5 @@
 /*
+	$Id$
 
     TiMidity -- Experimental MIDI to WAVE converter
     Copyright (C) 1995 Tuukka Toivonen <toivonen@clinet.fi>
@@ -48,6 +49,18 @@
 #include "controls.h"
 
 #include "tables.h"
+/*<95GUI_MODIF_BEGIN>*/
+#ifdef CHANNEL_EFFECT
+extern void effect_ctrl_change( MidiEvent* pCurrentEvent );
+extern void effect_ctrl_reset( int idChannel ) ;
+int opt_effect = 0;
+#endif /* CHANNEL_EFFECT */
+/*<95GUI_MODIF_END>*/
+
+#ifdef tplus
+#define PORTAMENTO_TIME_TUNING		(1.0 / 5000.0)
+#define PORTAMENTO_CONTROL_RATIO	256	/* controls per sec */
+#endif
 
 #ifdef __WIN32__
 extern int intr;
@@ -71,6 +84,14 @@ int free_instruments_afterwards=0;
 static unsigned max_polyphony = 0;
 #endif
 
+#ifdef tplus
+int opt_realtime_playing = 0;
+int opt_modulation_wheel = 1;
+int opt_portamento = 1;
+int opt_channel_pressure = 1;
+int opt_overlap_voice_allow = 1;
+#endif
+
 #ifndef ADAGIO
 Channel channel[MAXCHAN];
 char drumvolume[MAXCHAN][MAXNOTE];
@@ -81,6 +102,7 @@ char drumchorusdepth[MAXCHAN][MAXNOTE];
 static void read_seq(unsigned char *from, unsigned char *to);
 Channel channel[MAX_TONE_VOICES];
 #endif /* ADAGIO */
+
 Voice voice[MAX_VOICES];
 
 int
@@ -90,7 +112,7 @@ int32
     control_ratio=0,
     amplification=DEFAULT_AMPLIFICATION;
 
-float
+FLOAT_T
     master_volume;
 
 int32 drumchannels=DEFAULT_DRUMCHANNELS;
@@ -104,13 +126,27 @@ int XG_System_reverb_type;
 int XG_System_chorus_type;
 int XG_System_variation_type;
 
-static int32 lost_notes, cut_notes;
+static int32 lost_notes, cut_notes, played_notes;
+#ifdef CHANNEL_EFFECT
+int32 common_buffer[AUDIO_BUFFER_SIZE*2], /* stereo samples */
+             *buffer_pointer;
+static int32 buffered_count;
+
+MidiEvent *event_list, *current_event;
+int32 sample_count;
+int32 current_sample;
+#else
 static int32 common_buffer[AUDIO_BUFFER_SIZE*2], /* stereo samples */
              *buffer_pointer;
 static int32 buffered_count;
 
 static MidiEvent *event_list, *current_event;
 static int32 sample_count, current_sample;
+#endif
+
+#ifdef tplus
+static void update_portamento_controls(int ch);
+#endif
 
 static void adjust_amplification(void)
 { 
@@ -137,6 +173,27 @@ static void reset_controllers(int c)
   channel[c].sustain=0;
   channel[c].pitchbend=0x2000;
   channel[c].pitchfactor=0; /* to be computed */
+#ifdef tplus
+  channel[c].modulation_wheel = 0;
+  channel[c].portamento_time_lsb = 0;
+  channel[c].portamento_time_msb = 0;
+  channel[c].tuning_lsb = 64;
+  channel[c].tuning_msb = 64;
+  channel[c].porta_control_ratio = 0;
+  channel[c].portamento = 0;
+  channel[c].last_note_fine = -1;
+
+  channel[c].vibrato_ratio = 0;
+  channel[c].vibrato_depth = 0;
+  channel[c].vibrato_delay = 0;
+/*
+  memset(channel[c].envelope_rate, 0, sizeof(channel[c].envelope_rate));
+*/
+  update_portamento_controls(c);
+#endif
+#ifdef CHANNEL_EFFECT
+  if (opt_effect) effect_ctrl_reset( c ) ;
+#endif /* CHANNEL_EFFECT */
 }
 
 #ifndef ADAGIO
@@ -239,17 +296,41 @@ static void select_stereo_samples(int v, Instrument *ip)
   select_sample(v, ip);
 }
 
-static void recompute_freq(int v)
+#ifndef tplus
+static
+#endif
+void recompute_freq(int v)
 {
   int 
     sign=(voice[v].sample_increment < 0), /* for bidirectional loops */
     pb=channel[voice[v].channel].pitchbend;
   double a;
+  int32 tuning = 0;
   
   if (!voice[v].sample->sample_rate)
     return;
 
+#ifdef tplus
+  if(!opt_modulation_wheel)
+      voice[v].modulation_wheel = 0;
+  if(!opt_portamento)
+      voice[v].porta_control_ratio = 0;
+  voice[v].vibrato_control_ratio = voice[v].orig_vibrato_control_ratio;
+ 
+  if(voice[v].modulation_wheel > 0)
+      {
+	  voice[v].vibrato_control_ratio =
+	      (int32)(play_mode->rate * MODULATION_WHEEL_RATE
+		      / (2.0 * VIBRATO_SAMPLE_INCREMENTS));
+	  voice[v].vibrato_delay = 0;
+      }
+#endif
+
+#ifdef tplus
+  if(voice[v].vibrato_control_ratio || voice[v].modulation_wheel > 0)
+#else
   if (voice[v].vibrato_control_ratio)
+#endif
     {
       /* This instrument has vibrato. Invalidate any precomputed
          sample_increments. */
@@ -259,6 +340,20 @@ static void recompute_freq(int v)
 	voice[v].vibrato_sample_increment[i]=0;
     }
 
+
+#ifdef tplus
+  /* fine: [0..128] => [-256..256]
+   * 1 coarse = 256 fine (= 1 note)
+   * 1 fine = 2^5 tuning
+   */
+  tuning = (((int32)channel[voice[v].channel].tuning_lsb - 0x40)
+	    + 64 * ((int32)channel[voice[v].channel].tuning_msb - 0x40)) << 7;
+#endif
+
+#ifdef tplus
+  if(!voice[v].porta_control_ratio)
+  {
+#endif
   if (pb==0x2000 || pb<0 || pb>0x3FFF)
     voice[v].frequency=voice[v].orig_frequency;
   else
@@ -267,7 +362,7 @@ static void recompute_freq(int v)
       if (!(channel[voice[v].channel].pitchfactor))
 	{
 	  /* Damn. Somebody bent the pitch. */
-	  int32 i=pb*channel[voice[v].channel].pitchsens;
+	  int32 i=pb*channel[voice[v].channel].pitchsens + tuning;
 	  if (pb<0)
 	    i=-i;
 	  channel[voice[v].channel].pitchfactor=
@@ -282,6 +377,28 @@ static void recompute_freq(int v)
 	  (int32)((double)(voice[v].orig_frequency) /
 		  channel[voice[v].channel].pitchfactor);
     }
+#ifdef tplus
+  }
+  else /* Portament */
+  {
+      int32 i;
+      FLOAT_T pf;
+
+      pb -= 0x2000;
+
+      i = pb * channel[voice[v].channel].pitchsens + (voice[v].porta_pb << 5) + tuning;
+
+      if(i >= 0)
+	  pf = bend_fine[(i>>5) & 0xFF] * bend_coarse[(i>>13) & 0x7F];
+      else
+      {
+	  i = -i;
+	  pf = 1.0 / (bend_fine[(i>>5) & 0xFF] * bend_coarse[(i>>13) & 0x7F]);
+      }
+      voice[v].frequency = (int32)((double)(voice[v].orig_frequency) * pf);
+      /*voice[v].cache = NULL;*/
+  }
+#endif
 
   a = FRSCALE(((double)(voice[v].sample->sample_rate) *
 	      (double)(voice[v].frequency)) /
@@ -381,113 +498,121 @@ static void recompute_amp(int v)
     }
 }
 
+#if 0
+/* If I use this (from tplus), I have to rebalance my pseudo-reverb. --gl */
+static void recompute_amp(int v)
+{
+    FLOAT_T tempamp;
+
+    tempamp = ((FLOAT_T)master_volume *
+	       voice[v].velocity *
+	       voice[v].sample->volume *
+	       channel[voice[v].channel].volume *
+	       channel[voice[v].channel].expression); /* 21 bits */
+
+    if(!(play_mode->encoding & PE_MONO))
+    {
+	if(voice[v].panning > 60 && voice[v].panning < 68)
+	{
+	    voice[v].panned = PANNED_CENTER;
+	    voice[v].left_amp = FRSCALENEG(tempamp, 21);
+	}
+	else if (voice[v].panning < 5)
+	{
+	    voice[v].panned = PANNED_LEFT;
+	    voice[v].left_amp = FRSCALENEG(tempamp, 20);
+	}
+	else if(voice[v].panning > 123)
+	{
+	    voice[v].panned = PANNED_RIGHT;
+	    /* left_amp will be used */
+	    voice[v].left_amp =  FRSCALENEG(tempamp, 20);
+	}
+	else
+	{
+	    voice[v].panned = PANNED_MYSTERY;
+	    voice[v].left_amp = FRSCALENEG(tempamp, 27);
+	    voice[v].right_amp = voice[v].left_amp * voice[v].panning;
+	    voice[v].left_amp *= (FLOAT_T)(127 - voice[v].panning);
+	}
+    }
+    else
+    {
+	voice[v].panned = PANNED_CENTER;
+	voice[v].left_amp = FRSCALENEG(tempamp, 21);
+    }
+}
+#endif
+
 static int current_polyphony = 0;
+
+#define STEREO_CLONE 1
+#define REVERB_CLONE 2
+#define CHORUS_CLONE 3
+
 
 /* just a variant of note_on() */
 static int vc_alloc(int j)
 {
-  int i=voices, lowest=-1; 
-  int32 lv=0x7FFFFFFF, v;
-  static void kill_note(int);
-
-  current_polyphony = 0;
+  int i=voices; 
 
   while (i--)
     {
       if (i == j) continue;
-      if (voice[i].status == VOICE_FREE)
-	lowest=i; /* Can't get a lower volume than silence */
-      else current_polyphony++;
+      if (voice[i].status == VOICE_FREE) return i;
     }
 
-#ifdef ADAGIO
-  if (current_polyphony < max_polyphony && lowest != -1)
-#else
-  if (lowest != -1)
-#endif
-    {
-      /* Found a free voice. */
-      return lowest;
-    }
-  
-  /* Look for the decaying note with the lowest volume */
-  i=voices;
-  while (i--)
-    {
-      if (i == j) continue;
-      if ((voice[i].status!=VOICE_ON) &&
-      	(voice[i].status != VOICE_FREE) &&
-	  (voice[i].status!=VOICE_DIE))
-	{
-	  v=voice[i].left_mix;
-	  if ((voice[i].panned==PANNED_MYSTERY) && (voice[i].right_mix>v))
-	    v=voice[i].right_mix;
-	  if (v<lv)
-	    {
-	      lv=v;
-	      lowest=i;
-	    }
-	}
-    }
-
-  if (lowest != -1)
-    {
-      int cl = voice[lowest].clone_voice;
-
-      /* This can still cause a click, but if we had a free voice to
-	 spare for ramping down this note, we wouldn't need to kill it
-	 in the first place... Still, this needs to be fixed. Perhaps
-	 we could use a reserve of voices to play dying notes only. */
-      
-      cut_notes++;
-      voice[lowest].status=VOICE_FREE;
-      if (cl >= 0) {
-	if (voice[lowest].velocity == voice[cl].velocity)
-	   voice[cl].status=VOICE_FREE;
-	else voice[cl].clone_voice=-1;
-      }
-    }
-#ifdef ADAGIO
-  if (current_polyphony <= max_polyphony) return lowest;
-  else return -1;
-#else
-  return lowest;
-#endif
+  return -1;
 }
 
-static void clone_voice(Instrument *ip, int v, MidiEvent *e)
+extern int reverb_options;
+
+static void clone_voice(Instrument *ip, int v, MidiEvent *e, uint8 clone_type)
 {
   int w, k, played_note, chorus, reverb;
   int chan = voice[v].channel;
-  extern int command_cutoff_allowed;
   voice[v].clone_voice = -1;
+  voice[v].clone_type = 0;
+
+  if (clone_type == STEREO_CLONE && !voice[v].right_sample) return;
 
   chorus = ip->sample->chorusdepth;
   reverb = ip->sample->reverberation;
 
   if (channel[chan].kit) {
+/*
 	if ((k=drumreverberation[chan][voice[v].note]) >= 0) reverb = (reverb+k)/2;
 	if ((k=drumchorusdepth[chan][voice[v].note]) >= 0) chorus = (chorus+k)/2;
+*/
+	if ((k=drumreverberation[chan][voice[v].note]) >= 0) reverb = k;
+	if ((k=drumchorusdepth[chan][voice[v].note]) >= 0) chorus = k;
   }
   else {
 	if (channel[chan].chorusdepth) chorus = (chorus + channel[chan].chorusdepth)/2;
 	if (channel[chan].reverberation) reverb = (reverb + channel[chan].reverberation)/2;
   }
-/* also clone for reverb and chorus depth */
+
+  if (clone_type == REVERB_CLONE) chorus = 0;
+  else if (clone_type == CHORUS_CLONE) reverb = 0;
+
+  if (clone_type == REVERB_CLONE && reverb < 8) return;
+  if (clone_type == CHORUS_CLONE && chorus < 8) return;
+
   if (!voice[v].right_sample) {
 	if (voices - current_polyphony < 8) return;
-	if ((reverb < 8 && chorus < 8) || !command_cutoff_allowed) return;
+	/*if ((reverb < 8 && chorus < 8) || !command_cutoff_allowed) return;*/
 	/*if (!voice[v].vibrato_control_ratio) return;*/
 	voice[v].right_sample = voice[v].sample;
   }
-  else reverb = chorus = 0;
+  /** else reverb = chorus = 0; **/
 
-  if (!voice[v].right_sample) return;
+  /** if (!voice[v].right_sample) return; **/
   if ( (w = vc_alloc(v)) < 0 ) return;
 
-  voice[v].clone_voice = w;
+  if (clone_type==STEREO_CLONE) voice[v].clone_voice = w;
   /* voice[w].clone_voice = -1; */
   voice[w].clone_voice = v;
+  voice[w].clone_type = clone_type;
   voice[w].status = voice[v].status;
   voice[w].channel = voice[v].channel;
   voice[w].note = voice[v].note;
@@ -500,6 +625,7 @@ static void clone_voice(Instrument *ip, int v, MidiEvent *e)
   voice[w].sample_offset = voice[v].sample_offset;
   voice[w].sample_increment = voice[v].sample_increment;
   voice[w].echo_delay = voice[v].echo_delay;
+  voice[w].starttime = voice[v].starttime;
   voice[w].envelope_volume = voice[v].envelope_volume;
   voice[w].envelope_target = voice[v].envelope_target;
   voice[w].envelope_increment = voice[v].envelope_increment;
@@ -530,17 +656,28 @@ static void clone_voice(Instrument *ip, int v, MidiEvent *e)
   voice[w].control_counter = voice[v].control_counter;
   /*voice[w].panned = voice[v].panned;*/
   voice[w].panned = PANNED_RIGHT;
-  /*voice[w].panning = 127;*/
-  voice[w].panning = voice[w].sample->panning;
-
+  voice[w].panning = 127;
+  /*voice[w].panning = voice[w].sample->panning;*/
+#ifdef tplus
+  voice[w].porta_control_ratio = voice[v].porta_control_ratio;
+  voice[w].porta_dpb = voice[v].porta_dpb;
+  voice[w].porta_pb = voice[v].porta_pb;
+/*
+  voice[w].vibrato_control_ratio = voice[v].vibrato_control_ratio;
+  voice[w].vibrato_depth = voice[v].vibrato_depth;
+*/
+  voice[w].vibrato_delay = 0;
+#endif
   if (reverb) {
 	int milli = play_mode->rate/1000;
 	if (voice[w].panning < 64) voice[w].panning = 127;
 	else voice[w].panning = 0;
 	/*voice[w].velocity /= 2;*/
 	voice[w].velocity = (voice[w].velocity * reverb) / 128;
+	/**voice[w].velocity = (voice[w].velocity * reverb) / 256;**/
 	/*voice[w].echo_delay = 50 * (play_mode->rate/1000);*/
-	voice[w].echo_delay = (reverb>>2) * milli;
+	/**voice[w].echo_delay += (reverb>>2) * milli;**/
+	voice[w].echo_delay += (reverb>>4) * milli;
 /* 500, 250, 100, 50 too long; 25 pretty good */
 	voice[w].envelope_rate[3] /= 2;
 	if (XG_System_reverb_type >= 0) {
@@ -597,7 +734,10 @@ static void clone_voice(Instrument *ip, int v, MidiEvent *e)
 		voice[w].vibrato_depth = 6;
 		voice[w].vibrato_sweep = 74;
 	}
-	voice[w].velocity = (voice[w].velocity * chorus) / 128;
+	/*voice[w].velocity = (voice[w].velocity * chorus) / 128;*/
+	voice[w].velocity = (voice[w].velocity * chorus) / (128+96);
+	voice[v].velocity = voice[w].velocity;
+	recompute_amp(v);
 	voice[w].vibrato_sweep = chorus/2;
 	voice[w].vibrato_depth /= 2;
 	if (!voice[w].vibrato_depth) voice[w].vibrato_depth = 2;
@@ -639,7 +779,7 @@ static void clone_voice(Instrument *ip, int v, MidiEvent *e)
   if (voice[w].sample->modes & MODES_ENVELOPE)
     {
       /* Ramp up from 0 */
-      voice[w].envelope_stage=0;
+      voice[w].envelope_stage=ATTACK;
       voice[w].envelope_volume=0;
       voice[w].control_counter=0;
       recompute_envelope(w);
@@ -710,6 +850,7 @@ static void start_note(MidiEvent *e, int i)
     } /* not drum channel */
 #endif
 
+    voice[i].starttime = e->time;
     played_note = voice[i].sample->note_to_use;
     if (!played_note) played_note = e->a & 0x7f;
 #ifdef ADAGIO
@@ -732,7 +873,9 @@ static void start_note(MidiEvent *e, int i)
 #endif
   voice[i].sample_offset=0;
   voice[i].sample_increment=0; /* make sure it isn't negative */
-  voice[i].echo_delay=0;
+#ifdef tplus
+  voice[i].modulation_wheel=channel[e->channel].modulation_wheel;
+#endif
 
   voice[i].tremolo_phase=0;
   voice[i].tremolo_phase_increment=voice[i].sample->tremolo_phase_increment;
@@ -743,9 +886,20 @@ static void start_note(MidiEvent *e, int i)
   voice[i].vibrato_depth=voice[i].sample->vibrato_depth;
   voice[i].vibrato_sweep_position=0;
   voice[i].vibrato_control_ratio=voice[i].sample->vibrato_control_ratio;
+#ifdef tplus
+  if(channel[e->channel].vibrato_ratio && voice[i].vibrato_depth > 0)
+  {
+      voice[i].vibrato_control_ratio = channel[e->channel].vibrato_ratio;
+      voice[i].vibrato_depth = channel[e->channel].vibrato_depth;
+      voice[i].vibrato_delay = channel[e->channel].vibrato_delay;
+  }
+  else voice[i].vibrato_delay = 0;
+#endif
   voice[i].vibrato_control_counter=voice[i].vibrato_phase=0;
   for (j=0; j<VIBRATO_SAMPLE_INCREMENTS; j++)
     voice[i].vibrato_sample_increment[j]=0;
+
+
 #ifdef RATE_ADJUST_DEBUG
 {
 int e_debug=0, f_debug=0;
@@ -756,7 +910,7 @@ if (e_debug) printf("ADJ release time by %d on %d\n", channel[e->channel].releas
 if (f_debug) printf("ADJ attack time by %d on %d\n", channel[e->channel].attacktime -64, e->channel);
 #endif
 
-  for (j=0; j<6; j++)
+  for (j=ATTACK; j<MAXPOINT; j++)
     {
 	voice[i].envelope_rate[j]=voice[i].sample->envelope_rate[j];
 	voice[i].envelope_offset[j]=voice[i].sample->envelope_offset[j];
@@ -766,6 +920,8 @@ voice[i].envelope_rate[j],
 voice[i].envelope_offset[j]);
 #endif
     }
+
+  voice[i].echo_delay=voice[i].envelope_rate[DELAY];
 
 #ifdef RATE_ADJUST_DEBUG
 if (e_debug) {
@@ -800,14 +956,41 @@ printf("(new rel time = %ld)\n",
   if (drumpan != NO_PANNING)
     voice[i].panning=drumpan;
 /* for now, ... */
-  if (voice[i].right_sample) voice[i].panning = voice[i].sample->panning;
+  /*if (voice[i].right_sample) voice[i].panning = voice[i].sample->panning;*/
+  if (voice[i].right_sample) voice[i].panning = 0;
+
+#ifdef tplus
+  if(channel[e->channel].portamento && !channel[e->channel].porta_control_ratio)
+      update_portamento_controls(e->channel);
+  if(channel[e->channel].porta_control_ratio)
+  {
+      if(channel[e->channel].last_note_fine == -1)
+      {
+	  /* first on */
+	  channel[e->channel].last_note_fine = voice[i].note * 256;
+	  channel[e->channel].porta_control_ratio = 0;
+      }
+      else
+      {
+	  voice[i].porta_control_ratio = channel[e->channel].porta_control_ratio;
+	  voice[i].porta_dpb = channel[e->channel].porta_dpb;
+	  voice[i].porta_pb = channel[e->channel].last_note_fine -
+	      voice[i].note * 256;
+	  if(voice[i].porta_pb == 0)
+	      voice[i].porta_control_ratio = 0;
+      }
+  }
+
+  /* What "cnt"? if(cnt == 0) 
+      channel[e->channel].last_note_fine = voice[i].note * 256; */
+#endif
 
   recompute_freq(i);
   recompute_amp(i);
   if (voice[i].sample->modes & MODES_ENVELOPE)
     {
       /* Ramp up from 0 */
-      voice[i].envelope_stage=0;
+      voice[i].envelope_stage=ATTACK;
       voice[i].envelope_volume=0;
       voice[i].control_counter=0;
       recompute_envelope(i);
@@ -818,8 +1001,14 @@ printf("(new rel time = %ld)\n",
       voice[i].envelope_increment=0;
       apply_envelope_to_amp(i);
     }
-  clone_voice(ip, i, e);
+  if (reverb_options & 0x01) clone_voice(ip, i, e, STEREO_CLONE);
+  if (reverb_options & 0x02) clone_voice(ip, i, e, REVERB_CLONE);
+  if (reverb_options & 0x04) clone_voice(ip, i, e, CHORUS_CLONE);
+  rt = voice[i].status;
+  voice[i].status=VOICE_ON;
   ctl->note(i);
+  voice[i].status=rt;
+  played_notes++;
 }
 
 static void kill_note(int i)
@@ -854,13 +1043,12 @@ static void note_on(MidiEvent *e)
       start_note(e,lowest);
       return;
     }
-  
+ 
   /* Look for the decaying note with the lowest volume */
   i=voices;
   while (i--)
     {
       if ((voice[i].status!=VOICE_ON) &&
-      	(voice[i].status != VOICE_FREE) &&
 	  (voice[i].status!=VOICE_DIE))
 	{
 	  v=voice[i].left_mix;
@@ -873,6 +1061,27 @@ static void note_on(MidiEvent *e)
 	    }
 	}
     }
+ 
+  /* Look for the decaying note with the lowest volume */
+  if (lowest==-1)
+   {
+   i=voices;
+   while (i--)
+    {
+      if ((voice[i].status!=VOICE_ON) &&
+	  (!voice[i].clone_type))
+	{
+	  v=voice[i].left_mix;
+	  if ((voice[i].panned==PANNED_MYSTERY) && (voice[i].right_mix>v))
+	    v=voice[i].right_mix;
+	  if (v<lv)
+	    {
+	      lv=v;
+	      lowest=i;
+	    }
+	}
+    }
+   }
 
   if (lowest != -1)
     {
@@ -885,9 +1094,10 @@ static void note_on(MidiEvent *e)
       cut_notes++;
       voice[lowest].status=VOICE_FREE;
       if (cl >= 0) {
-	if (voice[lowest].velocity == voice[cl].velocity)
+	/** if (voice[lowest].velocity == voice[cl].velocity) **/
+	if (voice[cl].clone_type==STEREO_CLONE || (!voice[cl].clone_type && voice[lowest].clone_type==STEREO_CLONE))
 	   voice[cl].status=VOICE_FREE;
-	else voice[cl].clone_voice=-1;
+	else if (voice[cl].clone_voice==lowest) voice[cl].clone_voice=-1;
       }
       ctl->note(lowest);
 #ifdef ADAGIO
@@ -909,8 +1119,8 @@ static void finish_note(int i)
   /**if ((voice[i].sample->modes & MODES_ENVELOPE) && !(voice[i].sample->modes & MODES_FAST_RELEASE)) **/
     {
       /* We need to get the envelope out of Sustain stage */
-     if (voice[i].envelope_stage < 3)
-      voice[i].envelope_stage=3;
+     if (voice[i].envelope_stage < RELEASE)
+      voice[i].envelope_stage=RELEASE;
       voice[i].status=VOICE_OFF;
       recompute_envelope(i);
       apply_envelope_to_amp(i);
@@ -1051,14 +1261,31 @@ static void adjust_volume(int c)
       }
 }
 
+#ifdef tplus
+static int32 midi_cnv_vib_rate(int rate)
+{
+    return (int32)((double)play_mode->rate * MODULATION_WHEEL_RATE
+		   / (midi_time_table[rate] *
+		      2.0 * VIBRATO_SAMPLE_INCREMENTS));
+}
+
+static int midi_cnv_vib_depth(int depth)
+{
+    return (int)(depth * VIBRATO_DEPTH_TUNING);
+}
+
+static int32 midi_cnv_vib_delay(int delay)
+{
+    return (int32)(midi_time_table[delay]);
+}
+#endif
+
 #ifndef ADAGIO
 static int xmp_epoch = -1;
 static unsigned xxmp_epoch = 0;
 static unsigned time_expired = 0;
 static unsigned last_time_expired = 0;
-#if !defined( _UNIXWARE ) && ! defined(__hpux__) && ! defined (sun) && ! defined(_SCO_DS)
 extern int gettimeofday(struct timeval *, struct timezone *);
-#endif
 static struct timeval tv;
 static struct timezone tz;
 static void time_sync(int32 resync)
@@ -1142,6 +1369,32 @@ static void seek_forward(int32 until_time)
 	    current_event->a + current_event->b * 128;
 	  channel[current_event->channel].pitchfactor=0;
 	  break;
+#ifdef tplus
+	    case ME_MODULATION_WHEEL:
+	      channel[current_event->channel].modulation_wheel =
+		    midi_cnv_vib_depth(current_event->a);
+	      break;
+
+            case ME_PORTAMENTO_TIME_MSB:
+	      channel[current_event->channel].portamento_time_msb = current_event->a;
+	      break;
+
+            case ME_PORTAMENTO_TIME_LSB:
+	      channel[current_event->channel].portamento_time_lsb = current_event->a;
+	      break;
+
+            case ME_PORTAMENTO:
+	      channel[current_event->channel].portamento = (current_event->a >= 64);
+	      break;
+
+            case ME_FINE_TUNING:
+	      channel[current_event->channel].tuning_lsb = current_event->a;
+	      break;
+
+            case ME_COARSE_TUNING:
+	      channel[current_event->channel].tuning_msb = current_event->a;
+	      break;
+#endif
 	  
 	case ME_MAINVOLUME:
 	  channel[current_event->channel].volume=current_event->a;
@@ -1172,12 +1425,33 @@ static void seek_forward(int32 until_time)
 	  break;
 
 	case ME_REVERBERATION:
+#ifdef CHANNEL_EFFECT
+	 if (opt_effect)
+	  effect_ctrl_change( current_event ) ;
+	 else
+#endif
 	  channel[current_event->channel].reverberation=current_event->a;
 	  break;
 
 	case ME_CHORUSDEPTH:
+#ifdef CHANNEL_EFFECT
+	 if (opt_effect)
+	  effect_ctrl_change( current_event ) ;
+	 else
+#endif
 	  channel[current_event->channel].chorusdepth=current_event->a;
 	  break;
+
+#ifdef CHANNEL_EFFECT
+	case ME_CELESTE:
+	 if (opt_effect)
+	  effect_ctrl_change( current_event ) ;
+	  break;
+	case ME_PHASER:
+	 if (opt_effect)
+	  effect_ctrl_change( current_event ) ;
+	  break;
+#endif
 
 	case ME_HARMONICCONTENT:
 	  channel[current_event->channel].harmoniccontent=current_event->a;
@@ -1190,7 +1464,17 @@ static void seek_forward(int32 until_time)
 	case ME_ATTACKTIME:
 	  channel[current_event->channel].attacktime=current_event->a;
 	  break;
-
+#ifdef tplus
+	case ME_VIBRATO_RATE:
+	  channel[current_event->channel].vibrato_ratio=midi_cnv_vib_rate(current_event->a);
+	  break;
+	case ME_VIBRATO_DEPTH:
+	  channel[current_event->channel].vibrato_depth=midi_cnv_vib_depth(current_event->a);
+	  break;
+	case ME_VIBRATO_DELAY:
+	  channel[current_event->channel].vibrato_delay=midi_cnv_vib_delay(current_event->a);
+	  break;
+#endif
 	case ME_BRIGHTNESS:
 	  channel[current_event->channel].brightness=current_event->a;
 	  break;
@@ -1276,6 +1560,9 @@ static int apply_controls(void)
       case RC_LOAD_FILE:	  
       case RC_NEXT: /* >>| */
       case RC_REALLY_PREVIOUS: /* |<< */
+#ifdef KMIDI
+      case RC_PATCHCHANGE:
+#endif
 	play_mode->purge_output();
 	return rc;
 	
@@ -1342,6 +1629,9 @@ static int apply_controls(void)
 }
 #endif /* ADAGIO */
 
+#ifdef CHANNEL_EFFECT
+extern void (*do_compute_data)(int32) ;
+#else
 static void do_compute_data(int32 count)
 {
   int i;
@@ -1366,6 +1656,7 @@ static void do_compute_data(int32 count)
     }
   current_sample += count;
 }
+#endif /*CHANNEL_EFFECT*/
 
 /* count=0 means flush remaining buffered data to output device, then
    flush the device itself */
@@ -1408,19 +1699,110 @@ static int compute_data(int32 count)
   return RC_NONE;
 }
 
+#ifdef tplus
+static void update_modulation_wheel(int ch, int val)
+{
+    int i, uv = /*upper_*/voices;
+    for(i = 0; i < uv; i++)
+	if(voice[i].status != VOICE_FREE && voice[i].channel == ch && voice[i].modulation_wheel != val)
+	{
+	    /* Set/Reset mod-wheel */
+	    voice[i].modulation_wheel = val;
+	    voice[i].vibrato_delay = 0;
+	    recompute_freq(i);
+	}
+}
+
+static void drop_portamento(int ch)
+{
+    int i, uv = /*upper_*/voices;
+
+    channel[ch].porta_control_ratio = 0;
+    for(i = 0; i < uv; i++)
+	if(voice[i].status != VOICE_FREE &&
+	   voice[i].channel == ch &&
+	   voice[i].porta_control_ratio)
+	{
+	    voice[i].porta_control_ratio = 0;
+	    recompute_freq(i);
+	}
+    channel[ch].last_note_fine = -1;
+}
+
+static void update_portamento_controls(int ch)
+{
+    if(!channel[ch].portamento ||
+       (channel[ch].portamento_time_msb | channel[ch].portamento_time_lsb)
+       == 0)
+	drop_portamento(ch);
+    else
+    {
+	double mt, dc;
+	int d;
+
+	mt = midi_time_table[channel[ch].portamento_time_msb & 0x7F] *
+	    midi_time_table2[channel[ch].portamento_time_lsb & 0x7F] *
+		PORTAMENTO_TIME_TUNING;
+	dc = play_mode->rate * mt;
+	d = (int)(1.0 / (mt * PORTAMENTO_CONTROL_RATIO));
+	d++;
+	channel[ch].porta_control_ratio = (int)(d * dc + 0.5);
+	channel[ch].porta_dpb = d;
+    }
+}
+
+static void update_portamento_time(int ch)
+{
+    int i, uv = /*upper_*/voices;
+    int dpb;
+    int32 ratio;
+
+    update_portamento_controls(ch);
+    dpb = channel[ch].porta_dpb;
+    ratio = channel[ch].porta_control_ratio;
+
+    for(i = 0; i < uv; i++)
+    {
+	if(voice[i].status != VOICE_FREE &&
+	   voice[i].channel == ch &&
+	   voice[i].porta_control_ratio)
+	{
+	    voice[i].porta_control_ratio = ratio;
+	    voice[i].porta_dpb = dpb;
+	    recompute_freq(i);
+	}
+    }
+}
+
+static void update_channel_freq(int ch)
+{
+    int i, uv = /*upper_*/voices;
+    for(i = 0; i < uv; i++)
+	if(voice[i].status != VOICE_FREE && voice[i].channel == ch)
+	    recompute_freq(i);
+}
+#endif
+
 #ifndef ADAGIO
 int play_midi(MidiEvent *eventlist, int32 events, int32 samples)
 {
   int rc;
+#ifdef KMIDI
+  int32 whensaytime;
+#endif
+
 
   adjust_amplification();
 
   sample_count=samples;
   event_list=eventlist;
-  lost_notes=cut_notes=0;
+  lost_notes=cut_notes=played_notes=0;
 
   skip_to(0);
-  
+#ifdef KMIDI
+  whensaytime = current_event->time;
+#endif
+
   for (;;)
     {
 #ifdef __WIN32__
@@ -1431,12 +1813,27 @@ int play_midi(MidiEvent *eventlist, int32 events, int32 samples)
       /* Handle all events that should happen at this time */
       while (current_event->time <= current_sample)
 	{
+#ifdef KMIDI
+	  if (whensaytime + 100 > current_event->time && current_event->time + 100 < current_sample)
+	  {
+		ctl->current_time(current_event->time);
+		whensaytime = current_event->time;
+	  }
+#endif
 	  switch(current_event->type)
 	    {
 
 	      /* Effects affecting a single note */
 
 	    case ME_NOTEON:
+#ifdef tplus
+#if 0
+	      if (channel[current_event->channel].portamento &&
+		    current_event->b &&
+			(channel[current_event->channel].portamento_time_msb|
+			 channel[current_event->channel].portamento_time_lsb )) break;
+#endif
+#endif
 	      current_event->a += channel[current_event->channel].transpose;
 	      if (!(current_event->b)) /* Velocity 0? */
 		note_off(current_event);
@@ -1470,7 +1867,42 @@ int play_midi(MidiEvent *eventlist, int32 events, int32 samples)
 	      ctl->pitch_bend(current_event->channel, 
 			      channel[current_event->channel].pitchbend);
 	      break;
-	      
+#ifdef tplus
+	    case ME_MODULATION_WHEEL:
+	      channel[current_event->channel].modulation_wheel =
+		    midi_cnv_vib_depth(current_event->a);
+	      update_modulation_wheel(current_event->channel, channel[current_event->channel].modulation_wheel);
+		/*ctl_mode_event(CTLE_MOD_WHEEL, 1, current_event->channel, channel[current_event->channel].modulation_wheel);*/
+/*ctl->cmsg(CMSG_INFO, VERB_NORMAL, "~m%u", midi_cnv_vib_depth(current_event->a));*/
+	      break;
+
+            case ME_PORTAMENTO_TIME_MSB:
+	      channel[current_event->channel].portamento_time_msb = current_event->a;
+	      update_portamento_time(current_event->channel);
+	      break;
+
+            case ME_PORTAMENTO_TIME_LSB:
+	      channel[current_event->channel].portamento_time_lsb = current_event->a;
+	      update_portamento_time(current_event->channel);
+	      break;
+
+            case ME_PORTAMENTO:
+	      channel[current_event->channel].portamento = (current_event->a >= 64);
+	      if(!channel[current_event->channel].portamento) drop_portamento(current_event->channel);
+/*ctl->cmsg(CMSG_INFO, VERB_NORMAL, "~P%d",current_event->a);*/
+	      break;
+
+            case ME_FINE_TUNING:
+	      channel[current_event->channel].tuning_lsb = current_event->a;
+/*ctl->cmsg(CMSG_INFO, VERB_NORMAL, "~t");*/
+	      break;
+
+            case ME_COARSE_TUNING:
+	      channel[current_event->channel].tuning_msb = current_event->a;
+ctl->cmsg(CMSG_INFO, VERB_NORMAL, "~T");
+	      break;
+
+#endif
 	    case ME_MAINVOLUME:
 	      channel[current_event->channel].volume=current_event->a;
 	      adjust_volume(current_event->channel);
@@ -1482,12 +1914,33 @@ int play_midi(MidiEvent *eventlist, int32 events, int32 samples)
 	      break;
 	      
 	    case ME_REVERBERATION:
+#ifdef CHANNEL_EFFECT
+	 if (opt_effect)
+	      effect_ctrl_change( current_event ) ;
+	 else
+#endif
 	      channel[current_event->channel].reverberation=current_event->a;
 	      break;
 
 	    case ME_CHORUSDEPTH:
+#ifdef CHANNEL_EFFECT
+	 if (opt_effect)
+	      effect_ctrl_change( current_event ) ;
+	 else
+#endif
 	      channel[current_event->channel].chorusdepth=current_event->a;
 	      break;
+
+#ifdef CHANNEL_EFFECT
+	case ME_CELESTE:
+	 if (opt_effect)
+	  effect_ctrl_change( current_event ) ;
+	  break;
+	case ME_PHASER:
+	 if (opt_effect)
+	  effect_ctrl_change( current_event ) ;
+	  break;
+#endif
 
 	    case ME_PAN:
 	      channel[current_event->channel].panning=current_event->a;
@@ -1558,6 +2011,21 @@ printf("attack time %d on channel %d\n", channel[current_event->channel].attackt
 current_event->channel);
 */
 	      break;
+#ifdef tplus
+	case ME_VIBRATO_RATE:
+	  channel[current_event->channel].vibrato_ratio=midi_cnv_vib_rate(current_event->a);
+	  update_channel_freq(current_event->channel);
+	  break;
+	case ME_VIBRATO_DEPTH:
+	  channel[current_event->channel].vibrato_depth=midi_cnv_vib_depth(current_event->a);
+	  update_channel_freq(current_event->channel);
+ctl->cmsg(CMSG_INFO, VERB_NORMAL, "~v%u", midi_cnv_vib_depth(current_event->a));
+	  break;
+	case ME_VIBRATO_DELAY:
+	  channel[current_event->channel].vibrato_delay=midi_cnv_vib_delay(current_event->a);
+	  update_channel_freq(current_event->channel);
+	  break;
+#endif
 
 	    case ME_BRIGHTNESS:
 	      channel[current_event->channel].brightness=current_event->a;
@@ -1587,6 +2055,8 @@ current_event->channel);
 	      ctl->cmsg(CMSG_INFO, VERB_VERBOSE,
 		   "Playing time: ~%d seconds",
 		   current_sample/play_mode->rate+2);
+	      ctl->cmsg(CMSG_INFO, VERB_VERBOSE,
+		   "Notes played: %d", played_notes);
 	      ctl->cmsg(CMSG_INFO, VERB_VERBOSE,
 		   "Notes cut: %d", cut_notes);
 	      ctl->cmsg(CMSG_INFO, VERB_VERBOSE,
@@ -2056,6 +2526,9 @@ int play_midi_file(char *fn)
       free_instruments();
   
   free(event);
+#ifdef KMIDI
+if (rc==RC_PATCHCHANGE) fprintf(stderr,"kernel returning PATCHCHANGE\n");
+#endif
   return rc;
 }
 #endif
