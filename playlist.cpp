@@ -81,7 +81,7 @@ PlaylistEdit::PlaylistEdit(const char *name, QStringList *playlist,
 	file->setWhatsThis(41, i18n("Replace the contents of the<br>\n"
 				"currently selected playlist<br>\n"
 				"file with the new play list.") );
-  file->insertItem( i18n("Save as..."), this, SLOT( editNewPlaylist() ), 0, 42);
+  file->insertItem( i18n("Save As..."), this, SLOT( editNewPlaylist() ), 0, 42);
 	file->setWhatsThis(42, i18n("Make up a name for a<br>\n"
 				"new playlist file and<br>\n"
 				"save the current play list there.") );
@@ -100,7 +100,7 @@ PlaylistEdit::PlaylistEdit(const char *name, QStringList *playlist,
 
   view = new QPopupMenu;
   Q_CHECK_PTR( view );
-  view->insertItem( i18n("All files"), this, SLOT(setFilter()), 0, 50 );
+  view->insertItem( i18n("All Files"), this, SLOT(setFilter()), 0, 50 );
 	view->setWhatsThis(50, i18n("Choose whether the file<br>\n"
 				"list should show only uncompressed<br>\n"
 				"midi files or all files.") );
@@ -110,7 +110,7 @@ PlaylistEdit::PlaylistEdit(const char *name, QStringList *playlist,
   edit->insertItem( i18n("Clear"), this, SLOT(clearPlist()), 0, 51 );
 	edit->setWhatsThis(51, i18n("Discard the contents<br>\n"
 				"of the current play list.") );
-  edit->insertItem( i18n("Select all"), this, SLOT(select_all()), 0, 52 );
+  edit->insertItem( i18n("Select All"), this, SLOT(select_all()), 0, 52 );
 	edit->setWhatsThis(52, i18n("Append all the files<br>\n"
 				"in the directory listing<br>\n"
 				"to the play list.") );

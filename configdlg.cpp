@@ -81,9 +81,9 @@ ConfigDlg::ConfigDlg(QWidget *parent, struct configstruct *data, const char *nam
 
     tl = new QVBoxLayout(this, 5);
     bbox = new KButtonBox(this);
-    ok = bbox->addButton(i18n("OK"));
+    ok = bbox->addButton(i18n("&OK"));
     ok->setDefault(TRUE);
-    cancel = bbox->addButton(i18n("Cancel"));
+    cancel = bbox->addButton(i18n("&Cancel"));
     cancel->setDefault(TRUE);
 
     connect(ok, SIGNAL(clicked()), this, SLOT(accept()));
@@ -107,7 +107,7 @@ ConfigDlg::ConfigDlg(QWidget *parent, struct configstruct *data, const char *nam
     QString str = i18n("The LED color is used in<br>\nthe panel and meter.");
     label1 = new QLabel(w);
     label1->setGeometry(60,25,135,25);
-    label1->setText(i18n("LED Color:"));
+    label1->setText(i18n("LED color:"));
     what->add(label1, str);
 
     button1 = new KColorButton(configdata.led_color, w);
@@ -118,7 +118,7 @@ ConfigDlg::ConfigDlg(QWidget *parent, struct configstruct *data, const char *nam
     str = i18n("This color is for<br>\nthe panel and meter backgrounds.");
     label2 = new QLabel(w);
     label2->setGeometry(60,85,135,25);
-    label2->setText(i18n("Background Color:"));
+    label2->setText(i18n("Background color:"));
     what->add(label2, str);
 
     button2 = new KColorButton(configdata.background_color, w);
@@ -138,7 +138,7 @@ ConfigDlg::ConfigDlg(QWidget *parent, struct configstruct *data, const char *nam
     str = i18n("Try to stop KMidi from<br>\nusing up too much of your RAM.");
     label3 = new QLabel(w);
     label3->setGeometry(60,200,135,25);
-    label3->setText("Patch Mem Max:");
+    label3->setText("Patch mem max:");
     what->add(label3, str);
     meg = new KIntNumInput(configdata.max_patch_megs, w, 10, "hex_with_slider" );
     meg->setRange(0, 255);

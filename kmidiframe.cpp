@@ -198,10 +198,10 @@ KMidiFrame::KMidiFrame( const char *name ) :
     connect( reverb_level, SIGNAL(activated(int)), this, SLOT(doReverbLevel(int)) );
     connect( reverb_level, SIGNAL(aboutToShow()), this, SLOT(fixReverbLevelItems()) );
     reverb_options->insertSeparator();
-	reverb_options->insertItem(  i18n("No echo"), 120 );
+	reverb_options->insertItem(  i18n("No Echo"), 120 );
 	reverb_options->setWhatsThis(120, i18n("Prevents playing extra<br>\n"
 				"echo notes for reverberation.") );
-	reverb_options->insertItem(  i18n("Normal echo") , 121);
+	reverb_options->insertItem(  i18n("Normal Echo") , 121);
 	reverb_options->setWhatsThis(121, i18n("Extra echo notes are<br>\n"
 					       "played to get the effect<br>\n"
 					       "of reverberation.") );
@@ -209,7 +209,7 @@ KMidiFrame::KMidiFrame( const char *name ) :
     Q_CHECK_PTR( echo_level );
     echo_level->setCheckable( TRUE );
     reverb_options->insertSeparator();
-    reverb_options->insertItem( i18n("Echo level"), echo_level);
+    reverb_options->insertItem( i18n("Echo Level"), echo_level);
         echo_level->insertItem( i18n("default") , 130);
 	echo_level->setWhatsThis(130, i18n("The level for echo notes<br>\n"
 				"is set according to the midi<br>\n"
@@ -240,7 +240,7 @@ KMidiFrame::KMidiFrame( const char *name ) :
     chorus_level = new QPopupMenu();
     Q_CHECK_PTR( chorus_level );
     chorus_level->setCheckable( TRUE );
-    chorus_options->insertItem( i18n("Chorus level"), chorus_level);
+    chorus_options->insertItem( i18n("Chorus Level"), chorus_level);
     chorus_level->insertItem( i18n("default") , 170);
     chorus_level->setWhatsThis(170, i18n("The chorus level<br>\n"
 					 "is set according to the midi<br>\n"
