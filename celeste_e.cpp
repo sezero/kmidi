@@ -264,12 +264,12 @@ Effect* CelesteCtor(void)
 	pReturn = ( celeste_effect* )malloc( sizeof( celeste_effect) ) ;
 	memset( pReturn , 0 , sizeof( celeste_effect ) ) ;
 	
-	pReturn->m_pfnActionMono =  &ActionMono ;
-	pReturn->m_pfnActionStereo = &ActionStereo ;
-	pReturn->m_pfnCtrlChange = &CtrlChange ;
-	pReturn->m_pfnCtrlReset = &CtrlReset ;
-	pReturn->m_pfnName = &Name ;
-	pReturn->m_pfnDestruct = &Destruct ;
+	pReturn->m_pfnActionMono = (void*)&ActionMono ;
+	pReturn->m_pfnActionStereo = (void*)&ActionStereo ;
+	pReturn->m_pfnCtrlChange = (void*)&CtrlChange ;
+	pReturn->m_pfnCtrlReset = (void*)&CtrlReset ;
+	pReturn->m_pfnName = (void*)&Name ;
+	pReturn->m_pfnDestruct = (void*)&Destruct ;
 
 	create_cirbuff( &( pReturn->leftX ) , 0 ) ;
 	create_cirbuff( &( pReturn->rightX ) , 0 ) ;
