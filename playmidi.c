@@ -586,6 +586,7 @@ static void recompute_amp(int v)
 
 static int current_polyphony = 0;
 
+#define NOT_CLONE 0
 #define STEREO_CLONE 1
 #define REVERB_CLONE 2
 #define CHORUS_CLONE 3
@@ -680,9 +681,6 @@ static void clone_voice(Instrument *ip, int v, MidiEvent *e, uint8 clone_type, i
   }
 
   if (!voice[v].right_sample) {
-	/* if (voices - current_polyphony < 8) return; */
-	/*if ((reverb < 8 && chorus < 8) || !command_cutoff_allowed) return;*/
-	/*if (!voice[v].vibrato_control_ratio) return;*/
 	voice[v].right_sample = voice[v].sample;
   }
   else if (clone_type == STEREO_CLONE) variationbank = 0;
@@ -691,9 +689,9 @@ static void clone_voice(Instrument *ip, int v, MidiEvent *e, uint8 clone_type, i
   if ( (w = vc_alloc(v, clone_type)) < 0 ) return;
 
   if (clone_type==STEREO_CLONE) voice[v].clone_voice = w;
-  /* voice[w].clone_voice = -1; */
   voice[w].clone_voice = v;
   voice[w].clone_type = clone_type;
+
   voice[w].status = voice[v].status;
   voice[w].channel = voice[v].channel;
   voice[w].note = voice[v].note;
@@ -750,15 +748,42 @@ static void clone_voice(Instrument *ip, int v, MidiEvent *e, uint8 clone_type, i
   voice[w].envelope_stage = voice[v].envelope_stage;
   voice[w].modulation_stage = voice[v].modulation_stage;
   voice[w].control_counter = voice[v].control_counter;
-  /*voice[w].panned = voice[v].panned;*/
-  voice[w].panned = PANNED_RIGHT;
+
+  voice[w].panning = voice[v].panning;
+
   if (voice[w].right_sample)
   	voice[w].panning = voice[w].right_sample->panning;
   else voice[w].panning = 127;
 
-  if (clone_type == STEREO_CLONE && variationbank == 3) {
+  if (clone_type == STEREO_CLONE) {
+    int left, right;
+    int panrequest = voice[v].panning;
+    if (variationbank == 3) {
 	voice[v].panning = 0;
 	voice[w].panning = 127;
+    }
+    else {
+	if (voice[v].sample->panning > voice[w].sample->panning) {
+	  left = w;
+	  right = v;
+	}
+	else {
+	  left = v;
+	  right = w;
+	}
+	if (panrequest < 64) {
+	  if (voice[left].sample->panning < panrequest)
+		voice[left].panning = voice[left].sample->panning;
+	  else voice[left].panning = panrequest;
+	  voice[right].panning = (voice[right].sample->panning + panrequest + 32) / 2;
+	}
+	else {
+	  if (voice[right].sample->panning > panrequest)
+		voice[right].panning = voice[right].sample->panning;
+	  else voice[right].panning = panrequest;
+	  voice[left].panning = (voice[left].sample->panning + panrequest - 32) / 2;
+	}
+    }
   }
 
 #ifdef tplus
@@ -793,7 +818,7 @@ printf(" -> delay %d\n", voice[w].echo_delay);
 #endif
 
 
-	voice[w].envelope_rate[DECAY] /= 2;
+	voice[w].envelope_rate[DECAY] *= 2;
 	voice[w].envelope_rate[RELEASE] /= 2;
 
 	if (XG_System_reverb_type >= 0) {
@@ -853,10 +878,9 @@ printf(" -> delay %d\n", voice[w].echo_delay);
 	/*voice[w].orig_frequency += (voice[w].orig_frequency/128) * chorus;*/
 /*fprintf(stderr, "voice %d v sweep from %ld (cr %d, depth %d)", w, voice[w].vibrato_sweep,
 	 voice[w].vibrato_control_ratio, voice[w].vibrato_depth);*/
-	voice[w].panning = voice[v].panning - 16;
-	if (voice[w].panning < 0) voice[w].panning = 0;
-	voice[v].panning += 16;
-	if (voice[v].panning > 127) voice[v].panning = 127;
+
+	if (voice[v].panning < 64) voice[w].panning = voice[v].panning + 32;
+	else voice[w].panning = voice[v].panning - 32;
 
 	if (!voice[w].vibrato_control_ratio) {
 		voice[w].vibrato_control_ratio = 100;
@@ -871,6 +895,7 @@ printf(" -> delay %d\n", voice[w].echo_delay);
 	voice[w].volume = (voice[w].volume * chorus) / (128+96);
 	voice[v].volume = voice[w].volume;
 	recompute_amp(v);
+        apply_envelope_to_amp(v);
 	voice[w].vibrato_sweep = chorus/2;
 	voice[w].vibrato_depth /= 2;
 	if (!voice[w].vibrato_depth) voice[w].vibrato_depth = 2;
@@ -1196,9 +1221,6 @@ printf("(new rel time = %ld)\n",
     voice[i].panning=voice[i].sample->panning;
   if (drumpan != NO_PANNING)
     voice[i].panning=drumpan;
-/* for now, ... */
-  if (voice[i].right_sample) voice[i].panning = voice[i].sample->panning;
-  /*if (voice[i].right_sample) voice[i].panning = 0; */
 
 #ifdef tplus
   if(channel[ch].portamento && !channel[ch].porta_control_ratio)
@@ -1302,10 +1324,10 @@ printf("(new rel time = %ld)\n",
       apply_envelope_to_amp(i);
     }
   voice[i].clone_voice = -1;
-  voice[i].clone_type = 0;
+  voice[i].clone_type = NOT_CLONE;
   if (reverb_options & OPT_STEREO_VOICE) clone_voice(ip, i, e, STEREO_CLONE, variationbank);
-  if (reverb_options & OPT_REVERB_VOICE) clone_voice(ip, i, e, REVERB_CLONE, variationbank);
   if (reverb_options & OPT_CHORUS_VOICE) clone_voice(ip, i, e, CHORUS_CLONE, variationbank);
+  if (reverb_options & OPT_REVERB_VOICE) clone_voice(ip, i, e, REVERB_CLONE, variationbank);
   ctl->note(i);
   played_notes++;
 }

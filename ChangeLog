@@ -1,3 +1,9 @@
+1999-10-23  Greg Lee  <lee@hawaii.edu>
+
+	* playmidi.c: fix panning
+	* make files: -O3 dumps core in resample.c -
+	  -O2 for C-code seems ok (using egcs1.1.2)
+
 1999-10-22  Greg Lee  <lee@hawaii.edu>
 
 	* playmidi.c,resample.c: be more careful about
