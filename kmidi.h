@@ -70,6 +70,7 @@
 #include <ktmainwindow.h>
 #include <kled.h>
 #include <kmenubar.h>
+#include <krandomsequence.h>
 
 #define PLAYLIST_WIDTH  550
 #define PLAYLIST_HEIGHT 440
@@ -231,6 +232,7 @@ public:
 	ConfigDlg       *configdlg;
 	PlaylistEdit    *playlistdlg;
 	KConfig 	*config;
+	KRandomSequence randomSeq;
 	QDir		current_dir;
 
 private:

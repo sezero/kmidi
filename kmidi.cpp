@@ -210,7 +210,6 @@ KMidi::KMidi( QWidget *parent, const char *name )
     redoplaylistbox();
     playlistbox->setCurrentItem(current_playlist_num);
 
-    srandom(time(0L));
     adjustSize();
     setMinimumSize( regularsize );
 
@@ -1410,7 +1409,7 @@ int KMidi::randomSong(){
 
     int j;
     flag_new_playlist = false;
-    j=1+(int) (((double)playlist->count()) *rand()/(RAND_MAX+1.0));
+    j=1+randomSeq.getLong(playlist->count());
     return j;
 }
 
