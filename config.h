@@ -92,8 +92,8 @@
 /*#define DEFAULT_DRUMCHANNELS ((1<<9) | (1<<15))*/
 
 /* type of floating point number */
-/*typedef double FLOAT_T;*/
-typedef float FLOAT_T;
+typedef double FLOAT_T;
+/* typedef float FLOAT_T; */
 
 /* A somewhat arbitrary frequency range. The low end of this will
    sound terrible as no lowpass filtering is performed on most

@@ -3,6 +3,7 @@
 	* fix display sync problem
 	* make expression and volume controllers
 	  nonlinear
+	* change `float' to `double'
 
 1999-12-15  Greg Lee  <lee@hawaii.edu>
 
