@@ -24,7 +24,7 @@
 
 */
 
-/* #if defined(__linux__) || defined(__FreeBSD__) || defined(__bsdi__) */
+/* Usually Linux, FreeBSD, or BSDI.  Probably NetBSD and OpenBSD too */
 #ifdef AU_OSS
 #define _GNU_SOURCE
 #include <unistd.h>
@@ -32,18 +32,20 @@
 #include <errno.h>
 
 #ifdef __linux__
-#include <sys/ioctl.h> /* new with 1.2.0? Didn't need this under 1.1.64 */
-#include <linux/soundcard.h>
+	/* new with 1.2.0? Didn't need this under 1.1.64 */
+	#include <sys/ioctl.h>
+	#include <linux/soundcard.h>
 #endif
 
-#ifdef __FreeBSD__
-#include <stdio.h>
-#include <machine/soundcard.h>
+#if defined(__FreeBSD__) || defined(__bsdi__)
+	#include <stdio.h>
+	#include <sys/soundcard.h>
 #endif
 
-#ifdef __bsdi__
-#include <stdio.h>
-#include <sys/soundcard.h>
+#ifdef __NetBSD__
+	#include <stdio.h>
+	#include <sys/ioctl.h>
+	#include <soundcard.h>
 #endif
 
 #include "config.h"
@@ -76,6 +78,9 @@ PlayMode dpm = {
 #ifdef LINUX_SECOND_DEVICE
   "Linux 2nd dsp device", 'D',
   "/dev/dsp1",
+#elif defined(__NetBSD__)
+  "NetBSD audio device", 'd',
+  "/dev/sound",
 #else
   "Linux dsp device", 'd',
   "/dev/dsp",
@@ -320,13 +325,21 @@ static void close_output(void)
 static void flush_output(void)
 {
   output_data(0, 0);
+#ifdef __NetBSD__
+  ioctl(dpm.fd, SNDCTL_DSP_SYNC, NULL);
+#else
   ioctl(dpm.fd, SNDCTL_DSP_SYNC);
+#endif
 }
 
 static void purge_output(void)
 {
   b_out(dpm.id_character, dpm.fd, 0, -1);
+#ifdef __NetBSD__
+  ioctl(dpm.fd, SNDCTL_DSP_RESET, NULL);
+#else
   ioctl(dpm.fd, SNDCTL_DSP_RESET);
+#endif
 }
 
 #endif /* defined(__linux__) || defined(__FreeBSD__) || defined(__bsdi__) */
