@@ -11,7 +11,7 @@
 #ifndef TABLE_H
 #define TABLE_H
 
-#include <qttableview.h>
+#include "qttableview.h"
 
 
 class Table : public QtTableView
@@ -20,7 +20,7 @@ class Table : public QtTableView
 public:
     Table( int width, int height, QWidget* parent=0, const char* name=0, WFlags f=0 );
     ~Table();
-    
+
     QString cellContent( int row, int col ) const;
     void setCellContent( int row, int col, const char* );
 
@@ -36,7 +36,7 @@ public:
 protected:
     void paintCell( QPainter*, int row, int col );
     int cellWidth( int col );
- 
+
 private:
     int indexOf( int row, int col ) const;
     QString* contents;

@@ -35,7 +35,7 @@
 
 #include <khelpmenu.h>
 //#include <kfiledialog.h>
-#include <kmidifiledlg.h>
+#include "kmidifiledlg.h"
 
 #include "kmidi.h"
 
