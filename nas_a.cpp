@@ -291,7 +291,7 @@ static int opendevaudio(void)
   AuSetElements(fd.aud,fd.flow,AuTrue,2,elements,NULL);
   AuRegisterEventHandler(fd.aud,AuEventHandlerIDMask,0,fd.flow,nas_eventHandler,(AuPointer)&fd);
   fd.capacity = buf_samples*((dpm.encoding&PE_MONO)?1:2)*AuSizeofFormat(LINEAR16_FORMAT);
-  if ((fd.data=malloc(fd.capacity))==(char*)0) return -1;
+  if ((fd.data=(char*)malloc(fd.capacity))==(char*)0) return -1;
   fd.used = 0;
   fd.synced = AuFalse;
   fd.finished = AuFalse;
