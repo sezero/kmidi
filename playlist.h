@@ -1,6 +1,6 @@
 /*
    kModPlayer - Qt-Based Mod Player
-   
+
    $Id$
 
    Copyright 1996 Bernd Johannes Wuebben math.cornell.edu
@@ -24,26 +24,25 @@
 #ifndef PLAY_LIST_H
 #define PLAY_LIST_H
 
-#include <qdatetime.h> 
+#include <qdatetime.h>
 #include <qlineedit.h>
 //#include <qdialog.h>
 #include <qwidget.h>
 #include <qlabel.h>
-#include <qstrlist.h> 
-#include <qlistbox.h> 
+#include <qstrlist.h>
+#include <qlistbox.h>
 #include <qpushbutton.h>
 #include <qfiledialog.h>
 #include <qfile.h>
-#include <qtextstream.h> 
+#include <qtextstream.h>
 #include <qdir.h>
-#include <qstrlist.h>
 #include <qpainter.h>
-#include <qapplication.h>    
+#include <qapplication.h>
 #include <qpopupmenu.h>
 #include <qkeycode.h>
-#include <kmenubar.h> 
-//#include <qlineedit.h> 
-#include <qframe.h> 
+#include <kmenubar.h>
+//#include <qlineedit.h>
+#include <qframe.h>
 #include <kmainwindow.h>
 
 #include "kmidi.h"
@@ -58,13 +57,13 @@ public:
   MyListBoxItem( const QString &s, const QPixmap p )
     : QListBoxItem(), pm(p)
     { setText( s ); }
-  
+
 protected:
   virtual void paint( QPainter * );
   virtual int height( const QListBox * ) const;
   virtual int width( const QListBox * ) const;
   virtual const QPixmap *pixmap() { return &pm; }
-  
+
 public:
 
   QString filename;
@@ -112,8 +111,8 @@ protected:
     void set_local_dir(const QString &dir);
     void redoplist();
     void redoDisplay();
-    //void closeEvent( QCloseEvent *e );  
-    bool queryClose();  
+    //void closeEvent( QCloseEvent *e );
+    bool queryClose();
 
 public:
     QString current_playlist;
@@ -121,15 +120,15 @@ public:
 
 private:
 
-    bool starting_up;  
-    bool showmidisonly;  
+    bool starting_up;
+    bool showmidisonly;
     QDir cur_local_dir;
     QList<QFileInfo> cur_local_fileinfo;
     QListBox *local_list;
     QSplitter *hpanner, *vpanner;
     QLabel *statusbar;
 
-    KMenuBar *menu;    
+    KMenuBar *menu;
     QListBox* listbox;
     QListBox* plistbox;
     //QPushButton* filterButton;

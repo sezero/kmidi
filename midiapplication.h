@@ -1,8 +1,8 @@
-/*   
+/*
    kmidi - a midi to wav converter
-   
+
    Copyright 1997 Bernd Johannes Wuebben math.cornell.edu
-  
+
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
    the Free Software Foundation; either version 2, or (at your option)
@@ -17,7 +17,7 @@
    along with this program; if not, write to the Free Software
    Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
- 
+
  */
 
 #ifndef MIDIAPPLICATION_H
@@ -27,9 +27,9 @@
 #include "bwlednum.h"
 
 #include <qfileinfo.h>
-#include <qdatastream.h> 
-#include <qfile.h> 
-#include <qtabdialog.h> 
+#include <qdatastream.h>
+#include <qfile.h>
+#include <qtabdialog.h>
 #include <qfiledialog.h>
 #include <qpushbutton.h>
 #include <qradiobutton.h>
@@ -40,7 +40,6 @@
 #include <qtimer.h>
 #include <qbitmap.h>
 #include <qslider.h>
-#include <qgroupbox.h>
 #include <qcombobox.h>
 #include <qscrollbar.h>
 #include <qspinbox.h>
@@ -73,10 +72,10 @@
 
 class MidiApplication : public KUniqueApplication
 {
-  Q_OBJECT 
+  Q_OBJECT
 
 public:
-  
+
   MidiApplication();
   ~MidiApplication();
 

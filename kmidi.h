@@ -1,8 +1,8 @@
-/*   
+/*
    kmidi - a midi to wav converter
-   
+
    Copyright 1997 Bernd Johannes Wuebben math.cornell.edu
-  
+
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
    the Free Software Foundation; either version 2, or (at your option)
@@ -17,7 +17,7 @@
    along with this program; if not, write to the Free Software
    Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
- 
+
  */
 
 #ifndef KMIDI_PLAYER_H
@@ -27,9 +27,9 @@
 #include "bwlednum.h"
 
 #include <qfileinfo.h>
-#include <qdatastream.h> 
-#include <qfile.h> 
-#include <qtabdialog.h> 
+#include <qdatastream.h>
+#include <qfile.h>
+#include <qtabdialog.h>
 #include <qfiledialog.h>
 #include <qpushbutton.h>
 #include <qradiobutton.h>
@@ -38,7 +38,6 @@
 #include <qtimer.h>
 #include <qbitmap.h>
 #include <qslider.h>
-#include <qgroupbox.h>
 #include <qcombobox.h>
 #include <qscrollbar.h>
 #include <qspinbox.h>
@@ -109,7 +108,7 @@ class KMidi : public QWidget {
 public:
 
 	~KMidi();
-	
+
 
 	QPushButton	*playPB;
 	QPushButton	*stopPB;
@@ -149,13 +148,13 @@ public:
 	QSize		regularsize;
 	QSize		extendedsize;
 	QSize		topbarssize;
-    
+
 	QPixmap folder_pixmap;
 	QPixmap file_pixmap;
 	QPixmap cdup_pixmap;
 
 	QTimer*  readtimer;
-	
+
 
 	QLabel	*statusLA;
 	QLabel	*volLA;
@@ -269,7 +268,7 @@ public:
 	void		postError(const QString& s);
 	void		set_current_dir(const QString &dir);
 
-signals:	
+signals:
 	void		play();
 
 public slots:
@@ -320,4 +319,4 @@ public slots:
 
 extern KMidi *kmidi;
 
-#endif 
+#endif

@@ -3,8 +3,8 @@
  *
  * $Id$
  *            Copyright (C) 1997  Bernd Wuebben
- *                 wuebben@math.cornel.edu 
- * 
+ *                 wuebben@math.cornel.edu
+ *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Library General Public
  * License as published by the Free Software Foundation; either
@@ -23,11 +23,11 @@
 #ifndef _LOG_WIDGET_
 #define _LOG_WIDGET_
 
-#include<stdlib.h>
+#include <stdlib.h>
 
-#include<qstring.h>
+#include <qstring.h>
 //#include<qpixmap.h>
-#include<qmultilinedit.h>
+#include <qmultilineedit.h>
 #include <qtimer.h>
 #include <qstrlist.h>
 
