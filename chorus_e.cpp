@@ -288,7 +288,7 @@ static void Destruct( chorus_effect* pThis  )
 Effect* ChorusCtor() 
 {
 	chorus_effect* pReturn = 0 ;
-	pReturn = malloc( sizeof( chorus_effect ) ) ;
+	pReturn = (chorus_effect *) malloc( sizeof( chorus_effect ) ) ;
 	memset( pReturn , 0 , sizeof( chorus_effect ) ) ;
 	
 	pReturn->m_pfnActionMono =  &ActionMono ;
