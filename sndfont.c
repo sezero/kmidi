@@ -102,7 +102,7 @@ static void append_layer(Layer *dst, Layer *src, SFInfo *sf);
 static void make_inst(SFInsts *rec, Layer *lay, SFInfo *sf, int pr_idx, int in_idx, int inum, int range);
 static int32 calc_root_pitch(Layer *lay, SFInfo *sf, SampleList *sp);
 #ifndef SF_SUPPRESS_ENVELOPE
-static void convert_volume_envelope(Layer *lay, SFInfo *sf, SampleList *sp);
+static void convert_volume_envelope(Layer *lay, SFInfo *sf, SampleList *sp, int banknum, int preset);
 #endif
 static int32 to_offset(int offset);
 #ifdef tplussbkuse
@@ -112,7 +112,7 @@ static int32 calc_rate(int diff, int time);
 #endif
 static int32 to_msec(Layer *lay, SFInfo *sf, int index);
 static FLOAT_T calc_volume(Layer *lay, SFInfo *sf);
-static int32 calc_sustain(Layer *lay, SFInfo *sf);
+static int32 calc_sustain(Layer *lay, SFInfo *sf, int banknum, int preset);
 #ifndef SF_SUPPRESS_TREMOLO
 static void convert_tremolo(Layer *lay, SFInfo *sf, SampleList *sp);
 #endif
@@ -352,7 +352,7 @@ InstrumentLayer *load_sbk_patch(char *name, int gm_num, int bank, int percussion
 	if (ip && (ip->samples || ip->rsamples)) {
 		ip->already_loaded = 0;
 		sfrec.fname = ip->fname;
-    		ctl->cmsg(CMSG_INFO, VERB_NOISY, "Loading %s%s %s[%d,%d] from %s (vol %d to %d).",
+    		ctl->cmsg(CMSG_INFO, VERB_NOISY, "Loading %s%s %s[%d,%d] from %s (vel %d to %d).",
 #ifdef DO_LINKED_WAVES
 			(ip->rsamples)? "stereo " : "",
 #else
@@ -360,7 +360,8 @@ InstrumentLayer *load_sbk_patch(char *name, int gm_num, int bank, int percussion
 #endif
 			(percussion)? "drum":"instrument", name,
 			(percussion)? keynote : preset, (percussion)? preset : bank, sfrec.fname,
-				LO_VAL(ip->velrange), HI_VAL(ip->velrange));
+				LO_VAL(ip->velrange),
+				HI_VAL(ip->velrange)? HI_VAL(ip->velrange) : 127 );
 		sfrec.fd = ip->fd;
 		inst = load_from_file(&sfrec, ip, amp, brightness, harmoniccontent);
 	}
@@ -814,8 +815,10 @@ static void make_inst(SFInsts *rec, Layer *lay, SFInfo *sf, int pr_idx, int in_i
 #ifdef DO_LINKED_WAVES
 	int linked_wave;
 #endif
-	int sampleFlags, put_me_at_left;
-
+	int sampleFlags, put_me_at_left, keyrange;
+	static int lastinum = -1;
+	static int lastkeyrange = -1;
+	static int lastpreset = -1;
 
 	if (range) velrange = range;
 	else if (lay->set[SF_velRange]) velrange = lay->val[SF_velRange];
@@ -895,9 +898,35 @@ else printf("NO CFG NAME!\n");
 	}
 	/* don't append sample when instrument completely specified */
 	if (ip && ip->already_loaded) return;
+
+/* This doesn't work for Industry Standard G. Piano, which is mono but
+   pans to the right for higher notes.
 	if (!lay->set[SF_panEffectsSend] || lay->val[SF_panEffectsSend] <= 0)
 		put_me_at_left = 1;
 	else	put_me_at_left = 0;
+*/
+
+	if (lay->set[SF_keyRange]) keyrange = lay->val[SF_keyRange];
+	else keyrange = 0;
+
+	if (lastpreset != preset) {
+		lastpreset = preset;
+		lastinum = -1;
+		lastkeyrange = -1;
+	}
+	else if (lastinum != inum) {
+		lastinum = inum;
+		lastkeyrange = -1;
+	}
+	else if (lastkeyrange != keyrange) {
+		lastkeyrange = keyrange;
+		/* melodic preset with 2 instruments: put 2nd one at right */
+		if (banknum < 128 && inum == 1) put_me_at_left = 0;
+		else put_me_at_left = 1;
+	}
+	else if (keyrange) put_me_at_left = 0;
+	else put_me_at_left = 1;
+
 
 	if (ip == NULL) {
 		put_me_at_left = 1;
@@ -1084,7 +1113,7 @@ fprintf(stderr, "preset %d, root_freq %ld\n", preset, sp->v.root_freq);
 #endif
 	}
 #ifndef SF_SUPPRESS_ENVELOPE
-	convert_volume_envelope(lay, sf, sp);
+	convert_volume_envelope(lay, sf, sp, banknum, preset);
 #endif
 	if (strip_tail == 1) sp->v.data_length = sp->v.loop_end + 1;
 
@@ -1230,6 +1259,7 @@ static int32 calc_root_pitch(Layer *lay, SFInfo *sf, SampleList *sp)
 #endif
 	}
 	/* it's too high.. */
+
 	if (lay->set[SF_keyRange] &&
 	    root >= HI_VAL(lay->val[SF_keyRange]) + 60)
 		root -= 60;
@@ -1274,9 +1304,9 @@ static int32 calc_root_pitch(Layer *lay, SFInfo *sf, SampleList *sp)
  *----------------------------------------------------------------*/
 
 #ifndef SF_SUPPRESS_ENVELOPE
-static void convert_volume_envelope(Layer *lay, SFInfo *sf, SampleList *sp)
+static void convert_volume_envelope(Layer *lay, SFInfo *sf, SampleList *sp, int banknum, int preset)
 {
-	int32 sustain = calc_sustain(lay, sf);
+	int32 sustain = calc_sustain(lay, sf, banknum, preset);
 	int32 delay = to_msec(lay, sf, SF_delayEnv2);
 	int32 attack = to_msec(lay, sf, SF_attackEnv2);
 	int32 hold = to_msec(lay, sf, SF_holdEnv2);
@@ -1392,7 +1422,6 @@ static int32 calc_rate(int diff, int time)
 #define TO_LINEAR(centibel) pow(10.0, -(double)(centibel)/200.0)
 #endif
 /* #define TO_VOLUME(centibel) (uint8)(255 * (1.0 - (centibel) / (1200.0 * log10(2.0)))); */
-#define TO_VOLUME(level)  (uint8)(255.0 - (level) * (255.0/1000.0))
 
 /* convert the value to milisecs */
 static int32 to_msec(Layer *lay, SFInfo *sf, int index)
@@ -1432,7 +1461,7 @@ static FLOAT_T calc_volume(Layer *lay, SFInfo *sf)
 }
 
 /* convert sustain volume to linear volume */
-static int32 calc_sustain(Layer *lay, SFInfo *sf)
+static int32 calc_sustain(Layer *lay, SFInfo *sf, int banknum, int preset)
 {
 #ifdef tplussbkuse
 /*
@@ -1441,12 +1470,17 @@ static int32 calc_sustain(Layer *lay, SFInfo *sf)
  * parm: 0x7f - sustain_level(dB) * 0.75
  */
     double level;
-    if(!lay->set[SF_sustainEnv2])
+    if(!lay->set[SF_sustainEnv2]) {
 	return 255;
-    level = (double)lay->val[SF_sustainEnv2];
+/*
+	if (banknum < 128) level = 0;
+	else level = 1000;
+*/
+    }
+    else level = (double)lay->val[SF_sustainEnv2];
     if(level >= 1000)
 	return 1;
-    return TO_VOLUME(level);
+    return (uint8)(255.0 - (level) * (255.0/1000.0));
 #else
 	int32 level;
 	if (!lay->set[SF_sustainEnv2])
