@@ -31,10 +31,6 @@ ln -sf ../linux_a.cpp linux_a.c
 ln -sf ../linux_a2.cpp linux_a2.c
 ln -sf ../mix.cpp mix.c
 ln -sf ../mix.h mix.h
-ln -sf ../motif.h motif.h
-ln -sf ../motif_c.cpp motif_c.c
-ln -sf ../motif_i.cpp motif_i.c
-ln -sf ../motif_p.cpp motif_p.c
 ln -sf ../nas_a.cpp nas_a.c
 ln -sf ../ncurs_c.cpp ncurs_c.c
 ln -sf ../output.cpp output.c

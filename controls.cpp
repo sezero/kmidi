@@ -69,7 +69,7 @@ int check_for_rc(void) {
 # endif
 #endif
 
-#ifdef MOTIF
+#ifdef IA_MOTIF
   extern ControlMode motif_control_mode;
 # ifndef DEFAULT_CONTROL_MODE
 #  define DEFAULT_CONTROL_MODE &motif_control_mode
@@ -117,7 +117,7 @@ ControlMode *ctl_list[]={
 #ifdef IA_SLANG
   &slang_control_mode,
 #endif
-#ifdef MOTIF
+#ifdef IA_MOTIF
   &motif_control_mode,
 #endif
 #ifdef IA_XAW

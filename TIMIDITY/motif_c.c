@@ -27,7 +27,7 @@
 
     */
 
-#ifdef MOTIF
+#ifdef IA_MOTIF
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -98,9 +98,9 @@ static int cmsg(int type, int verbosity_level, const char *fmt, ...)
     else if (ctl.trace_playing)
 	{
 	    vsprintf(local, fmt, ap);
-	    pipe_int_write(CMSG_MESSAGE);
-	    pipe_int_write(type);
-	    pipe_string_write(local);
+	    motif_pipe_int_write(CMSG_MESSAGE);
+	    motif_pipe_int_write(type);
+	    motif_pipe_string_write(local);
 	}
     va_end(ap);
     return 0;
@@ -109,7 +109,7 @@ static int cmsg(int type, int verbosity_level, const char *fmt, ...)
 
 static void _ctl_refresh(void)
 {
-    /* pipe_int_write(REFRESH_MESSAGE); */
+    /* motif_pipe_int_write(REFRESH_MESSAGE); */
 }
 
 static void ctl_refresh(void)
@@ -122,20 +122,20 @@ static void ctl_total_time(uint32 tt)
 {
   int centisecs=(int)tt/(play_mode->rate/100);
 
-  pipe_int_write(TOTALTIME_MESSAGE);
-  pipe_int_write(centisecs);
+  motif_pipe_int_write(TOTALTIME_MESSAGE);
+  motif_pipe_int_write(centisecs);
 }
 
 static void ctl_master_volume(int mv)
 {
-    pipe_int_write(MASTERVOL_MESSAGE);
-    pipe_int_write(mv);
+    motif_pipe_int_write(MASTERVOL_MESSAGE);
+    motif_pipe_int_write(mv);
 }
 
 static void ctl_file_name(char *name)
 {
-    pipe_int_write(FILENAME_MESSAGE);
-    pipe_string_write(name);
+    motif_pipe_int_write(FILENAME_MESSAGE);
+    motif_pipe_string_write(name);
 }
 
 static void ctl_current_time(uint32 ct)
@@ -151,9 +151,9 @@ static void ctl_current_time(uint32 ct)
     while (i--)
 	if (voice[i].status!=VOICE_FREE) v++;
     
-    pipe_int_write(CURTIME_MESSAGE);
-    pipe_int_write(centisecs);
-    pipe_int_write(v);
+    motif_pipe_int_write(CURTIME_MESSAGE);
+    motif_pipe_int_write(centisecs);
+    motif_pipe_int_write(v);
 }
 
 static void ctl_note(int v)
@@ -284,7 +284,7 @@ static int ctl_open(int using_stdin, int using_stdout)
   ctl.trace_playing=1;	/* Default mode with Motif interface */
   
   /* The child process won't come back from this call  */
-  pipe_open();
+  motif_pipe_open();
 
   return 0;
 }
@@ -294,7 +294,7 @@ static void ctl_close(void)
 {
   if (ctl.opened)
     {
-	pipe_int_write(CLOSE_MESSAGE);
+	motif_pipe_int_write(CLOSE_MESSAGE);
 	ctl.opened=0;
     }
 }
@@ -309,7 +309,7 @@ static int ctl_blocking_read(int32 *valp)
   int new_volume;
   int new_centiseconds;
 
-  pipe_int_read(&command);
+  motif_pipe_int_read(&command);
   
   while (1)    /* Loop after pause sleeping to treat other buttons! */
       {
@@ -317,12 +317,12 @@ static int ctl_blocking_read(int32 *valp)
 	  switch(command)
 	      {
 	      case MOTIF_CHANGE_VOLUME:
-		  pipe_int_read(&new_volume);
+		  motif_pipe_int_read(&new_volume);
 		  *valp= new_volume - amplification ;
 		  return RC_CHANGE_VOLUME;
 		  
 	      case MOTIF_CHANGE_LOCATOR:
-		  pipe_int_read(&new_centiseconds);
+		  motif_pipe_int_read(&new_centiseconds);
 		  *valp= new_centiseconds*(play_mode->rate / 100) ;
 		  return RC_JUMP;
 		  
@@ -353,7 +353,7 @@ static int ctl_blocking_read(int32 *valp)
 	  
 	  if (command==MOTIF_PAUSE)
 	      {
-		  pipe_int_read(&command); /* Blocking reading => Sleep ! */
+		  motif_pipe_int_read(&command); /* Blocking reading => Sleep ! */
 		  if (command==MOTIF_PAUSE)
 		      return RC_NONE; /* Resume where we stopped */
 	      }
@@ -374,7 +374,7 @@ static int ctl_read(int32 *valp)
   int num;
 
   /* We don't wan't to lock on reading  */
-  num=pipe_read_ready(); 
+  num=motif_pipe_read_ready(); 
 
   if (num==0)
       return RC_NONE;
@@ -390,13 +390,13 @@ static void ctl_pass_playing_list(int number_of_files, const char *list_of_files
     int32 val;
 
     /* Pass the list to the interface */
-    pipe_int_write(FILE_LIST_MESSAGE);
-    pipe_int_write(number_of_files);
+    motif_pipe_int_write(FILE_LIST_MESSAGE);
+    motif_pipe_int_write(number_of_files);
     for (i=0;i<number_of_files;i++)
-	pipe_string_write(list_of_files[i]);
+	motif_pipe_string_write(list_of_files[i]);
     
     /* Ask the interface for a filename to play -> begin to play automatically */
-    pipe_int_write(NEXT_FILE_MESSAGE);
+    motif_pipe_int_write(NEXT_FILE_MESSAGE);
     
     command = ctl_blocking_read(&val);
 
@@ -406,7 +406,7 @@ static void ctl_pass_playing_list(int number_of_files, const char *list_of_files
 	    if (command==RC_LOAD_FILE)
 		{
 		    /* Read a LoadFile command */
-		    pipe_string_read(file_to_play);
+		    motif_pipe_string_read(file_to_play);
 		    command=play_midi_file(file_to_play);
 		}
 	    else
@@ -420,13 +420,21 @@ static void ctl_pass_playing_list(int number_of_files, const char *list_of_files
 		    switch(command)
 			{
 			case RC_NEXT:
-			    pipe_int_write(NEXT_FILE_MESSAGE);
+			    motif_pipe_int_write(NEXT_FILE_MESSAGE);
 			    break;
 			case RC_REALLY_PREVIOUS:
-			    pipe_int_write(PREV_FILE_MESSAGE);
+			    motif_pipe_int_write(PREV_FILE_MESSAGE);
 			    break;
 			case RC_TUNE_END:
-			    pipe_int_write(TUNE_END_MESSAGE);
+			    motif_pipe_int_write(TUNE_END_MESSAGE);
+			    break;
+			case RC_RESTART:
+      			case RC_CHANGE_VOLUME:
+			case RC_JUMP:
+			case RC_FORWARD:
+			case RC_BACK:
+			case RC_NONE:
+			case RC_STOP:
 			    break;
 			default:
 			    printf("PANIC !!! OTHER COMMAND ERROR ?!?! %i\n",command);
@@ -437,4 +445,4 @@ static void ctl_pass_playing_list(int number_of_files, const char *list_of_files
 	}
 }
 
-#endif /* MOTIF */
+#endif /* IA_MOTIF */

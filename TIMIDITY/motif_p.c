@@ -22,7 +22,7 @@
     pipe communication between motif interface and sound generator
 
     */
-#ifdef MOTIF
+#ifdef IA_MOTIF
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -37,21 +37,21 @@
 #include "controls.h"
 #include "motif.h"
 
-int pipeAppli[2],pipeMotif[2]; /* Pipe for communication with MOTIF process   */
-int fpip_in, fpip_out;	/* in and out depends in which process we are */
-int pid;	               /* Pid for child process */
+static int pipeAppli[2],pipeMotif[2]; /* Pipe for communication with MOTIF process   */
+static int fpip_in, fpip_out;	/* in and out depends in which process we are */
+static int pid;	               /* Pid for child process */
 
 /* DATA VALIDITY CHECK */
 #define INT_CODE 214
 #define STRING_CODE 216
 
-#define DEBUGPIPE
+/* #define DEBUGPIPE */
 
 /***********************************************************************/
 /* PIPE COMUNICATION                                                   */
 /***********************************************************************/
 
-void motif_pipe_error(char *st)
+static void motif_pipe_error(char *st)
 {
     fprintf(stderr,"CONNECTION PROBLEM WITH MOTIF PROCESS IN %s BECAUSE:%s\n",
 	    st,
@@ -212,4 +212,4 @@ void motif_pipe_open()
     fpip_out= pipeMotif[1];
 }
 
-#endif /* MOTIF */
+#endif /* IA_MOTIF */

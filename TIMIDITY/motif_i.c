@@ -45,7 +45,7 @@
 
    */
 
-#ifdef MOTIF
+#ifdef IA_MOTIF
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -59,7 +59,7 @@
 #endif
 */
 
-#include <IntrinsicP.h>
+#include <X11/IntrinsicP.h>
 #include <Xm/Xm.h>
 #include <Xm/Form.h>
 #include <Xm/Text.h>
@@ -1178,4 +1178,4 @@ void Launch_Motif_Process(int motif_pipe_number)
     XtRealizeWidget(toplevel);
     XtAppMainLoop(context);
 }
-#endif /* MOTIF */
+#endif /* IA_MOTIF */
