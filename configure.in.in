@@ -414,12 +414,18 @@ dnl
 
 interface_targets='ncurses slang motif tcltk xaw gtk'
 
-enable_ncurses=yes
-enable_slang=yes
-enable_motif=yes
-enable_tcltk=yes
+dnl enable_ncurses=yes
+dnl enable_slang=yes
+dnl enable_motif=yes
+dnl enable_tcltk=yes
+dnl enable_xaw=yes
+dnl enable_gtk=yes
+enable_ncurses=no
+enable_slang=no
+enable_motif=no
+enable_tcltk=no
 enable_xaw=yes
-enable_gtk=yes
+enable_gtk=no
 
 AC_ARG_ENABLE(interface,
   [  --enable-interface=[interface_list]  Comma separated KMidi/timidity interface list ],
