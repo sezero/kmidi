@@ -236,6 +236,7 @@ extern int dont_filter_drums;
 extern int command_cutoff_allowed;
 extern int dont_chorus;
 extern int dont_reverb;
+extern int current_interpolation;
 
 extern int GM_System_On;
 extern int XG_System_On;

@@ -99,6 +99,7 @@ int dont_filter_melodic=1;
 int dont_filter_drums=1;
 int dont_chorus=0;
 int dont_reverb=0;
+int current_interpolation=1;
 static int voice_reserve=0;
 
 #ifndef ADAGIO
@@ -1458,7 +1459,8 @@ debug_count--;
   /* else voice_reserve = 0; */
   else voice_reserve = voices / 10; /* to be able to find a stereo clone */
 
-  if (obf < 10) dont_cspline = 1;
+  if (!current_interpolation) dont_cspline = 1;
+  else if (obf < 10) dont_cspline = 1;
   else if (obf > 40) dont_cspline = 0;
 
   if (obf < 5) dont_reverb = 1;

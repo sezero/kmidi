@@ -282,6 +282,14 @@ void KMidi::dropEvent( QDropEvent * e )
 KMidi::~KMidi(){
 }
 
+#define STATUS_LED 0
+#define LOADING_LED 1
+#define LYRICS_LED 2
+#define BUFFER_LED 3
+#define CSPLINE_LED 4
+#define REVERB_LED 5
+#define CHORUS_LED 6
+
 void KMidi::setToolTips()
 {
     if(tooltips){
@@ -312,6 +320,17 @@ void KMidi::setToolTips()
 	QToolTip::add( effectbutton,	i18n("Effects") );
 	QToolTip::add( voicespin,	i18n("Set Polyphony") );
 	QToolTip::add( filterbutton,	i18n("Filter") );
+	QToolTip::add( led[STATUS_LED],		i18n("status") );
+	QToolTip::add( led[LOADING_LED],	i18n("loading") );
+	QToolTip::add( led[LYRICS_LED],		i18n("lyrics") );
+	QToolTip::add( led[BUFFER_LED],		i18n("buffer") );
+	QToolTip::add( led[CSPLINE_LED],	i18n("cspline") );
+	QToolTip::add( led[REVERB_LED],		i18n("reverb") );
+	QToolTip::add( led[CHORUS_LED],		i18n("chorus") );
+	QToolTip::add( ich[0],		i18n("linear interpolation") );
+	QToolTip::add( ich[1],		i18n("cspline") );
+	QToolTip::add( ich[2],		i18n("lagrange") );
+	QToolTip::add( ich[3],		i18n("cspline + filter") );
     }
     else{
 	QToolTip::remove( aboutPB);
@@ -341,6 +360,17 @@ void KMidi::setToolTips()
 	QToolTip::remove( effectbutton );
 	QToolTip::remove( voicespin );
 	QToolTip::remove( filterbutton );
+	QToolTip::remove( led[STATUS_LED] );
+	QToolTip::remove( led[LOADING_LED] );
+	QToolTip::remove( led[LYRICS_LED] );
+	QToolTip::remove( led[BUFFER_LED] );
+	QToolTip::remove( led[CSPLINE_LED] );
+	QToolTip::remove( led[REVERB_LED] );
+	QToolTip::remove( led[CHORUS_LED] );
+	QToolTip::remove( ich[0] );
+	QToolTip::remove( ich[1] );
+	QToolTip::remove( ich[2] );
+	QToolTip::remove( ich[3] );
     }
 
 }
@@ -482,7 +512,7 @@ QPushButton *KMidi::makeButton( int x, int y, int w, int h, const QString &n )
     pb->setGeometry( x, y, w, h );
     return pb;
 }
-	
+
 void KMidi::drawPanel()
 {
     int ix = 0;
@@ -666,13 +696,24 @@ void KMidi::drawPanel()
     ix = WIDTH + WIDTH/2;
     iy += HEIGHT;
 
-    for (int i = 0; i < 17; i++) {
+    for (int i = 0; i < 17; i++) if (i < 7 || i > 10) {
         led[i] = new KLed(led_color, this);
         led[i]->setLook(KLed::sunken);
         led[i]->setShape(KLed::Rectangular);
         led[i]->setGeometry(WIDTH/8 + i * WIDTH/4,3*HEIGHT+HEIGHT/6, WIDTH/6, HEIGHT/5);
 	led[i]->setColor(Qt::black);
     }
+
+    ichecks = new QButtonGroup( );
+    ichecks->setExclusive(TRUE);
+    //ichecks->setGeometry(WIDTH/8 + 7 * WIDTH/4,3*HEIGHT, WIDTH, HEIGHT);
+    for (int i = 0; i < 4; i++) {
+        ich[i] = new QCheckBox( this );
+	ichecks->insert(ich[i],i);
+        ich[i]->setGeometry(WIDTH/8 + (i+7) * WIDTH/4,3*HEIGHT, WIDTH/6, HEIGHT/2);
+    }
+    ich[1]->setChecked( TRUE );
+    connect( ichecks, SIGNAL(clicked(int)), SLOT(updateIChecks(int)) );
 
     regularheight = iy;
 
@@ -727,12 +768,27 @@ void KMidi::drawPanel()
 
     iy = regularheight;
     ix = WIDTH + SBARWIDTH;
-    rchecks = new QHButtonGroup( this );
-    rchecks->setGeometry(ix, iy, WIDTH, HEIGHT);
-    rcb1 = new QCheckBox(rchecks);
-    rcb2 = new QCheckBox(rchecks);
-    rcb3 = new QCheckBox(rchecks);
-    rcb4 = new QCheckBox(rchecks);
+    //rchecks = new QHButtonGroup( this );
+    //rchecks->setGeometry(ix, iy, WIDTH, HEIGHT);
+    rchecks = new QButtonGroup( );
+    rchecks->setExclusive(FALSE);
+    //rcb1 = new QCheckBox(rchecks);
+    //rcb2 = new QCheckBox(rchecks);
+    //rcb3 = new QCheckBox(rchecks);
+    //rcb4 = new QCheckBox(rchecks);
+    rcb1 = new QCheckBox(this);
+    rcb2 = new QCheckBox(this);
+    rcb3 = new QCheckBox(this);
+    rcb4 = new QCheckBox(this);
+    rcb1->setGeometry(ix+WIDTH/16, iy+HEIGHT/4, WIDTH/6, HEIGHT/2);
+    rcb2->setGeometry(ix+WIDTH/16 + WIDTH/4, iy+HEIGHT/4, WIDTH/6, HEIGHT/2);
+    rcb3->setGeometry(ix+WIDTH/16 + WIDTH/2, iy+HEIGHT/4, WIDTH/6, HEIGHT/2);
+    rcb4->setGeometry(ix+WIDTH/16 + 3*WIDTH/4, iy+HEIGHT/4, WIDTH/6, HEIGHT/2);
+    rchecks->insert(rcb1,0);
+    rchecks->insert(rcb2,1);
+    rchecks->insert(rcb3,2);
+    rchecks->insert(rcb4,3);
+
     rcb1->setTristate(TRUE);
     rcb2->setTristate(TRUE);
     rcb3->setTristate(TRUE);
@@ -742,7 +798,10 @@ void KMidi::drawPanel()
     rcb3->setNoChange();
     rcb4->setNoChange();
     connect( rchecks, SIGNAL(clicked(int)), SLOT(updateRChecks(int)) );
-    rchecks->hide();
+    rcb1->hide();
+    rcb2->hide();
+    rcb3->hide();
+    rcb4->hide();
 
     iy += HEIGHT;
     effectbutton = makeButton( ix,          iy, WIDTH/2, HEIGHT, "eff" );
@@ -780,10 +839,17 @@ void KMidi::plActivated( int index )
 {
     current_playlist_num = index;
     loadplaylist(index);
-    if (status != KPLAYING) setSong(0);
+    if (status != KPLAYING) resetSong();
     else flag_new_playlist = true;
 }
  
+void KMidi::updateIChecks( int which )
+{
+    interpolationrequest = which;
+    pipe_int_write(MOTIF_INTERPOLATION);
+    pipe_int_write(which);
+}
+
 void KMidi::updateRChecks( int which )
 {
     int check_states = 0;
@@ -838,8 +904,26 @@ void KMidi::setPatch( int index )
     pipe_int_write( index );
 }
 
+void KMidi::resetSong()
+{
+    flag_new_playlist = false;
+    song_number = 1;
+    if (!playlist->count()) {
+	redoplaybox();
+	return;
+    }
+    playbox->setCurrentItem(0);
+
+    fileName = playbox->text(0);
+    if(output_device_open)
+      updateUI();
+    setLEDs("OO:OO");
+    statusLA->setText(i18n("Ready"));
+}
+
 void KMidi::setSong( int number )
 {
+    flag_new_playlist = false;
     if (!playlist->count() || number > (int)playlist->count()) {
 	redoplaybox();
 	return;
@@ -934,7 +1018,10 @@ void KMidi::logoClicked(){
 	patchbox->hide();
 	playbox->hide();
 	playlistbox->hide();
-	rchecks->hide();
+        rcb1->hide();
+        rcb2->hide();
+        rcb3->hide();
+        rcb4->hide();
 	effectbutton->hide();
 	voicespin->hide();
 	meterspin->hide();
@@ -950,7 +1037,10 @@ void KMidi::logoClicked(){
     patchbox->show();
     playbox->show();
     playlistbox->show();
-    rchecks->show();
+    rcb1->show();
+    rcb2->show();
+    rcb3->show();
+    rcb4->show();
     effectbutton->show();
     voicespin->show();
     meterspin->show();
@@ -1132,8 +1222,7 @@ void KMidi::playClicked()
 void KMidi::stopClicked()
 {
      looping = false;
-     if (flag_new_playlist) setSong(0);
-     flag_new_playlist = false;
+     if (flag_new_playlist) resetSong(); 
      replayPB->setOn( FALSE );
      randomplay = false;
      shufflebutton->setOn( FALSE );
@@ -1425,6 +1514,10 @@ void KMidi::PlayCommandlineMods(){
   if (showinforequest) infoslot();
   if (lpfilterrequest) filterbutton->setOn(TRUE);
   if (effectsrequest) effectbutton->setOn(TRUE);
+  if (interpolationrequest != 1) {
+	ich[interpolationrequest]->setChecked( TRUE );
+	updateIChecks(interpolationrequest);
+  }
 
 }
 
@@ -1491,9 +1584,10 @@ void KMidi::loadplaylist( int which ) {
 
 }
 
+#define LYRBUFL 20
 static int lyric_head = 0, lyric_tail = 0;
-static char lyric_buffer[20][2024];
-static int lyric_time[20];
+static char lyric_buffer[LYRBUFL][2024];
+static int lyric_time[LYRBUFL];
 
 void KMidi::ReadPipe(){
 
@@ -1512,9 +1606,9 @@ void KMidi::ReadPipe(){
 	    if (!last_loading_blink) last_loading_blink++;
 	    if (last_loading_blink > 50) {
 	        last_loading_blink = -25;
-	        led[10]->setColor(Qt::black);
+	        led[LOADING_LED]->setColor(Qt::black);
 	    }
-	    else if (last_loading_blink > 0) led[10]->setColor(Qt::yellow);
+	    else if (last_loading_blink > 0) led[LOADING_LED]->setColor(Qt::yellow);
 	}
     }
 
@@ -1559,8 +1653,9 @@ void KMidi::ReadPipe(){
 		/*		printf("GUI: TOTALTIME %s\n",local_string);*/
 		max_sec=cseconds;
 		nbvoice = currplaytime = 0;
-		for (int l=0; l<20; l++) lyric_time[l] = -1;
+		for (int l=0; l<LYRBUFL; l++) lyric_time[l] = -1;
 		lyric_head = 0; lyric_tail = 0;
+                led[LYRICS_LED]->setColor(Qt::black);
 	    }
 	    break;
 	
@@ -1666,8 +1761,9 @@ void KMidi::ReadPipe(){
 			    return;
 			    */
 		nbvoice = currplaytime = 0;
-		for (int l=0; l<20; l++) lyric_time[l] = -1;
+		for (int l=0; l<LYRBUFL; l++) lyric_time[l] = -1;
 		lyric_head = 0; lyric_tail = 0;
+                led[LYRICS_LED]->setColor(Qt::black);
 
 		if(starting_up){
 		    starting_up = false;
@@ -1842,7 +1938,8 @@ void KMidi::ReadPipe(){
 			strcpy(lyric_buffer[lyric_head], strmessage);
 			lyric_time[lyric_head] = message_time;
 			lyric_head++;
-			if (lyric_head == 20) lyric_head = 0;
+			if (lyric_head == LYRBUFL) lyric_head = 0;
+			else led[LYRICS_LED]->setColor( QColor(205, 133, 63) ); //peru
 			break;
 		}
 
@@ -1894,11 +1991,11 @@ void KMidi::ReadPipe(){
 
 		last_sec=sec;
 
-		while (lyric_head != lyric_tail && lyric_time[lyric_tail] >= currplaytime) {
+		while (lyric_head != lyric_tail && lyric_time[lyric_tail] >= currplaytime+meterfudge) {
 			logwindow->insertStr(QString(lyric_buffer[lyric_tail]));
 			lyric_time[lyric_tail] = -1;
 			lyric_tail++;
-			if (lyric_tail == 20) lyric_tail = 0;
+			if (lyric_tail == LYRBUFL) lyric_tail = 0;
 		}
     }
 
@@ -1920,16 +2017,16 @@ void KMidi::ReadPipe(){
 	else if (looping) c = Qt::blue;
 	else if (randomplay) c = Qt::magenta;
 	last_status = status;
-	led[0]->setColor(c);
+	led[STATUS_LED]->setColor(c);
     }
 
     if (last_loading_blink && currplaytime) {
-	led[10]->setColor(Qt::black);
+	led[LOADING_LED]->setColor(Qt::black);
 	last_loading_blink = 0;
     }
 
     if (Panel->buffer_state < last_buffer_state - 5 || Panel->buffer_state > last_buffer_state + 5) {
-        led[1]->setColor( QColor(250 - 2*Panel->buffer_state, 150, 50 ) );
+        led[BUFFER_LED]->setColor( QColor(250 - 2*Panel->buffer_state, 150, 50 ) );
 	last_buffer_state = Panel->buffer_state;
     }
     rcheck_flags = reverb_state << 4 + chorus_state;
@@ -1937,38 +2034,38 @@ void KMidi::ReadPipe(){
     if (Panel->various_flags != last_various_flags || rcheck_flags != last_rcheck_flags) {
 	last_various_flags = Panel->various_flags;
 	//cspline interpolation
-	if (last_various_flags & 1) led[2]->setColor(Qt::black);
-        else led[2]->setColor(Qt::darkCyan);
+	if (last_various_flags & 1) led[CSPLINE_LED]->setColor(Qt::black);
+        else led[CSPLINE_LED]->setColor(Qt::darkCyan);
 	//reverberation
-	if (last_various_flags & 2) led[3]->setColor(Qt::black);
+	if (last_various_flags & 2) led[REVERB_LED]->setColor(Qt::black);
         else {
-	    if (reverb_state & 2) led[3]->setColor(Qt::blue);
-	    else if (reverb_state & 1) led[3]->setColor(Qt::darkBlue);
-            else led[3]->setColor(Qt::black);
+	    if (reverb_state & 2) led[REVERB_LED]->setColor(Qt::blue);
+	    else if (reverb_state & 1) led[REVERB_LED]->setColor(Qt::darkBlue);
+            else led[REVERB_LED]->setColor(Qt::black);
 	}
 	//chorus
-	if (last_various_flags & 4) led[4]->setColor(Qt::black);
+	if (last_various_flags & 4) led[CHORUS_LED]->setColor(Qt::black);
         else {
-	    if (chorus_state & 2) led[4]->setColor(Qt::yellow);
-	    else if (chorus_state & 1) led[4]->setColor(Qt::darkYellow);
-            else led[4]->setColor(Qt::black);
+	    if (chorus_state & 2) led[CHORUS_LED]->setColor(Qt::yellow);
+	    else if (chorus_state & 1) led[CHORUS_LED]->setColor(Qt::darkYellow);
+            else led[CHORUS_LED]->setColor(Qt::black);
 	}
 	last_rcheck_flags = rcheck_flags;
     }
     if (nbvoice != last_nbvoice) {
 	int quant = current_voices / 6;
-	if (nbvoice && !(last_nbvoice)) led[16]->setColor(Qt::cyan);
-	if (!nbvoice && last_nbvoice) led[16]->setColor(Qt::black);
-	if (nbvoice > quant && !(last_nbvoice > quant)) led[15]->setColor(Qt::cyan);
-	if (nbvoice < quant && !(last_nbvoice < quant)) led[15]->setColor(Qt::black);
-	if (nbvoice > 2*quant && !(last_nbvoice > 2*quant)) led[14]->setColor(Qt::cyan);
-	if (nbvoice < 2*quant && !(last_nbvoice < 2*quant)) led[14]->setColor(Qt::black);
-	if (nbvoice > 3*quant && !(last_nbvoice > 3*quant)) led[13]->setColor(Qt::cyan);
-	if (nbvoice < 3*quant && !(last_nbvoice < 3*quant)) led[13]->setColor(Qt::black);
-	if (nbvoice > 4*quant && !(last_nbvoice > 4*quant)) led[12]->setColor(Qt::cyan);
-	if (nbvoice < 4*quant && !(last_nbvoice < 4*quant)) led[12]->setColor(Qt::black);
-	if (nbvoice > 5*quant && !(last_nbvoice > 5*quant)) led[11]->setColor(Qt::cyan);
-	if (nbvoice < 5*quant && !(last_nbvoice < 5*quant)) led[11]->setColor(Qt::black);
+	if (nbvoice && !(last_nbvoice)) led[11]->setColor(Qt::cyan);
+	if (!nbvoice && last_nbvoice) led[11]->setColor(Qt::black);
+	if (nbvoice > quant && !(last_nbvoice > quant)) led[12]->setColor(Qt::cyan);
+	if (nbvoice < quant && !(last_nbvoice < quant)) led[12]->setColor(Qt::black);
+	if (nbvoice > 2*quant && !(last_nbvoice > 2*quant)) led[13]->setColor(Qt::cyan);
+	if (nbvoice < 2*quant && !(last_nbvoice < 2*quant)) led[13]->setColor(Qt::black);
+	if (nbvoice > 3*quant && !(last_nbvoice > 3*quant)) led[14]->setColor(Qt::cyan);
+	if (nbvoice < 3*quant && !(last_nbvoice < 3*quant)) led[14]->setColor(Qt::black);
+	if (nbvoice > 4*quant && !(last_nbvoice > 4*quant)) led[15]->setColor(Qt::cyan);
+	if (nbvoice < 4*quant && !(last_nbvoice < 4*quant)) led[15]->setColor(Qt::black);
+	if (nbvoice > 5*quant && !(last_nbvoice > 5*quant)) led[16]->setColor(Qt::cyan);
+	if (nbvoice < 5*quant && !(last_nbvoice < 5*quant)) led[16]->setColor(Qt::black);
 	last_nbvoice = nbvoice;
     }
 
@@ -1997,6 +2094,7 @@ void KMidi::readconfig(){
     infowindowheight = config->readNumEntry("InfoWindowHeight", 80);
     lpfilterrequest = config->readBoolEntry("Filter", FALSE);
     effectsrequest = config->readBoolEntry("Effects", TRUE);
+    interpolationrequest = config->readNumEntry("Interpolation", 1);
 
     QColor defaultback = black;
     QColor defaultled = QColor(107,227,88);
@@ -2031,6 +2129,7 @@ void KMidi::writeconfig(){
     config->writeEntry("InfoWindowHeight", logwindow->height());
     config->writeEntry("Filter", filterbutton->isOn());
     config->writeEntry("Effects", effectbutton->isOn());
+    config->writeEntry("Interpolation", interpolationrequest);
     config->sync();
 }
 
@@ -2152,7 +2251,10 @@ void KMidi::resizeEvent(QResizeEvent *e){
 	    patchbox->hide();
 	    playbox->hide();
 	    playlistbox->hide();
-	    rchecks->hide();
+    	    rcb1->hide();
+    	    rcb2->hide();
+    	    rcb3->hide();
+    	    rcb4->hide();
 	    effectbutton->hide();
 	    voicespin->hide();
 	    meterspin->hide();

@@ -32,6 +32,7 @@
 #include <qtabdialog.h> 
 #include <qfiledialog.h>
 #include <qpushbutton.h>
+#include <qradiobutton.h>
 #include <qlabel.h>
 #include <qdialog.h>
 #include <qapplication.h>
@@ -43,7 +44,7 @@
 #include <qcombobox.h>
 #include <qscrollbar.h>
 #include <qspinbox.h>
-#include <qhbuttongroup.h>
+#include <qbuttongroup.h>
 #include <qcheckbox.h>
 #include <qtooltip.h>
 #include <qregexp.h>
@@ -157,7 +158,9 @@ public:
 	QComboBox	*patchbox;
 	QComboBox	*playbox;
 	QComboBox	*playlistbox;
-	QHButtonGroup	*rchecks;
+	QButtonGroup	*ichecks;
+	QCheckBox	*ich[4];
+	QButtonGroup	*rchecks;
 	QCheckBox	*rcb1;
 	QCheckBox	*rcb2;
 	QCheckBox	*rcb3;
@@ -223,6 +226,7 @@ public:
 	bool		lpfilterrequest;
 	bool		effectsrequest;
 	int		infowindowheight;
+	int		interpolationrequest;
 
 	int		stereo_state;
 	int		reverb_state;
@@ -293,9 +297,11 @@ public slots:
 	void		setEffects( bool );
 	void		setFilter( bool );
 	void		setSong( int );
+	void		resetSong();
 	void		voicesChanged( int );
 	void		meterfudgeChanged( int );
 	void		updateRChecks( int );
+	void		updateIChecks( int );
 	void		dropEvent( QDropEvent * );
 	void		plActivated( int );
 	void		acceptPlaylist();

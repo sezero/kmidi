@@ -632,6 +632,13 @@ static int ctl_blocking_read(int32 *valp)
 		  if (!pausing) return RC_NONE;
 		  break;
 
+	      case MOTIF_INTERPOLATION:
+		  pipe_int_read(&arg);
+		  *valp= arg;
+		  current_interpolation = arg;
+		  if (!pausing) return RC_NONE;
+		  break;
+
 	      case MOTIF_CHANGE_VOICES:
 		  pipe_int_read(&arg);
 		  change_in_voices =

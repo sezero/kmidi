@@ -1,3 +1,8 @@
+1999-11-05  Greg Lee  <lee@hawaii.edu>
+
+	* kmidi.cpp: checkboxes select interpolation;
+	  reorganize leds; add lyrics led
+
 1999-11-04  Greg Lee  <lee@hawaii.edu>
 
 	* synchronize lyrics
