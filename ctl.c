@@ -32,6 +32,7 @@
 #include <sys/ioctl.h>
 #include <sys/types.h>
 #include <sys/wait.h>
+#include "../config.h"
 #ifdef HAVE_SYS_SEM_H
 #include <sys/sem.h>
 #endif
@@ -39,8 +40,6 @@
 #include <sys/socket.h>
 #endif
 #include <errno.h>
-
-/* #include "../config.h" */
 
 #ifdef HAVE_SYS_FILIO_H
 #include <sys/filio.h>
