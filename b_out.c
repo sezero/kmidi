@@ -21,8 +21,8 @@
 #include "config.h"
 #include "output.h"
 
-/* #define BB_SIZE AUDIO_BUFFER_SIZE*8 */
-#define BB_SIZE (AUDIO_BUFFER_SIZE*128)
+/* #define BB_SIZE AUDIO_BUFFER_SIZE*128 */
+#define BB_SIZE (AUDIO_BUFFER_SIZE*256)
 static unsigned char *bbuf = 0;
 static int bboffset = 0, bbcount = 0, outchunk = 0;
 static int starting_up = 1, flushing = 0;

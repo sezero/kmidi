@@ -631,7 +631,7 @@ static int ctl_blocking_read(int32 *valp)
 	  else 
 	      {
 		  fprintf(stderr,"UNKNOWN RC_MESSAGE %i\n",command);
-		  /* return RC_NONE; */
+		  return RC_NONE;
 	      }
       }
 }

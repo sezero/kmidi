@@ -883,6 +883,8 @@ static void clone_voice(Instrument *ip, int v, MidiEvent *e, uint8 clone_type, i
 	    }
 	}
   }
+  voice[w].loop_start = voice[w].sample->loop_start;
+  voice[w].loop_end = voice[w].sample->loop_end;
 
   recompute_freq(w);
   recompute_amp(w);
@@ -994,6 +996,8 @@ static void start_note(MidiEvent *e, int i)
 #endif
   voice[i].sample_offset=0;
   voice[i].sample_increment=0; /* make sure it isn't negative */
+  voice[i].loop_start = voice[i].sample->loop_start;
+  voice[i].loop_end = voice[i].sample->loop_end;
   voice[i].current_x0 =
     voice[i].current_x1 =
     voice[i].current_y0 =
@@ -2871,6 +2875,9 @@ int play_midi_file(char *fn)
 #ifdef tplus
   dont_cspline = 0;
 #endif
+  if (command_cutoff_allowed) dont_filter_melodic = 0;
+  else dont_filter_melodic = 1;
+
   got_a_lyric = 0;
   rc=play_midi(event, events, samples);
   if (free_instruments_afterwards)

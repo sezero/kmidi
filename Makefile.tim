@@ -29,8 +29,8 @@ major := $(basename $(basename $(rel)))
 
 ########### Compiler and flags.
 CC = gcc
-DEBUGFLAGS = -Wall -O4 -D__USE_FIXED_PROTOTYPES__
-#DEBUGFLAGS = -Wall -g -D__USE_FIXED_PROTOTYPES__
+#DEBUGFLAGS = -Wall -O4 -D__USE_FIXED_PROTOTYPES__
+DEBUGFLAGS = -Wall -g -D__USE_FIXED_PROTOTYPES__
 
 ########### Install.
 INSTALL = /usr/bin/install

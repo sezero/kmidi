@@ -1,3 +1,7 @@
+1999-10-12  Greg Lee  <lee@hawaii.edu>
+
+	* resample.c: on key-up play tail of patch
+
 1999-10-11  Greg Lee  <lee@hawaii.edu>
 
 	* sndfont.c/resample.c: modulate cutoff filter

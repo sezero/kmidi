@@ -217,11 +217,6 @@ typedef float FLOAT_T;
    computing them on the fly. Uncomment this to use lookups. */
 /* #define LOOKUP_SINE */
 
-/* Shawn McHorse's resampling optimizations. These may not in fact be
-   faster on your particular machine and compiler. You'll have to run
-   a benchmark to find out. */
-#define PRECALC_LOOPS
-
 /* If calling ldexp() is faster than a floating point multiplication
    on your machine/compiler/libm, uncomment this. It doesn't make much
    difference either way, but hey -- it was on the TODO list, so it

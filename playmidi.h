@@ -122,7 +122,7 @@ typedef struct {
   int32 clone_voice;
   uint32
     orig_frequency, frequency,
-    sample_offset;
+    sample_offset, loop_start, loop_end;
   int32
     envelope_volume, modulation_volume;
   int32
