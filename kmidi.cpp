@@ -1377,12 +1377,12 @@ void KMidi::display_playmode(){
 
     properties.sprintf(i18n("%d bit %s %s"),
 		       play_mode->encoding & PE_16BIT ? 16:8,
-		       play_mode->encoding & PE_SIGNED ? i18n("sig"):i18n("usig"),
-		       play_mode->encoding &PE_ULAW ? i18n("uLaw"):i18n("Linear"));
+		       play_mode->encoding & PE_SIGNED ? i18n("sig").ascii():i18n("usig").ascii(),
+		       play_mode->encoding &PE_ULAW ? i18n("uLaw").ascii():i18n("Linear").ascii());
 
     properties2.sprintf(i18n("%d Hz %s"),
 		       play_mode->rate,
-		       play_mode->encoding & PE_MONO ? i18n("Mono"):i18n("Stereo"));
+		       play_mode->encoding & PE_MONO ? i18n("Mono").ascii():i18n("Stereo").ascii());
 
     propertiesLA->setText(properties);
     properties2LA->setText(properties2);

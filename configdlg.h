@@ -3,7 +3,6 @@
  *
  * kscd -- A simple CD player for the KDE project           
  *
- * $Id$
  * 
  * Copyright (C) 1997 Bernd Johannes Wuebben 
  * wuebben@math.cornell.edu

@@ -1,8 +1,6 @@
 /*   
    kmidi - a midi to wav converter
    
-   $Id$
- 
    Copyright 1997 Bernd Johannes Wuebben math.cornell.edu
   
    This program is free software; you can redistribute it and/or modify
