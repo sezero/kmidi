@@ -276,7 +276,9 @@ static void ctl_current_time(int ct)
 
 static void ctl_channel_note(int ch, int note, int vel, int start)
 {
-	int slot = Panel->cindex[ch];
+	int slot;
+	/* ch &= 0x0f; */
+	slot = Panel->cindex[ch];
 	if (start != -1 && start > Panel->ctime[slot][ch]) {
 		int i = slot;
 		while (i < NQUEUE && Panel->ctime[i][ch] != -1) i++;
@@ -320,7 +322,6 @@ static void ctl_note(int v)
 
 	note = voice[v].note;
 	vel = voice[v].velocity;
-	/*vel = 0;*/
 	switch(voice[v].status)
 	{
 	    case VOICE_DIE:
@@ -328,7 +329,7 @@ static void ctl_note(int v)
 	      /*vel = 0;*/
 	      vel /= 2;
 	      start = -1;
-	      //if (Panel->notecount[slot][ch]) Panel->notecount[slot][ch]--;
+	      if (Panel->notecount[slot][ch]) Panel->notecount[slot][ch]--;
 	      break;
 	    case VOICE_FREE: 
 	      vel = 0;
@@ -339,10 +340,10 @@ static void ctl_note(int v)
 	      Panel->notecount[slot][ch]++;
 	      break;
 	    case VOICE_OFF:
+	      vel = 0;
+	      if (Panel->notecount[slot][ch]) Panel->notecount[slot][ch]--;
 	    case VOICE_SUSTAINED:
-	      /*vel = 0;*/
 	      start = -1;
-	      //if (Panel->notecount[slot][ch]) Panel->notecount[slot][ch]--;
 	      break;
 	}
 	ctl_channel_note(ch, note, vel, start);

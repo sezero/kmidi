@@ -211,7 +211,7 @@ static void reset_midi(void)
 {
   int i;
 #ifndef ADAGIO
-  for (i=0; i<16; i++)
+  for (i=0; i<MAXCHAN; i++)
 #else /* ADAGIO */
   for (i=0; i<MAX_VOICES; i++)
 #endif /* ADAGIO */

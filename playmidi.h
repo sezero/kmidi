@@ -192,7 +192,7 @@ typedef struct {
 #define OPT_REVERB_EXTRA 32
 #define OPT_CHORUS_EXTRA 64
 
-#define MAXCHAN 16
+#define MAXCHAN 32
 #define MAXNOTE 128
 
 #ifndef ADAGIO

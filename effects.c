@@ -39,7 +39,7 @@ EFFECT_CTOR effect_type_list[]={
 };
 
 /* number of effects*/
-#define NUM_EFFECTS ( sizeof(effect_type_list) / sizeof(EFFECT_CTOR) ) - 1 
+#define NUM_EFFECTS ( sizeof(effect_type_list) / sizeof(EFFECT_CTOR) ) - 1
 
 Effect* effect_list[ NUM_EFFECTS ][MAXCHAN] ; 
 

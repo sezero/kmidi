@@ -1,6 +1,6 @@
 
 #define INT_CODE 214
-#define NQUEUE 100
+#define NQUEUE 30
 typedef struct {
 	int reset_panel;
 	int multi_part;

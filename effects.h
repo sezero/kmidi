@@ -154,11 +154,11 @@ extern EFFECT_CTOR effect_type_list[] ;
  * RQ1 : may contains 0 if not activated 
  * RQ2 : placed in the same than for the effect_type_list array
  */
-extern Effect* effect_list[][16] ; 
+extern Effect* effect_list[][MAXCHAN] ; 
 
 /** effect name list 
  */
-extern char effect_name[][16] ;
+extern char effect_name[][MAXCHAN] ;
 
 /**************************************************************************/
 /**	effect_ctrl_change

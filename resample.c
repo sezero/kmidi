@@ -177,6 +177,8 @@ static sample_t *rs_plain(int v, int32 *countptr)
   int32 i, j;
 #endif
 
+  if (!incr) return resample_buffer; /* --gl */
+
   if(/* vp->cache && */ incr == (1 << FRACTION_BITS))
       return rs_plain_c(v, countptr);
 
@@ -281,6 +283,7 @@ static sample_t *rs_loop(Voice *vp, int32 count)
       return rs_loop_c(vp, count);
 
 #ifdef PRECALC_LOOPS
+  if (incr < 1) incr = 1; /* fixup --gl */
   while (count)
     {
       while (ofs >= le)
@@ -337,6 +340,8 @@ static sample_t *rs_bidir(Voice *vp, int32 count)
       /* NOTE: Assumes that incr > 0, which is NOT always the case
 	 when doing bidirectional looping.  I have yet to see a case
 	 where both ofs <= ls AND incr < 0, however. */
+      if (incr < 0) i = ls - ofs;
+	else
       i = (ls - ofs) / incr + 1;
       if (i > count)
 	{
@@ -579,6 +584,8 @@ static sample_t *rs_vib_loop(Voice *vp, int32 count)
   int32 i, j;
   int
     vibflag=0;
+
+  if (!incr) return resample_buffer;
 
   while (count)
     {
@@ -924,15 +931,19 @@ void pre_resample(Sample * sp)
   int32 incr, ofs, newlen, count;
   int16 *newdata, *dest, *src = (int16 *)sp->data, *vptr;
   int32 v, v1, v2, v3, v4, v5, i;
+  static const char note_name[12][3] =
+  {
+    "C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"
+  };
 
-/*
   ctl->cmsg(CMSG_INFO, VERB_DEBUG, " * pre-resampling for note %d (%s%d)",
 	    sp->note_to_use,
 	    note_name[sp->note_to_use % 12], (sp->note_to_use & 0x7F) / 12);
-*/
+
 
   a = ((double) (sp->sample_rate) * freq_table[(int) (sp->note_to_use)]) /
     ((double) (sp->root_freq) * play_mode->rate);
+  if (a<1.0) return;
   if(sp->data_length / a >= 0x7fffffffL)
   {
       /* Too large to compute */

@@ -336,7 +336,6 @@ extern PanelInfo *Panel;
 
 
 #define BAR_WID 10
-//#define BAR_HGT 58
 #define BAR_HGT 62
 #define BAR_LM  12
 #define BAR_TM  10
@@ -345,7 +344,7 @@ extern PanelInfo *Panel;
 #define WIN_HGT 80
 
 
-#define DELTA_VEL	1
+#define DELTA_VEL	4
 #define FLAG_NOTE_OFF	1
 #define FLAG_NOTE_ON	2
 
@@ -353,7 +352,6 @@ extern PanelInfo *Panel;
 #define FLAG_PROG	2
 #define FLAG_PAN	4
 #define FLAG_SUST	8
-//#define METERFUDGE	20
 
 void MeterWidget::remeter()
 {
@@ -361,30 +359,31 @@ void MeterWidget::remeter()
 	QPen greenpen(led_color, 3);
 	QPen yellowpen(yellow, 3);
 	QPen erasepen(background_color, 3);
-	static int lastvol[16], meterpainttime = 0;
-	int ch, x1, y1, slot, amplitude, notetime;
+	static int lastvol[MAXCHAN], lastamp[MAXCHAN], meterpainttime = 0;
+	int ch, x1, y1, slot, amplitude, notetime, chnotes;
 
 	if (currplaytime + meterfudge < meterpainttime || Panel->reset_panel) {
 		erase();
-		for (ch = 0; ch < 16; ch++) {
-			lastvol[ch] = 0;
+		for (ch = 0; ch < MAXCHAN; ch++) {
+			lastvol[ch] = lastamp[ch] = 0;
 			//Panel->mindex[ch] = Panel->cindex[ch];
 		}
 		Panel->reset_panel = 0;
 	}
 	meterpainttime = currplaytime + meterfudge;
 
-	for (ch = 0; ch < 16; ch++) {
-		x1 = BAR_LM + ch * BAR_WID;
+	for (ch = 0; ch < MAXCHAN; ch++) {
+		x1 = BAR_LM + (ch & 0x0f) * BAR_WID;
+		if (ch > 15) x1 += BAR_WID / 2;
 		amplitude = -1;
 		slot = Panel->mindex[ch];
+		chnotes = Panel->notecount[slot][ch];
 		while ( 1 ) {
 		    notetime = Panel->ctime[slot][ch];
 		    if (notetime == -1 || notetime > meterpainttime) break;
 		    if (Panel->v_flags[slot][ch]) {
 			if (Panel->v_flags[slot][ch] == FLAG_NOTE_OFF) {
-				//if (!Panel->notecount[slot][ch]) Panel->ctotal[slot][ch] -= DELTA_VEL;
-				Panel->ctotal[slot][ch] -= DELTA_VEL;
+				if (!chnotes) Panel->ctotal[slot][ch] -= DELTA_VEL;
 				if (Panel->ctotal[slot][ch] <= 0) {
 					Panel->ctotal[slot][ch] = 0;
 					Panel->v_flags[slot][ch] = 0;
@@ -395,15 +394,22 @@ void MeterWidget::remeter()
 			/*if (amplitude < Panel->ctotal[slot][ch])*/
 				amplitude = Panel->ctotal[slot][ch];
 		    }
-		    if (!Panel->notecount[slot][ch] && amplitude > 0) amplitude--;
+		    if (!chnotes && amplitude > 0) amplitude--;
 		    Panel->ctime[slot][ch] = -1;
 		    slot++;
 		    if (slot == NQUEUE) slot = 0;
 		    if (slot == Panel->mindex[ch]) break;
 		}
 		Panel->mindex[ch] = slot;
-		if (amplitude == -1 && lastvol[ch]) amplitude = lastvol[ch];
+		if (amplitude < 0 && lastvol[ch]) {
+			if (!chnotes) amplitude = lastvol[ch];
+			//else amplitude = lastamp[ch] - (3 - chnotes)*DELTA_VEL;
+			else amplitude = lastamp[ch] - DELTA_VEL;
+			if (amplitude < 0) amplitude = 0;
+			else if (amplitude > 127) amplitude = 127;
+		}
 		if (amplitude != -1) {
+			lastamp[ch] = amplitude;
 			y1 = (amplitude * BAR_HGT) / 127;
 			if (y1 > BAR_HGT) y1 = BAR_HGT;
 			if (y1 < lastvol[ch]) {

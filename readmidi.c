@@ -52,6 +52,16 @@ static int32 event_count;
 static FILE *fp;
 static int32 at;
 
+/* taken from tplus --gl */
+static int midi_port_number;
+
+#if MAXCHAN <= 16
+#define MERGE_CHANNEL_PORT(ch) ((int)(ch))
+#else
+#define MERGE_CHANNEL_PORT(ch) ((int)(ch) | (midi_port_number << 4))
+#endif
+
+
 /* These would both fit into 32 bits, but they are often added in
    large multiples, so it's simpler to have two roomy ints */
 static int32 sample_increment, sample_correction; /*samples per MIDI delta-t*/
@@ -196,7 +206,7 @@ static int metatext(int type, int leng, char *mess)
 static int sysex(int32 len, uint8 *syschan, uint8 *sysa, uint8 *sysb)
 {
   unsigned char *s=safe_malloc(len);
-  int id, model, port, adhi, adlo, cd, dta, dtb, dtc;
+  int id, model, ch, port, adhi, adlo, cd, dta, dtb, dtc;
   if (len != fread(s, 1, len, fp))
     {
       free(s);
@@ -211,7 +221,9 @@ static int sysex(int32 len, uint8 *syschan, uint8 *sysa, uint8 *sysb)
       free(s);
       return 0;
     }
-  *syschan=adlo;
+  ch = adlo & 0x0f;
+  ch = MERGE_CHANNEL_PORT(ch);
+  *syschan=(uint8)ch;
   if (id==0x7f && len==7 && port==0x7f && model==0x04 && adhi==0x01)
     {
       ctl->cmsg(CMSG_TEXT, VERB_DEBUG, "Master Volume %d", s[4]+(s[5]<<7));
@@ -272,7 +284,8 @@ static int sysex(int32 len, uint8 *syschan, uint8 *sysa, uint8 *sysb)
 		  return ME_PROGRAM;
 		  break;
 		case 0x08: /*  */
-		  channel[adlo&0x0f].transpose = (char)(dta-64);
+		  /* channel[adlo&0x0f].transpose = (char)(dta-64); */
+		  channel[ch].transpose = (char)(dta-64);
       	    	  ctl->cmsg(CMSG_TEXT, VERB_DEBUG, "transpose channel %d by %d",
 			(adlo&0x0f)+1, dta-64);
 		  break;
@@ -314,6 +327,7 @@ static int sysex(int32 len, uint8 *syschan, uint8 *sysa, uint8 *sysb)
 	    int chan=cd&0x0f;
 	    if (!chan) chan=9;
 	    else if (chan<10) chan--;
+	    chan = MERGE_CHANNEL_PORT(chan);
 	    channel[chan].kit=dtb;
 	  }
 	else if (cd==0x01) switch(dta)
@@ -432,6 +446,26 @@ static MidiEventList *read_midi_event(void)
 	  else
 	    switch(type)
 	      {
+
+	      case 0x21: /* MIDI port number */
+		if(len == 1)
+		{
+	  	    fread(&midi_port_number,1,1,fp);
+		    if(midi_port_number == EOF)
+		    {
+			    ctl->cmsg(CMSG_ERROR, VERB_NORMAL,
+				      "Warning: %s: Short midi file.",
+				      current_filename);
+			    return 0;
+		    }
+		    midi_port_number &= 0x0f;
+		    ctl->cmsg(CMSG_INFO, VERB_VERBOSE,
+			  "(MIDI port number %d)", midi_port_number);
+		    midi_port_number &= 0x01;
+		}
+		else skip(fp, len);
+		break;
+
 	      case 0x2F: /* End of Track */
 		return MAGIC_EOT;
 
@@ -451,7 +485,7 @@ static MidiEventList *read_midi_event(void)
 	  a=me;
 	  if (a & 0x80) /* status byte */
 	    {
-	      lastchan=a & 0x0F;
+	      lastchan = MERGE_CHANNEL_PORT(a & 0x0F);
 	      laststatus=(a>>4) & 0x07;
 	      fread(&a, 1,1, fp);
 	      a &= 0x7F;
@@ -650,6 +684,7 @@ static int read_track(int append)
   int32 len;
   char tmp[4];
 
+  midi_port_number = 0;
   meep=evlist;
   if (append && meep)
     {
