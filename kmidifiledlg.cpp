@@ -28,8 +28,6 @@
 #include "kmidifiledlg.h"
 #include "kmidi.h"
 
-extern KMidi *kmidi;
-
 KMidiFileDlg::KMidiFileDlg(const QString& dirName, const QString& filter,
 				 QWidget *parent, const char *name,
 				 bool modal )

@@ -51,7 +51,6 @@ int fixframesizecount = 0;
 //QFont default_font("Helvetica", 10, QFont::Bold);
 
 
-extern KMidi *kmidi;
 KMidiFrame *kmidiframe;
 
 DockWidget*     dock_widget;

@@ -33,8 +33,6 @@
 #include <kglobal.h>
 #include <kpopupmenu.h>
 
-extern KMidi *kmidi;
-
 DockWidget::DockWidget( KMidiFrame* parent, const char *name)
   : KDockWindow( parent, name )
 {

@@ -106,5 +106,6 @@ private:
 
 };
 
+extern KMidiFrame *kmidiframe;
 
 #endif 

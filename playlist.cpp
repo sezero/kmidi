@@ -35,6 +35,7 @@
 #include "playlist.h"
 #include "playlist.moc"
 #include "kmidi.h"
+#include "midiapplication.h"
 
 #define BORDER_WIDTH 2
 
@@ -45,9 +46,6 @@ char fontrefstring1[]="012345678901234567890";
 char fontrefstring2[]="01234567890";
 char fontrefstring3[]="00  00:00";
 
-
-extern KApplication *thisapp;
-extern KMidi *kmidi;
 
 
 PlaylistEdit::PlaylistEdit(const char *name, QStringList *playlist,

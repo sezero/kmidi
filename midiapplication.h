@@ -87,4 +87,6 @@ public:
 
 };
 
+extern MidiApplication *thisapp;
+
 #endif

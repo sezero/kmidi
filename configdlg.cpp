@@ -46,11 +46,9 @@
 #include "configdlg.h"
 #include "kmidi.h"
 #include "version.h"
+#include "midiapplication.h"
 
 //QFont default_font("Helvetica", 12);
-
-extern KApplication *thisapp;
-extern KMidi *kmidi;
 
 extern const char * whatsthis_image[];
 

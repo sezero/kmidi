@@ -22,6 +22,9 @@
 
    */
 
+#ifndef INSTRUM_H
+#define INSTRUM_H
+
 typedef struct {
   uint32
     loop_start, loop_end, data_length,
@@ -160,3 +163,6 @@ extern InstrumentLayer *load_sbk_patch(const char *name, int gm_num, int bank, i
 extern int current_tune_number;
 extern int max_patch_memory;
 extern int current_patch_memory;
+
+#endif
+

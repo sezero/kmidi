@@ -116,8 +116,6 @@ extern int fixframesizecount;
 //QFont default_font("Helvetica", 10, QFont::Bold);
 
 
-extern MidiApplication * thisapp;
-extern KMidiFrame *kmidiframe;
 KMidi *kmidi;
 Table		*channelwindow;
 

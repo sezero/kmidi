@@ -318,6 +318,6 @@ public slots:
 	void		invokeWhatsThis();
 };
 
-
+extern KMidi *kmidi;
 
 #endif 

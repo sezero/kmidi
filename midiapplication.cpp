@@ -49,8 +49,6 @@
 
 
 MidiApplication * thisapp;
-extern KMidiFrame *kmidiframe;
-extern KMidi *kmidi;
 
 int pipenumber;
 
