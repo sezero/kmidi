@@ -357,8 +357,8 @@ static void ctl_channel_note(int ch, /*int note, int vel,*/ int start)
 	Panel->chorusdepth[slot][ch] = (uint8)channel[ch].chorusdepth;
 	Panel->volume[slot][ch] = (uint8)channel[ch].volume;
 
-	//Panel->c_bank[ch] = (uint8)channel[ch].bank;
-	//Panel->c_variationbank[ch] = (uint8)channel[ch].variationbank;
+	/*Panel->c_bank[ch] = (uint8)channel[ch].bank; */
+	/*Panel->c_variationbank[ch] = (uint8)channel[ch].variationbank; */
 }
 
 static void ctl_note(int v)
