@@ -45,7 +45,15 @@
 #endif
 
 /*ALSA header file*/
+#ifdef __cplusplus
+#undef __cplusplus
+extern "C" {
 #include <sys/asoundlib.h>
+}
+#define __cplusplus
+#else
+#include <sys/asoundlib.h>
+#endif
 
 #ifdef ORIG_TIMPP
 #include "timidity.h"
@@ -56,10 +64,10 @@
 #include "common.h"
 #include "output.h"
 #include "controls.h"
-#include "timer.h"
+/* #include "timer.h" */
 #include "instrum.h"
 #include "playmidi.h"
-#include "miditrace.h"
+/* #include "miditrace.h" */
 
 static int open_output(void); /* 0=success, 1=warning, -1=fatal error */
 static void close_output(void);
@@ -67,7 +75,7 @@ static void close_output(void);
 static int output_data(char *buf, int32 nbytes);
 static int acntl(int request, void *arg);
 #else
-static void output_data(char *buf, uint32 count);
+static void output_data(int32 *buf, uint32 count);
 static int driver_output_data(unsigned char *buf, uint32 count);
 static void flush_output(void);
 static void purge_output(void);
@@ -92,6 +100,7 @@ PlayMode dpm = {
   acntl
 };
 #else
+#define PE_ALAW       0x20
 PlayMode dpm = {
   DEFAULT_RATE, PE_16BIT|PE_SIGNED,
   -1,
@@ -119,7 +128,14 @@ PlayMode dpm = {
 static snd_pcm_t* handle = NULL;
 static int card = 0;
 static int device = 0;
+static int setup_frags = 0;
+static int setup_frag_size = 0;
 
+void alsa_tell(int *fragsize, int *fragstotal)
+{
+  *fragsize = setup_frag_size;
+  *fragstotal = setup_frags;
+}
 
 static void error_report (int snd_error)
 {
@@ -239,21 +255,37 @@ static int check_sound_cards (int* card__, int* device__,
                == -1 fails
  */
 static int set_playback_info (void* handle__,
-			      int32* encoding__, int32* rate__,
+			      uint32* encoding__, uint32* rate__,
 			      const int32 extra_param[5])
 {
   int ret_val = 0;
-  const int32 orig_encoding = *encoding__;
-  const int32 orig_rate = *rate__;
-  snd_pcm_playback_info_t playback_info;
+  const uint32 orig_encoding = *encoding__;
+  const uint32 orig_rate = *rate__;
+  /* snd_pcm_playback_info_t playback_info; */
+  snd_pcm_channel_info_t playback_info;
   snd_pcm_format_t pcm_format;
+  /*
   struct snd_pcm_playback_params playback_params;
   struct snd_pcm_playback_status playback_status;
+  */
+  struct snd_pcm_channel_params playback_params;
+  struct snd_pcm_channel_status playback_status;
+  struct snd_pcm_channel_setup setup;
   int tmp;
+
+//fprintf(stderr,"setting playback info\n");
   memset (&pcm_format, 0, sizeof (pcm_format));
+  pcm_format.interleave = 1;
+
   memset (&playback_params, 0, sizeof (playback_params));
-  
-  tmp = snd_pcm_playback_info (handle__, &playback_info);
+  playback_params.channel = SND_PCM_CHANNEL_PLAYBACK;
+  playback_params.mode = SND_PCM_MODE_BLOCK;
+
+  memset(&playback_info, 0, sizeof(playback_info));
+  playback_info.channel = SND_PCM_CHANNEL_PLAYBACK;
+
+  tmp = snd_pcm_plugin_info (handle__, &playback_info);
+//fprintf(stderr,"tmp = %d from snd_pcm_channel_info\n",tmp);
   if (tmp != 0)
     {
       error_report (tmp);
@@ -261,11 +293,13 @@ static int set_playback_info (void* handle__,
     }
 
   /*check sample bit*/
+#if 0
   if ((playback_info.flags & SND_PCM_PINFO_8BITONLY) != 0)
     *encoding__ &= ~PE_16BIT;/*force 8bit samles*/
   if ((playback_info.flags & SND_PCM_PINFO_16BITONLY) != 0)
     *encoding__ |= PE_16BIT;/*force 16bit samples*/
-  
+#endif
+
   /*check rate*/
   if (playback_info.min_rate > *rate__)
     *rate__ = playback_info.min_rate;
@@ -274,15 +308,18 @@ static int set_playback_info (void* handle__,
   pcm_format.rate = *rate__;
 
   /*check channels*/
+#if 0
   if ((*encoding__ & PE_MONO) != 0 && playback_info.min_channels > 1)
     *encoding__ &= ~PE_MONO;
   if ((*encoding__ & PE_MONO) == 0 && playback_info.max_channels < 2)
     *encoding__ |= PE_MONO;
-  
+#endif
+
   if ((*encoding__ & PE_MONO) != 0)
-    pcm_format.channels = 1;/*mono*/
+    pcm_format.voices = 1;/*mono*/
   else
-    pcm_format.channels = 2;/*stereo*/
+    pcm_format.voices = 2;/*stereo*/
+
 
   /*check format*/
   if ((*encoding__ & PE_16BIT) != 0)
@@ -339,15 +376,18 @@ static int set_playback_info (void* handle__,
 	  return -1;
 	}
     }
+  memcpy(&playback_params.format, &pcm_format, sizeof(pcm_format));
 
-  
-  tmp = snd_pcm_playback_format (handle__, &pcm_format);
+#if 0
+  tmp = snd_pcm_channel_format (handle__, &pcm_format);
   if (tmp != 0)
     {
       error_report (tmp);
       return -1;
     }
-  /*check result of snd_pcm_playback_format*/
+#endif
+
+  /*check result of snd_pcm_channel_format*/
   if ((*encoding__ & PE_16BIT) != (orig_encoding & PE_16BIT ))
     {
       ctl->cmsg (CMSG_WARNING, VERB_VERBOSE,
@@ -355,7 +395,7 @@ static int set_playback_info (void* handle__,
 		 ((*encoding__ & PE_16BIT) != 0)? 16:8);
       ret_val = 1;
     }
-  if (((pcm_format.channels == 1)? PE_MONO:0) != (orig_encoding & PE_MONO))
+  if (((pcm_format.voices == 1)? PE_MONO:0) != (orig_encoding & PE_MONO))
     {
       ctl->cmsg(CMSG_WARNING, VERB_VERBOSE, "Sound adjusted to %sphonic",
 		((*encoding__ & PE_MONO) != 0)? "mono" : "stereo");
@@ -363,43 +403,77 @@ static int set_playback_info (void* handle__,
     }
   
   /* Set buffer fragments (in extra_param[0]) */
+#if 0
   tmp = AUDIO_BUFFER_BITS;
   if (!(*encoding__ & PE_MONO))
     tmp++;
   if (*encoding__ & PE_16BIT)
     tmp++;
-#if 0
   tmp++;
-  playback_params.fragment_size = (1 << tmp);
-  if (extra_param[0] == 0)
-    playback_params.fragments_max = 7;/*default value. What's value is apporpriate?*/
-  else
-    playback_params.fragments_max = extra_param[0];
-#else
-  playback_params.fragment_size = (1 << tmp);
+  playback_params.buf.block.frag_size = (1 << tmp);
+#endif
+  tmp = AUDIO_BUFFER_SIZE;
+  if (!(*encoding__ & PE_MONO))
+    tmp *=2;
+  if (*encoding__ & PE_16BIT)
+    tmp *=2;
+  playback_params.buf.block.frag_size = tmp;
+//fprintf(stderr,"frag_size %d\n", playback_params.buf.block.frag_size);
 
+  if (extra_param[0] == 0)
+    playback_params.buf.block.frags_max = 7;/*default value. What's value is apporpriate?*/
+  else
+    playback_params.buf.block.frags_max = extra_param[0];
+
+#if 0
   if (extra_param[0] == 0)
     playback_params.fragments_max = 15;/*default value. What's value is apporpriate?*/
   else
     playback_params.fragments_max = extra_param[0];
-
 #endif
-  playback_params.fragments_room = 1;
-  tmp = snd_pcm_playback_params (handle__, &playback_params);
+  playback_params.buf.block.frags_min = 1;
+  snd_pcm_plugin_flush(handle__, SND_PCM_CHANNEL_PLAYBACK);
+
+  playback_params.start_mode = SND_PCM_START_FULL;
+  playback_params.stop_mode = SND_PCM_STOP_STOP;
+
+  tmp = snd_pcm_channel_params (handle__, &playback_params);
+
+//fprintf(stderr,"tmp = %d from snd_pcm_channel_params\n",tmp);
   if (tmp != 0)
     {
       ctl->cmsg(CMSG_WARNING, VERB_NORMAL,
 		"%s doesn't support buffer fragments"
 		":request size=%d, max=%d, room=%d\n",
 		dpm.name,
-		playback_params.fragment_size,
-		playback_params.fragments_max,
-		playback_params.fragments_room);
+		playback_params.buf.block.frag_size,
+		playback_params.buf.block.frags_max,
+		playback_params.buf.block.frags_min);
       ret_val =1;
     }
 
-  if(snd_pcm_playback_status(handle__, &playback_status) == 0)
+
+  if (snd_pcm_plugin_prepare(handle__, SND_PCM_CHANNEL_PLAYBACK) < 0) {
+      fprintf(stderr, "unable to prepare channel\n");
+      return -1;
+  } 
+
+  memset(&setup, 0, sizeof(setup));
+  setup.channel = SND_PCM_CHANNEL_PLAYBACK;
+  setup.mode = SND_PCM_MODE_BLOCK;
+  if (snd_pcm_plugin_setup(handle__, &setup) < 0) {
+      fprintf(stderr, "unable to obtain setup\n");
+      return -1;
+  }
+  setup_frags = setup.buf.block.frags;
+  setup_frag_size = setup.buf.block.frag_size;
+
+//fprintf(stderr, "setup frags = %d\n", setup.buf.block.frags);
+//fprintf(stderr, "setup frag_size = %d\n", setup.buf.block.frag_size);
+
+  if(snd_pcm_plugin_status(handle__, &playback_status) == 0)
     {
+#if 0
       if (playback_status.rate != orig_rate)
 	{
 	  ctl->cmsg(CMSG_WARNING, VERB_VERBOSE,
@@ -408,10 +482,11 @@ static int set_playback_info (void* handle__,
 	  dpm.rate = playback_status.rate;
 	  ret_val = 1;
 	}
+#endif
       total_bytes = playback_status.count;
     }
   else
-    total_bytes = -1; /* snd_pcm_playback_status fails */
+    total_bytes = -1; /* snd_pcm_channel_status fails */
 
   return ret_val;
 }
@@ -420,13 +495,16 @@ static int open_output(void)
 {
   int tmp, warnings=0;
   int ret;
-  
+ 
   tmp = check_sound_cards (&card, &device, dpm.extra_param);
   if (tmp != 0)
     return -1;
-  
+
+//fprintf(stderr,"using card %d, device %d\n", card, device);
   /* Open the audio device */
   ret = snd_pcm_open (&handle, card, device, SND_PCM_OPEN_PLAYBACK);
+//fprintf(stderr,"ret was %d\n", ret);
+
   if (ret != 0)
     {
       ctl->cmsg(CMSG_ERROR, VERB_NORMAL, "%s: %s",
@@ -443,11 +521,8 @@ static int open_output(void)
       close_output ();
       return -1;
     }
-#ifdef ORIG_TIMPP
-  ret = snd_pcm_block_mode(handle, 0);
-#endif
 
-  dpm.fd = snd_pcm_file_descriptor (handle);
+  dpm.fd = snd_pcm_file_descriptor (handle, SND_PCM_CHANNEL_PLAYBACK);
   output_counter = 0;
   return warnings;
 }
@@ -474,7 +549,7 @@ static int output_data(char *buf, int32 nbytes)
 
     while(nbytes > 0)
     {
-	n = snd_pcm_write(handle, buf, nbytes);
+	n = snd_pcm_plugin_write(handle, buf, nbytes);
 	if(n == -1)
 	{
 	    ctl->cmsg(CMSG_WARNING, VERB_DEBUG,
@@ -492,22 +567,59 @@ static int output_data(char *buf, int32 nbytes)
 }
 #else
 
+void playback_write_error(void)
+{
+	snd_pcm_channel_status_t status;
+	
+	memset(&status, 0, sizeof(status));
+        status.channel = SND_PCM_CHANNEL_PLAYBACK;
+	if (snd_pcm_plugin_status(handle, &status)<0) {
+		fprintf(stderr, "playback channel status error\n");
+		exit(1);
+	}
+	if (status.status == SND_PCM_STATUS_UNDERRUN) {
+		printf("underrun at position %u!!!\n", status.scount);
+		if (snd_pcm_plugin_prepare(handle, SND_PCM_CHANNEL_PLAYBACK)<0) {
+			fprintf(stderr, "underrun: playback channel prepare error\n");
+			exit(1);
+		}
+		return;		/* ok, data should be accepted again */
+	}
+	fprintf(stderr, "write error\n");
+	exit(1);
+}
+
+
+
 static int driver_output_data(unsigned char *buf, uint32 count) {
-  return snd_pcm_write(handle, buf, count);
+	int ret_value;
+//fprintf(stderr,"write %d bytes with buffer size %d\n",
+//		count, AUDIO_BUFFER_SIZE);
+  if (count < (uint32)setup_frag_size ) return 0;
+  ret_value = snd_pcm_plugin_write(handle, buf, setup_frag_size);
+//fprintf(stderr,"ret_value = %d\n", ret_value);
+  if (ret_value < 0) {
+    playback_write_error();	  
+    ret_value = 0;
+  }
+  return ret_value;
 }
 
 
 static int output_count(uint32 ct)
 {
+  struct snd_pcm_channel_status playback_status;
   int samples = -1;
   int samples_queued, samples_sent = (int)ct;
 
   samples = samples_sent = b_out_count();
 
   if (samples_sent) {
+	if(snd_pcm_plugin_status(handle, &playback_status) != 0)
+	  return -1;
 /* samples_queued is PM_REQ_GETFILLED */
-      if (snd_pcm_playback_status(handle, &playback_status) == 0)
-	samples_queued = playback_status.queue;
+      /* if (snd_pcm_channel_status(handle, &playback_status) == 0) */
+	samples_queued = playback_status.count;
       samples -= samples_queued;
   }
   if (!(dpm.encoding & PE_MONO)) samples >>= 1;
@@ -544,13 +656,13 @@ static void output_data(int32 *buf, uint32 count)
 static void flush_output(void)
 {
   output_data(0, 0);
-  snd_pcm_flush_playback(handle);
+  snd_pcm_plugin_flush(handle, SND_PCM_CHANNEL_PLAYBACK);
 }
 
 static void purge_output(void)
 {
   b_out(dpm.id_character, dpm.fd, 0, -1);
-  snd_pcm_drain_playback (handle);
+  snd_pcm_plugin_playback_drain(handle);
 }
 
 #endif
@@ -609,6 +721,6 @@ static int acntl(int request, void *arg)
 	return 0;
     }
     return -1;
-#endif
 }
+#endif
 #endif
