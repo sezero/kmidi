@@ -31,7 +31,7 @@
 #include <klocale.h>
 #include <kiconloader.h>
 #include <kglobal.h>
-#include <kpopmenu.h>
+#include <kpopupmenu.h>
 
 extern KMidi *kmidi;
 
