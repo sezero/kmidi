@@ -22,8 +22,8 @@ appsdir = $(kde_appsdir)/Multimedia/More
 apps_DATA = timidity.desktop
 
 install-data-local: uninstall.desktop
-	$(mkinstalldirs) $(kde_appsdir)/Multimedia
-	$(INSTALL_DATA) $(srcdir)/uninstall.desktop $(kde_appsdir)/Multimedia/timidity.desktop
+	$(mkinstalldirs) $(DESTDIR)$(kde_appsdir)/Multimedia
+	$(INSTALL_DATA) $(srcdir)/uninstall.desktop $(DESTDIR)$(kde_appsdir)/Multimedia/timidity.desktop
 
 bin_PROGRAMS = timidity
 

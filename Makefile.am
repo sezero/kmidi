@@ -75,16 +75,16 @@ cfg.cpp: cfg.l
 	flex -t -B $(srcdir)/cfg.l >cfg.cpp
 
 install-data-local:
-	$(mkinstalldirs) $(kde_appsdir)/Multimedia
-	$(INSTALL_DATA) $(srcdir)/uninstall.desktop $(kde_appsdir)/Multimedia/kmidi.desktop
-	$(mkinstalldirs) $(TIMID_DIR)/patch
-	if [ ! -f $(TIMID_DIR)/patch/sologrnd.pat ]; then $(INSTALL_DATA) $(srcdir)/config/patch/sologrnd.pat $(DESTDIR)$(TIMID_DIR)/patch ; fi
-	if [ ! -f $(TIMID_DIR)/patch/nylongt2.pat ]; then $(INSTALL_DATA) $(srcdir)/config/patch/nylongt2.pat $(DESTDIR)$(TIMID_DIR)/patch ; fi
-	if [ ! -f $(TIMID_DIR)/patch/kick2.pat ]; then $(INSTALL_DATA) $(srcdir)/config/patch/kick2.pat $(DESTDIR)$(TIMID_DIR)/patch ; fi
-	if [ ! -f $(TIMID_DIR)/patch/kick1.pat ]; then $(INSTALL_DATA) $(srcdir)/config/patch/kick1.pat $(DESTDIR)$(TIMID_DIR)/patch ; fi
-	if [ ! -f $(TIMID_DIR)/patch/hihatcl.pat ]; then $(INSTALL_DATA) $(srcdir)/config/patch/hihatcl.pat $(DESTDIR)$(TIMID_DIR)/patch ; fi
-	if [ ! -f $(TIMID_DIR)/patch/cymride1.pat ]; then $(INSTALL_DATA) $(srcdir)/config/patch/cymride1.pat $(DESTDIR)$(TIMID_DIR)/patch ; fi
-	if [ ! -f $(TIMID_DIR)/patch/acbass.pat ]; then $(INSTALL_DATA) $(srcdir)/config/patch/acbass.pat $(DESTDIR)$(TIMID_DIR)/patch ; fi
+	$(mkinstalldirs) $(DESTDIR)$(kde_appsdir)/Multimedia
+	$(INSTALL_DATA) $(srcdir)/uninstall.desktop $(DESTDIR)$(kde_appsdir)/Multimedia/kmidi.desktop
+	$(mkinstalldirs) $(DESTDIR)$(TIMID_DIR)/patch
+	if [ ! -f $(DESTDIR)$(TIMID_DIR)/patch/sologrnd.pat ]; then $(INSTALL_DATA) $(srcdir)/config/patch/sologrnd.pat $(DESTDIR)$(TIMID_DIR)/patch ; fi
+	if [ ! -f $(DESTDIR)$(TIMID_DIR)/patch/nylongt2.pat ]; then $(INSTALL_DATA) $(srcdir)/config/patch/nylongt2.pat $(DESTDIR)$(TIMID_DIR)/patch ; fi
+	if [ ! -f $(DESTDIR)$(TIMID_DIR)/patch/kick2.pat ]; then $(INSTALL_DATA) $(srcdir)/config/patch/kick2.pat $(DESTDIR)$(TIMID_DIR)/patch ; fi
+	if [ ! -f $(DESTDIR)$(TIMID_DIR)/patch/kick1.pat ]; then $(INSTALL_DATA) $(srcdir)/config/patch/kick1.pat $(DESTDIR)$(TIMID_DIR)/patch ; fi
+	if [ ! -f $(DESTDIR)$(TIMID_DIR)/patch/hihatcl.pat ]; then $(INSTALL_DATA) $(srcdir)/config/patch/hihatcl.pat $(DESTDIR)$(TIMID_DIR)/patch ; fi
+	if [ ! -f $(DESTDIR)$(TIMID_DIR)/patch/cymride1.pat ]; then $(INSTALL_DATA) $(srcdir)/config/patch/cymride1.pat $(DESTDIR)$(TIMID_DIR)/patch ; fi
+	if [ ! -f $(DESTDIR)$(TIMID_DIR)/patch/acbass.pat ]; then $(INSTALL_DATA) $(srcdir)/config/patch/acbass.pat $(DESTDIR)$(TIMID_DIR)/patch ; fi
 
 	@echo ""
 	@echo "Midis:"
@@ -103,12 +103,12 @@ install-data-local:
 
 
 uninstall-local:
-	rm -f $(kde_appsdir)/Multimedia/kmidi.desktop
-	rm -f $(TIMID_DIR)/patch/acbass.pat
-	rm -f $(TIMID_DIR)/patch/cymride1.pat
-	rm -f $(TIMID_DIR)/patch/hihatcl.pat
-	rm -f $(TIMID_DIR)/patch/kick1.pat
-	rm -f $(TIMID_DIR)/patch/kick2.pat
-	rm -f $(TIMID_DIR)/patch/nylongt2.pat
-	rm -f $(TIMID_DIR)/patch/sologrnd.pat
+	rm -f $(DESTDIR)$(kde_appsdir)/Multimedia/kmidi.desktop
+	rm -f $(DESTDIR)$(TIMID_DIR)/patch/acbass.pat
+	rm -f $(DESTDIR)$(TIMID_DIR)/patch/cymride1.pat
+	rm -f $(DESTDIR)$(TIMID_DIR)/patch/hihatcl.pat
+	rm -f $(DESTDIR)$(TIMID_DIR)/patch/kick1.pat
+	rm -f $(DESTDIR)$(TIMID_DIR)/patch/kick2.pat
+	rm -f $(DESTDIR)$(TIMID_DIR)/patch/nylongt2.pat
+	rm -f $(DESTDIR)$(TIMID_DIR)/patch/sologrnd.pat
 
