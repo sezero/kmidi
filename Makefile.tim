@@ -124,6 +124,7 @@ SYSEXTRAS += slang_c.cpp
 #EXTRAINCS += -I/usr/include/slang
 EXTRALIBS += -lslang
 
+#Don't select the MOTIF interface -- it's not working now (gl).
 # Select the MOTIF interface
 ##SYSTEM += -DMOTIF
 ##SYSEXTRAS += motif_c.cpp motif_i.cpp motif_p.cpp
@@ -132,6 +133,17 @@ EXTRALIBS += -lslang
 ##EXTRALIBS += -L/usr/X11R6/lib -lXm -lXt -lX11
 # Solaris needs libgen?
 #EXTRALIBS += -lgen
+
+# Select the XAW interface
+SYSTEM += -DIA_XAW
+SYSEXTRAS += xaw_c.cpp xaw_i.cpp
+#EXTRAINCS += -I/usr/local/X11R5/include -L/usr/local/X11R5/lib
+EXTRAINCS += -I/usr/include/X11
+EXTRALIBS += -L/usr/X11R6/lib -lXaw -lXt -lX11
+####LIBS = -lXm -lXaw -lXmu -lXt -lSM -lICE -lXext -lX11 -lm    
+# Solaris needs libgen?
+#EXTRALIBS += -lgen
+
 
 # Select the Tcl/Tk interface
 SYSTEM += -DTCLTK -DTKPROGPATH=\"$(TCL_DIR)/tkmidity.tcl\"
@@ -201,7 +213,8 @@ MAKEFILES = Makefile my my.pl
 BITMAPS = $(BITMAPF) \
 	BITMAPS/back.xbm BITMAPS/fwd.xbm BITMAPS/next.xbm BITMAPS/pause.xbm \
 	BITMAPS/prev.xbm BITMAPS/quit.xbm BITMAPS/restart.xbm \
-	BITMAPS/timidity.xbm
+	BITMAPS/timidity.xbm BITMAPS/off.xbm BITMAPS/arrow.xbm \
+	BITMAPS/check.xbm BITMAPS/on.xbm
 
 # All headers
 CHDRS = config.h common.h readmidi.h playmidi.h resample.h mix.h instrum.h \

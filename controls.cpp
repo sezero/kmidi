@@ -38,6 +38,13 @@
 # endif
 #endif
 
+#ifdef IA_XAW
+  extern ControlMode xaw_control_mode;
+# ifndef DEFAULT_CONTROL_MODE
+#  define DEFAULT_CONTROL_MODE &xaw_control_mode
+# endif
+#endif
+
 #ifdef TCLTK
   extern ControlMode tk_control_mode;
 # ifndef DEFAULT_CONTROL_MODE
@@ -74,6 +81,9 @@ ControlMode *ctl_list[]={
 #endif
 #ifdef MOTIF
   &motif_control_mode,
+#endif
+#ifdef IA_XAW
+  &xaw_control_mode,
 #endif
 #ifdef KMIDI
   &kmidi_control_mode,
