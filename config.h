@@ -64,6 +64,7 @@
    This is currently ignored for Win32. */
 #define DECOMPRESSOR_LIST { \
 			      ".gz", "gunzip -c %s", \
+			      ".bz2", "bzip2 -cd %s", \
 			      ".Z", "zcat %s", \
 			      ".zip", "unzip -p %s", \
 			      ".lha", "lha -pq %s", \
