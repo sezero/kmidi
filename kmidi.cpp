@@ -174,6 +174,7 @@ KMidi::~KMidi(){
 void KMidi::setToolTips()
 {
     if(tooltips){
+	QToolTip::add( aboutPB,		i18n("Bottom Panel") );
 	QToolTip::add( playPB, 		i18n("Play/Pause") );
 	QToolTip::add( stopPB, 		i18n("Stop") );
 	QToolTip::add( replayPB, 	i18n("Loop Song") );
@@ -195,12 +196,17 @@ void KMidi::setToolTips()
 	QToolTip::add( lbuttonc,	i18n("unnassigned") );
 	QToolTip::add( lbuttond,	i18n("unnassigned") );
 	QToolTip::add( lbuttone,	i18n("unnassigned") );
-	QToolTip::add( rbuttona,	i18n("unnassigned") );
+	//QToolTip::add( rbuttona,	i18n("unnassigned") );
+	QToolTip::add( rcb1,		i18n("Stereo Voice: normal/xtra/off") );
+	QToolTip::add( rcb2,		i18n("Reverb: normal/xtra/off") );
+	QToolTip::add( rcb3,		i18n("Chorus: normal/xtra/off") );
+	QToolTip::add( rcb4,		i18n("unassigned") );
 	QToolTip::add( effectbutton,	i18n("Effects") );
 	QToolTip::add( voicespin,	i18n("Set Polyphony") );
 	QToolTip::add( rbuttond,	i18n("unnassigned") );
     }
     else{
+	QToolTip::remove( aboutPB);
 	QToolTip::remove( playPB);
 	QToolTip::remove( stopPB);
 	QToolTip::remove( replayPB);
@@ -222,7 +228,11 @@ void KMidi::setToolTips()
 	QToolTip::remove( lbuttonc );
 	QToolTip::remove( lbuttond );
 	QToolTip::remove( lbuttone );
-	QToolTip::remove( rbuttona );
+	//QToolTip::remove( rbuttona );
+	QToolTip::remove( rcb1 );
+	QToolTip::remove( rcb2 );
+	QToolTip::remove( rcb3 );
+	QToolTip::remove( rcb4 );
 	QToolTip::remove( effectbutton );
 	QToolTip::remove( voicespin );
 	QToolTip::remove( rbuttond );
@@ -613,17 +623,33 @@ void KMidi::drawPanel()
     connect( playbox, SIGNAL(activated(int)), SLOT(setSong(int)) );
 
     iy += HEIGHT;
-    lbuttonc = makeButton( ix,          iy, WIDTH/2, HEIGHT, "L_C" );
+    lbuttonc = makeButton( ix,          iy, WIDTH/2, HEIGHT, "" );
     lbuttonc->setFont( QFont( "helvetica", 10, QFont::Normal) );
-    lbuttond = makeButton( ix +WIDTH/2, iy, WIDTH/2, HEIGHT, "L_D" );
+    lbuttond = makeButton( ix +WIDTH/2, iy, WIDTH/2, HEIGHT, "" );
     lbuttond->setFont( QFont( "helvetica", 10, QFont::Normal) );
-    lbuttone = makeButton( ix +WIDTH,   iy, WIDTH/2, HEIGHT, "L_E" );
+    lbuttone = makeButton( ix +WIDTH,   iy, WIDTH/2, HEIGHT, "" );
     lbuttone->setFont( QFont( "helvetica", 10, QFont::Normal) );
 
     iy = regularheight;
     ix = WIDTH + SBARWIDTH;
-    rbuttona = makeButton( ix,          iy, WIDTH,   HEIGHT, "R_A" );
-    rbuttona->setFont( QFont( "helvetica", 10, QFont::Normal) );
+    //rbuttona = makeButton( ix,          iy, WIDTH,   HEIGHT, "R_A" );
+    //rbuttona->setFont( QFont( "helvetica", 10, QFont::Normal) );
+    // Create a button group to contain all buttons
+    rchecks = new QHButtonGroup( this );
+    rchecks->setGeometry(ix, iy, WIDTH, HEIGHT);
+    rcb1 = new QCheckBox(rchecks);
+    rcb2 = new QCheckBox(rchecks);
+    rcb3 = new QCheckBox(rchecks);
+    rcb4 = new QCheckBox(rchecks);
+    rcb1->setTristate(TRUE);
+    rcb2->setTristate(TRUE);
+    rcb3->setTristate(TRUE);
+    rcb4->setTristate(TRUE);
+    rcb1->setNoChange();
+    rcb2->setNoChange();
+    rcb3->setNoChange();
+    rcb4->setNoChange();
+    connect( rchecks, SIGNAL(clicked(int)), SLOT(updateRChecks(int)) );
 
     iy += HEIGHT;
     effectbutton = makeButton( ix,          iy, WIDTH/2, HEIGHT, "eff" );
@@ -634,7 +660,7 @@ void KMidi::drawPanel()
 
     // Create a spin box
 
-    voicespin = new QSpinBox( 1, MAX_VOICES, 1, this, "spin" );
+    voicespin = new QSpinBox( 1, MAX_VOICES, 1, this, "_spinv" );
     voicespin->setValue(current_voices);
     voicespin->setGeometry( ix +WIDTH/2, iy, WIDTH/2, HEIGHT );
     connect( voicespin, SIGNAL( valueChanged(int) ),
@@ -642,11 +668,40 @@ void KMidi::drawPanel()
     voicespin->setFont( QFont( "helvetica", 10, QFont::Normal) );
 
     iy += HEIGHT;
-    rbuttond = makeButton( ix,          iy, WIDTH,   HEIGHT, "R_D" );
+    rbuttond = makeButton( ix,          iy, WIDTH,   HEIGHT, "" );
     rbuttond->setFont( QFont( "helvetica", 10, QFont::Normal) );
 }
 
  
+void KMidi::updateRChecks( int which )
+{
+    int check_states = 0;
+
+    check_states |= which << 4;
+    //fprintf(stderr,"check %d\n", which);
+    switch (which) {
+	case 0:
+	    //fprintf(stderr, "state is %d\n", (int)rcb1->state() );
+	    check_states |= (int)rcb1->state();
+	    break;
+	case 1:
+	    //fprintf(stderr, "state is %d\n", (int)rcb2->state() );
+	    check_states |= (int)rcb2->state();
+	    break;
+	case 2:
+	    //fprintf(stderr, "state is %d\n", (int)rcb3->state() );
+	    check_states |= (int)rcb3->state();
+	    break;
+	case 3:
+	    //fprintf(stderr, "state is %d\n", (int)rcb4->state() );
+	    check_states |= (int)rcb4->state();
+	    break;
+
+    }
+    pipe_int_write(MOTIF_CHECK_STATE);
+    pipe_int_write(check_states);
+}
+
 void KMidi::voicesChanged( int newvoices )
 {
     if (newvoices < 1 || newvoices > MAX_VOICES) return;
@@ -1566,14 +1621,11 @@ void KMidi::readconfig(){
 	randomplay = FALSE;*/
 
     QColor defaultback = black;
-    QColor defaultled = QColor(226,224,255);
-
+    //QColor defaultled = QColor(226,224,255);
+    QColor defaultled = QColor(107,227,88);
 
     background_color = config->readColorEntry("BackColor",&defaultback);	
     led_color = config->readColorEntry("LEDColor",&defaultled);
-
-
-
 
 }
 

@@ -1211,9 +1211,29 @@ static void adjust_pressure(MidiEvent *e)
 	voice[i].velocity=e->b;
 	recompute_amp(i);
 	apply_envelope_to_amp(i);
-	/** return; **/
       }
 }
+
+#ifdef tplus
+static void adjust_channel_pressure(MidiEvent *e)
+{
+    if(opt_channel_pressure)
+    {
+	int i=voices;
+	int ch, pressure;
+
+	ch = e->channel;
+	pressure = e->a;
+        while (i--)
+	    if(voice[i].status == VOICE_ON && voice[i].channel == ch)
+	    {
+		voice[i].velocity = pressure;
+		recompute_amp(i);
+		apply_envelope_to_amp(i);
+	    }
+    }
+}
+#endif
 
 static void adjust_panning(int c)
 {
@@ -1394,6 +1414,11 @@ static void seek_forward(int32 until_time)
             case ME_COARSE_TUNING:
 	      channel[current_event->channel].tuning_msb = current_event->a;
 	      break;
+
+      	    case ME_CHANNEL_PRESSURE:
+	      /*adjust_channel_pressure(current_event);*/
+	      break;
+
 #endif
 	  
 	case ME_MAINVOLUME:
@@ -1874,7 +1899,7 @@ int play_midi(MidiEvent *eventlist, int32 events, int32 samples)
 		    midi_cnv_vib_depth(current_event->a);
 	      update_modulation_wheel(current_event->channel, channel[current_event->channel].modulation_wheel);
 		/*ctl_mode_event(CTLE_MOD_WHEEL, 1, current_event->channel, channel[current_event->channel].modulation_wheel);*/
-/*ctl->cmsg(CMSG_INFO, VERB_NORMAL, "~m%u", midi_cnv_vib_depth(current_event->a));*/
+		/*ctl->cmsg(CMSG_INFO, VERB_NORMAL, "~m%u", midi_cnv_vib_depth(current_event->a));*/
 	      break;
 
             case ME_PORTAMENTO_TIME_MSB:
@@ -1890,17 +1915,21 @@ int play_midi(MidiEvent *eventlist, int32 events, int32 samples)
             case ME_PORTAMENTO:
 	      channel[current_event->channel].portamento = (current_event->a >= 64);
 	      if(!channel[current_event->channel].portamento) drop_portamento(current_event->channel);
-/*ctl->cmsg(CMSG_INFO, VERB_NORMAL, "~P%d",current_event->a);*/
+		/*ctl->cmsg(CMSG_INFO, VERB_NORMAL, "~P%d",current_event->a);*/
 	      break;
 
             case ME_FINE_TUNING:
 	      channel[current_event->channel].tuning_lsb = current_event->a;
-/*ctl->cmsg(CMSG_INFO, VERB_NORMAL, "~t");*/
+		/*ctl->cmsg(CMSG_INFO, VERB_NORMAL, "~t");*/
 	      break;
 
             case ME_COARSE_TUNING:
 	      channel[current_event->channel].tuning_msb = current_event->a;
-ctl->cmsg(CMSG_INFO, VERB_NORMAL, "~T");
+		/*ctl->cmsg(CMSG_INFO, VERB_NORMAL, "~T");*/
+	      break;
+
+      	    case ME_CHANNEL_PRESSURE:
+	      adjust_channel_pressure(current_event);
 	      break;
 
 #endif

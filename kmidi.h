@@ -43,6 +43,8 @@
 #include <qcombobox.h>
 #include <qscrollbar.h>
 #include <qspinbox.h>
+#include <qhbuttongroup.h>
+#include <qcheckbox.h>
 #include <qtooltip.h>
 #include <qregexp.h>
 #include <qgroupbox.h>
@@ -128,7 +130,12 @@ public:
 	QPushButton 	*lbuttonc;
 	QPushButton 	*lbuttond;
 	QPushButton 	*lbuttone;
-	QPushButton 	*rbuttona;
+	//QPushButton 	*rbuttona;
+	QHButtonGroup	*rchecks;
+	QCheckBox	*rcb1;
+	QCheckBox	*rcb2;
+	QCheckBox	*rcb3;
+	QCheckBox	*rcb4;
 	QPushButton 	*effectbutton;
 	QSpinBox 	*voicespin;
 	QPushButton 	*rbuttond;
@@ -250,6 +257,7 @@ public slots:
 	void		setEffects( bool );
 	void		setSong( int );
 	void		voicesChanged( int );
+	void		updateRChecks( int );
 };
 
 

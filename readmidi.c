@@ -601,13 +601,21 @@ ctl->cmsg(CMSG_INFO, VERB_NORMAL, "PHASER");
 	      a &= 0x7f;
 	      MIDIEVENT(at, ME_PROGRAM, lastchan, a, 0);
 
+#ifdef tplus
+	    case 5: /* Channel pressure */
+	      MIDIEVENT(at, ME_CHANNEL_PRESSURE, lastchan, a, 0);
+#else
 	    case 5: /* Channel pressure - NOT IMPLEMENTED */
 	      break;
+#endif
 
 	    case 6: /* Pitch wheel */
 	      fread(&b, 1,1, fp);
 	      b &= 0x7F;
 	      MIDIEVENT(at, ME_PITCHWHEEL, lastchan, a, b);
+
+	    case 7:
+	      break;
 
 	    default: 
 	      ctl->cmsg(CMSG_ERROR, VERB_NORMAL, 

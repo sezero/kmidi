@@ -49,6 +49,7 @@ typedef struct {
 #define ME_LYRIC	16
 #define ME_TONE_KIT	17
 #define ME_MASTERVOLUME	18
+#define ME_CHANNEL_PRESSURE 19
 
 #define ME_HARMONICCONTENT	71
 #define ME_RELEASETIME		72

@@ -1,3 +1,7 @@
+1999-08-21  Greg Lee  <lee@hawaii.edu>
+
+	* spinbox for polyphony; meter colors configurable
+
 1999-08-15  Greg Lee  <lee@hawaii.edu>
 
 	* configdlg.cpp/h, kmidi.cpp: redo to use KTabCtl, KAboutWidget

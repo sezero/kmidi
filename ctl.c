@@ -463,10 +463,11 @@ static void ctl_close(void)
 
 static int ctl_blocking_read(int32 *valp)
 {
+  extern int reverb_options;
   int command;
   int new_volume;
   int new_centiseconds;
-  int arg;
+  int arg, argopt;
 
   pipe_int_read(&command);
   
@@ -524,7 +525,7 @@ static int ctl_blocking_read(int32 *valp)
 	      case MOTIF_PATCHSET:
 		  pipe_int_read(&arg);
 		  cfg_select = arg;
-/*fprintf(stderr,"ctl_blocking_read set #%d\n", cfg_select);*/
+	/*fprintf(stderr,"ctl_blocking_read set #%d\n", cfg_select);*/
 		  return RC_PATCHCHANGE;
 
 	      case MOTIF_EFFECTS:
@@ -538,6 +539,35 @@ static int ctl_blocking_read(int32 *valp)
 		  change_in_voices =
 		    *valp= arg;
 		  return RC_CHANGE_VOICES;
+		  
+	      case MOTIF_CHECK_STATE:
+		  pipe_int_read(&arg);
+	/* arg >>4 = checkbox 0,1,2,3; arg&0x0f = 0 (off), 1 (no change), 2 (on) */
+	/*fprintf(stderr, "box %d, state %d\n", arg>>4, arg&0x0f);*/
+		  argopt = arg & 0x0f;
+		  switch (arg>>4) {
+		     case 0:
+			/* stereo */
+			if (!argopt) reverb_options &= ~0x01;
+			else reverb_options |= 0x01;
+			break;
+		     case 1:
+			/* reverb */
+			if (!argopt) reverb_options &= ~0x02;
+			else reverb_options |= 0x02;
+			break;
+		     case 2:
+			/* chorus */
+			if (!argopt) reverb_options &= ~0x04;
+			else reverb_options |= 0x04;
+			break;
+		     case 3:
+			/* ?? */
+			if (!argopt) reverb_options &= ~0x08;
+			else reverb_options |= 0x08;
+			break;
+		  }
+		  return RC_NONE;
 		  
 
 	      case TRY_OPEN_DEVICE:
