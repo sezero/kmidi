@@ -537,7 +537,7 @@ static void output_data(int32 *buf, uint32 count)
       }
   }
 
-  b_out(dpm.fd, (int *)buf, ocount);
+  b_out(dpm.id_character, dpm.fd, (int *)buf, ocount);
 }
 
 
@@ -549,7 +549,7 @@ static void flush_output(void)
 
 static void purge_output(void)
 {
-  b_out(dpm.fd, 0, -1);
+  b_out(dpm.id_character, dpm.fd, 0, -1);
   snd_pcm_drain_playback (handle);
 }
 

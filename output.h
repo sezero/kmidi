@@ -57,7 +57,7 @@ extern int output_device_open;
 /* extern int current_sample_count(uint32 ct); */
 /* extern int driver_output_data(char *buf, uint32 count); */
 extern int b_out_count(void);
-extern void b_out(int fd, int *buf, int ocount);
+extern void b_out(char id, int fd, int *buf, int ocount);
 /* Conversion functions -- These overwrite the int32 data in *lp with
    data in another format */
 

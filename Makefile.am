@@ -14,7 +14,7 @@ if GXXOPTIMIZE
 KDE_CXXFLAGS = -O3 -fomit-frame-pointer -ffast-math -malign-double
 endif
 LDFLAGS = $(all_libraries) $(KDE_RPATH)
-LDADD = $(LIB_KFILE) $(LIBALIB) $(LIBAUDIO) $(LIBMME) $(EXTRALIBS)
+LDADD = $(LIB_KFILE) $(LIBALIB) $(LIBAUDIO) $(LIBMME) $(EXTRALIBS) -lsoundserver_idl -lartsflow
 
 # Where to install the patches, config files, and MIDI files.
 # If you change this, it's a good idea to recompile the binary,
@@ -36,7 +36,7 @@ kmidi_SOURCES = kmidi.cpp  playlist.cpp bwlednum.cpp configdlg.cpp log.cpp \
 	tables.cpp controls.cpp output.cpp filter.cpp wave_a.cpp raw_a.cpp dumb_c.cpp \
 	sndfont.cpp readsbk.cpp ncurs_c.cpp slang_c.cpp ctl.cpp cfg.cpp \
 	linux_a.cpp linux_a2.cpp dec_a.cpp sun_a.cpp hpux_a.cpp hpux_d_a.cpp alsa_a.cpp \
-	bsd20_a.cpp esd_a.cpp nas_a.cpp \
+	bsd20_a.cpp esd_a.cpp nas_a.cpp arts_a.cpp \
 	b_out.cpp fffload.cpp \
 	effects.cpp reverb_e.cpp chorus_e.cpp phaser_e.cpp celeste_e.cpp \
 	resample_l.cpp resample_f.cpp midiapplication.cpp kmidiframe.cpp \

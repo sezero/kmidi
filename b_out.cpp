@@ -49,7 +49,7 @@ int b_out_count()
   return out_count;
 }
 
-void b_out(int fd, int *buf, int ocount)
+void b_out(char id, int fd, int *buf, int ocount)
 {
   int ret;
   uint32 ucount;
@@ -81,7 +81,8 @@ void b_out(int fd, int *buf, int ocount)
   if (!total_bytes) {
 #ifdef SNDCTL_DSP_GETOSPACE
     audio_buf_info info;
-    if (ioctl(fd, SNDCTL_DSP_GETOSPACE, &info) != -1) {
+    if ( (id == 'd' || id == 'D') &&
+         (ioctl(fd, SNDCTL_DSP_GETOSPACE, &info) != -1)) {
 	total_bytes = info.fragstotal * info.fragsize;
 	outchunk = info.fragsize;
     }
@@ -99,7 +100,8 @@ void b_out(int fd, int *buf, int ocount)
   else {
 	int samples_queued;
 #ifdef SNDCTL_DSP_GETODELAY
-	if (ioctl(fd, SNDCTL_DSP_GETODELAY, &samples_queued) == -1)
+        if ( (id == 'd' || id == 'D') &&
+	     (ioctl(fd, SNDCTL_DSP_GETODELAY, &samples_queued) == -1))
 #endif
 	    samples_queued = 0;
 
