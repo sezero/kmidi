@@ -55,7 +55,7 @@ extern const char * whatsthis_image[];
 ConfigDlg::ConfigDlg(QWidget *parent, struct configstruct *data, const char *name)
     : QDialog(parent, name, TRUE)
 {
-    setCaption(i18n("kmidi configuration"));
+    setCaption(i18n("kmidi Configuration"));
     setMinimumSize(300, 200);
 
   configdata.background_color = black;
