@@ -175,7 +175,7 @@ int MidiApplication::newInstance()
 int createKApplication(int *argc, char ***argv) 
 {
        int deref_argc = *argc;
-       char **deref_argv = new (char**)[deref_argc];
+       char **deref_argv = new char*[deref_argc];
        for(int i = 0; i < deref_argc; i++)
           deref_argv[i] = (*argv)[i];
 
