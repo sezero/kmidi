@@ -1037,7 +1037,7 @@ void KMidi::drawPanel()
 			      "in centiseconds before a played<br>\n"
 			      "note is displayed on the<br>\n"
 			      "channel meter to the left.<br>\n"
-			      "It may help to syncronize the<br>\n"
+			      "It may help to synchronize the<br>\n"
 			      "display with the music."));
     meterspin->hide();
 

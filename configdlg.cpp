@@ -135,7 +135,7 @@ ConfigDlg::ConfigDlg(QWidget *parent, struct configstruct *data, const char *nam
 			       "when cursor is left over a<br>\n"
 			       "object on the screen"));
 
-    str = i18n("Try to stop KMidi from<br>\nusing up too much of your ram.");
+    str = i18n("Try to stop KMidi from<br>\nusing up too much of your RAM.");
     label3 = new QLabel(w);
     label3->setGeometry(60,200,135,25);
     label3->setText("Patch Mem Max:");
