@@ -129,7 +129,7 @@ public:
 	QComboBox	*playbox;
 	QPushButton 	*lbuttonc;
 	QPushButton 	*lbuttond;
-	QPushButton 	*lbuttone;
+	//QPushButton 	*lbuttone;
 	//QPushButton 	*rbuttona;
 	QHButtonGroup	*rchecks;
 	QCheckBox	*rcb1;
@@ -137,6 +137,7 @@ public:
 	QCheckBox	*rcb3;
 	QCheckBox	*rcb4;
 	QPushButton 	*effectbutton;
+	QSpinBox 	*meterspin;
 	QSpinBox 	*voicespin;
 	QPushButton 	*rbuttond;
 	MeterWidget	*meter;
@@ -257,6 +258,7 @@ public slots:
 	void		setEffects( bool );
 	void		setSong( int );
 	void		voicesChanged( int );
+	void		meterfudgeChanged( int );
 	void		updateRChecks( int );
 };
 

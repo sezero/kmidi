@@ -63,7 +63,8 @@
 #include "ctl.h"
 //#include <kiconloader.h>
 #include <kstddirs.h>
-//#include <kglobal.h>
+#include <kglobal.h>
+
 
 extern "C" {
 
@@ -81,6 +82,7 @@ extern int32 control_ratio;
 extern char *cfg_names[];
 
 static int currplaytime = 0;
+static int meterfudge = 0;
 
 enum midistatus{ KNONE, KPLAYING, KSTOPPED, KLOOPING, KFORWARD,
 		 KBACKWARD, KNEXT, KPREVIOUS,KPAUSED};
@@ -195,7 +197,7 @@ void KMidi::setToolTips()
 	QToolTip::add( playbox,		i18n("Select Song") );
 	QToolTip::add( lbuttonc,	i18n("unnassigned") );
 	QToolTip::add( lbuttond,	i18n("unnassigned") );
-	QToolTip::add( lbuttone,	i18n("unnassigned") );
+	QToolTip::add( meterspin,	i18n("Sync Meter") );
 	QToolTip::add( rcb1,		i18n("Stereo Voice: norm/xtra/off") );
 	QToolTip::add( rcb2,		i18n("Reverb: norm/xtra/off") );
 	QToolTip::add( rcb3,		i18n("Chorus: norm/xtra/off") );
@@ -226,7 +228,7 @@ void KMidi::setToolTips()
 	QToolTip::remove( playbox );
 	QToolTip::remove( lbuttonc );
 	QToolTip::remove( lbuttond );
-	QToolTip::remove( lbuttone );
+	QToolTip::remove( meterspin );
 	QToolTip::remove( rcb1 );
 	QToolTip::remove( rcb2 );
 	QToolTip::remove( rcb3 );
@@ -298,7 +300,7 @@ extern PanelInfo *Panel;
 #define FLAG_PROG	2
 #define FLAG_PAN	4
 #define FLAG_SUST	8
-#define METERFUDGE	0
+//#define METERFUDGE	20
 
 void MeterWidget::remeter()
 {
@@ -309,7 +311,7 @@ void MeterWidget::remeter()
 	static int lastvol[16], meterpainttime = 0;
 	int ch, x1, y1, slot, amplitude, notetime;
 
-	if (currplaytime < meterpainttime || Panel->reset_panel) {
+	if (currplaytime + meterfudge < meterpainttime || Panel->reset_panel) {
 		erase();
 		for (ch = 0; ch < 16; ch++) {
 			lastvol[ch] = 0;
@@ -317,7 +319,7 @@ void MeterWidget::remeter()
 		}
 		Panel->reset_panel = 0;
 	}
-	meterpainttime = currplaytime - METERFUDGE;
+	meterpainttime = currplaytime + meterfudge;
 
 	for (ch = 0; ch < 16; ch++) {
 		x1 = BAR_LM + ch * BAR_WID;
@@ -625,8 +627,16 @@ void KMidi::drawPanel()
     lbuttonc->setFont( QFont( "helvetica", 10, QFont::Normal) );
     lbuttond = makeButton( ix +WIDTH/2, iy, WIDTH/2, HEIGHT, "" );
     lbuttond->setFont( QFont( "helvetica", 10, QFont::Normal) );
-    lbuttone = makeButton( ix +WIDTH,   iy, WIDTH/2, HEIGHT, "" );
-    lbuttone->setFont( QFont( "helvetica", 10, QFont::Normal) );
+
+    //lbuttone = makeButton( ix +WIDTH,   iy, WIDTH/2, HEIGHT, "" );
+    //lbuttone->setFont( QFont( "helvetica", 10, QFont::Normal) );
+
+    meterspin = new QSpinBox( 0, 99, 1, this, "_spinm" );
+    meterspin->setValue(meterfudge);
+    meterspin->setGeometry( ix +WIDTH, iy, WIDTH/2, HEIGHT );
+    connect( meterspin, SIGNAL( valueChanged(int) ),
+	     SLOT( meterfudgeChanged(int) ) );
+    meterspin->setFont( QFont( "helvetica", 10, QFont::Normal) );
 
     iy = regularheight;
     ix = WIDTH + SBARWIDTH;
@@ -656,7 +666,6 @@ void KMidi::drawPanel()
     connect( effectbutton, SIGNAL(toggled(bool)), SLOT(setEffects(bool)) );
 
 
-    // Create a spin box
 
     voicespin = new QSpinBox( 1, MAX_VOICES, 1, this, "_spinv" );
     voicespin->setValue(current_voices);
@@ -699,6 +708,11 @@ void KMidi::updateRChecks( int which )
     }
     pipe_int_write(MOTIF_CHECK_STATE);
     pipe_int_write(check_states);
+}
+
+void KMidi::meterfudgeChanged( int newfudge )
+{
+    meterfudge = newfudge;
 }
 
 void KMidi::voicesChanged( int newvoices )
@@ -1197,33 +1211,40 @@ void KMidi::PlayCommandlineMods(){
 void KMidi::loadplaylist(){
 
     QString defaultlist = locate( "appdata", "default");
-    if (defaultlist.isEmpty())
-        return;
 
-    QFile f(defaultlist);
+    if (defaultlist.isEmpty()) {
+	QStringList list = KGlobal::dirs()->findAllResources("appdata", "*.mid");
 
-    f.open( IO_ReadOnly | IO_Translate);
-
-    char buffer[1024];
-    QString tempstring;
-
-    while(!f.atEnd()){
-      QFileInfo file;
-
-      buffer[0] = (char) 0;
-      f.readLine(buffer,511);
-
-      tempstring = buffer;
-      tempstring = tempstring.stripWhiteSpace();
-
-      if (!tempstring.isEmpty()){
-	file.setFile(tempstring);
-	if (file.isReadable())
-	  playlist->append(tempstring);
-	}	
+	for ( QStringList::Iterator it = list.begin(); it != list.end(); ++it ) {
+	    playlist->append( *it );
+        }
     }
+    else {
+	QFile f(defaultlist);
 
-    f.close();
+	f.open( IO_ReadOnly | IO_Translate);
+
+	char buffer[1024];
+	QString tempstring;
+
+	while(!f.atEnd()){
+	  QFileInfo file;
+
+	  buffer[0] = (char) 0;
+	  f.readLine(buffer,511);
+
+	  tempstring = buffer;
+	  tempstring = tempstring.stripWhiteSpace();
+
+	  if (!tempstring.isEmpty()){
+	    file.setFile(tempstring);
+	    if (file.isReadable())
+	      playlist->append(tempstring);
+	  }	
+	}
+
+	f.close();
+    }
     redoplaybox();
 
 }
@@ -1602,7 +1623,7 @@ void KMidi::readconfig(){
 
     volume = config->readNumEntry("Volume", 40);
     current_voices = config->readNumEntry("Polyphony", DEFAULT_VOICES);
-
+    meterfudge = config->readNumEntry("MeterAdjust", 14);
     tooltipsint = config->readNumEntry("ToolTips", 1);
 
     if (tooltipsint == 1)
@@ -1652,6 +1673,7 @@ void KMidi::writeconfig(){
     config->writeEntry("Polyphony", current_voices);
     config->writeEntry("BackColor",background_color);
     config->writeEntry("LEDColor",led_color);
+    config->writeEntry("MeterAdjust",meterfudge);
     config->sync();
 }
 

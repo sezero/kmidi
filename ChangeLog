@@ -1,3 +1,8 @@
+1999-08-23  Greg Lee  <lee@hawaii.edu>
+
+	* install sample midis in appdata
+	* add spinbox to sync channel meter
+
 1999-08-22  Greg Lee  <lee@hawaii.edu>
 
 	* panel control of stereo/reverb/chorus voice & verbosity

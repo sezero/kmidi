@@ -2088,7 +2088,7 @@ current_event->channel);
 	case ME_VIBRATO_DEPTH:
 	  channel[current_event->channel].vibrato_depth=midi_cnv_vib_depth(current_event->a);
 	  update_channel_freq(current_event->channel);
-ctl->cmsg(CMSG_INFO, VERB_NORMAL, "~v%u", midi_cnv_vib_depth(current_event->a));
+	/*ctl->cmsg(CMSG_INFO, VERB_NORMAL, "~v%u", midi_cnv_vib_depth(current_event->a));*/
 	  break;
 	case ME_VIBRATO_DELAY:
 	  channel[current_event->channel].vibrato_delay=midi_cnv_vib_delay(current_event->a);

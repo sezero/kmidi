@@ -35,7 +35,7 @@ noinst_HEADERS = kmidi.h  playlist.h bwlednum.h configdlg.h\
 
 METASOURCES = kmidi.moc  playlist.moc bwlednum.moc configdlg.moc log.moc
 
-SUBDIRS = config bitmaps patch
+SUBDIRS = config bitmaps patch midis
 
 appsdir = $(kde_appsdir)/Multimedia
 apps_DATA = kmidi.desktop
@@ -66,17 +66,17 @@ install-data-local:
 	@echo "=========="	
 	@echo "Midis:"
 	@echo "I have included a couple of nice midis in the kmidi/midis directory."
+	@echo "These are installed in KDEDIR/share/apps/kmidi."
 	@echo ""
 	@echo "Sound Patches:"
-	@echo "Only a simple  piano and guitar sound patch come with this distribution."
-	@echo "This  means that you can only play guitar or piano midis such as the"
-	@echo "included cavatina.mid, malaguena.mid until you get yourself a full set" 
-	@echo "of general midi patches. Read the html docs for more info on how to obtain "
-	@echo "a full set of General Midi (GM)  patches."
+	@echo "Only a simple  piano and guitar sound patch and 3 drum patches come with "
+	@echo "this distribution. This  means that you can only play guitar or piano midis "
+	@echo "midis such as the included cavatina.mid, malaguena.mid, or \"Take The A Train\""
+	@echo "until you get yourself a full set of general midi (or GS or XG) patches." 
+	@echo "Read the html docs for more info on how to obtain more patches."
 	@echo ""
-	@echo "ONCE YOU HAVE A FULL SET YOU WON'T BELIEVE YOUR EARS -- PROMISE!"
 	@echo ""
-	@echo "Have fun with kmidi -- Bernd Wuebben <wuebben@kde.org>"
+	@echo "Have fun with kmidi -- Bernd Wuebben <wuebben@kde.org>, Greg Lee <lee@hawaii.edu>"
 
 
 
