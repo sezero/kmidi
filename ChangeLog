@@ -1,3 +1,7 @@
+1999-12-24  Greg Lee  <lee@hawaii.edu>
+
+	* fix multiple references to soundfonts
+
 1999-12-22  Greg Lee  <lee@hawaii.edu>
 
 	* fix error messages

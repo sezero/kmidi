@@ -123,7 +123,11 @@ static void calc_filterQ(Layer *lay, SFInfo *sf, SampleList *sp);
 
 /*----------------------------------------------------------------*/
 
-static SFInsts sfrec;
+#define MAX_SF_FILES 40
+static int current_sf_index = 0;
+static int last_sf_index = 0;
+
+static SFInsts sfrec[MAX_SF_FILES];
 
 int cutoff_allowed = 0;
 int command_cutoff_allowed = 0;
@@ -142,47 +146,6 @@ static char *getname(p)
 
 static SFInfo sfinfo;
 
-#ifdef tplussbk
-/* add blank loop for each data */
-int auto_add_blank = 0;
-void correct_samples(SFInfo *sf)
-{
-	int i;
-	SFSampleInfo *sp;
-	int prev_end;
-
-	prev_end = 0;
-	for (sp = sf->sample, i = 0; i < sf->nsamples; i++, sp++) {
-		/* correct sample positions for SBK file */
-		if (sf->version == 1) {
-			sp->startloop++;
-			sp->endloop += 2;
-		}
-
-		/* calculate sample data size */
-		if (sp->sampletype & 0x8000)
-			sp->size = 0;
-		else if (sp->startsample < prev_end && sp->startsample != 0)
-			sp->size = 0;
-		else {
-			sp->size = -1;
-			if (!auto_add_blank && i != sf->nsamples-1)
-				sp->size = sp[1].startsample - sp->startsample;
-			if (sp->size < 0)
-				sp->size = sp->endsample - sp->startsample + 48;		}
-		prev_end = sp->endsample;
-
-		/* calculate short-shot loop size */
-		if (auto_add_blank || i == sf->nsamples-1)
-			sp->loopshot = 48;
-		else {
-			sp->loopshot = sp[1].startsample - sp->endsample;
-			if (sp->loopshot < 0 || sp->loopshot > 48)
-				sp->loopshot = 48;
-		}
-	}
-}
-#endif
 
 #ifdef READ_WHOLE_SF_FILE
 static int sf_size_of_contents;
@@ -241,6 +204,14 @@ static unsigned char *read_whole_sf(FILE *fd) {
 }
 #endif
 
+/*
+ * init_soundfont
+ *	fname: name of soundfont file
+ *	newbank: toneset # or, if >255, drumset # + 256
+ *	oldbank: same as newbank unless cfg file has "sf <name> oldbank=<num>",
+ *		in which case oldbank=<num>
+ *	level: nesting level of cfg file (what is this for?)
+ */
 void init_soundfont(char *fname, int oldbank, int newbank, int level)
 {
 	int i;
@@ -249,84 +220,66 @@ void init_soundfont(char *fname, int oldbank, int newbank, int level)
 	unsigned char *sf_contents = 0;
 #endif
 
-	ctl->cmsg(CMSG_INFO, VERB_NOISY, "init soundfonts `%s'", fname);
-#ifdef ADAGIO
-	play_mode->rate = setting_dsp_rate;  /*output_rate;*/
-#endif
+	ctl->cmsg(CMSG_INFO, VERB_NOISY, "init soundfont `%s'", fname);
 
-#if 0
-#define XTO_MSEC(tcents) (int32)(1000 * pow(2.0, (double)(tcents) / 1200.0))
-for (i = -12000; i <= 8000; i+= 500)
-printf(" %d tcents = %d msec = %d adj = %d adjj\n", i,
-	 XTO_MSEC( 0.5 *(i-8000) ),
-	 XTO_MSEC( 0.5*(i - 7000) ),
-	 XTO_MSEC( 0.5*(i - 4000) ) );
-#endif
-#if 0
-for (i = -12000; i <= 8000; i+= 500)
-printf(" %d tcents = %d msec = %d adj = %d adjj\n", i,
-	(int32)(1000 * pow(2.0, (double)( i - 12000 ) / 120.0)),
-	(int32)(1000 * pow(2.0, (double)( i - 12000 ) / 1200.0)),
-	(int32)(1000 * pow(2.0, (double)( i - 12000 ) / 12000.0)) );
-#endif
-
-#if 0
-#define XTO_LINEAR(centibel) pow(10.0, -(double)(centibel)/200.0)
-for (i = -200; i <= 1000; i+= 50)
-printf(" %d cbel = %f vol = %d norm\n", i,
-	 XTO_LINEAR((double)i/10.0),
-	 (int32)(255.0 * XTO_LINEAR((double)i/10.0)) );
-#endif
-
-#if 0
-#define YTO_VOLUME(centibel) (255 * (1.0 - ((double)(centibel)/100.0) / (1200.0 * log10(2.0)) ))
-#define OTO_VOLUME(centibel) (255 * (1.0 - (centibel) / (1200.0 * log10(2.0))))
-#define XTO_VOLUME(centibel) (uint8)(255 * pow(10.0, -(double)(centibel)/200.0))
-for (i = -200; i <= 1000; i+= 50)
-printf(" %d cbel = %f vol\n", i, YTO_VOLUME(i));
-#endif
-
-	control_ratio = play_mode->rate / CONTROLS_PER_SECOND;
-	if(control_ratio<1)
-		 control_ratio=1;
-	else if (control_ratio > MAX_CONTROL_RATIO)
-		 control_ratio=MAX_CONTROL_RATIO;
-
-	if ((sfrec.fd = open_file(fname, 1, OF_VERBOSE, level)) == NULL) {
-		ctl->cmsg(CMSG_ERROR, VERB_NORMAL,
-			  "can't open soundfont file %s", fname);
-		return;
+	current_sf_index = -1;
+	for (i = 0; i < last_sf_index; i++) if (sfrec[i].fname && !strcmp(sfrec[i].fname, fname)) {
+		current_sf_index = i;
+		rewind(sfrec[i].fd);
+		break;
 	}
-	sfrec.fname = strcpy((char*)safe_malloc(strlen(fname)+1), fname);
-	load_sbk(sfrec.fd, &sfinfo);
-#ifdef tplussbk
-	correct_samples(&sfinfo);
-	current_sfrec = rec;
-#endif
+
+	if (current_sf_index == -1) {
+	    if (last_sf_index >= MAX_SF_FILES) {
+		ctl->cmsg(CMSG_ERROR, VERB_NORMAL,
+			  "Too many soundfont files to load %s.", fname);
+		return;
+	    }
+	    current_sf_index = last_sf_index;
+
+	    if ((sfrec[current_sf_index].fd = open_file(fname, 1, OF_VERBOSE, level)) == NULL) {
+		ctl->cmsg(CMSG_ERROR, VERB_NORMAL,
+			  "Can't open soundfont file %s.", fname);
+		return;
+	    }
+	    last_sf_index++;
+	    sfrec[current_sf_index].fname = strcpy((char*)safe_malloc(strlen(fname)+1), fname);
+	}
+
+	load_sbk(sfrec[current_sf_index].fd, &sfinfo);
+
 	for (i = 0; i < sfinfo.nrpresets-1; i++) {
-		int bank = sfinfo.presethdr[i].bank;
-		int preset = sfinfo.presethdr[i].preset;
+		/* if substituting banks, only parse matching bank */
 		if (oldbank != newbank) {
+			int bank = sfinfo.presethdr[i].bank;
+			int preset = sfinfo.presethdr[i].preset;
+			/* is it a matching percussion preset? */
 			if (newbank >= 256 && bank == 128 && preset == oldbank) {
 				preset = sfinfo.presethdr[i].sub_preset = newbank - 256;
+				parse_preset(&sfrec[current_sf_index], &sfinfo, i);
 			}
-			else if (bank == oldbank) bank = sfinfo.presethdr[i].sub_bank = newbank;
+			/* is it a matching melodic bank? */
+			else if (bank == oldbank) {
+				bank = sfinfo.presethdr[i].sub_bank = newbank;
+				parse_preset(&sfrec[current_sf_index], &sfinfo, i);
+			}
 		}
-		parse_preset(&sfrec, &sfinfo, i);
+		/* but if not substituting banks, parse them all */
+		else parse_preset(&sfrec[current_sf_index], &sfinfo, i);
 	}
 
 	/* copy header info */
-	sfrec.version = sfinfo.version;
-	sfrec.minorversion = sfinfo.minorversion;
-	sfrec.samplepos = sfinfo.samplepos;
-	sfrec.samplesize = sfinfo.samplesize;
+	sfrec[current_sf_index].version = sfinfo.version;
+	sfrec[current_sf_index].minorversion = sfinfo.minorversion;
+	sfrec[current_sf_index].samplepos = sfinfo.samplepos;
+	sfrec[current_sf_index].samplesize = sfinfo.samplesize;
 
 	free_sbk(&sfinfo);
 
 
 #ifdef READ_WHOLE_SF_FILE
-	sf_contents = read_whole_sf(sfrec.fd);
-	for (ip = sfrec.instlist; ip; ip = ip->next) {
+	sf_contents = read_whole_sf(sfrec[current_sf_index].fd);
+	for (ip = sfrec[current_sf_index].instlist; ip; ip = ip->next) {
 	    if (!ip->already_loaded) {
 		ip->contents = sf_contents;
 		ip->size_of_contents = sf_size_of_contents;
@@ -335,7 +288,7 @@ printf(" %d cbel = %f vol\n", i, YTO_VOLUME(i));
 	}
 #else
 	/* mark instruments as loaded so they won't be loaded again if we're re-called */
-	for (ip = sfrec.instlist; ip; ip = ip->next) ip->already_loaded = 10000000;
+	for (ip = sfrec[current_sf_index].instlist; ip; ip = ip->next) ip->already_loaded = 10000000;
 #endif
 
 }
@@ -343,16 +296,24 @@ printf(" %d cbel = %f vol\n", i, YTO_VOLUME(i));
 
 void end_soundfont(void)
 {
-	InstList *ip, *next;
-	FILE *still_open = NULL;
-	char *still_not_free = NULL;
-	unsigned char *contents_not_free = NULL;
-	int contents_size = 0;
+    InstList *ip, *next;
+    FILE *still_open;
+    char *still_not_free;
+    unsigned char *contents_not_free;
+    int contents_size = 0;
 
-	if (!sfrec.instlist) return;
+    current_sf_index = 0;
+
+    while (current_sf_index < last_sf_index) {
+
+	if (!sfrec[current_sf_index].instlist) continue;
+
+	still_open = NULL;
+	still_not_free = NULL;
+	contents_not_free = NULL;
 
 	while (1) {
-	    for (ip = sfrec.instlist; ip; ip = next) {
+	    for (ip = sfrec[current_sf_index].instlist; ip; ip = next) {
 		next = ip->next;
 		if (!still_open && ip->fd) {
 		    still_open = ip->fd;
@@ -381,17 +342,22 @@ void end_soundfont(void)
 	    else break;
 	}
 
-	for (ip = sfrec.instlist; ip; ip = next) {
+	for (ip = sfrec[current_sf_index].instlist; ip; ip = next) {
 		next = ip->next;
 		free(ip);
 	}
 
-	sfrec.version =
-	sfrec.minorversion =
-	sfrec.samplepos =
-	sfrec.samplesize = 0;
-	sfrec.instlist = NULL;
-	sfrec.fd = NULL;
+	sfrec[current_sf_index].version =
+	sfrec[current_sf_index].minorversion =
+	sfrec[current_sf_index].samplepos =
+	sfrec[current_sf_index].samplesize = 0;
+	sfrec[current_sf_index].instlist = NULL;
+	sfrec[current_sf_index].fd = NULL;
+
+	current_sf_index++;
+    }
+
+    current_sf_index = last_sf_index = 0;
 }
 
 /*----------------------------------------------------------------
@@ -413,9 +379,7 @@ InstrumentLayer *load_sbk_patch(int gm_num, int tpgm, int reverb, int main_volum
     int percussion, amp=-1, keynote, strip_loop, strip_envelope, strip_tail, bank, newmode;
 #else
 InstrumentLayer *load_sbk_patch(char *name, int gm_num, int bank, int percussion,
-			   int panning, int amp, int keynote,
-			   int strip_loop, int strip_envelope,
-			   int strip_tail) {
+			   int panning, int amp, int keynote, int sf_ix) {
 #endif
 	int preset;
 	int not_done, load_index=0;
@@ -446,6 +410,17 @@ InstrumentLayer *load_sbk_patch(char *name, int gm_num, int bank, int percussion
     }
     else keynote = -1;
 
+    if (sf_ix < 0 || sf_ix >= MAX_SF_FILES) {
+	ctl->cmsg(CMSG_ERROR, VERB_NORMAL, "Indexing non-existent soundfont %d.",
+		sf_ix);
+	return 0;
+    }
+    if (!sfrec[sf_ix].fname || !sfrec[sf_ix].instlist) {
+	ctl->cmsg(CMSG_ERROR, VERB_NORMAL, "Indexing uninitialized soundfont %d.",
+		sf_ix);
+	return 0;
+    }
+
     cutoff_allowed = command_cutoff_allowed;
 
     patch_memory = 0;
@@ -455,7 +430,7 @@ InstrumentLayer *load_sbk_patch(char *name, int gm_num, int bank, int percussion
 
     while (not_done) {
 
-	for (ip = sfrec.instlist; ip; ip = ip->next) {
+	for (ip = sfrec[sf_ix].instlist; ip; ip = ip->next) {
 		if (ip->bank == bank && ip->preset == preset &&
 			ip->already_loaded > load_index &&
 		    (keynote < 0 || keynote == ip->keynote))
@@ -466,19 +441,19 @@ InstrumentLayer *load_sbk_patch(char *name, int gm_num, int bank, int percussion
 		if (!load_index)
 			load_index = ip->already_loaded - 1;
 		ip->already_loaded = load_index;
-		sfrec.fname = ip->fname;
+		sfrec[sf_ix].fname = ip->fname;
 #ifdef READ_WHOLE_SF_FILE
-		sfrec.contents = ip->contents;
+		sfrec[sf_ix].contents = ip->contents;
 #endif
     		ctl->cmsg(CMSG_INFO, VERB_NOISY, "%s%s[%d,%d] %s%s (%d-%d)",
 			(percussion)? "   ":"", name,
 			(percussion)? keynote : preset, (percussion)? preset : bank,
 			(ip->rsamples)? "(2) " : "",
-			sfrec.fname,
+			sfrec[sf_ix].fname,
 			LO_VAL(ip->velrange),
 				HI_VAL(ip->velrange)? HI_VAL(ip->velrange) : 127 );
-		sfrec.fd = ip->fd;
-		inst = load_from_file(&sfrec, ip, amp);
+		sfrec[sf_ix].fd = ip->fd;
+		inst = load_from_file(&sfrec[sf_ix], ip, amp);
 #ifdef READ_WHOLE_SF_FILE
 		if (inst) inst->contents = ip->contents;
 #endif
@@ -489,7 +464,7 @@ InstrumentLayer *load_sbk_patch(char *name, int gm_num, int bank, int percussion
 		if (!lp) {
 		    ctl->cmsg(CMSG_INFO, VERB_NORMAL, "Can't find %s %s[%d,%d] in %s.",
 			(percussion)? "drum":"instrument", name,
-			(percussion)? keynote : preset, (percussion)? preset : bank, sfrec.fname);
+			(percussion)? keynote : preset, (percussion)? preset : bank, sfrec[sf_ix].fname);
 		    return 0;
 		}
 	}
@@ -1111,12 +1086,20 @@ fprintf(stderr,"Adding keynote #%d preset %d to %s (%d), bank %d (=? %d).\n", ke
 	if (!bank) return;
 	namep = &bank->tone[program].name;
 #ifdef GREGSTEST
-if (*namep) fprintf(stderr,"cfg name is %s\n", *namep);
-else printf("NO CFG NAME!\n");
+	if (*namep) fprintf(stderr,"cfg name is %s\n", *namep);
+	else printf("NO CFG NAME!\n");
 #endif
+	/* if not declared, we don't load it */
 	if (*namep == 0) return;
 
+	/* could be a GUS patch */
 	if (bank->tone[program].font_type != FONT_SBK) return;
+	/* note we're loading this preset from a certain soundfont */
+	if (bank->tone[program].sf_ix == -1)
+		bank->tone[program].sf_ix = current_sf_index;
+	/* has it been loaded already from a different soundfont? */
+	else if (bank->tone[program].sf_ix != current_sf_index) return;
+
 	panning = bank->tone[program].pan;
 	strip_loop = bank->tone[program].strip_loop;
 	strip_envelope = bank->tone[program].strip_envelope;

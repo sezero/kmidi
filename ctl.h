@@ -50,3 +50,9 @@ typedef struct {
 extern PanelInfo *Panel;
 extern MidiEvent *current_event;
 extern int output_device_open;
+extern int pipe_read_ready();
+extern void pipe_int_write(int c);
+extern void pipe_int_read(int *c);
+extern void pipe_string_read(char *str);
+extern void pipe_string_write(char *str);
+

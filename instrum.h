@@ -97,7 +97,7 @@ typedef struct _InstrumentLayer {
 typedef struct {
   char *name;
   InstrumentLayer *layer;
-  int font_type, last_used;
+  int font_type, sf_ix, last_used;
 #ifndef ADAGIO
   int note, amp, pan, strip_loop, strip_envelope, strip_tail;
 #else /* ADAGIO */
@@ -156,7 +156,7 @@ extern InstrumentLayer *load_fff_patch(char *name, int gm_num, int bank, int per
  int panning, int amp, int note_to_use, int strip_loop, int strip_envelope, int strip_tail);
 #endif
 extern InstrumentLayer *load_sbk_patch(char *name, int gm_num, int bank, int percussion,
- int panning, int amp, int note_to_use, int strip_loop, int strip_envelope, int strip_tail);
+ int panning, int amp, int note_to_use, int sf_ix);
 extern int current_tune_number;
 extern int max_patch_memory;
 extern int current_patch_memory;
