@@ -61,8 +61,6 @@ KMidiFrame::KMidiFrame( const char *name ) :
 {
 
     menuBar = new KMenuBar(this);
-    menuBar->enableMoving(false);
-    menuBar->enableFloating(false);
 
     QPopupMenu *fileMenu = new QPopupMenu;
     menuBar->insertItem("&File", fileMenu);
@@ -343,9 +341,6 @@ KMidiFrame::KMidiFrame( const char *name ) :
 
     QPopupMenu *about = helpMenu(aboutapp);
     menuBar->insertItem( i18n("About"), about);
-
-    menuBar->enableFloating(false);
-    menuBar->enableMoving(false);
 
     setMenu(menuBar);
 
