@@ -1,51 +1,11 @@
-/* 
+/*
  *
  *             BW_LED_Number a very very primitive LED
- * 
+ *
  * Copyright: Bernd Johannes Wuebben, wuebben@math.cornell.edu
- * 
+ *
  *
  * $Id$
- * 
- * $Log$
- * Revision 1.3  1999/03/01 23:37:24  kulow
- * CVS_SILENT ported to Qt 2.0
- *
- * Revision 1.2.6.1  1999/02/22 22:28:05  kulow
- * CVS_SILENT replaced old qt header names with new ones
- *
- * Revision 1.2  1998/04/06 18:44:11  wuebben
- * Bernd: layout changes
- *
- * Revision 1.3  1997/10/25 15:15:35  wuebben
- * Bernd: fixed the segfault error if you had no permiision to access the cdrom
- * drive
- *
- * Revision 1.2  1997/08/15 22:51:26  wuebben
- * *** empty log message ***
- *
- * Revision 1.2  1997/08/15 22:42:54  wuebben
- * Bernd -- Version 0.4
- * o Support for cdda on Solaris
- * o Support for Irix
- * o New interactive configuration script
- * o  lot of header, define and configuration changes. -- Keep your
- *   fingers crossed .... ;-)
- *
- * Revision 1.1  1997/08/14 23:51:07  wuebben
- * Initial revision
- *
- * Revision 1.1  1997/06/21 23:09:10  wuebben
- * Initial revision
- *
- * Revision 1.2  1997/03/22 22:09:37  wuebben
- * Added support for visibe non-illuminated Segments
- *
- * Revision 1.1  1997/03/22 12:45:25  wuebben
- * Initial revision
- *
- *
- * 
  *
  */
 
@@ -90,7 +50,7 @@ public slots:
 
             // display one of the characters " 0 1 2 3 4 5 6 7 8 9 . : - "
     void    display( char c );
-  
+
             // display on e of the numbers   " 0 1 2 3 4 5 6 7 8 9"
     void    display( int i );
 
