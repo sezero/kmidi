@@ -133,9 +133,9 @@ KMidiFrame::KMidiFrame( const char *name ) :
     //autodock = false;
     autodock = true;
     dockinginprogress = false;
-    dock_widget = new DockWidget("dockw");
+    dock_widget = new DockWidget(this, "dockw");
         if(docking){
-        dock_widget->dock();
+        dock_widget->show();
     }
 
 }
@@ -144,6 +144,7 @@ KMidiFrame::~KMidiFrame(){
 }
 
 
+#if 0
 bool KMidiFrame::event( QEvent *e ){
     if(e->type() == QEvent::Hide && autodock && docking){
         if(dockinginprogress || quitPending)
@@ -159,6 +160,7 @@ bool KMidiFrame::event( QEvent *e ){
     }
     return QWidget::event(e);
 }
+#endif
 
 void KMidiFrame::closeEvent( QCloseEvent *e ){
 
@@ -1335,7 +1337,6 @@ void KMidi::playClicked()
   }
 
   if(status == KPLAYING){
-    //Panel->reset_panel = 10;
     status = KPAUSED;
     playPB->setOn( FALSE );
     pipe_int_write(MOTIF_PAUSE);
@@ -1350,8 +1351,6 @@ void KMidi::playClicked()
     statusLA->setText(i18n("Playing"));
     return;
   }
-
-  if (!playPB->isOn()) return;
 
   if (flag_new_playlist) {
     flag_new_playlist = false;
@@ -1371,8 +1370,9 @@ void KMidi::playClicked()
     pipe_string_write(playlist->at(index));
 
     status = KPLAYING;
+    playPB->setOn( TRUE );
   }
-
+  else stopClicked();
 }
 
 

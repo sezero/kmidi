@@ -120,7 +120,7 @@ public:
 
 protected:
 	void		closeEvent( QCloseEvent *e );  
-	bool		event( QEvent *e );
+//	bool		event( QEvent *e );
 
 };
 

@@ -34,52 +34,17 @@
 #include <qtimer.h>
 #include <qpopupmenu.h>
 #include <qpoint.h>
+#include <kdockwindow.h>
 
+class KMidiFrame;
 
-extern int 	ibytes;
-extern int 	obytes;
-
-class DockWidget : public QWidget {
+class DockWidget : public KDockWindow {
 
   Q_OBJECT
 
 public:
-  DockWidget(const char *name=0);
+  DockWidget( KMidiFrame* parent, const char *name=0);
   ~DockWidget();
-
-protected:
-  void paintEvent(QPaintEvent *e);
-
-private slots:
-    void timeclick();
-    void play_pause();
-    void forward();
-    void backward();
-    void next();
-    void prev();
-    void eject();
-    void stop();
-    void kquit();
-    void mousePressEvent(QMouseEvent *e);
-
-public slots:
-    void dock();
-    void undock();
-    void paintIcon();
-    void toggle_window_state();
-
-public:
-    const bool isDocked();
-    const bool isToggled();
-    void setToggled(int);
-    
-
-private:
-  bool docked;
-  int toggleID;
-  QPopupMenu *popup_m;
-  QPixmap kmidi_pixmap;
-  bool toggled;
 
 };
 
