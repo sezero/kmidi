@@ -45,3 +45,5 @@ cfg.c: cfg.l
 	rm -f cfg.c
 	flex -t -B $(srcdir)/cfg.l >cfg.c
 
+timidity.c:
+	./makelinks
