@@ -222,6 +222,7 @@ extern int opt_chorus_control;
 extern int opt_channel_pressure;
 extern int opt_overlap_voice_allow;
 extern void recompute_freq(int v);
+extern int reduce_quality_flag;
 #endif
 
 extern int GM_System_On;

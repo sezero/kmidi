@@ -90,6 +90,7 @@ int opt_modulation_wheel = 1;
 int opt_portamento = 1;
 int opt_channel_pressure = 1;
 int opt_overlap_voice_allow = 1;
+int reduce_quality_flag=0;
 #endif
 
 #ifndef ADAGIO
@@ -1072,6 +1073,10 @@ static void note_on(MidiEvent *e)
 	lowest=i; /* Can't get a lower volume than silence */
 	else current_polyphony++;
     }
+
+#ifdef tplus
+  reduce_quality_flag = (current_polyphony > voices / 2);
+#endif
 
 #ifdef ADAGIO
   if (current_polyphony <= max_polyphony)
@@ -2592,6 +2597,9 @@ int play_midi_file(char *fn)
   ctl->master_volume(amplification);
 
   load_missing_instruments();
+#ifdef tplus
+  reduce_quality_flag = 0;
+#endif
   rc=play_midi(event, events, samples);
   if (free_instruments_afterwards)
       free_instruments();
