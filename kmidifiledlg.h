@@ -42,7 +42,8 @@ protected:
 
 protected slots:
     void slotOk(void);
-//    void playFile(const QString& fname);
+    void playFile(const QString& fname);
+
 };
 
 #endif //__KICONFILEDLG_H__

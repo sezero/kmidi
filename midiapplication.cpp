@@ -26,7 +26,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
-//#include <math.h>
 
 #include <kuniqueapp.h>
 
@@ -38,7 +37,8 @@
 #include <kglobal.h>
 #include <kwm.h>
 #include <klocale.h>
-
+#include <kaboutdata.h>
+#include <kcmdlineargs.h>
 
 #include "config.h"
 #include "output.h"
@@ -54,19 +54,49 @@ extern KMidi *kmidi;
 
 int pipenumber;
 
+static KCmdLineOptions options[] = 
+{
+   { "o <file>", I18N_NOOP("Output to another file (or device)."), 0 },
+   { "O <mode>", I18N_NOOP("Select output mode and format (see below for list)."), 0 },
+   { "s <freq>", I18N_NOOP("Set sampling frequency to f (Hz or kHz)."), 0 },
+   { "a", I18N_NOOP("Enable the antialiasing filter."), 0 },
+   { "f", I18N_NOOP("Enable fast decay mode."), 0 },
+   { "d", I18N_NOOP("Enable dry mode."), 0 },
+   { "p <n>", I18N_NOOP("Allow n-voice polyphony."), 0 },
+   { "A <n>", I18N_NOOP("Amplify volume by n percent (may cause clipping)."), 0 },
+   { "C <n>", I18N_NOOP("Set ratio of sampling and control frequencies."), 0 },
+   { "# <n>", I18N_NOOP("Select patch set n."), 0 },
+   { "E", I18N_NOOP("Effects filter."), 0 },
+   { "L <dir>", I18N_NOOP("Append dir to search path."), 0 },
+   { "c <file>", I18N_NOOP("Read extra configuration file."), 0 },
+   { "I <n>", I18N_NOOP("Use program n as the default."), 0 },
+   { "P <file>", I18N_NOOP("Use patch file for all programs."), 0 },
+   { "D <n>", I18N_NOOP("Play drums on channel n."), 0 },
+   { "Q <n>", I18N_NOOP("Ignore channel n."), 0 },
+   { "R <n>", I18N_NOOP("Reverb options (1)(+2)(+4) [7]."), 0 },
+   { "k <n>", I18N_NOOP("Resampling interpolation option (0-3) [1]."), 0 },
+   { "r <n>", I18N_NOOP("Max ram to hold patches (in megabytes) [60]."), 0 },
+   { "X <n>", I18N_NOOP("Midi expression is linear (0) or exponential (1-2) [1]."), 0 },
+   { "V <n>", I18N_NOOP("Midi volume is linear (0) or exponential (1-2) [1]."), 0 },
+   { "F", I18N_NOOP("Enable fast panning."), 0 },
+   { "U", I18N_NOOP("Unload instruments from memory between MIDI files."), 0 },
+   { "i <letter>", I18N_NOOP("Select user interface (letter=d(umb)/n(curses)/s(lang))."), 0 },
+   { "B <n>", I18N_NOOP("Set number of buffer fragments."), 0 },
+   { 0, 0, 0 } // End of options.
+};
+
 MidiApplication::MidiApplication(int &argc, char *argv[], const QCString &appName)
   : KUniqueApplication(argc, argv, appName)
+  //: KUniqueApplication()
 {
 //fprintf(stderr,"2: argc=%d argv[1]={%s}\n", argc, (argc>0)? argv[1] : "none");
-#if 0
-  if (isRestored())
-    RESTORE(TopLevel)
-  else 
-    toplevel = new TopLevel();
-  
-  setMainWidget(toplevel);
-  toplevel->resize(640,400);
-#endif
+
+    KAboutData about( appName, I18N_NOOP("KMidi"), "1.3alpha");
+
+    KCmdLineArgs::init(argc, argv, &about);
+    KCmdLineArgs::addCmdLineOptions( options );
+
+    KUniqueApplication::addCmdLineOptions();
 }
 
 bool MidiApplication::process(const QCString &fun, const QByteArray &data,
@@ -158,21 +188,12 @@ int createKApplication(int *argc, char **argv) {
 
        int deref = *argc;
 
-       //if (!MidiApplication::start(*argc, &*argv, "kmidi")) {
        if (!MidiApplication::start(deref, &*argv, "kmidi")) {
-//fprintf(stderr,"n: argc=%d *argc=%d\n", argc, *argc);
 	    return 0;
        }
-//fprintf(stderr,"1: argc=%d argv[1]={%s}\n", *argc, (*argc>0)? argv[1] : "none");
-	//thisapp = new MidiApplication(*argc, argv, "kmidi");
-	//thisapp = new MidiApplication(*argc, &*argv, "kmidi");
 	thisapp = new MidiApplication(*argc, argv, "kmidi");
-//fprintf(stderr,"3: argc=%d argv[1]={%s}\n", *argc, (*argc>0)? argv[1] : "none");
 
-	//QString timplace = KGlobal::dirs()->KStandardDirs::findResourceDir("appdata", "timidity.cfg");
-	//QString timplace = KGlobal::dirs()->findResourceDir("appdata", "timidity.cfg");
-//fprintf(stderr, "I'm in [%s]\n", timplace.ascii());
-
+	KCmdLineArgs *args = KCmdLineArgs::parsedArgs();
 
 	return 1;
 }
@@ -206,50 +227,3 @@ int Launch_KMidi_Process(int _pipenumber) {
 
 
 #include "midiapplication.moc"
-/*
-static void cleanup( int sig ){
-
-  catchSignals();
-
-}
-
-void catchSignals()
-{
-signal(SIGHUP, cleanup);	
-signal(SIGINT, cleanup);		
-signal(SIGTERM, cleanup);		
-//	signal(SIGCHLD, cleanup);
-
-signal(SIGABRT, cleanup);
-//	signal(SIGUSR1, un_minimize);
-signal(SIGALRM, cleanup);
-signal(SIGFPE, cleanup);
-signal(SIGILL, cleanup);
-//	signal(SIGPIPE, cleanup);
-signal(SIGQUIT, cleanup);
-//	signal(SIGSEGV, cleanup);
-
-#ifdef SIGBUS
-signal(SIGBUS, cleanup);
-#endif
-#ifdef SIGPOLL
-signal(SIGPOLL, cleanup);
-#endif
-#ifdef SIGSYS
-signal(SIGSYS, cleanup);
-#endif
-#ifdef SIGTRAP
-signal(SIGTRAP, cleanup);
-#endif
-#ifdef SIGVTALRM
-signal(SIGVTALRM, cleanup);
-#endif
-#ifdef SIGXCPU
-signal(SIGXCPU, cleanup);
-#endif
-#ifdef SIGXFSZ
-signal(SIGXFSZ, cleanup);
-#endif
-}
-
-*/

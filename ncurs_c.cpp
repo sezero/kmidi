@@ -739,30 +739,37 @@ static int ctl_read(int32 *valp)
 	case KEY_F(2):
 	  current_interpolation = 0;
 	  screen_bugfix = 0;
+          re_init_screen();
 	  return RC_NONE;
 	case KEY_F(3):
 	  current_interpolation = 1;
 	  screen_bugfix = 0;
+          re_init_screen();
 	  return RC_NONE;
 	case KEY_F(4):
 	  current_interpolation = 2;
 	  screen_bugfix = 0;
+          re_init_screen();
 	  return RC_NONE;
 	case KEY_F(5):
 	  cfg_select = 0;
 	  screen_bugfix = 0;
+          re_init_screen();
 	  return RC_PATCHCHANGE;
 	case KEY_F(6):
 	  cfg_select = 1;
 	  screen_bugfix = 0;
+          re_init_screen();
 	  return RC_PATCHCHANGE;
 	case KEY_F(7):
 	  cfg_select = 2;
 	  screen_bugfix = 0;
+          re_init_screen();
 	  return RC_PATCHCHANGE;
 	case KEY_F(8):
 	  cfg_select = 3;
 	  screen_bugfix = 0;
+          re_init_screen();
 	  return RC_PATCHCHANGE;
 	case KEY_F(11):
 	  if (!opt_dry)

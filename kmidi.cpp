@@ -1987,10 +1987,6 @@ void KMidi::ReadPipe(){
 
 	switch (message)
 	    {
-	    case REFRESH_MESSAGE : {
-	      /*		printf("REFRESH MESSAGE IS OBSOLETE !!!\n");*/
-	    }
-	    break;
 
 	    case DEVICE_NOT_OPEN:
 	      output_device_open = 0;
@@ -1999,13 +1995,6 @@ void KMidi::ReadPipe(){
 	    case DEVICE_OPEN:
 
 	      output_device_open = 1;
-#if 0
-	      if(have_commandline_midis>0 && output_device_open) {
-                playPB->setOn( TRUE );
-		volChanged(volume);
-		emit play();
-	      }
-#endif
 	      break;
 
 	    case TOTALTIME_MESSAGE : {
@@ -2058,73 +2047,7 @@ void KMidi::ReadPipe(){
 		updateUI();
 	    }
 	    break;
-	
-	    case FILE_LIST_MESSAGE : {
-		char filename[255];
-		int i, number_of_files;
-		/*		printf("RECEIVED: FILE_LIST_MESSAGE\n");*/
-	
-		/* reset the playing list : play from the start */
-		song_number = 1;
 
-		pipe_int_read(&number_of_files);
-
-		if(number_of_files > 0 )
-		    playlist->clear();	
-
-/*#define DO_IT_MYSELF*/
-		QFileInfo file;
-		//have_commandline_midis = 0;
-
-		for (i=0;i<number_of_files;i++)
-		  {
-		    pipe_string_read(filename);
-#ifdef DO_IT_MYSELF
-		    file.setFile(filename);
-		    if( file.isReadable()){
-		//better check if it's a midi file
-		      playlist->append(file.absFilePath());
-#endif
-
-		      //have_commandline_midis = 1;
-
-#ifdef DO_IT_MYSELF
-		    }
-		    else postError( i18n("\"%1\"\nis not readable or doesn't exist.").arg(filename) );
-#endif
-
-		  }	
-		
-		if( !have_commandline_midis) {
-		  /*don't have cmd line midis to play*/
-		  /*or none of them was readable */
-		    loadplaylist(current_playlist_num);
-		}
-#ifdef DO_IT_MYSELF
-    		else redoplaybox();
-#endif
-
-
-		if(playlist->count() > 0){
-	
-		    fileName = playlist->at(0);
-		    int index = fileName.findRev('/',-1,TRUE);
-		    if(index != -1)
-			fileName = fileName.right(fileName.length() -index -1);
-		    if(output_device_open)
-		      updateUI();
-
-		}
-		if(have_commandline_midis>0 && output_device_open) {
-                  playPB->setOn( TRUE );
-		  volChanged(volume);
-		  emit play();
-		}
-
-
-	    }
-	    break;
-	
 	    case PATCH_CHANGED_MESSAGE :
 		settletime = fastforward = fastrewind = nbvoice = currplaytime = 0;
 	    break;
@@ -2136,10 +2059,6 @@ void KMidi::ReadPipe(){
 	      	/*	printf("RECEIVED: NEXT/PREV/TUNE_MESSAGE\n"); */
 	
 		/* When a file ends, launch next if auto_next toggle */
-		/*	    if ((message==TUNE_END_MESSAGE) &&
-			    !XmToggleButtonGetState(auto_next_option))
-			    return;
-			    */
 		settletime = fastforward = fastrewind = nbvoice = currplaytime = 0;
 		for (int l=0; l<LYRBUFL; l++) lyric_time[l] = -1;
 		lyric_head = 0; lyric_tail = 0;
@@ -2167,14 +2086,6 @@ void KMidi::ReadPipe(){
 		    playClicked();
 		    return;
 		}
-
-		/*
-		if (message==PREV_FILE_MESSAGE)
-		    song_number--;
-		else {
-		    song_number++;
-		}
-		*/
 
 		if (flag_new_playlist)
 		    {
@@ -2238,17 +2149,7 @@ void KMidi::ReadPipe(){
 
 	    }
 	    break;
-	    /*	
-	    case NOTE_MESSAGE : {
-		int channel;
-		int note;
-	
-		pipe_int_read(&channel);
-		pipe_int_read(&note);
-		printf("NOTE chn%i %i\n",channel,note);
-	    }
-	    break;
-	    */
+
 	    case    PROGRAM_MESSAGE :{
 		int channel;
 		int pgm;
@@ -2262,63 +2163,6 @@ void KMidi::ReadPipe(){
 		//printf("NOTE chn%i %i %s\n",channel,pgm, progname);
 	    }
 	    break;
-	    /*
-	    case VOLUME_MESSAGE : {
-		int channel;
-		int volume;
-	
-		pipe_int_read(&channel);
-		pipe_int_read(&volume);
-		printf("VOLUME= chn%i %i \n",channel, volume);
-	    }
-	    break;
-	
-	
-	    case EXPRESSION_MESSAGE : {
-		int channel;
-		int express;
-	
-		pipe_int_read(&channel);
-		pipe_int_read(&express);
-		printf("EXPRESSION= chn%i %i \n",channel, express);
-	    }
-	    break;
-	
-	    case PANNING_MESSAGE : {
-		int channel;
-		int pan;
-	
-		pipe_int_read(&channel);
-		pipe_int_read(&pan);
-		printf("PANNING= chn%i %i \n",channel, pan);
-	    }
-	    break;
-	
-	    case  SUSTAIN_MESSAGE : {
-		int channel;
-		int sust;
-	
-		pipe_int_read(&channel);
-		pipe_int_read(&sust);
-		printf("SUSTAIN= chn%i %i \n",channel, sust);
-	    }
-	    break;
-	
-	    case  PITCH_MESSAGE : {
-		int channel;
-		int bend;
-	
-		pipe_int_read(&channel);
-		pipe_int_read(&bend);
-		printf("PITCH BEND= chn%i %i \n",channel, bend);
-	    }
-	    break;
-	
-	    case RESET_MESSAGE : {
-		printf("RESET_MESSAGE\n");
-	    }
-	    break;
-	    */
 
 	    case CLOSE_MESSAGE : {
 		//	    printf("CLOSE_MESSAGE\n");
@@ -2357,7 +2201,6 @@ void KMidi::ReadPipe(){
 		char strmessage[2024];
 
 		pipe_string_read(strmessage);
-		//logwindow->insertStr(QString(strmessage));
 		postError(QString(strmessage));
 
 		}
@@ -2491,17 +2334,6 @@ void KMidi::ReadPipe(){
 
 void KMidi::set_current_dir(const QString &dir) {
 
-#if 0
-   if (!dir.isEmpty()){
-    if ( !current_dir.setCurrent(dir)){
-      QString str = i18n("Can not enter directory: %1\n").arg(dir);
-      KMessageBox::sorry(this, str);
-      return;
-    }
-   }
-
-   current_dir  = QDir::current();
-#endif
    current_dir = QDir(dir);
 }
 
@@ -2511,7 +2343,6 @@ void KMidi::readconfig(){
     // let's set the defaults
 
     randomplay = false;
-    /*	int randomplayint = 0;*/
 
     //////////////////////////////////////////
 

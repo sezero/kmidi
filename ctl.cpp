@@ -838,6 +838,7 @@ static void ctl_pass_playing_list(int number_of_files, const char *list_of_files
 
     /* Pass the list to the interface */
 #if 0
+/* The commandline files now come from the c++ ui side. */
     pipe_int_write(FILE_LIST_MESSAGE);
 
     pipe_int_write(number_of_files);

@@ -38,10 +38,10 @@ KMidiFileDlg::KMidiFileDlg(const QString& dirName, const QString& filter,
  //connect(this,SIGNAL(fileSelected(const QString&)),SLOT(playFile(const QString&)));
 }
 
-//void KMidiFileDlg::playFile(const QString& fname)
-//{
-//    fprintf(stderr, "You clicked on %s\n", fname.ascii());
-//}
+void KMidiFileDlg::playFile(const QString& fname)
+{
+    fprintf(stderr, "You clicked on %s\n", fname.ascii());
+}
 
 void KMidiFileDlg::slotOk()
 {
@@ -77,7 +77,8 @@ void KMidiFileDlg::getOpenDialog(const QString& dir, const QString& filter,
 	dlg= new KMidiFileDlg(dir, filter, parent, name, false);
 	dlg->setCaption(i18n("Open"));
 //This doesn't work, either.
-// connect(dlg,SIGNAL(KFileDialog::fileSelected(const QString&)),dlg,SLOT(playFile(const QString&)));
+// connect(dlg,SIGNAL(fileSelected(const QString&)),dlg,SLOT(playFile(const QString&)));
+// connect(dlg,SIGNAL(fileHighlighted(const QString&)),dlg,SLOT(playFile(const QString&)));
     }
 
     dlg->show();
