@@ -88,6 +88,12 @@ static KCmdLineOptions options[] =
 
 MidiApplication::MidiApplication()
 {
+//fprintf(stderr,"new MidiApplication\n");
+}
+
+MidiApplication::~MidiApplication()
+{
+//fprintf(stderr,"delete MidiApplication\n");
 }
 
 bool MidiApplication::process(const QCString &fun, const QByteArray &data,
@@ -96,8 +102,9 @@ bool MidiApplication::process(const QCString &fun, const QByteArray &data,
   QDataStream stream(data, IO_ReadOnly);
   QDataStream stream2(replyData, IO_WriteOnly);
   QString res;
-  int exitcode;
+//  int exitcode;
 
+//fprintf(stderr, "MidiApplication::process\n");
   if (fun == "play(QString)") {
     QString arg;
     stream >> arg;
@@ -122,7 +129,9 @@ int MidiApplication::newInstance()
     QFileInfo file;
     KCmdLineArgs *args = KCmdLineArgs::parsedArgs();
 
+//fprintf(stderr, "newInstance\n");
     if (kmidi) {
+//fprintf(stderr, "kmidi exists!\n");
 
         for (int i=0; i < args->count(); i++) {
             QString filename = args->url(i).path();
@@ -156,6 +165,7 @@ int MidiApplication::newInstance()
 	    kmidi->restartPlaybox();
         }
     }
+    else fprintf(stderr, "NO kmidi!\n");
 #endif
     return 0;
 }
@@ -169,20 +179,27 @@ int createKApplication(int *argc, char ***argv)
        for(int i = 0; i < deref_argc; i++)
           deref_argv[i] = (*argv)[i];
 
+//fprintf(stderr,"making about\n");
        KAboutData about( "kmidi", I18N_NOOP("KMidi"), "1.3alpha");
 
+//fprintf(stderr,"init deref\n");
        KCmdLineArgs::init(deref_argc, deref_argv, &about);
 
-       delete [] deref_argv;
+// can't delete this now, since Krash handler need my name
+//       delete [] deref_argv;
 
+//fprintf(stderr,"add options 1\n");
        KCmdLineArgs::addCmdLineOptions( options );
 
+//fprintf(stderr,"add options ?\n");
        KUniqueApplication::addCmdLineOptions();
 
+//fprintf(stderr,"starting ?\n");
        if (!MidiApplication::start()) {
 	    return 0;
        }
 
+//fprintf(stderr,"making thisapp\n");
        thisapp = new MidiApplication();
 
        return 1;
@@ -192,17 +209,20 @@ int Launch_KMidi_Process(int _pipenumber) {
 
 	pipenumber = _pipenumber;
 
+//fprintf(stderr,"Launch\n");
 	if (thisapp->isRestored()) {
 	   int n = 1;
 	   while (KTMainWindow::canBeRestored(n)) {
+//fprintf(stderr,"restoring\n");
 	      (new KMidiFrame)->restore(n);
 	      n++;
 	   }
 	}
 	else {
+//fprintf(stderr,"make kmidiframe\n");
 	   kmidiframe = new KMidiFrame( "_kmidiframe" );
 	   //// KWM::setWmCommand(kmidiframe->winId(),"_kmidiframe");
-	   kmidiframe->setCaption( i18n("Midi Player") );
+//	   kmidiframe->setCaption( i18n("Midi Player") );
 	   //kmidiframe->setCaption( QString::null );
 	   //kmidiframe->setFontPropagation( QWidget::AllChildren );
            //thisapp->setFont(default_font, TRUE);

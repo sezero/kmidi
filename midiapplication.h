@@ -79,6 +79,7 @@ class MidiApplication : public KUniqueApplication
 public:
   
   MidiApplication();
+  ~MidiApplication();
 
   virtual int newInstance();
 

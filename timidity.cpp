@@ -470,8 +470,18 @@ int main(int argc, char **argv)
   init_effect() ;
 #endif /*CHANNEL_EFFECT*/
 
+#ifdef KMIDI
+  if (argc >= 3 && !strcmp(argv[1],"-miniicon")) {
+	  for (i=1; i<argc-2; i++) argv[i] = argv[i+2];
+	  argc -= 2;
+  }
+  if (argc >= 3 && !strcmp(argv[1],"-icon")) {
+	  for (i=1; i<argc-2; i++) argv[i] = argv[i+2];
+	  argc -= 2;
+  }
+#endif
 
-  while ((c=getopt(argc, argv, "UI:P:L:c:A:C:ap:fo:O:s:Q:R:FD:hi:#:qEmk:r:X:V:d"
+  while ((c=getopt(argc, argv, "UI:P:L:c:A:C:ap:fo:O:s:Q:R:FD:hi:#:qEmk:r:X:V:d-::"
 #if defined(AU_LINUX) || defined(AU_WIN32)
 			"B:" /* buffer fragments */
 #endif
@@ -601,6 +611,9 @@ int main(int argc, char **argv)
 		case 'h':
 	help();
 	return 0;
+
+		case '-':
+	break;
 
 		default:
 	cmderr++; break;
