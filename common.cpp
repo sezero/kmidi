@@ -60,7 +60,7 @@ static char * shell_quote(const char *s)
 {
    char *result;
    char *p;
-   p = result = malloc(strlen(s)*5+3);
+   p = result = (char*)malloc(strlen(s)*5+3);
    *p++ = '\'';
    while(*s)
    {
