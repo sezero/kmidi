@@ -44,6 +44,8 @@
 #include <kbuttonbox.h>
 #include <knuminput.h>
 #include <kcolorbtn.h>
+//#include <khelpmenu.h>
+#include <qwhatsthis.h>
 
 struct configstruct{
   QColor led_color;
@@ -67,12 +69,16 @@ public:
 
     struct configstruct * getData();
 
+//    KHelpMenu *helpmenu;
+
 protected:
     void resizeEvent(QResizeEvent *);
     KTabCtl *test;
     KAboutWidget *about;
     QWidget *pages[3];
     KIntNumInput *meg;
+    QWhatsThis *what;
+
 public slots:
     void tabChanged(int);
 

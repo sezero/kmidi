@@ -59,12 +59,10 @@ PlaylistEdit::PlaylistEdit(const char *name, QStrList *playlist,
   starting_up = true;
 
 
+  what = new QWhatsThis(this);
+
   QPopupMenu *file = new QPopupMenu;
-
-  //savenew = new QPopupMenu;
   CHECK_PTR( file );
-
-  //savenew->insertItem( i18n("New Playlist"), this, SLOT( editNewPlaylist() ) );
 
   snpopup = new QFrame( this ,0, WType_Popup);
   snpopup->setFrameStyle( QFrame::PopupPanel|QFrame::Raised );
@@ -79,83 +77,99 @@ PlaylistEdit::PlaylistEdit(const char *name, QStrList *playlist,
   connect( newEdit, SIGNAL( returnPressed() ), this, SLOT( newPlaylist() ) );
   newEdit->setFocus();
 
-  file->insertItem( i18n("Save"), this, SLOT(saveIt()));
-  //file->insertItem( i18n("Save as ..."), savenew);
-  file->insertItem( i18n("Save as ..."), this, SLOT( editNewPlaylist() ));
-  file->insertItem( i18n("Append"), this, SLOT(appendIt()));
-  file->insertItem( i18n("Delete"), this, SLOT(removeIt()));
-  file->insertItem( i18n("OK"), this, SLOT(checkList()));
-  file->insertItem( i18n("Quit"), this, SLOT(hide()));
-  
+  file->insertItem( i18n("OK"), this, SLOT(checkList()), 0, 40);
+	file->setWhatsThis(40, i18n("Accept and use the new play list.") );
+  file->insertItem( i18n("Save"), this, SLOT(saveIt()), 0, 41);
+	file->setWhatsThis(41, i18n("Replace the contents of the<br>" \
+				"currently selected playlist<br>" \
+				"file with the new play list.") );
+  file->insertItem( i18n("Save as ..."), this, SLOT( editNewPlaylist() ), 0, 42);
+	file->setWhatsThis(42, i18n("Make up a name for a<br>" \
+				"new playlist file and<br>" \
+				"save the current play list there.") );
+  file->insertItem( i18n("Append"), this, SLOT(appendIt()), 0, 43);
+	file->setWhatsThis(43, i18n("Add the midi files in the<br>" \
+				"current play list to the selected<br>" \
+				"playlist file.") );
+  file->insertItem( i18n("Delete"), this, SLOT(removeIt()), 0, 44);
+	file->setWhatsThis(44, i18n("Delete the currently selected<br>" \
+				"playlist file (it's contents<br>" \
+				"will be lost).") );
+  file->insertSeparator();
+  file->insertItem( i18n("&Quit"), this, SLOT(hide()), 0, 45);
+	file->setWhatsThis(45, i18n("Discard the play list<br>" \
+				"and leave the play list editor.") );
+ 
   view = new QPopupMenu;
   CHECK_PTR( view );
-  view->insertItem( i18n("All files"), this, SLOT(setFilter()), 0, 0 );
+  view->insertItem( i18n("All files"), this, SLOT(setFilter()), 0, 50 );
+	view->setWhatsThis(50, i18n("Choose whether the file<br>" \
+				"list should show only uncompressed<br>" \
+				"midi files or all file.") );
 
   QPopupMenu *edit = new QPopupMenu;
   CHECK_PTR( edit );
-  edit->insertItem( i18n("Clear"), this, SLOT(clearPlist()) );
-  edit->insertItem( i18n("Select all"), this, SLOT(select_all()) );
-  edit->insertItem( i18n("Add"), this, SLOT(addEntry()) );
-  edit->insertItem( i18n("Remove"), this, SLOT(removeEntry()) );
+  edit->insertItem( i18n("Clear"), this, SLOT(clearPlist()), 0, 51 );
+	edit->setWhatsThis(51, i18n("Discard the contents<br>" \
+				"of the current play list.") );
+  edit->insertItem( i18n("Select all"), this, SLOT(select_all()), 0, 52 );
+	edit->setWhatsThis(52, i18n("Append all the files<br>" \
+				"to the play list.") );
+  edit->insertItem( i18n("Add"), this, SLOT(addEntry()), 0, 53 );
+	edit->setWhatsThis(53, i18n("Append the selected<br>" \
+				"file to the play list.") );
+  edit->insertItem( i18n("Remove"), this, SLOT(removeEntry()), 0, 54 );
+	edit->setWhatsThis(54, i18n("Remove the selected<br>" \
+				"file from the play list.") );
   
-  QPopupMenu *help = new QPopupMenu;
-  CHECK_PTR( help );
-  help->insertItem( i18n("Help"), this, SLOT(help()));
-
   menu = new KMenuBar( this );
   CHECK_PTR( menu );
   menu->insertItem( i18n("&File"), file );
   menu->insertItem( i18n("&View"), view );
   menu->insertItem( i18n("&Edit"), edit );
   menu->insertSeparator();
-  menu->insertItem( i18n("&Help"), help );
+  menu->insertItem( i18n("&Help"),  this, SLOT(invokeWhatsThis()) );
+
+  QString aboutapp;
+  aboutapp.sprintf(i18n("KDE midi file player\n\n"
+                     "A software synthesizer for playing\n"
+                     "midi songs using Tuukka Toivonen's\n"
+                     "TiMidity"));
+
+  QPopupMenu *about = helpMenu(aboutapp);
+  menu->insertItem( i18n("About"), about);
 
   vpanner = new QSplitter(Vertical, this, "_panner");
   hpanner = new QSplitter(Horizontal, vpanner, "_panner");
   vpanner->setOpaqueResize( TRUE );
   hpanner->setOpaqueResize( TRUE );
+  what->add(vpanner, i18n("You can drag this<br>bar up or down.") );
+  what->add(hpanner, i18n("You can drag this<br>bar left or right.") );
 
   listbox = new QListBox(hpanner,"listbox",0); 
+  what->add(listbox, i18n("Here is the play<br>list you are composing."));
   hpanner->moveToLast(listbox);
 
   connect(listbox, SIGNAL(selected(int)), this, SLOT(removeEntry()));
 
-  //filterButton = new QPushButton(this,"filterButton");
-  //filterButton->setText(i18n("Filter"));
   showmidisonly = TRUE;
-  //filterButton->setToggleButton( TRUE );
-  //filterButton->setOn( TRUE );
-  //connect(filterButton,SIGNAL(clicked()),this,SLOT(setFilter()));
-
-  //addButton = new QPushButton(this,"addButton");
-  //addButton->setText(i18n("Add"));
-  //connect(addButton,SIGNAL(clicked()),this,SLOT(addEntry()));
-
-  //removeButton = new QPushButton(this,"removeButton");
-  //removeButton->setText(i18n("Remove"));
-  //connect(removeButton,SIGNAL(clicked()),this,SLOT(removeEntry()));
-
-  //cancelButton = new QPushButton(this,"cancelButton");
-  //cancelButton->setText(i18n(i18n("Cancel")));
-  //connect(cancelButton,SIGNAL(clicked()),this,SLOT(hide()));
-
-  //okButton = new QPushButton(this,"okButton");
-  //okButton->setText(i18n("OK"));
-  //connect(okButton,SIGNAL(clicked()),this,SLOT(checkList()));
 
   local_list = new QListBox(hpanner, "local_list",0);
+  what->add(local_list, i18n("Here are the files<br>you can add<br>to the play list."));
   hpanner->moveToFirst(local_list);
 
   playlist_ptr = current_playlist_ptr;
   plistbox = new QListBox(vpanner,"listbox",0); 
   connect(plistbox, SIGNAL(selected(int)), this, SLOT(readPlaylist(int)));
   connect(plistbox, SIGNAL(highlighted(int)), this, SLOT(selectPlaylist(int)));
-
+  what->add(plistbox, i18n("<u>Playlist files:</u><br> Click to select one.<br>" \
+			"Doubleclick to transfer contents<br>" \
+			"to the play list."));
   QValueList<int> size;
   size << 30 << 70;
   hpanner->setSizes(size);
 
-  local_list->insertItem("Local Directory", -1);
+  //local_list->insertItem("Local Directory", -1);
   connect(local_list, SIGNAL(selected(int )), this, SLOT(local_file_selected(int )));
   
   QString str;
@@ -184,6 +198,10 @@ PlaylistEdit::~PlaylistEdit(){
 void PlaylistEdit::closeEvent( QCloseEvent *e ){
     hide();
     e->ignore();
+}
+
+void PlaylistEdit::invokeWhatsThis(){
+    QWhatsThis::enterWhatsThisMode();
 }
 
 void MyListBoxItem::paint( QPainter *p ){
@@ -619,11 +637,11 @@ void PlaylistEdit::loadPlaylist(const QString &name){
  
 }
 
-void PlaylistEdit::help(){
-
-  if(!thisapp)
-    return;
-
-  thisapp->invokeHTMLHelp("","");
-
-}
+//void PlaylistEdit::help(){
+//
+//  if(!thisapp)
+//    return;
+//
+//  thisapp->invokeHTMLHelp("","");
+//
+//}

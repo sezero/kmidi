@@ -104,6 +104,9 @@ ConfigDlg::ConfigDlg(QWidget *parent, struct configstruct *data, const char *nam
     helpbutton = bbox->addButton("Help");
     connect(helpbutton, SIGNAL(clicked()), this, SLOT(help()));
 
+    //helpmenu = new KHelpMenu(this, "kmidi plays midi files");
+    what = new QWhatsThis(this);
+
 // Page 1
     QWidget *w = new QWidget(test, "_page1");
 
@@ -111,34 +114,43 @@ ConfigDlg::ConfigDlg(QWidget *parent, struct configstruct *data, const char *nam
     //box->setGeometry(10,10,320,260);
     configsize = QSize( 320+20, 260+80 );
 
+    QString str = i18n("The led color is used in<br>the panel and meter.");
     label1 = new QLabel(w);
     label1->setGeometry(60,25,135,25);
     label1->setText(i18n("LED Color:"));
+    what->add(label1, str);
 
     button1 = new KColorButton(configdata.led_color, w);
     button1->setGeometry(205,25,100,45);
     connect(button1,SIGNAL(changed( const QColor & )),this,SLOT(set_led_color( const QColor & )));
+    what->add(button1, str);
 
+    str = i18n("This color is for<br>the panel and meter backgrounds.");
     label2 = new QLabel(w);
     label2->setGeometry(60,85,135,25);
     label2->setText(i18n("Background Color:"));
+    what->add(label2, str);
 
     button2 = new KColorButton(configdata.background_color, w);
     button2->setGeometry(205,85,100,45);
     connect(button2,SIGNAL(changed( const QColor & )),this,SLOT(set_background_color( const QColor & )));
+    what->add(button2, str);
 
     ttcheckbox = new QCheckBox(i18n("Show Tool Tips"), w, "tooltipscheckbox");
     ttcheckbox->setGeometry(30,150,135,25);
     ttcheckbox->setFixedSize( ttcheckbox->sizeHint() );
     ttcheckbox->setChecked(configdata.tooltips);
     connect(ttcheckbox,SIGNAL(clicked()),this,SLOT(ttclicked()));
-
+    what->add(ttcheckbox, i18n("Provide brief descriptions<br>" \
+			"when cursor is left over a<br>" \
+			"object on the screen"));
 
     meg = new KIntNumInput("Limit megabytes of patch memory",
                           0, 255, 1, configdata.max_patch_megs, "megs", 10, true, w, "hex_with_slider");
     meg->setSpecialValueText("no limit");
     meg->move(30, 200);
     connect(meg,SIGNAL(valueChanged(int)),this,SLOT(megChanged(int)));
+    what->add(meg, i18n("Try to stop KMidi from<br>using up too much of your ram."));
 
     w->resize(320, 260);
     test->addTab(w, "Configure");
@@ -232,8 +244,14 @@ void ConfigDlg::ttclicked(){
 }
 void ConfigDlg::help(){
 
-  if(thisapp)
-    thisapp->invokeHTMLHelp("","");
+//  if(thisapp)
+//    thisapp->invokeHTMLHelp("","");
+
+//the damn thing won't go away
+//   (helpmenu->menu())->move( QCursor::pos() );
+//   (helpmenu->menu())->show();
+//    helpmenu->aboutApp();
+    QWhatsThis::enterWhatsThisMode();
 }
 
 void ConfigDlg::cancelbutton() {

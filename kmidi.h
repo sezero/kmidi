@@ -52,6 +52,7 @@
 #include <qwidget.h>
 #include <qpainter.h>
 #include <qdragobject.h>
+#include <qwhatsthis.h>
 
 #include <pwd.h>
 #include <stdlib.h>
@@ -139,6 +140,7 @@ public:
 	QPushButton	*fwdPB;
 	QPushButton	*bwdPB;
 	QPushButton	*quitPB;
+	QPushButton	*whatbutton;
 	QPushButton	*replayPB;
 	QPushButton	*ejectPB;
 	QPushButton	*aboutPB;
@@ -255,7 +257,7 @@ private:
 
 protected:
         void		resizeEvent(QResizeEvent *e);
-
+	QWhatsThis	*what;
 
 public:
 	KMidi( QWidget *parent=0, const char *name=0 );
@@ -303,6 +305,7 @@ public slots:
 	void		dragEnterEvent( QDragEnterEvent *e );
 	void		plActivated( int );
 	void		acceptPlaylist();
+	void		invokeWhatsThis();
 };
 
 

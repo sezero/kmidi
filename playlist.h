@@ -91,7 +91,7 @@ private slots:
 
   void editNewPlaylist();
   void newPlaylist();
-  void help();
+//  void help();
   void savePlaylistbyName(const QString &name, bool truncate);
   void removeEntry();
   void addEntry();
@@ -106,6 +106,7 @@ private slots:
   void saveIt();
   void removeIt();
   void appendIt();
+  void invokeWhatsThis();
 
 protected:
     void parse_fileinfo(QFileInfo*, MyListBoxItem*);
@@ -136,6 +137,7 @@ private:
     //QPushButton* okButton;
     //QPushButton* removeButton;
     //QPushButton* cancelButton;
+    QWhatsThis *what;
     QStrList*  songlist;
     QStrList*  listsonglist;
     QLineEdit* newEdit;
