@@ -32,7 +32,7 @@ noinst_HEADERS = kmidi.h  playlist.h bwlednum.h configdlg.h\
 
 METASOURCES = kmidi.moc  playlist.moc bwlednum.moc configdlg.moc log.moc
 
-SUBDIRS = docs config bitmaps patch
+SUBDIRS = config bitmaps patch
 
 appsdir = $(kde_appsdir)/Multimedia
 apps_DATA = KMidi.kdelnk
