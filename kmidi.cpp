@@ -659,7 +659,10 @@ void KMidi::setPatch( int index )
 
 void KMidi::setSong( int number )
 {
-    if (!playlist->count()) return;
+    if (!playlist->count() || number > playlist->count()) {
+	redoplaybox();
+	return;
+    }
     song_number = number + 1;
 	
     fileName = playbox->text(number);
@@ -1116,7 +1119,7 @@ void KMidi::PlayCommandlineMods(){
   status = KSTOPPED; // is this right? --gl
   patchbox->setEnabled( TRUE );
   statusLA->setText(i18n("Ready"));
-
+  volChanged(volume);
   //  readtimer->start(10);
 
 }
@@ -1177,9 +1180,11 @@ void KMidi::ReadPipe(){
 	    case DEVICE_OPEN:
 
 	      output_device_open = 1;
-	      if(have_commandline_midis && output_device_open)
+	      if(have_commandline_midis && output_device_open) {
                 playPB->setOn( TRUE );
+		volChanged(volume);
 		emit play();
+	      }
 	      break;
 
 	    case TOTALTIME_MESSAGE : {
@@ -1200,9 +1205,10 @@ void KMidi::ReadPipe(){
 	    break;
 	
 	    case MASTERVOL_MESSAGE: {
-		int volume;
+		int vol;
 	
-		pipe_int_read(&volume);
+		pipe_int_read(&vol);
+		volume = vol*100/255;
 
 	    }
 	    break;
@@ -1279,6 +1285,7 @@ void KMidi::ReadPipe(){
 		}
 		if(have_commandline_midis && output_device_open) {
                   playPB->setOn( TRUE );
+		  volChanged(volume);
 		  emit play();
 		}
 
@@ -1520,19 +1527,22 @@ void KMidi::readconfig(){
 
     //////////////////////////////////////////
 
-    QString str;
+//    QString str;
 	
-    config = thisapp->getConfig();
+//    config = thisapp->getConfig();
+    config=KApplication::getKApplication()->getConfig();
 //KConfig *config=KApplication::getKApplication()->getConfig();
     config->setGroup("KMidi");
 
-    str = config->readEntry("Volume");
-    if ( !str.isNull() )
-	volume = str.toInt();
+//    str = config->readEntry("Volume");
+//    if ( !str.isNull() )
+//	volume = str.toInt();
+    volume = config->readNumEntry("Volume", 40);
 
-    str = config->readEntry("ToolTips");
-    if ( !str.isNull() )
-	tooltipsint =  str.toInt();
+//    str = config->readEntry("ToolTips");
+//    if ( !str.isNull() )
+//	tooltipsint =  str.toInt();
+    tooltipsint = config->readNumEntry("ToolTips", 1);
 
     if (tooltipsint == 1)
 	tooltips = TRUE;
@@ -1563,7 +1573,8 @@ void KMidi::readconfig(){
 void KMidi::writeconfig(){
 
 
-    config = thisapp->getConfig();
+//    config = thisapp->getConfig();
+    config=KApplication::getKApplication()->getConfig();
 	
     ///////////////////////////////////////////////////
 
