@@ -172,7 +172,7 @@ void init_soundfont(char *fname, int order, int oldbank, int newbank)
 	sfrec.fname = strcpy((char*)safe_malloc(strlen(fname)+1), fname);
 	load_sbk(sfrec.fd, &sfinfo);
 
-	for (i = 0; i < sfinfo.nrpresets; i++) {
+	for (i = 0; i < sfinfo.nrpresets - 1; i++) {
 		int bank = sfinfo.presethdr[i].bank;
 		int preset = sfinfo.presethdr[i].preset;
 		if (oldbank != newbank) {
