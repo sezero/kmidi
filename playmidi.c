@@ -272,11 +272,11 @@ static void select_sample(int v, Instrument *ip)
   midfreq = (sp->low_freq + sp->high_freq) / 2;
   for(i=0; i<s; i++)
     {
-      /* diff=sp->root_freq - f; */
+      diff=sp->root_freq - f;
   /*  But the root freq. can perfectly well lie outside the keyrange
    *  frequencies, so let's try:
    */
-      diff=midfreq - f;
+      /* diff=midfreq - f; */
       if (diff<0) diff=-diff;
       if (diff<cdiff)
 	{
