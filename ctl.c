@@ -897,6 +897,46 @@ void pipe_string_read(char *str)
     str[slen]='\0';		/* Append a terminal 0 */
 }
 
+#ifdef tplus
+
+#if defined(sgi)
+#include <sys/time.h>
+#endif
+
+#if defined(SOLARIS)
+#include <sys/filio.h>
+#endif
+
+int pipe_read_ready(void)
+ {
+#if defined(sgi)
+    fd_set fds;
+    int cnt;
+    struct timeval timeout;
+
+    FD_ZERO(&fds);
+    FD_SET(fpip_in, &fds);
+    timeout.tv_sec = timeout.tv_usec = 0;
+    if((cnt = select(fpip_in + 1, &fds, NULL, NULL, &timeout)) < 0)
+    {
+	perror("select");
+	return -1;
+    }
+
+    return cnt > 0 && FD_ISSET(fpip_in, &fds) != 0;
+#else
+    int num;
+
+    if(ioctl(fpip_in,FIONREAD,&num) < 0) /* see how many chars in buffer. */
+    {
+	perror("ioctl: FIONREAD");
+	return -1;
+    }
+    return num;
+#endif
+}
+
+#else
 int pipe_read_ready()
 {
     int num;
@@ -904,7 +944,7 @@ int pipe_read_ready()
     ioctl(fpip_in,FIONREAD,&num); /* see how many chars in buffer. */
     return num;
 }
-
+#endif
 
 /*----------------------------------------------------------------
  * shared memory handling

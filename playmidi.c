@@ -969,10 +969,6 @@ static void start_note(MidiEvent *e, int i)
     voice[i].note = played_note;
     voice[i].orig_frequency = freq_table[played_note];
 
-/*
-  if (voice[i].sample->modes & MODES_FAST_RELEASE) voice[i].status=VOICE_OFF;
-  else
-*/
   voice[i].status=VOICE_ON;
   voice[i].channel=ch;
   voice[i].note=e->a;
@@ -1206,10 +1202,7 @@ printf("(new rel time = %ld)\n",
   if (reverb_options & OPT_STEREO_VOICE) clone_voice(ip, i, e, STEREO_CLONE, variationbank);
   if (reverb_options & OPT_REVERB_VOICE) clone_voice(ip, i, e, REVERB_CLONE, variationbank);
   if (reverb_options & OPT_CHORUS_VOICE) clone_voice(ip, i, e, CHORUS_CLONE, variationbank);
-  rt = voice[i].status;
-  voice[i].status=VOICE_ON;
   ctl->note(i);
-  voice[i].status=rt;
   played_notes++;
 }
 
@@ -1273,7 +1266,8 @@ debug_count--;
   else if (obf < 20) voice_reserve = voices / 4;
   else if (obf < 30) voice_reserve = voices / 5;
   else if (obf < 40) voice_reserve = voices / 6;
-  else voice_reserve = 0;
+  /* else voice_reserve = 0; */
+  else voice_reserve = voices / 10; /* to be able to find a stereo clone */
 
   if (obf < 10) dont_cspline = 1;
   else if (obf > 60) dont_cspline = 0;
@@ -1284,7 +1278,9 @@ debug_count--;
 */
   if (obf < 20 && current_polyphony > voices / 2) reduce_polyphony();
   if (obf < 10 && current_polyphony > voices / 3) reduce_polyphony();
-  if (obf < 5 && current_polyphony > voices / 4) reduce_polyphony();
+  if (obf < 8 && current_polyphony > voices / 4) reduce_polyphony();
+  if (obf < 5 && current_polyphony > voices / 5) reduce_polyphony();
+  if (obf < 4 && current_polyphony > voices / 6) reduce_polyphony();
 
   if (command_cutoff_allowed) dont_filter = 0;
   else dont_filter = 1;
@@ -1604,6 +1600,7 @@ static void time_sync(int32 resync)
 	time_expired = (jiffies * play_mode->rate)/100 + last_time_expired;
 }
 
+static int got_a_lyric = 0;
 
 static void show_markers(int32 until_time)
 {
@@ -1627,10 +1624,13 @@ static void show_markers(int32 until_time)
     len = 0;
     while (meta)
 	if (meta->time <= time_expired) {
+	  if (meta->type == 5) got_a_lyric = 1;
+	  if (!got_a_lyric || meta->type == 5) {
 	    len += strlen(meta->text);
 	    if (len < 100) strcat(buf, meta->text);
 	    if (!meta->next) strcat(buf, " \n");
-	    meta = meta->next;
+	  }
+	  meta = meta->next;
 	}
 	else break;
     len = strlen(buf);
@@ -2840,6 +2840,7 @@ int play_midi_file(char *fn)
   dont_cspline = 0;
 #endif
   dont_filter = 0;
+  got_a_lyric = 0;
   rc=play_midi(event, events, samples);
   if (free_instruments_afterwards)
       free_instruments();

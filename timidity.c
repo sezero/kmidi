@@ -438,10 +438,20 @@ int read_config_file(char *name)
 		 }
 	  for (i=1; i<words; i++)
 	    {
+#ifdef tplus
+	      int status;
+#endif
 	      rcf_count++;
 	      cfg_condition = -1;
+#ifdef tplus
+	      status = read_config_file(w[i]);
+ 	      rcf_count--;
+	      if(status != 0)
+		return status;
+#else
 			read_config_file(w[i]);
 	      rcf_count--;
+#endif
 	    }
 	  }
 	  cfg_condition = -1;

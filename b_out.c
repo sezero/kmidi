@@ -2,6 +2,8 @@
 	$Id$
 */
 
+#if defined(linux) || defined(__FreeBSD__) || defined(sun)
+
 #include <stdio.h>
 #include <unistd.h>
 #include <errno.h>
@@ -18,8 +20,6 @@
 #include <malloc.h>
 #include "config.h"
 #include "output.h"
-
-int output_buffer_full = 100;
 
 /* #define BB_SIZE AUDIO_BUFFER_SIZE*8 */
 #define BB_SIZE (AUDIO_BUFFER_SIZE*128)
@@ -176,3 +176,4 @@ void b_out(int fd, int *buf, int ocount)
     }
   }
 }
+#endif

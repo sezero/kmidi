@@ -22,40 +22,18 @@
  */
 
 #include <stdio.h>
-
-#include <kapp.h>
+//#include <kapp.h>
 #include <klocale.h>
 
 #include "log.moc"
 
-
-myMultiEdit::myMultiEdit(QWidget *parent, const char *name)
-  : QMultiLineEdit(parent, name){
-  // doesn't work:
-  //setTableFlags( tableFlags() & ~Tbl_hScrollBar );
-}
-
-myMultiEdit::~myMultiEdit(){
-}
-
-void myMultiEdit::newLine(){
-  QMultiLineEdit::newLine();
-}
-
-
-
-bool  myMultiEdit::rowYPos(int row, int& yPos){
-
-  return QMultiLineEdit::rowYPos(row,&yPos);
-}
 
 LogWindow::LogWindow(QWidget *parent, const char *name)
   : QWidget(parent, name)
 {
   setCaption(i18n("Info Window"));
 
-
-  text_window = new myMultiEdit(this,"logwindow");
+  text_window = new QMultiLineEdit(this,"logwindow");
   text_window->setFocusPolicy ( QWidget::NoFocus );
   text_window->setReadOnly( TRUE );
 
@@ -77,11 +55,9 @@ void LogWindow::updatewindow(){
   timerset = false;
 
 
-  //printf("in updatewindow\n");
 
   if (stringlist->count() != 0){
 
-    /*    printf("inserting .. %d\n", stringlist->count());*/
     text_window->setAutoUpdate(FALSE);
     
     for(stringlist->first();stringlist->current();stringlist->next()){
@@ -109,27 +85,9 @@ void LogWindow::updatewindow(){
     }
 
     text_window->setAutoUpdate(TRUE);
+
     text_window->setCursorPosition(text_window->numLines(),0,FALSE);
 
-    int y1  = -1;
-    int y2  = -1;
-
-    int templine,tempcol;
-    
-    text_window->getCursorPosition(&templine,&tempcol);	
-
-    bool visible1, visible2;
-
-    visible1 = text_window->rowYPos(templine ,y1);
-    visible2 = text_window->rowYPos(templine +1,y2);
-    
-    if(y1 == -1)
-      y1 = 0;
-    
-    if(y2 == -1)
-      y2 = text_window->height();
-    
-    text_window->repaint(0,y1,text_window->width(),y2);
 
     stringlist->clear();
 
@@ -139,23 +97,13 @@ void LogWindow::updatewindow(){
 
 void LogWindow::insertStr(const QString &string){
 
-  if(string.find("Lyric:",0,TRUE) != -1)
-    return;
+  //if(string.find("Lyric:",0,TRUE) != -1)
+  //  return;
   
   if(string.find("MIDI file",0,TRUE) != -1){
     stringlist->append(" ");
   }
  
-// This makes it difficult to keep track of the cursor when
-// a lyric contains a ';' (and also lies about the lyric). --gl
-  //--gl int index;
-  //  char newl = '\n';
-  //--gl if((index = string.find(";",0,TRUE)) != -1){
-  //--gl   string.replace(index,1,"\n");
-  //--gl }
-
-
-
   stringlist->append(string);
  
   if(!timerset){
@@ -178,17 +126,6 @@ void LogWindow::resizeEvent(QResizeEvent*e ){
 
   int w = width() ;
   int h = height();
-    int mh = (e->size()).height();
-    int mw = (e->size()).width();
 
   text_window->resize(w, h);
 }
-
-void LogWindow::enter() {
-
-  char character[3] = "\r\n";
-
-  text_window->append(character);
-
-}
-

@@ -1,3 +1,10 @@
+1999-10-06  Greg Lee  <lee@hawaii.edu>
+
+	* log.cpp/.h: clean up code
+	* fixes from Masanao Izumo
+	* playmidi.c: don't display text if have lyrics
+	* sndfont.c: shorten loading messages
+
 1999-10-04  Greg Lee  <lee@hawaii.edu>
 
 	* playmidi.c: implement octave and fifth XG variation banks;

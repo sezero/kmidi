@@ -396,8 +396,8 @@ typedef char int8;
 #endif
 
 #ifdef USE_LDEXP
-#  define FRSCALE(a,b) ldexp((a),(b))
-#  define FRSCALENEG(a,b) ldexp((a),-(b))
+#  define FRSCALE(a,b) ldexp((double)(a),(b))
+#  define FRSCALENEG(a,b) ldexp((double)(a),-(b))
 #else
 #  define FRSCALE(a,b) ((a) * (double)(1<<(b)))
 #  define FRSCALENEG(a,b) ((a) * (1.0L / (double)(1<<(b))))

@@ -28,11 +28,9 @@
 
 /* #define GREGSTEST */
 
-/*#define SF_SUPPRESS_TREMOLO*/
 #ifdef ADAGIO
 #define SF_SUPPRESS_VIBRATO
 #endif
-/*#define SF_SUPPRESS_CUTOFF*/
 
 
 /*----------------------------------------------------------------
@@ -88,9 +86,7 @@ static void append_layer(Layer *dst, Layer *src, SFInfo *sf);
 static void make_inst(SFInsts *rec, Layer *lay, SFInfo *sf, int pr_idx, int in_idx, int inum,
 	uint16 pk_range, uint16 pv_range, int num_i);
 static int32 calc_root_pitch(Layer *lay, SFInfo *sf, SampleList *sp);
-#ifndef SF_SUPPRESS_ENVELOPE
 static void convert_volume_envelope(Layer *lay, SFInfo *sf, SampleList *sp, int banknum, int preset);
-#endif
 static int32 to_offset(int offset);
 static int32 calc_rate(int diff, double msec);
 static double to_msec(Layer *lay, SFInfo *sf, int index);
@@ -364,9 +360,9 @@ InstrumentLayer *load_sbk_patch(char *name, int gm_num, int bank, int percussion
 	if (ip && (ip->samples || ip->rsamples)) {
 		ip->already_loaded = 0;
 		sfrec.fname = ip->fname;
-    		ctl->cmsg(CMSG_INFO, VERB_NOISY, "Loading %s%s %s[%d,%d] from %s (vel %d to %d).",
-			(ip->rsamples)? "compound " : "",
-			(percussion)? "drum":"instrument", name,
+    		ctl->cmsg(CMSG_INFO, VERB_NOISY, "%s%s%s[%d,%d] %s (vel %d to %d).",
+			(ip->rsamples)? "2 " : "",
+			(percussion)? "Drum ":"", name,
 			(percussion)? keynote : preset, (percussion)? preset : bank, sfrec.fname,
 				LO_VAL(ip->velrange),
 				HI_VAL(ip->velrange)? HI_VAL(ip->velrange) : 127 );
@@ -1485,7 +1481,6 @@ static int32 calc_root_pitch(Layer *lay, SFInfo *sf, SampleList *sp)
  * convert volume envelope
  *----------------------------------------------------------------*/
 
-#ifndef SF_SUPPRESS_ENVELOPE
 static void convert_volume_envelope(Layer *lay, SFInfo *sf, SampleList *sp, int banknum, int preset)
 {
 	int32 sustain = calc_sustain(lay, sf, banknum, preset);
@@ -1569,7 +1564,6 @@ if (no_shown) {
 }
 #endif
 }
-#endif
 
 /* convert from 8bit value to fractional offset (15.15) */
 static int32 to_offset(int offset)
@@ -1802,7 +1796,6 @@ static void calc_filterQ(Layer *lay, SFInfo *sf, SampleList *sp)
 #if 0
 /* moved to resample.c */
 
-#ifndef SF_SUPPRESS_CUTOFF
 /*----------------------------------------------------------------
  * low-pass filter:
  * 	y(n) = A * x(n) + B * y(n-1)
@@ -1953,6 +1946,5 @@ printf("\tgain %f , f=%ld : a0=%f a1=%f a2=%f b0=%f b1=%f\n", inputgain, freq, a
 }
 #endif
 
-#endif
 #endif
 

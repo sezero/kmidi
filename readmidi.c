@@ -145,7 +145,6 @@ static int metatext(int type, int leng, char *mess)
     struct meta_text_type *meta, *mlast;
     char *meta_string;
 
-
     if (at > 0 && (type == 1||type == 5||type == 6||type == 7)) {
 	meta = (struct meta_text_type *)safe_malloc(sizeof(struct meta_text_type));
 	if (leng > 72) leng = 72;
@@ -447,8 +446,8 @@ static MidiEventList *read_midi_event(void)
 	  if (type>0 && type<16)
 	    {
 	      static char *label[]={
-		"Text event: ", "Text: ", "Copyright: ", "Track name: ",
-		"Instrument: ", "Lyric: ", "Marker: ", "Cue point: "};
+		"Text: ", "Text: ", "Copyright: ", "Track ",
+		"Instrument ", "Lyric: ", "Marker: ", "Cue point: "};
 	      dumpstring(len, label[(type>7) ? 0 : type], type);
 	    }
 	  else
@@ -533,7 +532,11 @@ static MidiEventList *read_midi_event(void)
 		  case 7: control=ME_MAINVOLUME; break;
 		  case 10: control=ME_PAN; break;
 		  case 11: control=ME_EXPRESSION; break;
+#ifdef tplus
+		  case 64: control=ME_SUSTAIN; b = (b >= 64); break;
+#else
 		  case 64: control=ME_SUSTAIN; break;
+#endif
 		  case 71: control=ME_HARMONICCONTENT; break;
 		  case 72: control=ME_RELEASETIME; break;
 		  case 73: control=ME_ATTACKTIME; break;
@@ -810,9 +813,11 @@ static MidiEvent *groom_list(int32 divisions, uint32 *eventsp, uint32 *samplesp)
 	}
       if (meep->event.type==ME_TEMPO)
 	{
+#ifndef tplus
 	  tempo=
 	    meep->event.channel + meep->event.b * 256 + meep->event.a * 65536;
 	  compute_sample_increment(tempo, divisions);
+#endif
 	  skip_this_event=1;
 	}
       else if ((quietchannels & (1<<meep->event.channel)))
@@ -1018,6 +1023,14 @@ static MidiEvent *groom_list(int32 divisions, uint32 *eventsp, uint32 *samplesp)
 	  st += samples_to_do;
 	}
       else if (counting_time==1) counting_time=0;
+#ifdef tplus
+      if (meep->event.type==ME_TEMPO)
+	{
+	  tempo=
+	    meep->event.channel + meep->event.b * 256 + meep->event.a * 65536;
+	  compute_sample_increment(tempo, divisions);
+	}
+#endif
       if (!skip_this_event)
 	{
 	  /* Add the event to the list */

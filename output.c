@@ -79,6 +79,7 @@ PlayMode *play_mode_list[] = {
 /* Some functions to convert signed 32-bit data to other formats */
 
 int output_clips = 0;
+int output_buffer_full = 100;
 
 void s32tos8(int32 *lp, int32 c)
 {

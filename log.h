@@ -25,28 +25,11 @@
 
 #include<stdlib.h>
 
-#include<qdialog.h>
-#include<qfont.h>
 #include<qstring.h>
-#include<qpainter.h>
-#include<qpixmap.h>
-#include<qlabel.h>
+//#include<qpixmap.h>
 #include<qmultilinedit.h>
-#include<qpushbutton.h>
 #include <qtimer.h>
 #include <qstrlist.h>
-
-
-class myMultiEdit : public QMultiLineEdit {
-
-public:
-
-  myMultiEdit(QWidget *parent=0, const char *name=0);
-  ~myMultiEdit();
-
-bool rowYPos(int row, int& yPos);
-void newLine();
-};
 
 
 class LogWindow : public QWidget {
@@ -61,20 +44,17 @@ public:
   void clear();
 
 private slots:
-    void updatewindow();
+  void updatewindow();
 
 private:
-      void resizeEvent(QResizeEvent *e);
+  void resizeEvent(QResizeEvent *e);
 
 private:
 
   bool timerset;
   QTimer *sltimer;
   QStrList *stringlist;
-  void enter();
-  QFrame *fline;
-  myMultiEdit *text_window;
-
+  QMultiLineEdit *text_window;
 
 };
 #endif

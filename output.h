@@ -46,7 +46,7 @@ typedef struct {
 } PlayMode;
 
 extern PlayMode *play_mode_list[], *play_mode;
-extern int init_buffers(int kbytes);
+
 extern int output_buffer_full;
 
 /* Conversion functions -- These overwrite the int32 data in *lp with

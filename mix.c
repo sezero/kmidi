@@ -70,7 +70,12 @@ int recompute_envelope(int v)
     }
   voice[v].envelope_stage=stage+1;
 
+#ifdef tplus
+  if (voice[v].envelope_volume==voice[v].envelope_offset[stage] ||
+      (stage > 2 && voice[v].envelope_volume < voice[v].envelope_offset[stage]))
+#else
   if (voice[v].envelope_volume==voice[v].envelope_offset[stage])
+#endif
     return recompute_envelope(v);
   voice[v].envelope_target=voice[v].envelope_offset[stage];
   voice[v].envelope_increment = voice[v].envelope_rate[stage];
