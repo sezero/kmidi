@@ -1,5 +1,4 @@
 /*================================================================
- *	$Id$
  * SoundFont file extension
  *	written by Takashi Iwai <iwai@dragon.mm.t.u-tokyo.ac.jp>
  *================================================================*/
@@ -37,8 +36,6 @@
 /* sounds crappy -- 2mbgmgs.sf2 has them */
 /* #define DO_LINKED_WAVES */
 
-/* require cfg declarations of all banks and presets --gl */
-#define STRICT_VOICE_DECL
 /*----------------------------------------------------------------
  * local parameters
  *----------------------------------------------------------------*/
@@ -53,13 +50,13 @@ typedef struct _SampleList {
 	struct _SampleList *next;
 	int32 startsample, endsample;
 	int32 cutoff_freq;
-	float resonance;
+	FLOAT_T resonance;
 } SampleList;
 
 typedef struct _InstList {
 	int bank, preset, keynote;
 	int samples, rsamples;
-	int order, already_loaded;
+	int already_loaded;
 	char *fname;
 	FILE *fd;
 	SampleList *slist, *rslist;
@@ -74,37 +71,22 @@ typedef struct SFInsts {
 	InstList *instlist;
 } SFInsts;
 
-typedef struct _SFExclude {
-	int bank, preset, keynote;
-	struct _SFExclude *next;
-} SFExclude;
-
-typedef struct _SFOrder {
-	int bank, preset, keynote;
-	int order;
-	struct _SFOrder *next;
-} SFOrder;
-
 
 /*----------------------------------------------------------------*/
 
 /*static void free_sample(InstList *ip);*/
 static int load_one_side(SFInsts *rec, SampleList *sp, int sample_count, Sample *base_sample, int amp, int brightness, int harmoniccontent);
 static Instrument *load_from_file(SFInsts *rec, InstList *ip, int amp, int brightness, int harmoniccontent);
-static int is_excluded(int bank, int preset, int keynote);
-static void free_exclude(void);
-static int is_ordered(int bank, int preset, int keynote);
-static void free_order(void);
-static void parse_preset(SFInsts *rec, SFInfo *sf, int preset, int order);
+static void parse_preset(SFInsts *rec, SFInfo *sf, int preset);
 static void parse_gen(Layer *lay, tgenrec *gen);
 static void parse_preset_layer(Layer *lay, SFInfo *sf, int idx);
 /*static void merge_layer(Layer *dst, Layer *src);*/
 static int search_inst(Layer *lay);
-static void parse_inst(SFInsts *rec, Layer *pr_lay, SFInfo *sf, int preset, int inst, int order, int which);
+static void parse_inst(SFInsts *rec, Layer *pr_lay, SFInfo *sf, int preset, int inst, int which);
 static void parse_inst_layer(Layer *lay, SFInfo *sf, int idx);
 static int search_sample(Layer *lay);
 static void append_layer(Layer *dst, Layer *src, SFInfo *sf);
-static void make_inst(SFInsts *rec, Layer *lay, SFInfo *sf, int pr_idx, int in_idx, int order, int which);
+static void make_inst(SFInsts *rec, Layer *lay, SFInfo *sf, int pr_idx, int in_idx, int which);
 static int32 calc_root_pitch(Layer *lay, SFInfo *sf, SampleList *sp);
 #ifndef SF_SUPPRESS_ENVELOPE
 static void convert_volume_envelope(Layer *lay, SFInfo *sf, SampleList *sp);
@@ -112,7 +94,7 @@ static void convert_volume_envelope(Layer *lay, SFInfo *sf, SampleList *sp);
 static int32 to_offset(int offset);
 static int32 calc_rate(int diff, int time);
 static int32 to_msec(Layer *lay, SFInfo *sf, int index);
-static float calc_volume(Layer *lay, SFInfo *sf);
+static FLOAT_T calc_volume(Layer *lay, SFInfo *sf);
 static int32 calc_sustain(Layer *lay, SFInfo *sf);
 #ifndef SF_SUPPRESS_TREMOLO
 static void convert_tremolo(Layer *lay, SFInfo *sf, SampleList *sp);
@@ -121,7 +103,7 @@ static void convert_tremolo(Layer *lay, SFInfo *sf, SampleList *sp);
 static void convert_vibrato(Layer *lay, SFInfo *sf, SampleList *sp);
 #endif
 #ifndef SF_SUPPRESS_CUTOFF
-static void do_lowpass(Sample *sp, int32 freq, float resonance);
+static void do_lowpass(Sample *sp, int32 freq, FLOAT_T resonance);
 #endif
 static void calc_cutoff(Layer *lay, SFInfo *sf, SampleList *sp);
 static void calc_filterQ(Layer *lay, SFInfo *sf, SampleList *sp);
@@ -129,11 +111,9 @@ static void calc_filterQ(Layer *lay, SFInfo *sf, SampleList *sp);
 /*----------------------------------------------------------------*/
 
 static SFInsts sfrec;
-static SFExclude *sfexclude;
-static SFOrder *sforder;
 
 int cutoff_allowed = 0;
-int command_cutoff_allowed = 1;
+int command_cutoff_allowed = 0;
 
 
 #ifdef GREGSTEST
@@ -173,7 +153,8 @@ void init_soundfont(char *fname, int oldbank, int newbank)
 	sfrec.fname = strcpy((char*)safe_malloc(strlen(fname)+1), fname);
 	load_sbk(sfrec.fd, &sfinfo);
 
-	for (i = 0; i < sfinfo.nrpresets - 1; i++) {
+	/*for (i = 0; i < sfinfo.nrpresets; i++) { one too many?? --gl*/
+	for (i = 0; i < sfinfo.nrpresets-1; i++) {
 		int bank = sfinfo.presethdr[i].bank;
 		int preset = sfinfo.presethdr[i].preset;
 		if (oldbank != newbank) {
@@ -182,7 +163,7 @@ void init_soundfont(char *fname, int oldbank, int newbank)
 			}
 			else if (bank == oldbank) bank = sfinfo.presethdr[i].sub_bank = newbank;
 		}
-		parse_preset(&sfrec, &sfinfo, i, 0);
+		parse_preset(&sfrec, &sfinfo, i);
 	}
 
 	/* copy header info */
@@ -226,6 +207,8 @@ void end_soundfont(void)
 	FILE *still_open = NULL;
 	char *still_not_free = NULL;
 
+	if (!sfrec.instlist) return;
+
 	while (1) {
 	    for (ip = sfrec.instlist; ip; ip = next) {
 		next = ip->next;
@@ -239,20 +222,24 @@ void end_soundfont(void)
 		fclose(still_open);
 		still_open = NULL;
 		if (still_not_free) free(still_not_free);
+		still_not_free = NULL;
 	    }
 	    else break;
 	}
 
-/** freeing samples done by free_instrument in instrum.c
 	for (ip = sfrec.instlist; ip; ip = next) {
 		next = ip->next;
+/** freeing samples done by free_instrument in instrum.c
 		free_sample(ip);
-	}
 **/
+		free(ip);
+	}
+	sfrec.version =
+	sfrec.minorversion =
+	sfrec.samplepos =
+	sfrec.samplesize = 0;
 	sfrec.instlist = NULL;
-
-	free_exclude();
-	free_order();
+	sfrec.fd = NULL;
 }
 
 /*----------------------------------------------------------------
@@ -285,8 +272,8 @@ Instrument *load_sbk_patch(char *name, int gm_num, int bank, int percussion,
     percussion = (gm_num >= 128);
     name = gus_voice[tpgm].vname;
 /*
-    if (very_verbose) printf("load_sbk_patch(%s:order=%d,bank=%d,preset=%d,tpgm=%d,reverb=%d,main_volume=%d) keep 0x%02X\n",
-	name,order,bank,preset,tpgm,reverb,main_volume, gus_voice[tpgm].keep);
+    if (very_verbose) printf("load_sbk_patch(%s:bank=%d,preset=%d,tpgm=%d,reverb=%d,main_volume=%d) keep 0x%02X\n",
+	name,bank,preset,tpgm,reverb,main_volume, gus_voice[tpgm].keep);
 */
 #endif
 
@@ -317,8 +304,7 @@ printf("but bank %d voice %d is already loaded\n", bank, preset);
 
 	for (ip = sfrec.instlist; ip; ip = ip->next) {
 		if (ip->bank == bank && ip->preset == preset &&
-		    (keynote < 0 || keynote == ip->keynote) &&
-		    ip->order == 0)
+		    (keynote < 0 || keynote == ip->keynote))
 			break;
 	}
 	if (ip && ip->samples) {
@@ -331,6 +317,9 @@ printf("but bank %d voice %d is already loaded\n", bank, preset);
 		sfrec.fname = ip->fname;
 		inst = load_from_file(&sfrec, ip, amp, brightness, harmoniccontent);
 	}
+	else ctl->cmsg(CMSG_INFO, VERB_NORMAL, "Can't find %s %s[%d,%d] in %s.",
+			(percussion)? "drum":"instrument", name,
+			(percussion)? keynote : preset, (percussion)? preset : bank, sfrec.fname);
 
 
 #ifdef SF_CLOSE_EACH_FILE
@@ -354,7 +343,9 @@ printf("but bank %d voice %d is already loaded\n", bank, preset);
 static Instrument *load_from_file(SFInsts *rec, InstList *ip, int amp, int brightness, int harmoniccontent)
 {
 	Instrument *inst;
-
+	int r_brightness = brightness;
+	int r_harmoniccontent = harmoniccontent;
+	int r_amp = amp;
 /*
 	ctl->cmsg(CMSG_INFO, VERB_NOISY, "Loading SF bank %d prg %d note %d from %s",
 		  ip->bank, ip->preset, ip->keynote, rec->fname);
@@ -368,12 +359,22 @@ static Instrument *load_from_file(SFInsts *rec, InstList *ip, int amp, int brigh
 	inst->left_samples = inst->samples;
 	inst->left_sample = inst->sample;
 	inst->right_samples = ip->rsamples;
-
+/*#define PSEUDO_STEREO*/
+#ifdef PSEUDO_STEREO
+	if (!ip->rsamples && ip->keynote >= 0) {
+		ip->rsamples = ip->samples;
+		ip->rslist = ip->slist;
+		r_brightness = 40;
+		r_harmoniccontent = 0;
+		if (ip->keynote % 2) r_amp = -2;
+		else r_amp = -3;
+	}
+#endif
 	if (ip->rsamples) inst->right_sample = safe_malloc(sizeof(Sample)*ip->rsamples);
 	else inst->right_sample = 0;
 
 	if (load_one_side(rec, ip->slist, ip->samples, inst->sample, amp, brightness, harmoniccontent) &&
-	    load_one_side(rec, ip->rslist, ip->rsamples, inst->right_sample, amp, brightness, harmoniccontent))
+	    load_one_side(rec, ip->rslist, ip->rsamples, inst->right_sample, r_amp, r_brightness, r_harmoniccontent))
 		return inst;
 
 	if (inst->right_sample) free(inst->right_sample);
@@ -417,46 +418,64 @@ static int load_one_side(SFInsts *rec, SampleList *sp, int sample_count, Sample 
 	   Another problem is that have to reload voices between songs.
 	   The filter really ought to be in resample.c.
 	*/
-#define SF_SUPPRESS_DYN_CUTOFF
-#ifndef SF_SUPPRESS_DYN_CUTOFF
+#define SF_SUPPRESS_STATIC_CUTOFF
+/*#define STATIC_CUT_DEBUG*/
+
+#ifndef SF_SUPPRESS_STATIC_CUTOFF
+		free_instruments_afterwards=1;
 		if (brightness >= 0 && brightness != 64) {
 			int32 fq = sp->cutoff_freq;
-#ifdef DYN_CUT_DEBUG
-printf("cutoff from %ld", fq);
+#ifdef STATIC_CUT_DEBUG
+ctl->cmsg(CMSG_INFO, VERB_NORMAL, "~cutoff from %ld", fq);
 #endif
-			if (!fq) fq = 8400;
-			fq += (brightness - 64) * (fq / 40);
-#ifdef DYN_CUT_DEBUG
-printf(" to %ld\n", fq);
-#endif
-			if (fq < 349) fq = 349;
+			if (brightness > 64) {
+				if (!fq || fq > 8000) fq = 0;
+				else fq += (brightness - 64) * (fq / 80);
+			}
+			else {
+				if (!fq) fq = 6400 + (brightness - 64) * 80;
+				else fq += (brightness - 64) * (fq / 80);
+			}
+			if (fq && fq < 349) fq = 349;
 			else if (fq > 19912) fq = 19912;
+#ifdef STATIC_CUT_DEBUG
+ctl->cmsg(CMSG_INFO, VERB_NORMAL, " to %ld", fq);
+#endif
 			sp->cutoff_freq = fq;
 
 		}
 		if (harmoniccontent >= 0 && harmoniccontent != 64) {
-#ifdef DYN_CUT_DEBUG
+#ifdef STATIC_CUT_DEBUG
 printf("resonance from %f", sp->resonance);
 #endif
 			sp->resonance = harmoniccontent / 256.0;
-#ifdef DYN_CUT_DEBUG
+#ifdef STATIC_CUT_DEBUG
 printf(" to %f\n", sp->resonance);
 #endif
 		}
-#else
-	if (brightness+harmoniccontent > 1000) printf("gcc shush\n");
 #endif
+
 		/* do some filtering if necessary */
 #ifndef SF_SUPPRESS_CUTOFF
 		if (sp->cutoff_freq > 0 && cutoff_allowed) {
 			/* restore the normal value */
 			sample->data_length >>= FRACTION_BITS;
-    		        if (!i) ctl->cmsg(CMSG_INFO, VERB_NOISY, "cutoff = %ld ; resonance = %g",
+    		        if (!i) ctl->cmsg(CMSG_INFO, VERB_DEBUG, "cutoff = %ld ; resonance = %g",
 				sp->cutoff_freq, sp->resonance);
 			do_lowpass(sample, sp->cutoff_freq, sp->resonance);
 			/* convert again to the fractional value */
 			sample->data_length <<= FRACTION_BITS;
 		}
+#endif
+
+#ifdef PSEUDO_STEREO
+	if (amp<-1) {
+		if (sp->v.panning >= 64) sp->v.panning = 0;
+		else sp->v.panning = 127;
+		if (amp==-3) sp->v.panning = 127 - sp->v.panning;
+		/*amp = 80;*/
+		amp = -1;
+	}
 #endif
 
 #ifdef ADJUST_SAMPLE_VOLUMES
@@ -520,31 +539,34 @@ printf(" to %f\n", sp->resonance);
 printf("loop start %ld, loop end %ld, len %d\n", sample->loop_start>>FRACTION_BITS, sample->loop_end>>FRACTION_BITS,
 sample->data_length >> FRACTION_BITS);
 */
-/*#define HANNU_CLICK_REMOVAL*/
+#define HANNU_CLICK_REMOVAL
+/*#define DEBUG_CLICK*/
 #ifdef HANNU_CLICK_REMOVAL
     if ((sample->modes & MODES_LOOPING)) {
 	int nls = sample->loop_start>>FRACTION_BITS;
 	int nle = sample->loop_end>>FRACTION_BITS;
 	int ipt = 0, ips = 0;
-	char v1, v2;
+	int v1, v2, inls, inle;
+	inls = nls;
+	inle = nle;
 	while (!ipt) {
 		v1 = sample->data[nle-1];  v2 = sample->data[nle];
 		if (v2==0) {
 			if (v1 < 0) ipt = 1;
-			else if (v2 > 0) ipt = 2;
+			else if (v1 > 0) ipt = 2;
 		}
 		else {
 			if (v1 <= 0 && v2 > 0) ipt = 1;
 			else if (v1 >= 0 && v2 < 0) ipt = 2;
 		}
 		if (!ipt) nle--;
-		if (nle <= sample->loop_start) break;
+		if (nle <= inls) break;
 	}
 	if (ipt && nls > 0) while (!ips) {
 		v1 = sample->data[nls-1];  v2 = sample->data[nls];
 		if (v2==0) {
 			if (ipt == 1 && v1 < 0) ips = 1;
-			else if (ipt == 2 && v2 > 0) ips = 2;
+			else if (ipt == 2 && v1 > 0) ips = 2;
 		}
 		else {
 			if (ipt == 1 && v1 <= 0 && v2 > 0) ips = 1;
@@ -553,12 +575,13 @@ sample->data_length >> FRACTION_BITS);
 		if (!ips) nls--;
 		if (nls < 1) break;
 	}
-	if (ipt && ips && ipt == ips && nle <= sample->loop_end) {
-/*
-printf("changing loop start from %ld to %d, loop end from %ld to %d\n",
-sample->loop_start>>FRACTION_BITS, nls,
-sample->loop_end>>FRACTION_BITS, nle);
-*/
+	if (ipt && ips && ipt == ips && (nle-nls) == (inle-inls)) {
+#ifdef DEBUG_CLICK
+printf("changing loop start from %d to %d, loop end from %d to %d, len %d to %d\n",
+inls, nls,
+inle, nle,
+inle-inls, nle-nls);
+#endif
 		sample->loop_start = nls<<FRACTION_BITS;
 		sample->loop_end = nle<<FRACTION_BITS;
 	}
@@ -568,92 +591,11 @@ sample->loop_end>>FRACTION_BITS, nle);
 	return 1;
 }
 
-
-/*----------------------------------------------------------------
- * excluded samples
- *----------------------------------------------------------------*/
-
-void exclude_soundfont(int bank, int preset, int keynote)
-{
-	SFExclude *rec;
-	rec = (SFExclude*)safe_malloc(sizeof(SFExclude));
-	rec->bank = bank;
-	rec->preset = preset;
-	rec->keynote = keynote;
-	rec->next = sfexclude;
-	sfexclude = rec;
-}
-
-/* check the instrument is specified to be excluded */
-static int is_excluded(int bank, int preset, int keynote)
-{
-	SFExclude *p;
-	for (p = sfexclude; p; p = p->next) {
-		if (p->bank == bank &&
-		    (p->preset < 0 || p->preset == preset) &&
-		    (p->keynote < 0 || p->keynote == keynote))
-			return 1;
-	}
-	return 0;
-}
-
-/* free exclude list */
-static void free_exclude(void)
-{
-	SFExclude *p, *next;
-	for (p = sfexclude; p; p = next) {
-		next = p->next;
-		free(p);
-	}
-	sfexclude = NULL;
-}
-
-
-/*----------------------------------------------------------------
- * ordered samples
- *----------------------------------------------------------------*/
-
-void order_soundfont(int bank, int preset, int keynote)
-{
-	SFOrder *rec;
-	rec = (SFOrder*)safe_malloc(sizeof(SFOrder));
-	rec->bank = bank;
-	rec->preset = preset;
-	rec->keynote = keynote;
-	rec->order = 0;
-	rec->next = sforder;
-	sforder = rec;
-}
-
-/* check the instrument is specified to be ordered */
-static int is_ordered(int bank, int preset, int keynote)
-{
-	SFOrder *p;
-	for (p = sforder; p; p = p->next) {
-		if (p->bank == bank &&
-		    (p->preset < 0 || p->preset == preset) &&
-		    (p->keynote < 0 || p->keynote == keynote))
-			return p->order;
-	}
-	return -1;
-}
-
-/* free order list */
-static void free_order(void)
-{
-	SFOrder *p, *next;
-	for (p = sforder; p; p = next) {
-		next = p->next;
-		free(p);
-	}
-	sforder = NULL;
-}
-
 /*----------------------------------------------------------------
  * parse a preset
  *----------------------------------------------------------------*/
 
-static void parse_preset(SFInsts *rec, SFInfo *sf, int preset, int order)
+static void parse_preset(SFInsts *rec, SFInfo *sf, int preset)
 {
 	int from_ndx, to_ndx;
 	Layer lay, glay;
@@ -678,7 +620,7 @@ printf("Preset #%d (%s) has %d instruments.\n", preset,
 			memcpy(&glay, &lay, sizeof(Layer));
 		else {
 			append_layer(&lay, &glay, sf);
-			parse_inst(rec, &lay, sf, preset, inst, order, inum);
+			parse_inst(rec, &lay, sf, preset, inst, inum);
 			inum++;
 		}
 	}
@@ -723,7 +665,7 @@ static int search_inst(Layer *lay)
 }
 
 /* parse an instrument */
-static void parse_inst(SFInsts *rec, Layer *pr_lay, SFInfo *sf, int preset, int inst, int order, int which)
+static void parse_inst(SFInsts *rec, Layer *pr_lay, SFInfo *sf, int preset, int inst, int which)
 {
 	int from_ndx, to_ndx;
 	int i, sample;
@@ -741,7 +683,7 @@ static void parse_inst(SFInsts *rec, Layer *pr_lay, SFInfo *sf, int preset, int 
 			append_layer(&glay, &lay, sf);
 		else {
 			append_layer(&lay, &glay, sf);
-			make_inst(rec, &lay, sf, preset, inst, order, which);
+			make_inst(rec, &lay, sf, preset, inst, which);
 		}
 	}
 }
@@ -793,13 +735,13 @@ static void append_layer(Layer *dst, Layer *src, SFInfo *sf)
 }
 
 /* convert layer info to timidity instrument strucutre */
-static void make_inst(SFInsts *rec, Layer *lay, SFInfo *sf, int pr_idx, int in_idx, int order, int which)
+static void make_inst(SFInsts *rec, Layer *lay, SFInfo *sf, int pr_idx, int in_idx, int which)
 {
 	int banknum = sf->presethdr[pr_idx].bank;
 	int preset = sf->presethdr[pr_idx].preset;
 	int sub_banknum = sf->presethdr[pr_idx].sub_bank;
 	int sub_preset = sf->presethdr[pr_idx].sub_preset;
-	int keynote, n_order, program, truebank, note_to_use;
+	int keynote, program, truebank, note_to_use;
 	int strip_loop = 0, strip_envelope = 0, strip_tail = 0, panning = 0;
 #ifndef ADAGIO
 	ToneBank *bank=0;
@@ -821,7 +763,7 @@ static void make_inst(SFInsts *rec, Layer *lay, SFInfo *sf, int pr_idx, int in_i
 	linked_wave = sample->samplelink;
 	if (linked_wave && linked_wave < sfinfo.nrinfos) {
 		if (which == -1) sample = &sf->sampleinfo[linked_wave - 1];
-		else make_inst(rec, lay, sf, pr_idx, in_idx, order, -1);
+		else make_inst(rec, lay, sf, pr_idx, in_idx, -1);
 	}
 #endif
 	if (sample->sampletype & 0x8000) /* is ROM sample? */
@@ -832,20 +774,6 @@ static void make_inst(SFInsts *rec, Layer *lay, SFInfo *sf, int pr_idx, int in_i
 		truebank = sub_preset;
 		program = keynote = LO_VAL(lay->val[SF_keyRange]);
 #ifndef ADAGIO
-#ifndef STRICT_VOICE_DECL
-		if (!drumset[preset]) {
-			int i;
-			drumset[preset] = safe_malloc(sizeof(ToneBank));
-			memset(drumset[preset], 0, sizeof(ToneBank));
-			bank = drumset[preset];
-			for (i = 0; i < 128; i++) {
-			    bank->tone[i].font_type = FONT_SBK;
-  			    bank->tone[i].note=bank->tone[i].amp=bank->tone[i].pan=
-	  			bank->tone[i].strip_loop=bank->tone[i].strip_envelope=
-	    			bank->tone[i].strip_tail=-1;
-			}
-		}
-#endif
 		if (drumset[truebank]) {
 			bank = drumset[truebank];
 		}
@@ -855,20 +783,6 @@ static void make_inst(SFInsts *rec, Layer *lay, SFInfo *sf, int pr_idx, int in_i
 		truebank = sub_banknum;
 		program = preset;
 #ifndef ADAGIO
-#ifndef STRICT_VOICE_DECL
-		if (!tonebank[banknum]) {
-			int i;
-			tonebank[banknum] = safe_malloc(sizeof(ToneBank));
-			memset(tonebank[banknum], 0, sizeof(ToneBank));
-			bank = tonebank[banknum];
-			for (i = 0; i < 128; i++) {
-			    bank->tone[i].font_type = FONT_SBK;
-  			    bank->tone[i].note=bank->tone[i].amp=bank->tone[i].pan=
-	  			bank->tone[i].strip_loop=bank->tone[i].strip_envelope=
-	    			bank->tone[i].strip_tail=-1;
-			}
-		}
-#endif
 		if (tonebank[truebank]) {
 			bank = tonebank[truebank];
 		}
@@ -888,39 +802,15 @@ printf("Adding keynote #%d preset %d to %s (%d), bank %d (=? %d).\n", keynote, p
 if (*namep) printf("cfg name is %s\n", *namep);
 else printf("NO CFG NAME!\n");
 #endif
-#ifdef STRICT_VOICE_DECL
 	if (*namep == 0) return;
-#endif
 
-#ifdef STRICT_VOICE_DECL
 	if (bank->tone[program].font_type != FONT_SBK) return;
-#else
-	if (truebank && bank->tone[program].font_type != FONT_SBK) return;
-#endif
 	panning = bank->tone[program].pan;
 	strip_loop = bank->tone[program].strip_loop;
 	strip_envelope = bank->tone[program].strip_envelope;
 	strip_tail = bank->tone[program].strip_tail;
 	note_to_use = bank->tone[program].note;
 	/*if (!strip_envelope) strip_envelope = (banknum == 128);*/
-#endif
-
-	if (is_excluded(banknum, preset, keynote))
-		return;
-	if ((n_order = is_ordered(banknum, preset, keynote)) >= 0)
-		order = n_order;
-
-#ifndef ADAGIO
-#if 0
-	if (*namep == NULL || strlen(*namep) < 2) {
-		if (*namep) free(*namep);
-		*namep = safe_malloc(21);
-		if (banknum == 128)
-			memcpy(*namep, sf->samplenames[lay->val[SF_sampleId]].name, 20);
-		else memcpy(*namep, sf->insthdr[in_idx].name, 20);
-		(*namep)[20] = 0;
-	}
-#endif
 #endif
 
 	/* search current instrument list */
@@ -936,7 +826,6 @@ else printf("NO CFG NAME!\n");
 		ip->bank = sub_banknum;
 		ip->preset = sub_preset;
 		ip->keynote = keynote;
-		ip->order = order;
 		ip->already_loaded = 0;
 		ip->samples = 0;
 		ip->rsamples = 0;
@@ -969,6 +858,9 @@ else printf("NO CFG NAME!\n");
 		+ (short)lay->val[SF_endAddrs]
 		+ sample->endsample - sp->startsample;
 
+	if (sp->endsample > (1 << (32-FRACTION_BITS)))
+		ctl->cmsg(CMSG_ERROR, VERB_NORMAL,
+			  "sndfont: patch size %ld greater than max (%ld)", sp->endsample, 1<<(32-FRACTION_BITS));
 
 	/* set loop position */
 	sp->v.loop_start = ((short)lay->val[SF_startloopAddrsHi] * 32768)
@@ -1030,6 +922,8 @@ else printf("NO CFG NAME!\n");
 			sp->v.loop_end = sp->v.data_length - 4;
 		else sp->v.loop_end = sp->v.data_length;
 	}
+
+/* debug */
 #if 0
 if (strip_loop == 1) {
 	fprintf(stderr, "orig start sample %lu, endsample %lu\n", sample->startsample, sample->endsample);
@@ -1044,6 +938,7 @@ if (strip_loop == 1) {
 	fprintf(stderr, "loop start %lu, loop end %lu\n", sp->v.loop_start, sp->v.loop_end);
 }
 #endif
+
 
 	sp->v.sample_rate = sample->samplerate;
 	if (lay->set[SF_keyRange]) {
@@ -1086,8 +981,6 @@ if (strip_loop == 1) {
 	}
 	if (strip_tail == 1) sp->v.data_length = sp->v.loop_end + 1;
 
-	/*if (banknum == 128) sp->v.modes |= MODES_FAST_RELEASE;*/
-
       /* Strip any loops and envelopes we're permitted to */
       if ((strip_loop==1) && 
 	  (sp->v.modes & (MODES_SUSTAIN | MODES_LOOPING | 
@@ -1103,6 +996,8 @@ if (strip_loop == 1) {
 	    ctl->cmsg(CMSG_INFO, VERB_DEBUG, " - Removing envelope");
 	  sp->v.modes &= ~MODES_ENVELOPE;
 	}
+
+	if (banknum == 128 && !(sp->v.modes&(MODES_LOOPING|MODES_SUSTAIN))) sp->v.modes |= MODES_FAST_RELEASE;
 
 
 	/* panning position: 0 to 127 */
@@ -1232,11 +1127,12 @@ static int32 calc_root_pitch(Layer *lay, SFInfo *sf, SampleList *sp)
 static void convert_volume_envelope(Layer *lay, SFInfo *sf, SampleList *sp)
 {
 	int32 sustain = calc_sustain(lay, sf);
-	/*int delay = to_msec(lay, sf, SF_delayEnv2);*/
+	int32 delay = to_msec(lay, sf, SF_delayEnv2);
 	int32 attack = to_msec(lay, sf, SF_attackEnv2);
 	int32 hold = to_msec(lay, sf, SF_holdEnv2);
 	int32 decay = to_msec(lay, sf, SF_decayEnv2);
 	int32 release = to_msec(lay, sf, SF_releaseEnv2);
+	int milli = play_mode->rate/1000;
 #ifdef EXAMINE_SOME_ENVELOPES
 	static int no_shown = 0;
 if (!no_shown) {
@@ -1252,22 +1148,25 @@ if (!no_shown) {
 }
 #endif
 
-	sp->v.envelope_offset[0] = to_offset(255);
+	sp->v.envelope_offset[ATTACK] = to_offset(255);
 if (fast_decay)
-	sp->v.envelope_rate[0] = calc_rate(255, attack) * 2;
+	sp->v.envelope_rate[ATTACK] = calc_rate(255, attack) * 2;
 else
-	sp->v.envelope_rate[0] = calc_rate(255, attack) * 4;
+	sp->v.envelope_rate[ATTACK] = calc_rate(255, attack) * 4;
 
-	sp->v.envelope_offset[1] = to_offset(250);
-	sp->v.envelope_rate[1] = calc_rate(5, hold);
-	sp->v.envelope_offset[2] = to_offset(sustain);
-	sp->v.envelope_rate[2] = calc_rate(250 - sustain, decay);
-	sp->v.envelope_offset[3] = to_offset(5);
-	sp->v.envelope_rate[3] = calc_rate(255, release);
-	sp->v.envelope_offset[4] = to_offset(4);
-	sp->v.envelope_rate[4] = to_offset(200);
-	sp->v.envelope_offset[5] = to_offset(4);
-	sp->v.envelope_rate[5] = to_offset(200);
+	sp->v.envelope_offset[HOLD] = to_offset(250);
+	sp->v.envelope_rate[HOLD] = calc_rate(5, hold);
+	sp->v.envelope_offset[DECAY] = to_offset(sustain);
+	sp->v.envelope_rate[DECAY] = calc_rate(250 - sustain, decay);
+	sp->v.envelope_offset[RELEASE] = to_offset(5);
+	sp->v.envelope_rate[RELEASE] = calc_rate(255, release);
+	sp->v.envelope_offset[RELEASEB] = to_offset(4);
+	sp->v.envelope_rate[RELEASEB] = to_offset(200);
+	sp->v.envelope_offset[RELEASEC] = to_offset(4);
+	sp->v.envelope_rate[RELEASEC] = to_offset(200);
+
+	sp->v.envelope_offset[DELAY] = 0;
+	sp->v.envelope_rate[DELAY] = delay * milli;
 
 	sp->v.modes |= MODES_ENVELOPE;
 #ifdef EXAMINE_SOME_ENVELOPES
@@ -1334,10 +1233,10 @@ static int32 to_msec(Layer *lay, SFInfo *sf, int index)
 }
 
 /* convert peak volume to linear volume (0-255) */
-static float calc_volume(Layer *lay, SFInfo *sf)
+static FLOAT_T calc_volume(Layer *lay, SFInfo *sf)
 {
 	if (sf->version == 1)
-		return (float)(lay->val[SF_instVol] * 2) / 255.0;
+		return (FLOAT_T)(lay->val[SF_instVol] * 2) / 255.0;
 	else
 		return TO_LINEAR((double)lay->val[SF_instVol] / 10.0);
 }
@@ -1517,9 +1416,9 @@ static void calc_filterQ(Layer *lay, SFInfo *sf, SampleList *sp)
 #define USE_BUTTERWORTH
 
 #ifdef USE_BUTTERWORTH
-static void do_lowpass_w_res(Sample *sp, int32 freq, float resonance)
+static void do_lowpass_w_res(Sample *sp, int32 freq, FLOAT_T resonance)
 #else
-static void do_lowpass(Sample *sp, int32 freq, float resonance)
+static void do_lowpass(Sample *sp, int32 freq, FLOAT_T resonance)
 #endif
 {
 	double A, B, C;
@@ -1576,7 +1475,7 @@ static void do_lowpass(Sample *sp, int32 freq, float resonance)
 }
 
 #ifdef USE_BUTTERWORTH
-static void do_lowpass(Sample *sp, int32 freq, float resonance)
+static void do_lowpass(Sample *sp, int32 freq, FLOAT_T resonance)
 {
 	double C, a0, a1, a2, b0, b1;
 	sample_t *buf = sp->data;
@@ -1613,7 +1512,7 @@ static void do_lowpass(Sample *sp, int32 freq, float resonance)
 		outsamp = a0 * insamp + a1 * lastin + a2 * oldin - b0 * lastout - b1 * oldout;
 		if (outsamp >maxin) maxin = outsamp;
 		if (outsamp <minin) minin = outsamp;
-		lastout = outsamp;
+		/*lastout = outsamp;*/
 		if (outsamp > MAX_DATAVAL) {
 			outsamp = MAX_DATAVAL;
 			clips++;
@@ -1626,6 +1525,7 @@ static void do_lowpass(Sample *sp, int32 freq, float resonance)
 		oldin = lastin;
 		lastin = insamp;
 		oldout = lastout;
+		lastout = outsamp;
 	}
 #ifdef BUTTERWORTH_DEBUG
 if (resonance)
