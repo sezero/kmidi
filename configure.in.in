@@ -162,6 +162,8 @@ if test "x$au_enable_default" = xyes; then
     *-*-netbsd*)
       au_enable_sun=yes
       ;;
+    *-*-openbsd*)
+      au_enable_sun=yes
     *)
       AC_MSG_WARN(No --enable-audio=default audio for $target)
       ;;
