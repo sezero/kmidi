@@ -1,3 +1,8 @@
+1999-11-01  Greg Lee  <lee@hawaii.edu>
+
+	* b_out.c: disable filling of entire buffer
+	  on start up to get meter display started
+
 1999-10-31  Greg Lee  <lee@hawaii.edu>
 
 	* log.cpp: keep only 100 lines in the QMLE

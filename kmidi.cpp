@@ -1090,6 +1090,7 @@ void KMidi::playClicked()
   }
 
   if(status == KPLAYING){
+    //Panel->reset_panel = 10;
     status = KPAUSED;
     playPB->setOn( FALSE );
     pipe_int_write(MOTIF_PAUSE);
@@ -1132,6 +1133,7 @@ void KMidi::playClicked()
 
 void KMidi::stopClicked()
 {
+     //Panel->reset_panel = 10;
      looping = false;
      flag_new_playlist = false;
      replayPB->setOn( FALSE );

@@ -94,7 +94,7 @@ void b_out(int fd, int *buf, int ocount)
 
   ret = 0;
 
-  if (!starting_up)
+  /* if (!starting_up) */
   while (bbcount) {
     if (outchunk && bbcount >= outchunk)
         ret = write(fd, bbuf + bboffset, outchunk);
@@ -145,7 +145,7 @@ void b_out(int fd, int *buf, int ocount)
   memcpy(bbuf + bboffset + bbcount, buf, ocount);
   bbcount += ocount;
 
-  if (starting_up) return;
+  /* if (starting_up) return; */
 
   if (ret >= 0) while (bbcount) {
     if (outchunk && bbcount >= outchunk)

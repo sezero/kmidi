@@ -307,7 +307,7 @@ static void ctl_channel_note(int ch, int note, int vel, int start)
 
 	ch &= 0x1f;
 
-	if (slot == -1 && start > 10)
+	if (slot == -1 /* && start > 10 */)
 	  for (k = 0; k < NQUEUE; k++)
 	    if (Panel->ctime[k][ch] >= start && Panel->ctime[k][ch] < start + 8) {
 		slot = k;
@@ -322,7 +322,7 @@ static void ctl_channel_note(int ch, int note, int vel, int start)
 	    }
 
 	/* if (slot == -1) { fprintf(stderr,"D"); return; } */
-	if (slot == -1) slot = 0;
+	if (slot == -1) return;
 
 
 	Panel->ctime[slot][ch] = start;
@@ -363,7 +363,6 @@ static void ctl_note(int v)
 
 	if (voice[v].clone_type != 0) return;
 
-	/* start = voice[v].starttime/(play_mode->rate/100); */
 	start = (voice[v].starttime + (voice[v].sample_offset>>FRACTION_BITS)) /(play_mode->rate/100);
 	ch = voice[v].channel;
 	ch &= 0x1f;
@@ -396,48 +395,58 @@ static void ctl_note(int v)
 
 static void ctl_program(int ch, int val)
 {
+#ifdef MISC_PANEL_UPDATE
 	if (!ctl.trace_playing) 
 		return;
 	ch &= 0x1f;
 	if (ch < 0 || ch >= MAXCHAN) return;
 	/*Panel->channel[ch].program = val;*/
 	Panel->c_flags[ch] |= FLAG_PROG;
+#endif
 }
 
 static void ctl_volume(int ch, int val)
 {
+#ifdef MISC_PANEL_UPDATE
 	if (!ctl.trace_playing)
 		return;
 	ch &= 0x1f;
 	/* Panel->channel[ch].volume = val; */
 	ctl_channel_note(ch, Panel->cnote[ch], Panel->cvel[ch], -1);
+#endif
 }
 
 static void ctl_expression(int ch, int val)
 {
+#ifdef MISC_PANEL_UPDATE
 	if (!ctl.trace_playing)
 		return;
 	ch &= 0x1f;
 	/* Panel->channel[ch].expression = val; */
 	ctl_channel_note(ch, Panel->cnote[ch], Panel->cvel[ch], -1);
+#endif
 }
 
 static void ctl_panning(int ch, int val)
 {
+#ifdef MISC_PANEL_UPDATE
 	if (!ctl.trace_playing) 
 		return;
 	ch &= 0x1f;
 	/* Panel->channel[ch].panning = val; */
 	Panel->c_flags[ch] |= FLAG_PAN;
+#endif
 }
 
 static void ctl_sustain(int ch, int val)
 {
+#ifdef MISC_PANEL_UPDATE
 	if (!ctl.trace_playing)
 		return;
 	ch &= 0x1f;
 	/* Panel->channel[ch].sustain = val; */
 	Panel->c_flags[ch] |= FLAG_SUST;
+#endif
 }
 
 static void ctl_pitch_bend(int channel, int val)
@@ -456,7 +465,7 @@ static void ctl_reset(void)
 
         Panel->buffer_state = 100;
         Panel->various_flags = 0;
-	Panel->reset_panel = 5;
+	Panel->reset_panel = 10;
 
 
 	for (i = 0; i < MAXDISPCHAN; i++) {
@@ -472,6 +481,8 @@ static void ctl_reset(void)
 		for (j = 0; j < NQUEUE; j++) {
 			Panel->ctime[j][i] = -1;
 			Panel->notecount[j][i] = 0;
+			Panel->ctotal[j][i] = 0;
+			Panel->ctotal_sustain[j][i] = 0;
 		}
 	}
 }
@@ -1040,7 +1051,7 @@ static void shm_alloc(void)
 		exit(1);
 	}
 
-	Panel->reset_panel = 5;
+	Panel->reset_panel = 10;
 }
 
 static void shm_free(int sig)
