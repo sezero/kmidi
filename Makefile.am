@@ -31,7 +31,7 @@ kmidi_SOURCES = kmidi.cpp  playlist.cpp bwlednum.cpp configdlg.cpp log.cpp\
 noinst_HEADERS = kmidi.h  playlist.h bwlednum.h configdlg.h\
 	config.h common.h readmidi.h playmidi.h resample.h mix.h instrum.h \
 	tables.h controls.h output.h filter.h log.h version.h filepic.h \
-	cduppic.h constants.h folderpic.h sbk.h sflayer.h ctl.h
+	cduppic.h constants.h folderpic.h sbk.h sflayer.h ctl.h effects.h
 
 METASOURCES = kmidi.moc  playlist.moc bwlednum.moc configdlg.moc log.moc
 
