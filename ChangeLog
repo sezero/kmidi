@@ -1,3 +1,8 @@
+1999-11-23  Greg Lee  <lee@hawaii.edu>
+
+	* Makefile.am: change -O2 to -O to avoid
+	  core dumps (egcs-1.1.2)
+
 1999-11-22  Greg Lee  <lee@hawaii.edu>
 
 	* fixed core dump during LaGrange interpolation

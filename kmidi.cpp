@@ -75,19 +75,26 @@ static const char * whatsthis_image[] = {
 "     ooo        ",
 "     ooo        "};
 
-#include "config.h"
+//#include "config.h"
 #include "playlist.h"
-#include "output.h"
-#include "instrum.h"
-#include "playmidi.h"
-#include "constants.h"
-#include "ctl.h"
+//#include "output.h"
+//#include "instrum.h"
+//#include "playmidi.h"
+//#include "constants.h"
+//#include "ctl.h"
 #include <kstddirs.h>
 #include <kglobal.h>
 #include <kwm.h>
 
 
 extern "C" {
+
+#include "config.h"
+#include "output.h"
+#include "instrum.h"
+#include "playmidi.h"
+#include "constants.h"
+#include "ctl.h"
 
 int pipe_read_ready();
 void pipe_int_write(int c);

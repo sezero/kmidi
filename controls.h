@@ -64,7 +64,8 @@
 #endif
 
 typedef struct {
-  const char *id_name, id_character;
+  const char *id_name;
+  char id_character;
   int verbosity, trace_playing, opened;
 
   int (*open)(int using_stdin, int using_stdout);

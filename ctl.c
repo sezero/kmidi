@@ -77,7 +77,7 @@ static void ctl_master_volume(int mv);
 static void ctl_file_name(char *name);
 static void ctl_current_time(uint32 ct);
 static void ctl_note(int v);
-static void ctl_program( int ch, int val );
+static void ctl_program( int ch, int val);
 static void ctl_volume( int ch, int val );
 static void ctl_expression( int ch, int val );
 static void ctl_panning( int ch, int val );
@@ -109,9 +109,9 @@ void pipe_int_read(int *c);
 void pipe_string_write(char *str);
 void pipe_string_read(char *str);
 
-void 	pipe_open();
+void 	pipe_open(void);
 void	pipe_error(const char *st);
-int 	pipe_read_ready();
+int 	pipe_read_ready(void);
 
 /*
 static int AppInit(Tcl_Interp *interp);
@@ -303,7 +303,7 @@ static void ctl_current_time(uint32 ct)
 }
 
 
-static void ctl_channel_note(int ch, int note, int vel, int start)
+static void ctl_channel_note(int ch, /*int note, int vel,*/ int start)
 {
 	int k, slot=-1, i=voices, v=0, totalvel=0, total_sustain=0;
 	FLOAT_T total_amp = 0, total_amp_s = 0;
@@ -396,10 +396,10 @@ static void ctl_note(int v)
 	      break;
 	}
 #endif
-	ctl_channel_note(ch, note, vel, start);
+	ctl_channel_note(ch, /* note, vel,*/ start);
 }
 
-static void ctl_program( int ch, int val )
+static void ctl_program( int ch, int val)
 {
 #ifdef MISC_PANEL_UPDATE
 	if (!ctl.trace_playing) 
@@ -493,10 +493,9 @@ static void ctl_reset(void)
 		ctl_panning(i, channel[i].panning);
 		ctl_sustain(i, channel[i].sustain);
 		ctl_pitch_bend(i, channel[i].pitchbend);
-	#endif
 		ctl_channel_note(i, Panel->cnote[i], 0, -1);
+	#endif
 		Panel->cindex[i] = 0;
-		/* Panel->mindex[i] = 0; */
 		for (j = 0; j < NQUEUE; j++) {
 			Panel->ctime[j][i] = -1;
 			Panel->notecount[j][i] = 0;
