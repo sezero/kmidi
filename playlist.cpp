@@ -29,6 +29,7 @@
 
 #include <klocale.h>
 #include <kstddirs.h>
+#include <kmessagebox.h>
 
 #include "playlist.h"
 #include "playlist.moc"
@@ -219,7 +220,7 @@ void PlaylistDialog::set_local_dir(const QString &dir){
   if (!dir.isEmpty()){
     if ( !cur_local_dir.setCurrent(dir)){
       QString str = i18n("Can not enter directory: %1\n").arg(dir);
-      QMessageBox::information(this, i18n("Sorry"),str,i18n("OK"));
+      KMessageBox::sorry(this, str);
       return;
     }
   }
@@ -287,7 +288,7 @@ void PlaylistDialog::set_local_dir(const QString &dir){
     }
   } else {
     qApp->restoreOverrideCursor();
-    QMessageBox::information(this, i18n("Sorry"), i18n("Cannot open or read directory."), i18n("OK") );
+    KMessageBox::error(this, i18n("Cannot open or read directory."));
     qApp ->setOverrideCursor( waitCursor );
   }
   local_list->setAutoUpdate( TRUE );

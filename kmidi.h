@@ -41,7 +41,6 @@
 #include <qslider.h>
 #include <qgroupbox.h>
 #include <qcombobox.h>
-#include <qmessagebox.h>
 #include <qscrollbar.h>
 #include <qtooltip.h>
 #include <qregexp.h>

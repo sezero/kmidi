@@ -39,7 +39,6 @@
 #include <qstrlist.h>
 #include <qpainter.h>
 #include <qapplication.h>    
-#include <qmessagebox.h>
 #include <qpopupmenu.h>
 #include <qkeycode.h>
 #include <qmenubar.h> 
