@@ -54,7 +54,7 @@ KMidiFrame *kmidiframe;
 DockWidget*     dock_widget;
 
 KMidiFrame::KMidiFrame( const char *name ) :
-    KMainWindow( 0, name )
+    KMainWindow( 0, name, WStyle_ContextHelp )
 {
 
     menuBar = new KMenuBar(this);
@@ -127,42 +127,37 @@ KMidiFrame::KMidiFrame( const char *name ) :
 
 
 
-    stereo_options = new QPopupMenu();
-    Q_CHECK_PTR( stereo_options );
-    stereo_options->setCheckable( TRUE );
-    menuBar->insertItem( i18n("Stereo"), stereo_options );
-    connect( stereo_options, SIGNAL(activated(int)), this, SLOT(doStereoMenuItem(int)) );
-    connect( stereo_options, SIGNAL(aboutToShow()), this, SLOT(fixStereoItems()) );
-	stereo_options->insertItem(  i18n("No Stereo Patch"), 110 );
-	stereo_options->setWhatsThis(110, i18n("Prevents playing the<br>\n"
+    effects_menu = new QPopupMenu();
+    Q_CHECK_PTR( effects_menu );
+    effects_menu->setCheckable( TRUE );
+    menuBar->insertItem( i18n("Effects"), effects_menu );
+    connect( effects_menu, SIGNAL(activated(int)), this, SLOT(doEffectsMenuItem(int)) );
+    connect(effects_menu, SIGNAL(aboutToShow()), 
+		    this, SLOT(fixEffectsItems()) );
+	effects_menu->insertItem(  i18n("No Stereo Patch"), 110 );
+	effects_menu->setWhatsThis(110, i18n("Prevents playing the<br>\n"
 				"second instrument for those<br>\n"
 				"patches that have two<br>\n"
 				"(you probably don't want<br>\n"
 				"to choose this option).") );
-	stereo_options->insertItem(  i18n("Normal Stereo") , 111);
-	stereo_options->setWhatsThis(111, i18n("Plays both instruments<br>\n"
+	effects_menu->insertItem(  i18n("Normal Stereo") , 111);
+	effects_menu->setWhatsThis(111, i18n("Plays both instruments<br>\n"
 				"for those (sf2) patches<br>\n"
 				"which have two.") );
-	stereo_options->insertItem(  i18n("Extra Stereo") , 112);
-	stereo_options->setWhatsThis(112, i18n("For keyboard instruments,<br>\n"
+	effects_menu->insertItem(  i18n("Extra Stereo") , 112);
+	effects_menu->setWhatsThis(112, i18n("For keyboard instruments,<br>\n"
 				"lower notes come from the left<br>\n"
 				"For other instruments, position is<br>\n"
 				"made a function of note<br>\n"
 				"velocity.") );
-	stereo_options->insertSeparator();
-	stereo_options->insertItem(  i18n("Surround Stereo") , 113);
-	stereo_options->setWhatsThis(112, i18n("Extra stereo, echo and<br>" \
+	effects_menu->insertItem(  i18n("Surround Stereo") , 113);
+	effects_menu->setWhatsThis(112, i18n("Extra stereo, echo and<br>" \
 				"detuned notes are spread out more<br>" \
 				"to left and right.") );
 
-    reverb_options = new QPopupMenu();
-    Q_CHECK_PTR( reverb_options );
-    reverb_options->setCheckable( TRUE );
-    menuBar->insertItem( i18n("Reverb"), reverb_options );
-    connect( reverb_options, SIGNAL(activated(int)), this, SLOT(doReverbMenuItem(int)) );
-    connect( reverb_options, SIGNAL(aboutToShow()), this, SLOT(fixReverbItems()) );
-	reverb_options->insertItem(  i18n("Dry"), 119 );
-	reverb_options->setWhatsThis(119, i18n("With the dry setting,<br>\n"
+	effects_menu->insertSeparator();
+	effects_menu->insertItem(  i18n("Dry Reverb"), 119 );
+	effects_menu->setWhatsThis(119, i18n("With the dry setting,<br>\n"
 				"after notes are released,<br>\n"
 				"they are ended by playing<br>\n"
 				"through the ends of their<br>\n"
@@ -173,8 +168,7 @@ KMidiFrame::KMidiFrame( const char *name ) :
     reverb_level = new QPopupMenu();
     Q_CHECK_PTR( reverb_level );
     reverb_level->setCheckable( TRUE );
-    reverb_options->insertSeparator();
-    reverb_options->insertItem( i18n("Reverb Level"), reverb_level);
+    effects_menu->insertItem( i18n("Reverb Level"), reverb_level);
         reverb_level->insertItem( i18n("default") , 160);
 	reverb_level->setWhatsThis(160, i18n("The reverberation level<br>\n"
 				"is set according to the midi<br>\n"
@@ -194,19 +188,18 @@ KMidiFrame::KMidiFrame( const char *name ) :
 				"is set to the maximum level of 127." ) );
     connect( reverb_level, SIGNAL(activated(int)), this, SLOT(doReverbLevel(int)) );
     connect( reverb_level, SIGNAL(aboutToShow()), this, SLOT(fixReverbLevelItems()) );
-    reverb_options->insertSeparator();
-	reverb_options->insertItem(  i18n("No Echo"), 120 );
-	reverb_options->setWhatsThis(120, i18n("Prevents playing extra<br>\n"
+    effects_menu->insertSeparator();
+	effects_menu->insertItem(  i18n("No Echo"), 120 );
+	effects_menu->setWhatsThis(120, i18n("Prevents playing extra<br>\n"
 				"echo notes for reverberation.") );
-	reverb_options->insertItem(  i18n("Normal Echo") , 121);
-	reverb_options->setWhatsThis(121, i18n("Extra echo notes are<br>\n"
+	effects_menu->insertItem(  i18n("Normal Echo") , 121);
+	effects_menu->setWhatsThis(121, i18n("Extra echo notes are<br>\n"
 					       "played to get the effect<br>\n"
 					       "of reverberation.") );
     echo_level = new QPopupMenu();
     Q_CHECK_PTR( echo_level );
     echo_level->setCheckable( TRUE );
-    reverb_options->insertSeparator();
-    reverb_options->insertItem( i18n("Echo Level"), echo_level);
+    effects_menu->insertItem( i18n("Echo Level"), echo_level);
         echo_level->insertItem( i18n("default") , 130);
 	echo_level->setWhatsThis(130, i18n("The level for echo notes<br>\n"
 				"is set according to the midi<br>\n"
@@ -227,17 +220,12 @@ KMidiFrame::KMidiFrame( const char *name ) :
     connect( echo_level, SIGNAL(activated(int)), this, SLOT(doEchoLevel(int)) );
     connect( echo_level, SIGNAL(aboutToShow()), this, SLOT(fixEchoLevelItems()) );
 
+    effects_menu->insertSeparator();
 
-    chorus_options = new QPopupMenu();
-    Q_CHECK_PTR( chorus_options );
-    chorus_options->setCheckable( TRUE );
-    menuBar->insertItem( i18n("Chorus"), chorus_options );
-    connect( chorus_options, SIGNAL(activated(int)), this, SLOT(doChorusMenuItem(int)) );
-    connect( chorus_options, SIGNAL(aboutToShow()), this, SLOT(fixChorusItems()) );
     chorus_level = new QPopupMenu();
     Q_CHECK_PTR( chorus_level );
     chorus_level->setCheckable( TRUE );
-    chorus_options->insertItem( i18n("Chorus Level"), chorus_level);
+    effects_menu->insertItem( i18n("Chorus Level"), chorus_level);
     chorus_level->insertItem( i18n("default") , 170);
     chorus_level->setWhatsThis(170, i18n("The chorus level<br>\n"
 					 "is set according to the midi<br>\n"
@@ -257,19 +245,18 @@ KMidiFrame::KMidiFrame( const char *name ) :
 					 "is set to the maximum level of 127." ) );
     connect( chorus_level, SIGNAL(activated(int)), this, SLOT(doChorusLevel(int)) );
     connect( chorus_level, SIGNAL(aboutToShow()), this, SLOT(fixChorusLevelItems()) );
-    chorus_options->insertSeparator();
-    chorus_options->insertItem(  i18n("No Detune"), 140 );
-    chorus_options->setWhatsThis(140, i18n("Prevents playing extra<br>\n"
+    effects_menu->insertSeparator();
+    effects_menu->insertItem(  i18n("No Detune"), 140 );
+    effects_menu->setWhatsThis(140, i18n("Prevents playing extra<br>\n"
 					   "detuned notes for chorus effect.") );
-    chorus_options->insertItem(  i18n("Normal Detune") , 141);
-    chorus_options->setWhatsThis(141, i18n("Extra detuned notes are<br>\n"
+    effects_menu->insertItem(  i18n("Normal Detune") , 141);
+    effects_menu->setWhatsThis(141, i18n("Extra detuned notes are<br>\n"
 					   "played to get the effect<br>\n"
 					   "of chorusing") );
     detune_level = new QPopupMenu();
     Q_CHECK_PTR( detune_level );
     detune_level->setCheckable( TRUE );
-    chorus_options->insertSeparator();
-    chorus_options->insertItem( i18n("Detune Level"), detune_level);
+    effects_menu->insertItem( i18n("Detune Level"), detune_level);
     detune_level->insertItem( i18n("default") , 150);
     detune_level->setWhatsThis(150, i18n("The level for detuned notes<br>\n"
 					 "is set according to the MIDI<br>\n"
@@ -447,129 +434,204 @@ void KMidiFrame::doViewInfoLevel(int id) {
 	kmidi->updateRChecks(3);
     }
 }
+
 void KMidiFrame::fixInfoLevelItems() {
-    view_level->setItemChecked( 100, kmidi->verbosity_state == 0);
-    view_level->setItemChecked( 101, kmidi->verbosity_state == 1);
-    view_level->setItemChecked( 102, kmidi->verbosity_state == 2);
-    view_level->setItemChecked( 103, kmidi->verbosity_state == 3);
-    view_level->setItemChecked( 104, kmidi->verbosity_state == 4);
+    view_level->setItemChecked( view_level->idAt(0),
+		    kmidi->verbosity_state == 0);
+    view_level->setItemChecked( view_level->idAt(1),
+		    kmidi->verbosity_state == 1);
+    view_level->setItemChecked( view_level->idAt(2),
+		    kmidi->verbosity_state == 2);
+    view_level->setItemChecked( view_level->idAt(3), 
+		    kmidi->verbosity_state == 3);
+    view_level->setItemChecked( view_level->idAt(4), 
+		    kmidi->verbosity_state == 4);
 }
-void KMidiFrame::doStereoMenuItem(int id) {
-    if (id >= 110 && id <= 112 && (id-110 != kmidi->stereo_state) ) {
-	if (id == 110) kmidi->rcb1->setChecked(false);
-	else if (id == 111) kmidi->rcb1->setNoChange();
-	else if (id == 112) kmidi->rcb1->setChecked(true);
-	kmidi->updateRChecks(0);
+void KMidiFrame::doEffectsMenuItem(int id) {
+
+    if (id == effects_menu->idAt(0)) {
+	    if (kmidi->stereo_state != 0) {
+		    kmidi->rcb1->setChecked(false);
+		    kmidi->stereo_state = 0;
+	    }
+    	    kmidi->updateRChecks(0);
+	    return;
     }
-    else if (id == 113) {
+
+    if (id == effects_menu->idAt(1)) {
+	    if (kmidi->stereo_state != 1) {
+		    kmidi->rcb1->setNoChange();
+		    kmidi->stereo_state = 1;
+	    }
+    	    kmidi->updateRChecks(0);
+	    return;
+    }
+
+    if (id == effects_menu->idAt(2)) {
+	    if (kmidi->stereo_state != 2) {
+		    kmidi->rcb1->setChecked(true);
+		    kmidi->stereo_state = 2;
+	    }
+    	    kmidi->updateRChecks(0);
+	    return;
+    }
+
+    if (id == effects_menu->idAt(3)) {
         if (( kmidi->evs_state  & 0x0f ) == 1) kmidi->setSurround(0);
 	else kmidi->setSurround(1);
     }
-}
-void KMidiFrame::fixStereoItems() {
-    stereo_options->setItemChecked( 110, kmidi->stereo_state == 0);
-    stereo_options->setItemChecked( 111, kmidi->stereo_state == 1);
-    stereo_options->setItemChecked( 112, kmidi->stereo_state == 2);
-    stereo_options->setItemChecked( 113, ( kmidi->evs_state  & 0x0f ) == 1);
-}
-void KMidiFrame::doReverbMenuItem(int id) {
-    if (id == 119) kmidi->setDry(!kmidi->dry_state);
-    else if (id >= 120 && id <= 121 && (id-120 != kmidi->echo_state) ) {
-	if (id == 120) kmidi->rcb2->setChecked(false);
-	else if (id == 121) kmidi->rcb2->setNoChange();
-	kmidi->updateRChecks(1);
+
+    // reverb items
+    if (id == effects_menu->idAt(5)) {
+	    kmidi->setDry(!kmidi->dry_state);
+	    kmidi->updateRChecks(1);
+	    return;
     }
+
+    if (id == effects_menu->idAt(8)) {
+	    kmidi->rcb2->setChecked(false);
+	    kmidi->echo_state = 0;
+	    kmidi->updateRChecks(1);
+	    return;
+    }
+
+    if (id == effects_menu->idAt(9)) {
+	    kmidi->rcb2->setNoChange();
+	    kmidi->echo_state = 1;
+	    kmidi->updateRChecks(1);
+	    return;
+    }
+
+    // chorus items
+    if (id == effects_menu->idAt(14)) {
+	    kmidi->rcb3->setChecked(false);
+	    kmidi->detune_state = 0;
+	    kmidi->updateRChecks(2);
+	    return;
+    }
+
+    if (id == effects_menu->idAt(15)) {
+    	kmidi->rcb3->setNoChange();
+	kmidi->detune_state = 1;
+	kmidi->updateRChecks(2);
+	return;
+    }
+
 }
-void KMidiFrame::fixReverbItems() {
-    reverb_options->setItemChecked( 119, kmidi->dry_state);
-    reverb_options->setItemChecked( 120, kmidi->echo_state == 0);
-    reverb_options->setItemChecked( 121, kmidi->echo_state == 1);
+
+void KMidiFrame::fixEffectsItems() {
+    effects_menu->setItemChecked( effects_menu->idAt(0), 
+		    kmidi->stereo_state == 0);
+    effects_menu->setItemChecked( effects_menu->idAt(1), 
+		    kmidi->stereo_state == 1);
+    effects_menu->setItemChecked( effects_menu->idAt(2), 
+		    kmidi->stereo_state == 2);
+    effects_menu->setItemChecked( effects_menu->idAt(3), 
+		    ( kmidi->evs_state  & 0x0f ) == 1);
+    effects_menu->setItemChecked( effects_menu->idAt(5), 
+		    kmidi->dry_state);
+    effects_menu->setItemChecked( effects_menu->idAt(8), 
+		    kmidi->echo_state == 0);
+    effects_menu->setItemChecked( effects_menu->idAt(9), 
+		    kmidi->echo_state == 1);
+    effects_menu->setItemChecked( effects_menu->idAt(14), 
+		    kmidi->detune_state == 0);
+    effects_menu->setItemChecked( effects_menu->idAt(15), 
+		    kmidi->detune_state == 1);
 }
 void KMidiFrame::doReverbLevel(int id) {
-    kmidi->setReverb(id - 160);
+    kmidi->setReverb(reverb_level->indexOf(id));
 }
+
 void KMidiFrame::doEchoLevel(int id) {
-    if (id == 130 && kmidi->echo_state >= 2) {
+    if (id == echo_level->idAt(0)
+	    && kmidi->echo_state >= 2) {
 	//kmidi->rcb2->setChecked(false);
 	kmidi->rcb2->setNoChange();
 	kmidi->updateRChecks(1);
     }
-    else if (kmidi->echo_state != id-129) {
+    else if (kmidi->echo_state != echo_level->indexOf(id) + 1) {
 	kmidi->rcb2->setChecked(true);
-	kmidi->echo_state = id-129;
+	kmidi->echo_state = echo_level->indexOf(id) + 1;
 	kmidi->updateRChecks(1);
     }
 }
 void KMidiFrame::fixEchoLevelItems() {
-    echo_level->setItemChecked( 130, kmidi->echo_state < 2);
-    echo_level->setItemChecked( 131, kmidi->echo_state == 2);
-    echo_level->setItemChecked( 132, kmidi->echo_state == 3);
-    echo_level->setItemChecked( 133, kmidi->echo_state == 4);
-    echo_level->setItemChecked( 134, kmidi->echo_state == 5);
+    echo_level->setItemChecked( echo_level->idAt(0), kmidi->echo_state < 2);
+    echo_level->setItemChecked( echo_level->idAt(1), kmidi->echo_state == 2);
+    echo_level->setItemChecked( echo_level->idAt(2), kmidi->echo_state == 3);
+    echo_level->setItemChecked( echo_level->idAt(3), kmidi->echo_state == 4);
+    echo_level->setItemChecked( echo_level->idAt(4), kmidi->echo_state == 5);
+
 }
 void KMidiFrame::fixReverbLevelItems() {
-    reverb_level->setItemChecked( 160, kmidi->reverb_state == 0);
-    reverb_level->setItemChecked( 161, kmidi->reverb_state == 1);
-    reverb_level->setItemChecked( 162, kmidi->reverb_state == 2);
-    reverb_level->setItemChecked( 163, kmidi->reverb_state == 3);
-    reverb_level->setItemChecked( 164, kmidi->reverb_state == 4);
-}
-void KMidiFrame::doChorusMenuItem(int id) {
-    if (id >= 140 && id <= 141 && (id-140 != kmidi->detune_state) ) {
-	if (id == 140) kmidi->rcb3->setChecked(false);
-	else if (id == 141) kmidi->rcb3->setNoChange();
-	kmidi->updateRChecks(2);
-    }
-}
-void KMidiFrame::fixChorusItems() {
-    chorus_options->setItemChecked( 140, kmidi->detune_state == 0);
-    chorus_options->setItemChecked( 141, kmidi->detune_state == 1);
+    reverb_level->setItemChecked( reverb_level->idAt(0), 
+		    kmidi->reverb_state < 2);
+    reverb_level->setItemChecked( reverb_level->idAt(1), 
+		    kmidi->reverb_state == 2);
+    reverb_level->setItemChecked( reverb_level->idAt(2), 
+		    kmidi->reverb_state == 3);
+    reverb_level->setItemChecked( reverb_level->idAt(3), 
+		    kmidi->reverb_state == 4);
+    reverb_level->setItemChecked( reverb_level->idAt(4), 
+		    kmidi->reverb_state == 5);
 }
 void KMidiFrame::doChorusLevel(int id) {
     kmidi->setChorus(id - 170);
 }
 void KMidiFrame::doDetuneLevel(int id) {
-    if (id == 150 && kmidi->detune_state >= 2) {
+    if ((id == detune_level->idAt(0))
+	    && kmidi->detune_state >= 2) {
 	kmidi->rcb3->setNoChange();
 	kmidi->updateRChecks(2);
     }
-    else if (kmidi->detune_state != id-149) {
+    else if (kmidi->detune_state != detune_level->indexOf(id) + 1) {
 	kmidi->rcb3->setChecked(true);
-	kmidi->detune_state = id-149;
+	kmidi->detune_state = detune_level->indexOf(id) + 1;
 	kmidi->updateRChecks(2);
     }
 }
 void KMidiFrame::fixChorusLevelItems() {
-    chorus_level->setItemChecked( 170, kmidi->chorus_state == 0);
-    chorus_level->setItemChecked( 171, kmidi->chorus_state == 1);
-    chorus_level->setItemChecked( 172, kmidi->chorus_state == 2);
-    chorus_level->setItemChecked( 173, kmidi->chorus_state == 3);
-    chorus_level->setItemChecked( 174, kmidi->chorus_state == 4);
+    chorus_level->setItemChecked( chorus_level->idAt(0), 
+		    kmidi->chorus_state == 0);
+    chorus_level->setItemChecked( chorus_level->idAt(1), 
+		    kmidi->chorus_state == 1);
+    chorus_level->setItemChecked( chorus_level->idAt(2), 
+		    kmidi->chorus_state == 2);
+    chorus_level->setItemChecked( chorus_level->idAt(3), 
+		    kmidi->chorus_state == 3);
+    chorus_level->setItemChecked( chorus_level->idAt(4), 
+		    kmidi->chorus_state == 4);
 }
 void KMidiFrame::fixDetuneLevelItems() {
-    detune_level->setItemChecked( 150, kmidi->detune_state < 2);
-    detune_level->setItemChecked( 151, kmidi->detune_state == 2);
-    detune_level->setItemChecked( 152, kmidi->detune_state == 3);
-    detune_level->setItemChecked( 153, kmidi->detune_state == 4);
-    detune_level->setItemChecked( 154, kmidi->detune_state == 5);
+    detune_level->setItemChecked( detune_level->idAt(0), 
+		    kmidi->detune_state < 2);
+    detune_level->setItemChecked( detune_level->idAt(1), 
+		    kmidi->detune_state == 2);
+    detune_level->setItemChecked( detune_level->idAt(2), 
+		    kmidi->detune_state == 3);
+    detune_level->setItemChecked( detune_level->idAt(3), 
+		    kmidi->detune_state == 4);
+    detune_level->setItemChecked( detune_level->idAt(4), 
+		    kmidi->detune_state == 5);
 }
 void KMidiFrame::doVolumeCurve(int id) {
-    kmidi->setVolumeCurve(id - 180);
+    kmidi->setVolumeCurve(volume_curve->indexOf(id));
 }
 void KMidiFrame::fixVolumeCurveItems() {
     int v_state = (kmidi->evs_state >> 4) & 0x0f;
-    volume_curve->setItemChecked( 180, v_state == 0);
-    volume_curve->setItemChecked( 181, v_state == 1);
-    volume_curve->setItemChecked( 182, v_state == 2);
+    volume_curve->setItemChecked( volume_curve->idAt(0), v_state == 0);
+    volume_curve->setItemChecked( volume_curve->idAt(1), v_state == 1);
+    volume_curve->setItemChecked( volume_curve->idAt(2), v_state == 2);
 }
 void KMidiFrame::doExpressionCurve(int id) {
-    kmidi->setExpressionCurve(id - 190);
+    kmidi->setExpressionCurve(expression_curve->indexOf(id));
 }
 void KMidiFrame::fixExpressionCurveItems() {
     int e_state = (kmidi->evs_state >> 8) & 0x0f;
-    expression_curve->setItemChecked( 190, e_state == 0);
-    expression_curve->setItemChecked( 191, e_state == 1);
-    expression_curve->setItemChecked( 192, e_state == 2);
+    expression_curve->setItemChecked( expression_curve->idAt(0), e_state == 0);
+    expression_curve->setItemChecked( expression_curve->idAt(1), e_state == 1);
+    expression_curve->setItemChecked( expression_curve->idAt(2), e_state == 2);
 }
 
 #include "kmidiframe.moc"

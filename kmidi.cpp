@@ -191,8 +191,6 @@ KMidi::KMidi( QWidget *parent, const char *name )
     connect( fwdPB, SIGNAL(released()), SLOT(fwdReleased()) );
     connect( bwdPB, SIGNAL(pressed()), SLOT(bwdPressed()) );
     connect( bwdPB, SIGNAL(released()), SLOT(bwdReleased()) );
-    connect( quitPB, SIGNAL(clicked()), SLOT(quitClicked()) );
-    connect( whatbutton, SIGNAL(clicked()), SLOT(invokeWhatsThis()) );
     connect( replayPB, SIGNAL(clicked()), SLOT(replayClicked()) );
     connect( ejectPB, SIGNAL(clicked()), SLOT(ejectClicked()) );
     connect( volSB, SIGNAL(valueChanged(int)), SLOT(volChanged(int)));
@@ -312,8 +310,6 @@ void KMidi::setToolTips()
 	QToolTip::add( bwdPB, 		i18n("Rewind") );
 	QToolTip::add( nextPB, 		i18n("Next midi") );
 	QToolTip::add( prevPB, 		i18n("Previous midi") );
-	QToolTip::add( quitPB, 		i18n("Exit KMidi") );
-	QToolTip::add( whatbutton,	i18n("What's This?") );
 	QToolTip::add( shufflebutton, 	i18n("Random play") );
         QToolTip::add( configurebutton, i18n("Configure KMidi") );
 	QToolTip::add( ejectPB, 	i18n("Open playlist") );
@@ -354,8 +350,6 @@ void KMidi::setToolTips()
 	QToolTip::remove( bwdPB);
 	QToolTip::remove( nextPB );
 	QToolTip::remove( prevPB );
-	QToolTip::remove( quitPB );
-	QToolTip::remove( whatbutton );
 	QToolTip::remove( configurebutton );
 	QToolTip::remove( shufflebutton );
 	QToolTip::remove( ejectPB );
@@ -621,12 +615,6 @@ void KMidi::drawPanel()
 
     //leds here
     iy += HEIGHT/2;
-
-    quitPB = makeButton( ix, iy, 3*WIDTH/4, HEIGHT, "Quit" );
-    whatbutton = makeButton( ix + 3*WIDTH/4, iy, WIDTH/4, HEIGHT, "??" );
-    QPixmap p( whatsthis_image );
-    whatbutton->setPixmap( p );
-    what->add(quitPB, i18n("exit from KMidi"));
 
     ix += WIDTH;
     iy = 0;
@@ -1400,7 +1388,6 @@ void KMidi::loadBitmaps() {
     fwdPB->setPixmap( fwdBmp );
     bwdPB->setPixmap( bwdBmp );
     ejectPB->setPixmap( ejectBmp );
-    quitPB->setPixmap( quitBmp );
     aboutPB->setPixmap( aboutBmp );
 }
 

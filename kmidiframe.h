@@ -67,12 +67,8 @@ protected slots:
 	void		fixViewItems();
 	void		doViewInfoLevel(int);
 	void		fixInfoLevelItems();
-	void		doStereoMenuItem(int);
-	void		doChorusMenuItem(int);
-	void		doReverbMenuItem(int);
-	void		fixStereoItems();
-	void		fixChorusItems();
-	void		fixReverbItems();
+	void		doEffectsMenuItem(int);
+	void		fixEffectsItems();
 	void		doEchoLevel(int);
 	void		doReverbLevel(int);
 	void		doChorusLevel(int);
@@ -92,11 +88,9 @@ private:
 	int		m_on_id, m_off_id, i_on_id, i_off_id;
 	QPopupMenu	*view_options;
 	QPopupMenu	*view_level;
-	QPopupMenu	*stereo_options;
-	QPopupMenu	*chorus_options;
+	QPopupMenu	*effects_menu;
 	QPopupMenu	*chorus_level;
 	QPopupMenu	*detune_level;
-	QPopupMenu	*reverb_options;
 	QPopupMenu	*echo_level;
 	QPopupMenu	*reverb_level;
 
