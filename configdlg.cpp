@@ -104,7 +104,7 @@ ConfigDlg::ConfigDlg(QWidget *parent, struct configstruct *data, const char *nam
     //box->setGeometry(10,10,320,260);
     configsize = QSize( 320+20, 260+80 );
 
-    QString str = i18n("The led color is used in<br>\nthe panel and meter.");
+    QString str = i18n("The LED color is used in<br>\nthe panel and meter.");
     label1 = new QLabel(w);
     label1->setGeometry(60,25,135,25);
     label1->setText(i18n("LED Color:"));
@@ -132,7 +132,7 @@ ConfigDlg::ConfigDlg(QWidget *parent, struct configstruct *data, const char *nam
     ttcheckbox->setChecked(configdata.tooltips);
     connect(ttcheckbox,SIGNAL(clicked()),this,SLOT(ttclicked()));
     what->add(ttcheckbox, i18n("Provide brief descriptions<br>\n"
-			       "when cursor is left over a<br>\n"
+			       "when cursor is left over an<br>\n"
 			       "object on the screen"));
 
     str = i18n("Try to stop KMidi from<br>\nusing up too much of your RAM.");
@@ -218,7 +218,7 @@ ConfigDlg::ConfigDlg(QWidget *parent, struct configstruct *data, const char *nam
 		i18n("A very good large soundfont (38 megs)."));
     patches->addContributor("Msdos sfark decompressor.", QString::null,
 		"http://www.melodymachine.com/",
-		i18n("You may need this msdos-only tool."));
+		i18n("You may need this MSDOS-only tool."));
 
     connect(patches, SIGNAL( sendEmail(const QString& , const QString& ) ),
 	this, SLOT ( sendEmailSlot(const QString& , const QString& ) ) );

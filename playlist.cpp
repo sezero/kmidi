@@ -96,7 +96,7 @@ PlaylistEdit::PlaylistEdit(const char *name, QStringList *playlist,
   file->insertSeparator();
   file->insertItem( i18n("&Quit"), this, SLOT(hide()), 0, 45);
 	file->setWhatsThis(45, i18n("Discard the play list<br>\n"
-				"and leave the play list editor.") );
+				"and exit the play list editor.") );
 
   view = new QPopupMenu;
   Q_CHECK_PTR( view );
@@ -115,7 +115,7 @@ PlaylistEdit::PlaylistEdit(const char *name, QStringList *playlist,
 				"in the directory listing<br>\n"
 				"to the play list.") );
   edit->insertItem( i18n("Add"), this, SLOT(addEntry()), 0, 53 );
-	edit->setWhatsThis(53, i18n("Append the selected<br>\n"
+	edit->setWhatsThis(53, i18n("Append the selected file<br>\n"
 				"in the directory listing<br>\n"
 				"file to the play list.") );
   edit->insertItem( i18n("Remove"), this, SLOT(removeEntry()), 0, 54 );
@@ -128,7 +128,7 @@ PlaylistEdit::PlaylistEdit(const char *name, QStringList *playlist,
   menu->insertItem( i18n("&View"), view );
   menu->insertItem( i18n("&Edit"), edit );
   menu->insertSeparator();
-  menu->insertItem( i18n("What?"),  this, SLOT(invokeWhatsThis()) );
+  menu->insertItem( i18n("What's This?"),  this, SLOT(invokeWhatsThis()) );
 
 #if 0
   QString aboutapp;

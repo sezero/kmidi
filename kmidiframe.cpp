@@ -126,7 +126,7 @@ KMidiFrame::KMidiFrame( const char *name ) :
     editMenu->insertItem( i18n("Edit Playlist"), kmidi, SLOT(ejectClicked()), 0, 108);
 	editMenu->setWhatsThis(108, i18n("Transfer the current<br>\n"
 				"play list to the Playlist Editor<br>\n"
-				"and start him up.") );
+				"and start it up.") );
 
 
 
@@ -154,7 +154,7 @@ KMidiFrame::KMidiFrame( const char *name ) :
 				"velocity.") );
 	stereo_options->insertSeparator();
 	stereo_options->insertItem(  i18n("Surround Stereo") , 113);
-	stereo_options->setWhatsThis(112, i18n("Extra stereo, echo, and<br>" \
+	stereo_options->setWhatsThis(112, i18n("Extra stereo, echo and<br>" \
 				"detuned notes are spread out more<br>" \
 				"to left and right.") );
 
@@ -194,7 +194,7 @@ KMidiFrame::KMidiFrame( const char *name ) :
 				"is set to a minimum level of 96." ) );
         reverb_level->insertItem( i18n("midi level 127") , 164);
 	reverb_level->setWhatsThis(164, i18n("The reverberation level<br>\n"
-				"is set to the maximem level of 127." ) );
+				"is set to the maximum level of 127." ) );
     connect( reverb_level, SIGNAL(activated(int)), this, SLOT(doReverbLevel(int)) );
     connect( reverb_level, SIGNAL(aboutToShow()), this, SLOT(fixReverbLevelItems()) );
     reverb_options->insertSeparator();
@@ -226,7 +226,7 @@ KMidiFrame::KMidiFrame( const char *name ) :
 				"is set to a minimum level of 96." ) );
         echo_level->insertItem( i18n("midi level 127") , 134);
 	echo_level->setWhatsThis(133, i18n("The echo level<br>\n"
-				"is set to the maximem level of 127." ) );
+				"is set to the maximum level of 127." ) );
     connect( echo_level, SIGNAL(activated(int)), this, SLOT(doEchoLevel(int)) );
     connect( echo_level, SIGNAL(aboutToShow()), this, SLOT(fixEchoLevelItems()) );
 
@@ -247,16 +247,16 @@ KMidiFrame::KMidiFrame( const char *name ) :
 					 "channel setting and what the<br>\n"
 					 "instrument patch specifies.") );
     chorus_level->insertItem( i18n("midi level  32") , 171);
-    chorus_level->setWhatsThis(171, i18n("The choruslevel<br>\n"
+    chorus_level->setWhatsThis(171, i18n("The chorus level<br>\n"
 					 "is set to a minimum level of 32." ) );
     chorus_level->insertItem( i18n("midi level  64") , 172);
-    chorus_level->setWhatsThis(172, i18n("The choruslevel<br>\n"
+    chorus_level->setWhatsThis(172, i18n("The chorus level<br>\n"
 					 "is set to a minimum level of 64." ) );
     chorus_level->insertItem( i18n("midi level  96") , 173);
-    chorus_level->setWhatsThis(173, i18n("The choruslevel<br>\n"
+    chorus_level->setWhatsThis(173, i18n("The chorus level<br>\n"
 					 "is set to a minimum level of 96." ) );
     chorus_level->insertItem( i18n("midi level 127") , 174);
-    chorus_level->setWhatsThis(174, i18n("The choruslevel<br>\n"
+    chorus_level->setWhatsThis(174, i18n("The chorus level<br>\n"
 					 "is set to the maximum level of 127." ) );
     connect( chorus_level, SIGNAL(activated(int)), this, SLOT(doChorusLevel(int)) );
     connect( chorus_level, SIGNAL(aboutToShow()), this, SLOT(fixChorusLevelItems()) );
@@ -275,9 +275,9 @@ KMidiFrame::KMidiFrame( const char *name ) :
     chorus_options->insertItem( i18n("Detune Level"), detune_level);
     detune_level->insertItem( i18n("default") , 150);
     detune_level->setWhatsThis(150, i18n("The level for detuned notes<br>\n"
-					 "is set according to the midi<br>\n"
+					 "is set according to the MIDI<br>\n"
 					 "channel setting and what the<br>\n"
-					 "instrument patch specifies for"
+					 "instrument patch specifies for "
 					 "chorus level.") );
     detune_level->insertItem( i18n("midi level  32") , 151);
     detune_level->setWhatsThis(151, i18n("The detuning level<br>\n"
