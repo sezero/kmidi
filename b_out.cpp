@@ -27,7 +27,7 @@
 /* #define BB_SIZE (AUDIO_BUFFER_SIZE*256) */
 static unsigned char *bbuf = 0;
 static int bboffset = 0, bbcount = 0;
-static uint32 outchunk = 0;
+static int outchunk = 0;
 static int starting_up = 1, flushing = 0;
 static int out_count = 0;
 static int total_bytes = 0;
@@ -104,9 +104,7 @@ void b_out(int fd, int *buf, int ocount)
 
   ret = 0;
 
-#ifndef KMIDI
   if (!starting_up)
-#endif
   while (bbcount) {
     if (outchunk && bbcount >= outchunk)
         ret = WRITEDRIVER(fd, bbuf + bboffset, outchunk);

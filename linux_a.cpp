@@ -204,14 +204,22 @@ static int open_output(void)
 }
 
 
+#ifdef SNDCTL_DSP_GETOPTR
 int current_sample_count(uint32 ct)
 {
-#ifndef SNDCTL_DSP_GETODELAY
-#ifdef SNDCTL_DSP_GETOPTR
   count_info auinfo;
-#endif
-#endif
   int samples = -1;
+  if (ioctl(dpm.fd, SNDCTL_DSP_GETOPTR, &auinfo)<0) return samples;
+  samples = auinfo.bytes;
+  if (!(dpm.encoding & PE_MONO)) samples >>= 1;
+  if (dpm.encoding & PE_16BIT) samples >>= 1;
+  return samples;
+}
+
+#else
+int current_sample_count(uint32 ct)
+{
+  int samples = (int)ct;
 #ifdef SNDCTL_DSP_GETODELAY
   int samples_queued, samples_sent;
 
@@ -224,16 +232,10 @@ int current_sample_count(uint32 ct)
   }
   if (!(dpm.encoding & PE_MONO)) samples >>= 1;
   if (dpm.encoding & PE_16BIT) samples >>= 1;
-#else
-#ifdef SNDCTL_DSP_GETOPTR
-  if (ioctl(dpm.fd, SNDCTL_DSP_GETOPTR, &auinfo)<0) return samples;
-  samples = auinfo.bytes;
-  /* if (!(dpm.encoding & PE_MONO)) samples >>= 1; */
-  if (dpm.encoding & PE_16BIT) samples >>= 1;
-#endif
 #endif
   return samples;
 }
+#endif
 
 static void output_data(int32 *buf, uint32 count)
 {

@@ -56,7 +56,7 @@ int main(int argc, char **argv)
 	}
 	print_sbk(&sfinfo, fp);
 
-	fprintf(fp, "\nsbk %s\n", argv[1]);
+	fprintf(fp, "\nsf %s\n", argv[1]);
 
 	return 0;
 }
@@ -92,7 +92,7 @@ static void print_sbk(SFInfo *sf, FILE *fout)
     fprintf(fout, "#\n#  ** Presets: %d\n", sf->nrpresets-1);
 
     for (bank = 0; bank <= 128; bank++) {
-      for (preset = 0; preset <= 128; preset++) {
+      for (preset = 0; preset <= 127; preset++) {
       lastpatch = -1;
 	for (i = 0, ip = sf->presethdr; i < sf->nrpresets-1; i++) {
 	    int b, g, inst, sm_idx;
@@ -111,7 +111,7 @@ static void print_sbk(SFInfo *sf, FILE *fout)
 	    if (bank != 128) {
 		int realwaves = 0;
 		if (bank != lastbank) {
-			fprintf(fout, "\nbank %d sbk\n", bank);
+			fprintf(fout, "\nbank %d sf\n", bank);
 			lastbank = bank;
 		}
 		for (b = tp[inst].bagNdx; b < tp[inst+1].bagNdx; b++) {
@@ -128,7 +128,7 @@ static void print_sbk(SFInfo *sf, FILE *fout)
 	    }
 	    else {
 		int keynote, c, dpreset;
-		fprintf(fout, "\ndrumset %d sbk\t\t%s\n", ip[i].preset, getname(ip[i].name));
+		fprintf(fout, "\ndrumset %d sf\t%s\n", ip[i].preset, getname(ip[i].name));
 
 		for (dpreset = 0; dpreset < 128; dpreset++)
 	        for (c = ip[i].bagNdx; c < ip[i+1].bagNdx; c++) {
@@ -139,16 +139,23 @@ static void print_sbk(SFInfo *sf, FILE *fout)
 			break;
 		   }
 		  if (inst >= 0) for (b = tp[inst].bagNdx; b < tp[inst+1].bagNdx; b++) {
+		    int hikeynote = -1;
 		    sm_idx = keynote = -1;
 		    for (g = sf->instbag[b]; g < sf->instbag[b+1]; g++) {
 			if (sf->instgen[g].oper == SF_sampleId) sm_idx = sf->instgen[g].amount;
-			else if (sf->instgen[g].oper == SF_keyRange) keynote = sf->instgen[g].amount & 0xff;
+			else if (sf->instgen[g].oper == SF_keyRange) {
+			    keynote = sf->instgen[g].amount & 0xff;
+			    hikeynote = (sf->instgen[g].amount >> 8) & 0xff;
+			}
 		    }
+		    if (sm_idx < 0) continue;
 		    if (sf->sampleinfo[sm_idx].sampletype >= 0x8000) continue;
-		    if (keynote != dpreset) continue;
-		    if (sm_idx >= 0 && keynote >= 0 && keynote != lastpatch) {
-			   fprintf(fout, "\t%3d %s\n", keynote, getname( sf->samplenames[sm_idx].name ));
-			   lastpatch = keynote;
+		    /*if (keynote != dpreset) continue;*/
+		    if (dpreset < keynote) continue;
+		    if (dpreset > hikeynote) continue;
+		    if (sm_idx >= 0 && keynote >= 0 && dpreset != lastpatch) {
+			   fprintf(fout, "\t%3d %s\n", dpreset, getname( sf->samplenames[sm_idx].name ));
+			   lastpatch = dpreset;
 		    }
 		  }
 	        }

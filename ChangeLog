@@ -3,6 +3,10 @@
 	* playmidi.cpp: increase stereo separation
 	* instrum.cpp: demote some error msgs to info
 	* tables.cpp: expression table
+	* sndfont.cpp,sf2cfg.cpp: allow for percussion
+	  key ranges
+	* linux_a.c: use OSS GETOPOINTER
+	* b_out.c: fill buffer at start up
 
 1999-12-24  Greg Lee  <lee@hawaii.edu>
 

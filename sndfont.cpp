@@ -36,7 +36,7 @@
 /* use some modifications from TiMidity++ */
 #define tplussbkuse
 
-/* #define GREGSTEST */
+/*#define GREGSTEST*/
 
 #ifdef ADAGIO
 #define SF_SUPPRESS_VIBRATO
@@ -101,7 +101,7 @@ static void parse_inst_layer(Layer *lay, SFInfo *sf, int idx);
 static int search_sample(Layer *lay);
 static void append_layer(Layer *dst, Layer *src, SFInfo *sf);
 static void make_inst(SFInsts *rec, Layer *lay, SFInfo *sf, int pr_idx, int in_idx, int inum,
-	uint16 pk_range, uint16 pv_range, int num_i);
+	uint16 pk_range, uint16 pv_range, int num_i, int program);
 static int32 calc_root_pitch(Layer *lay, SFInfo *sf, SampleList *sp);
 static void convert_volume_envelope(Layer *lay, SFInfo *sf, SampleList *sp, int banknum, int preset);
 static void convert_modulation_envelope(Layer *lay, SFInfo *sf, SampleList *sp, int banknum, int preset);
@@ -134,8 +134,7 @@ int command_cutoff_allowed = 0;
 
 
 #ifdef GREGSTEST
-static char *getname(p)
-	char *p;
+static char *getname(char *p)
 {
 	static char buf[21];
 	strncpy(buf, p, 20);
@@ -861,7 +860,7 @@ static void parse_inst(SFInsts *rec, Layer *pr_lay, SFInfo *sf, int preset, int 
 		else {
 			/* append_layer(&lay, &glay, sf); */
 			merge_layer(&lay, &glay);
-			make_inst(rec, &lay, sf, preset, inst, inum, pk_range, pv_range, num_i);
+			make_inst(rec, &lay, sf, preset, inst, inum, pk_range, pv_range, num_i, -1);
 		}
 	}
 }
@@ -1006,13 +1005,13 @@ static int intersect_rvec(int lr, int kr)
 }
 /* convert layer info to timidity instrument strucutre */
 static void make_inst(SFInsts *rec, Layer *lay, SFInfo *sf, int pr_idx, int in_idx, int inum,
-	uint16 pk_range, uint16 pv_range, int num_i)
+	uint16 pk_range, uint16 pv_range, int num_i, int program)
 {
 	int banknum = sf->presethdr[pr_idx].bank;
 	int preset = sf->presethdr[pr_idx].preset;
 	int sub_banknum = sf->presethdr[pr_idx].sub_bank;
 	int sub_preset = sf->presethdr[pr_idx].sub_preset;
-	int keynote, program, truebank, note_to_use, velrange;
+	int keynote, truebank, note_to_use, velrange;
 	int strip_loop = 0, strip_envelope = 0, strip_tail = 0, panning = 0;
 #ifndef ADAGIO
 	ToneBank *bank=0;
@@ -1050,29 +1049,39 @@ LO_VAL(velrange), HI_VAL(velrange));
 	linked_wave = sample->samplelink;
 	if (linked_wave && linked_wave < sfinfo.nrinfos) {
 		if (inum == -1) sample = &sf->sampleinfo[linked_wave - 1];
-		else make_inst(rec, lay, sf, pr_idx, in_idx, -1, pk_range, velrange, num_i);
+		else make_inst(rec, lay, sf, pr_idx, in_idx, -1, pk_range, velrange, num_i, -1);
 	}
 #endif
 	if (sample->sampletype & 0x8000) /* is ROM sample? */
 		return;
 
+	if (lay->set[SF_keyRange]) keyrange = lay->val[SF_keyRange];
+	else keyrange = 0;
+
+	/* Were we called to do later notes of a percussion range? */
+	if (program >= 0) keyrange = (program << 8) | program;
+	else if (banknum == 128 && LO_VAL(keyrange) < HI_VAL(keyrange)) {
+		int drumkey = LO_VAL(keyrange);
+		keyrange = (drumkey << 8) | drumkey;
+		drumkey++;
+		/* Do later notes of percussion key range. */
+		for ( ; drumkey <= HI_VAL(keyrange); drumkey++)
+		  make_inst(rec, lay, sf, pr_idx, in_idx, inum, pk_range, pv_range, num_i, drumkey);
+	}
 	/* set bank/preset name */
 	if (banknum == 128) {
 		truebank = sub_preset;
-		program = keynote = LO_VAL(lay->val[SF_keyRange]);
+		if (program == -1) program = keynote = LO_VAL(keyrange);
+		else keynote = program;
 #ifndef ADAGIO
-		if (drumset[truebank]) {
-			bank = drumset[truebank];
-		}
+		bank = drumset[truebank];
 #endif
 	} else {
 		keynote = -1;
 		truebank = sub_banknum;
 		program = preset;
 #ifndef ADAGIO
-		if (tonebank[truebank]) {
-			bank = tonebank[truebank];
-		}
+		bank = tonebank[truebank];
 #endif
 	}
 
@@ -1132,9 +1141,10 @@ fprintf(stderr,"Adding keynote #%d preset %d to %s (%d), bank %d (=? %d).\n", ke
 	else	stereo_chan = 1;
 */
 
+/* earlier
 	if (lay->set[SF_keyRange]) keyrange = lay->val[SF_keyRange];
 	else keyrange = 0;
-
+*/
 	if (lastbanknum != banknum || lastpreset != preset) {
 		lastbanknum = banknum;
 		lastpreset = preset;
