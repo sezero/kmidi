@@ -34,6 +34,9 @@
 #endif
 #endif
 
+/* Enable extensions taken from TiMidity++ */
+#define tplus
+
 /* Filename extension, followed by command to run decompressor so that
    output is written to stdout. Terminate the list with a 0. 
 
@@ -394,6 +397,12 @@ typedef char int8;
 #define RATE_SHIFT 5
 
 #define VIBRATO_SAMPLE_INCREMENTS 32
+
+
+#ifdef tplus
+#define MODULATION_WHEEL_RATE (1.0/6.0)
+#define VIBRATO_DEPTH_TUNING (1.0/4.0)
+#endif
 
 #if defined(hpux) || defined(__hpux)
   extern char *sys_errlist[];
