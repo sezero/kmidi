@@ -1464,7 +1464,7 @@ void KMidi::playClicked()
     return;
   }
 
-  if(status == KPAUSED){
+  if(status == KPAUSED && playlist->count()){
     status = KPLAYING;
     playPB->setOn( TRUE );
     pipe_int_write(MOTIF_PAUSE);
