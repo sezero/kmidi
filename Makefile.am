@@ -11,7 +11,7 @@ VERSION = 0.2i
 INCLUDES = $(all_includes) `$(bindir)/artsc-config --cflags`
 AM_CPPFLAGS = -DDEFAULT_PATH=\"$(TIMID_DIR)\" -DKMIDI $(EXTRADEFS) $(CPPFLAGS)
 if GXXOPTIMIZE
-KDE_CXXFLAGS = -O3 -fomit-frame-pointer -ffast-math -malign-double
+KDE_CXXFLAGS = -O3 -fomit-frame-pointer -ffast-math
 endif
 LDFLAGS = $(all_libraries) `$(bindir)/artsc-config --libs` $(KDE_RPATH)
 #LDADD = $(LIB_KFILE) $(LIBALIB) $(LIBAUDIO) $(LIBMME) $(EXTRALIBS) -lsoundserver_idl -lartsflow

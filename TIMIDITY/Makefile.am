@@ -11,7 +11,7 @@ VERSION = 0.2i
 INCLUDES = $(X_INCLUDES) `$(bindir)/artsc-config --cflags`
 AM_CFLAGS = -DDEFAULT_PATH=\"$(TIMID_DIR)\" $(EXTRATDEFS) $(EXTRATCFLAGS)
 if GXXOPTIMIZE
-CFLAGS = -O3 -fomit-frame-pointer -ffast-math -malign-double
+CFLAGS = -O3 -fomit-frame-pointer -ffast-math
 endif
 LDFLAGS = `$(bindir)/artsc-config --libs`
 LDADD = $(LIBALIB) $(LIBAUDIO) $(LIBMME) $(EXTRATLIBS) $(X_LIBS) -lm
