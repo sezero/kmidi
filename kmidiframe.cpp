@@ -63,7 +63,7 @@ KMidiFrame::KMidiFrame( const char *name ) :
     menuBar = new KMenuBar(this);
 
     QPopupMenu *fileMenu = new QPopupMenu;
-    menuBar->insertItem("&File", fileMenu);
+    menuBar->insertItem(i18n("&File"), fileMenu);
 
     fileMenu->insertItem( i18n("&Open..."), this,
                         SLOT(file_Open()), CTRL+Key_O );
