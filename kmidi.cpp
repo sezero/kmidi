@@ -23,6 +23,16 @@
 
  */
 
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <math.h>
+
+/*#include <qsocketnotifier.h> */
+
+#include <kconfig.h>
+#include <klocale.h>
+
 #include "kmidi.h"
 
 #include "bitmaps/playpaus.xbm"
@@ -42,13 +52,6 @@
 #include "filepic.h"
 #include "cduppic.h"
 #include "folderpic.h"
-
-/*#include <qsocketnotifier.h> */
-
-#include <stdio.h>
-#include <stdlib.h>
-#include <unistd.h>
-#include <math.h>
 
 #include "config.h"
 #include "playlist.h"

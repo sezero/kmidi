@@ -22,12 +22,13 @@
 
 */
 
-#include "playlist.h"
-#include "playlist.moc"
 #include <stdio.h>
 
-#include "kmidi.h"
+#include <klocale.h>
 
+#include "playlist.h"
+#include "playlist.moc"
+#include "kmidi.h"
 
 #define BORDER_WIDTH 2
 

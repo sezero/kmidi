@@ -25,10 +25,10 @@
  *
  */
 
-
+#include <kapp.h>
+#include <klocale.h>
 
 #include "configdlg.h"
-#include <kapp.h>
 
 extern KApplication *thisapp;
 
