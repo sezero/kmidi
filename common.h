@@ -29,6 +29,7 @@ extern FILE *msgfp;
 typedef struct {
   char *path;
   void *next;
+  int level;
 } PathList;
 
 /* Noise modes for open_file */
@@ -36,8 +37,9 @@ typedef struct {
 #define OF_NORMAL	1
 #define OF_VERBOSE	2
 
-extern FILE *open_file(const char *name, int decompress, int noise_mode);
-extern void add_to_pathlist(char *s);
+extern FILE *open_file(const char *name, int decompress, int noise_mode, int level);
+extern void add_to_pathlist(char *s, int level);
+extern void clear_pathlist(void);
 extern void close_file(FILE *fp);
 extern void skip(FILE *fp, size_t len);
 extern void *safe_malloc(size_t count);

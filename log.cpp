@@ -89,7 +89,7 @@ void LogWindow::updatewindow(){
     text_window->setAutoUpdate(TRUE);
 
     text_window->setCursorPosition(line+1,0,FALSE);
-    text_window->repaint();
+    text_window->repaint(FALSE);
 
     stringlist->clear();
 

@@ -352,7 +352,7 @@ static InstrumentLayer *load_instrument(char *name, int font_type, int percussio
   if (!name) return 0;
 
   /* Open patch file */
-  if (!(fp=open_file(name, 1, OF_NORMAL)))
+  if (!(fp=open_file(name, 1, OF_NORMAL, 0)))
     {
       noluck=1;
 #ifdef PATCH_EXT_LIST
@@ -363,7 +363,7 @@ static InstrumentLayer *load_instrument(char *name, int font_type, int percussio
 	    {
 	      strcpy(tmp, name);
 	      strcat(tmp, patch_ext[i]);
-	      if ((fp=open_file(tmp, 1, OF_NORMAL)))
+	      if ((fp=open_file(tmp, 1, OF_NORMAL, 0)))
 		{
 		  noluck=0;
 		  break;

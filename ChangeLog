@@ -1,3 +1,15 @@
+1999-12-02  Greg Lee  <lee@hawaii.edu>
+
+	* first commandline file didn't play
+	  because patches weren't initialized
+	  (because of new KUniqueApp behavior)
+	* timidity no longer looks first in the
+	  current directory for patches
+	* commandline files are now passed to
+	  the playlist editor with full path names
+	* the directory path list is now cleared
+	  before a new set of patches is read
+
 1999-11-30  Greg Lee  <lee@hawaii.edu>
 
 	* mmap soundfont files

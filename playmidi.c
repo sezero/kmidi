@@ -3056,7 +3056,7 @@ int play_midi_file(char *fn)
       fp=stdin;
       strcpy(current_filename, "(stdin)");
     }
-  else if (!(fp=open_file(fn, 1, OF_VERBOSE)))
+  else if (!(fp=open_file(fn, 1, OF_VERBOSE, 0)))
     return RC_ERROR;
 
   ctl->file_name(current_filename);

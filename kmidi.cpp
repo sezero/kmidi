@@ -1658,7 +1658,6 @@ void KMidi::PlayCommandlineMods(){
     // time whether the driver is finally ready. This is handy for people
     // like me who usually use NAS but forgot to turn it off.
 
-
   timer->changeInterval(1000);
 
   connect(readtimer, SIGNAL(timeout()),this,SLOT(ReadPipe()));
@@ -1697,6 +1696,8 @@ void KMidi::PlayCommandlineMods(){
 
   disconnect( timer, SIGNAL(timeout()),this, SLOT(PlayCommandlineMods()) );
   connect( timer, SIGNAL(timeout()),this, SLOT(PlayMOD()) );
+
+#if 0
   thisapp->processEvents();
   thisapp->flushX();
 
@@ -1704,6 +1705,7 @@ void KMidi::PlayCommandlineMods(){
 
   thisapp->processEvents();
   thisapp->flushX();
+#endif
 
   //status = KSTOPPED; // is this right? --gl
   //patchbox->setEnabled( TRUE );
@@ -1760,6 +1762,16 @@ void KMidi::PlayCommandlineMods(){
     pipe_int_write(  MOTIF_PATCHSET );
     pipe_int_write( Panel->currentpatchset );
 
+  thisapp->processEvents();
+  thisapp->flushX();
+
+  display_playmode();
+
+  thisapp->processEvents();
+  thisapp->flushX();
+
+  if (have_commandline_midis>0 && output_device_open && status != KPLAYING)
+	setSong(0);
 }
 
 void KMidi::loadplaylist( int which ) {
@@ -1883,11 +1895,13 @@ void KMidi::ReadPipe(){
 	    case DEVICE_OPEN:
 
 	      output_device_open = 1;
+#if 0
 	      if(have_commandline_midis>0 && output_device_open) {
                 playPB->setOn( TRUE );
 		volChanged(volume);
 		emit play();
 	      }
+#endif
 	      break;
 
 	    case TOTALTIME_MESSAGE : {
@@ -1962,7 +1976,9 @@ void KMidi::ReadPipe(){
 		    pipe_string_read(filename);
 		    file.setFile(filename);
 		    if( file.isReadable()){
-		      playlist->append(filename);
+		//better check if it's a midi file
+		      //playlist->append(filename);
+		      playlist->append(file.absFilePath());
 		      have_commandline_midis = 1;
 		    }
 		    else{
@@ -1979,6 +1995,7 @@ void KMidi::ReadPipe(){
 		}
     		else redoplaybox();
 
+#if 0
 		if(playlist->count() > 0){
 	
 		    fileName = playlist->at(0);
@@ -1994,6 +2011,7 @@ void KMidi::ReadPipe(){
 		  volChanged(volume);
 		  emit play();
 		}
+#endif
 
 	    }
 	    break;
@@ -2006,7 +2024,7 @@ void KMidi::ReadPipe(){
 	    case PREV_FILE_MESSAGE :
 	    case TUNE_END_MESSAGE :{
 
-	      /*		printf("RECEIVED: NEXT/PREV/TUNE_MESSAGE\n");*/
+	      	/*	printf("RECEIVED: NEXT/PREV/TUNE_MESSAGE\n"); */
 	
 		/* When a file ends, launch next if auto_next toggle */
 		/*	    if ((message==TUNE_END_MESSAGE) &&

@@ -363,6 +363,7 @@ void clear_config(void)
 
     memset(drumset[0], 0, sizeof(ToneBank));
     memset(tonebank[0], 0, sizeof(ToneBank));
+    clear_pathlist();
 }
 
 #define MAXWORDS 10
@@ -376,7 +377,7 @@ int read_config_file(const char *name, int prescanning)
   static ToneBank *bank=0;
   static int banknum=0;
   int i, j, k, line=0, words;
-  static int rcf_count=0;
+  static int rcf_count=1;
   static int font_type=FONT_NORMAL;
   static int cfg_condition = -1;
 
@@ -386,7 +387,7 @@ int read_config_file(const char *name, int prescanning)
 		return (-1);
 	 }
 
-  if (!(fp=open_file(name, 1, OF_VERBOSE)))
+  if (!(fp=open_file(name, 1, OF_VERBOSE, 0)))
 	 return -1;
 
   if (prescanning) {
@@ -411,7 +412,7 @@ int read_config_file(const char *name, int prescanning)
 	      return -2;
 		 }
 	  for (i=1; i<words; i++)
-	    add_to_pathlist(w[i]);
+	    add_to_pathlist(w[i], rcf_count);
 	}
       /******* if ********/
 		else if(!strcmp(w[0], "if"))
@@ -432,8 +433,8 @@ int read_config_file(const char *name, int prescanning)
 		else if (!strcmp(w[0], "source"))
 	{
 #ifdef KMIDI
-	 if (cfg_condition >= 0 && cfg_condition < 30 && words == 2
-		&& !rcf_count && !cfg_names[cfg_condition])
+	 if (prescanning && cfg_condition >= 0 && cfg_condition < 30 && words == 2
+		&& (rcf_count==1) && !cfg_names[cfg_condition])
 	  {
 	    cfg_names[cfg_condition] = (char *)safe_malloc(strlen(w[1])+1);
 	    strcpy(cfg_names[cfg_condition], w[1]);
@@ -672,7 +673,7 @@ int read_config_file(const char *name, int prescanning)
 		      }
 
 	      }
-	      init_soundfont(w[1], sf_oldbank, sf_newbank);
+	      init_soundfont(w[1], sf_oldbank, sf_newbank, rcf_count);
 	}
       /******* patch declaration ********/
 		else
@@ -876,7 +877,7 @@ int main(int argc, char **argv)
      kmidi_config = safe_malloc(strlen(KDEdir)+strlen(KMIDI_CONFIG_SUBDIR)+1);
      strcpy(kmidi_config, KDEdir);
      strcat(kmidi_config, KMIDI_CONFIG_SUBDIR); 
-     add_to_pathlist(kmidi_config);
+     add_to_pathlist(kmidi_config, 0);
    }
 #endif
 
@@ -916,7 +917,7 @@ int main(int argc, char **argv)
 		{
 		case 'q': command_cutoff_allowed=1; break;
 		case 'U': free_instruments_afterwards=1; break;
-		case 'L': add_to_pathlist(optarg); try_config_again=1; break;
+		case 'L': add_to_pathlist(optarg, 0); try_config_again=1; break;
 		case 'c':
 	if (read_config_file(optarg, 1)) cmderr++;
 	else got_a_configuration=1;

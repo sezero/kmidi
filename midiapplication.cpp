@@ -77,6 +77,7 @@ int MidiApplication::newInstance(QValueList<QCString> params)
     char mbuff[5];
     int newones = 0;
     QValueList<QCString>::Iterator it = params.begin();
+    QFileInfo file;
 
 //printf("count %d [%s]\n", (*it).count(), (*it).data());
     it++; // skip program name
@@ -85,7 +86,10 @@ int MidiApplication::newInstance(QValueList<QCString> params)
     if (kmidi) {
 
         for (; it != params.end(); it++) {
-//printf("[%s]\n", (*it).data());
+//printf("NI:[%s]\n", (*it).data());
+
+	    file.setFile(*it);
+	    if (!file.isReadable()) continue;
 
             QFile f(*it);
             if (!f.open( IO_ReadOnly )) continue;
@@ -100,7 +104,8 @@ int MidiApplication::newInstance(QValueList<QCString> params)
             }
             f.close();
 
-	    kmidi->playlist->insert(0, *it);
+	    //kmidi->playlist->insert(0, *it);
+	    kmidi->playlist->append(file.absFilePath());
 	    newones++;
         }
  

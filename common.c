@@ -53,7 +53,7 @@ int current_filedescriptor;
 #else
 #ifdef DEFAULT_PATH
     /* The paths in this list will be tried whenever we're reading a file */
-    static PathList defaultpathlist={DEFAULT_PATH,0};
+    static PathList defaultpathlist={DEFAULT_PATH,0, 0};
     static PathList *pathlist=&defaultpathlist; /* This is a linked list */
 #else
     static PathList *pathlist=0;
@@ -132,7 +132,7 @@ static FILE *try_to_open(char *name, int decompress)
 
 /* This is meant to find and open files for reading, possibly piping
    them through a decompressor. */
-FILE *open_file(const char *name, int decompress, int noise_mode)
+FILE *open_file(const char *name, int decompress, int noise_mode, int level)
 {
   FILE *fp;
   PathList *plp=pathlist;
@@ -149,15 +149,20 @@ FILE *open_file(const char *name, int decompress, int noise_mode)
   strncpy(current_filename, name, 1023);
   current_filename[1023]='\0';
 
-  ctl->cmsg(CMSG_INFO, VERB_DEBUG, "Trying to open %s", current_filename);
-  if ((fp=try_to_open(current_filename, decompress)))
-    return fp;
-
-  if (noise_mode && (errno != ENOENT))
+  /* when called from read_config_file, do not look in current dir */
+  if (level==0 || name[0]==PATH_SEP)
     {
-      ctl->cmsg(CMSG_ERROR, VERB_NORMAL, "%s: %s", 
-	   current_filename, sys_errlist[errno]);
-      return 0;
+      ctl->cmsg(CMSG_INFO, VERB_DEBUG, "Trying to open %s", current_filename);
+
+      if ( (fp=try_to_open(current_filename, decompress)) )
+        return fp;
+
+      if (noise_mode && (errno != ENOENT))
+        {
+          ctl->cmsg(CMSG_ERROR, VERB_NORMAL, "%s: %s", 
+	       current_filename, sys_errlist[errno]);
+          return 0;
+        }
     }
   
   if (name[0] != PATH_SEP)
@@ -245,10 +250,28 @@ void *safe_malloc(size_t count)
 }
 
 /* This adds a directory to the path list */
-void add_to_pathlist(char *s)
+void add_to_pathlist(char *s, int level)
 {
   PathList *plp=safe_malloc(sizeof(PathList));
   strcpy((plp->path=safe_malloc(strlen(s)+1)),s);
   plp->next=pathlist;
+  plp->level=level;
   pathlist=plp;
+}
+/* This clears the path list of all paths added from read_config_file. */
+void clear_pathlist()
+{
+  PathList *nlp, *plp=pathlist, *prev=0;
+  while (plp) {
+    nlp = plp->next;
+    if (plp->level > 0)
+      {
+	if (plp == pathlist) pathlist = nlp;
+	free(plp->path);
+	free(plp);
+	if (prev) prev->next = nlp;
+      }
+    else prev = plp;
+    plp = nlp;
+  }
 }

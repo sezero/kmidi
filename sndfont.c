@@ -241,7 +241,7 @@ static unsigned char *read_whole_sf(FILE *fd) {
 }
 #endif
 
-void init_soundfont(char *fname, int oldbank, int newbank)
+void init_soundfont(char *fname, int oldbank, int newbank, int level)
 {
 	int i;
 	InstList *ip;
@@ -292,7 +292,7 @@ printf(" %d cbel = %f vol\n", i, YTO_VOLUME(i));
 	else if (control_ratio > MAX_CONTROL_RATIO)
 		 control_ratio=MAX_CONTROL_RATIO;
 
-	if ((sfrec.fd = open_file(fname, 1, OF_VERBOSE)) == NULL) {
+	if ((sfrec.fd = open_file(fname, 1, OF_VERBOSE, level)) == NULL) {
 		ctl->cmsg(CMSG_ERROR, VERB_NORMAL,
 			  "can't open soundfont file %s", fname);
 		return;

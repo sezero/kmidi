@@ -640,8 +640,19 @@ static int ctl_blocking_read(int32 *valp)
 		  pipe_int_read(&arg);
 		  /*if (cfg_select == arg) return RC_NONE;*/
 		  cfg_select = arg;
-	/* fprintf(stderr,"ctl_blocking_read set #%d\n", cfg_select); */
 		  return RC_PATCHCHANGE;
+	/* fprintf(stderr,"ctl_blocking_read set #%d\n", cfg_select); */
+#if 0
+		  if (!pausing) return RC_PATCHCHANGE;
+		  	    free_instruments();
+		  	    end_soundfont();
+		  	    clear_config();
+			/* what if read_config fails?? */
+	          	    if (!read_config_file(current_config_file, 0))
+		  	        Panel->currentpatchset = cfg_select;
+			/* else fprintf(stderr,"couldn't read config file\n"); */
+		  break;
+#endif
 
 	      case MOTIF_EFFECTS:
 		  pipe_int_read(&arg);
@@ -854,7 +865,6 @@ static void ctl_pass_playing_list(int number_of_files, char *list_of_files[])
 			    pipe_int_write(JUMP_MESSAGE);
 			    break;
 			case RC_PATCHCHANGE:
-			/* fprintf(stderr,"Changing to patch #%d\n", cfg_select); */
 		  	    free_instruments();
 		  	    end_soundfont();
 		  	    clear_config();
