@@ -1,67 +1,24 @@
 #!/bin/sh
-ln -f -s ../alsa_a.cpp alsa_a.c
-ln -f -s ../arts_a.cpp arts_a.c
-ln -f -s ../b_out.cpp b_out.c
-ln -f -s ../bag.cpp bag.c
-ln -f -s ../bsd20_a.cpp bsd20_a.c
-ln -f -s ../celeste_e.cpp celeste_e.c
-ln -f -s ../chorus_e.cpp chorus_e.c
-ln -f -s ../common.cpp common.c
-ln -f -s ../common.h common.h
-ln -f -s ../config.h config.h
-ln -f -s ../controls.cpp controls.c
-ln -f -s ../controls.h controls.h
-ln -f -s ../cfg.cpp cfg.c
-ln -f -s ../cfg.l cfg.l
-ln -f -s ../ctl.cpp ctl.c
-ln -f -s ../ctl.h ctl.h
-ln -f -s ../dec_a.cpp dec_a.c
-ln -f -s ../dumb_c.cpp dumb_c.c
-ln -f -s ../effects.cpp effects.c
-ln -f -s ../effects.h effects.h
-ln -f -s ../esd_a.cpp esd_a.c
-ln -f -s ../fffload.cpp fffload.c
-ln -f -s ../filter.cpp filter.c
-ln -f -s ../filter.h filter.h
-ln -f -s ../gentxt.cpp gentxt.c
-ln -f -s ../getopt.cpp getopt.c
-ln -f -s ../hpux_a.cpp hpux_a.c
-ln -f -s ../hpux_d_a.cpp hpux_d_a.c
-ln -f -s ../instrum.cpp instrum.c
-ln -f -s ../instrum.h instrum.h
-ln -f -s ../linux_a.cpp linux_a.c
-ln -f -s ../linux_a2.cpp linux_a2.c
-ln -f -s ../mix.cpp mix.c
-ln -f -s ../mix.h mix.h
-ln -f -s ../nas_a.cpp nas_a.c
-ln -f -s ../ncurs_c.cpp ncurs_c.c
-ln -f -s ../output.cpp output.c
-ln -f -s ../output.h output.h
-ln -f -s ../phaser_e.cpp phaser_e.c
-ln -f -s ../playmidi.cpp playmidi.c
-ln -f -s ../playmidi.h playmidi.h
-ln -f -s ../raw_a.cpp raw_a.c
-ln -f -s ../readmidi.cpp readmidi.c
-ln -f -s ../readmidi.h readmidi.h
-ln -f -s ../readsbk.cpp readsbk.c
-ln -f -s ../resample.cpp resample.c
-ln -f -s ../resample.h resample.h
-ln -f -s ../resample_f.cpp resample_f.c
-ln -f -s ../resample_l.cpp resample_l.c
-ln -f -s ../reverb_e.cpp reverb_e.c
-ln -f -s ../sbk.h sbk.h
-ln -f -s ../sbktext.cpp sbktext.c
-ln -f -s ../sf2cfg.cpp sf2cfg.c
-ln -f -s ../sflayer.h sflayer.h
-ln -f -s ../slang_c.cpp slang_c.c
-ln -f -s ../sndfont.cpp sndfont.c
-ln -f -s ../sun_a.cpp sun_a.c
-ln -f -s ../tables.cpp tables.c
-ln -f -s ../tables.h tables.h
-ln -f -s ../timidity.cpp timidity.c
-ln -f -s ../version.h version.h
-ln -f -s ../wav2pat.cpp wav2pat.c
-ln -f -s ../wave_a.cpp wave_a.c
-ln -f -s ../cfg.l cfg.l
-ln -f -s ../BITMAPS BITMAPS
+for header in common config controls ctl effects filter instrum mix \
+              output playmidi readmidi resample sbk sflayer tables \
+              version ; do
+    if [ ! -h ${header}.h ]; then ln -s ../${header}.h . ; fi
+done
 
+for cfile in alsa_a arts_a b_out bag bsd20_a celeste_e chorus_e \
+	     common controls cfg ctl dec_a dumb_c effects esd_a \
+	     fffload filter gentxt getopt hpux_a hpux_d_a instrum \
+	     linux_a linux_a2 mix nas_a ncurs_c output phaser_e \
+	     playmidi raw_a readmidi readsbk resample resample_f \
+	     resample_l reverb_e sbktext sf2cfg slang_c sndfont \
+	     sun_a tables timidity wav2pat wave_a ; do
+    if [ ! -h ${cfile}.c ]; then ln -s ../${cfile}.cpp ${cfile}.c ; fi
+done
+
+for lfile in cfg ; do
+    if [ ! -h ${lfile}.l ]; then ln -s ../${lfile}.l . ; fi
+done
+
+for other in BITMAPS ; do
+    if [ ! -h ${other} ]; then ln -s ../${other} . ; fi
+done
