@@ -146,7 +146,6 @@ public:
 	QPushButton	*aboutPB;
 	QPushButton 	*shufflebutton;
 	QPushButton 	*configurebutton;
-	QPushButton 	*lowerBar;
 	QTabDialog      *tabdialog;
 	QPushButton 	*infobutton;
 	BW_LED_Number	*trackTimeLED[9];
@@ -194,6 +193,7 @@ public:
 	QComboBox	*songListCB;
 
 	QSlider		*volSB;
+	QSlider 	*timeSB;
 	QWidget 	*backdrop;
 	QPushButton     *makeButton( int, int, int, int, const QString & );
 
@@ -206,6 +206,7 @@ public:
 	bool 		tooltips;
 	bool 		starting_up;
 	bool 		looping;
+	int 		timestopped;
 	int		max_patch_megs;
 	int		volume;
 	int		current_voices;
@@ -292,6 +293,8 @@ public slots:
 	void		logoClicked();
 	void		check_meter_visible();
 	void		volChanged( int );
+	void		timeStart();
+	void		timeStop();
 	void		setPatch( int );
 	void		setEffects( bool );
 	void		setFilter( bool );

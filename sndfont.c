@@ -187,6 +187,10 @@ static unsigned char *read_whole_sf(FILE *fd) {
 
     sf_size_of_contents = 0;
 
+#ifndef LITTLE_ENDIAN
+    return 0;
+#else
+
 #ifndef KMIDI
     if (have_commandline_midis < 3) return 0;
 #endif
@@ -213,6 +217,7 @@ static unsigned char *read_whole_sf(FILE *fd) {
     current_patch_memory += info.st_size;
 	/* fprintf(stderr,"OK -- read %d\n", sf_size_of_contents); */
     return sf_contents;
+#endif
 }
 #endif
 
@@ -553,7 +558,7 @@ static int load_one_side(SFInsts *rec, SampleList *sp, int sample_count, Sample 
 /* here, if we read whole file, sample->data = rec.contents + sp->startsample */
 #ifdef READ_WHOLE_SF_FILE
 	    if (rec->contents)
-		sample->data = rec->contents + sp->startsample;
+		sample->data = (sample_t *)(rec->contents + sp->startsample);
 		else
 #endif
 		sample->data = safe_malloc(sp->endsample);
@@ -575,7 +580,7 @@ static int load_one_side(SFInsts *rec, SampleList *sp, int sample_count, Sample 
 		}
 
 #ifndef LITTLE_ENDIAN
-/* NOTE: only do this once */
+/* NOTE: only do this once for all samples when first loaded ?? */
 		tmp = (int16*)sample->data;
 		for (j = 0; j < sp->endsample/2; j++) {
 			s = LE_SHORT(*tmp);
@@ -609,9 +614,11 @@ static int load_one_side(SFInsts *rec, SampleList *sp, int sample_count, Sample 
 	  /* Try to determine a volume scaling factor for the sample.
 	     This is a very crude adjustment, but things sound more
 	     balanced with it. Still, this should be a runtime option. */
-	  uint32 i=sp->endsample/2;
+	  uint32 i, numsamps=sp->endsample/2;
+	  uint32 higher=0, highcount=0;
 	  int16 maxamp=0,a;
 	  int16 *tmp=(int16 *)sample->data;
+	  i = numsamps;
 	  while (i--)
 	    {
 	      a=*tmp++;
@@ -619,7 +626,21 @@ static int load_one_side(SFInsts *rec, SampleList *sp, int sample_count, Sample 
 	      if (a>maxamp)
 		maxamp=a;
 	    }
-	  sample->volume=32768.0 / (double)(maxamp);
+	  tmp=(int16 *)sample->data;
+	  i = numsamps;
+	  while (i--)
+	    {
+	      a=*tmp++;
+	      if (a<0) a=-a;
+	      if (a > 3*maxamp/4)
+		{
+		   higher += a;
+		   highcount++;
+		}
+	    }
+	  if (highcount) higher /= highcount;
+	  else higher = 10000;
+	  sample->volume = (32768.0 * 0.875) /  (double)higher ;
 	  ctl->cmsg(CMSG_INFO, VERB_DEBUG, " * volume comp: %f", sample->volume);
 	}
 #else

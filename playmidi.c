@@ -824,7 +824,7 @@ printf("r=%d vol %f", reverb, voice[w].volume);
 #endif
 
 /* try 98->99 for melodic instruments ? (bit much for percussion) */
-	voice[w].volume = vol_table[(127-reverb)/8 + 98];
+	voice[w].volume *= vol_table[(127-reverb)/8 + 98];
 
 #ifdef DEBUG_REVERBERATION
 printf(" -> vol %f", voice[w].volume);

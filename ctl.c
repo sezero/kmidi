@@ -357,6 +357,7 @@ static void ctl_channel_note(int ch, int note, int vel, int start)
 	Panel->ctotal_sustain[slot][ch] = total_sustain;
 
 	if (channel[ch].kit) Panel->c_flags[ch] |= FLAG_PERCUSSION;
+	else Panel->c_flags[ch] = 0;
 }
 
 static void ctl_note(int v)

@@ -1,3 +1,8 @@
+1999-11-20  Greg Lee  <lee@hawaii.edu>
+
+	* sndfont.c: adjust sample volumes
+	* kmidi.cpp: add display/set time slider
+
 1999-11-19  Greg Lee  <lee@hawaii.edu>
 
 	* sndfont.c: adjust sample volumes

@@ -181,6 +181,8 @@ KMidi::KMidi( QWidget *parent, const char *name )
     last_status = status = KNONE;
     flag_new_playlist = false;
     song_number = 1;
+    max_sec = 0;
+    timestopped = 0;
     current_voices = DEFAULT_VOICES;
     stereo_state = reverb_state = chorus_state = verbosity_state = 1;
     starting_up = true;
@@ -239,6 +241,8 @@ KMidi::KMidi( QWidget *parent, const char *name )
     connect( replayPB, SIGNAL(clicked()), SLOT(replayClicked()) );
     connect( ejectPB, SIGNAL(clicked()), SLOT(ejectClicked()) );
     connect( volSB, SIGNAL(valueChanged(int)), SLOT(volChanged(int)));
+    connect( timeSB, SIGNAL(sliderReleased()), SLOT(timeStart()));
+    connect( timeSB, SIGNAL(sliderPressed()), SLOT(timeStop()));
     connect( aboutPB, SIGNAL(clicked()), SLOT(logoClicked()));
     connect( configurebutton, SIGNAL(clicked()), SLOT(aboutClicked()));
     connect( shufflebutton, SIGNAL(clicked()), SLOT(randomClicked()));
@@ -331,6 +335,7 @@ void KMidi::setToolTips()
 	QToolTip::add( infobutton, 	i18n("Show Info Window") );
 	QToolTip::add( shufflebutton, 	i18n("Random Play") );
 	QToolTip::add( volSB, 		i18n("Volume Control") );
+	QToolTip::add( timeSB, 		i18n("Time Control") );
 
 	QToolTip::add( patchbox,	i18n("Select Patch Set") );
 	QToolTip::add( playbox,		i18n("Select Song") );
@@ -372,6 +377,7 @@ void KMidi::setToolTips()
 	QToolTip::remove( shufflebutton );
 	QToolTip::remove( infobutton );
 	QToolTip::remove( volSB );
+	QToolTip::remove( timeSB );
 
 	QToolTip::remove( patchbox );
 	QToolTip::remove( playbox );
@@ -419,6 +425,23 @@ void KMidi::volChanged( int vol )
 
 }
 
+void KMidi::timeStop()
+{
+    if (status != KPLAYING) return;
+    timestopped = max_sec;
+}
+
+void KMidi::timeStart()
+{
+    if (status != KPLAYING) return;
+    int time = timeSB->value();
+
+    timestopped = 3;
+    pipe_int_write(MOTIF_CHANGE_LOCATOR);
+    pipe_int_write( max_sec * time / 100);
+
+}
+	
 
 
 #define BAR_WID 10
@@ -634,10 +657,12 @@ void KMidi::drawPanel()
     what->add(configurebutton, i18n("open up or close<br>the configuration window"));
 
 
-    lowerBar = new QPushButton(this);
-    lowerBar->setGeometry( WIDTH ,
-			   7*HEIGHT/2 + HEIGHT/2, 2*SBARWIDTH/3 -1, HEIGHT/2 +1 );
-    what->add(lowerBar, i18n("(this is just decorative)"));
+    timeSB = new QSlider( 0, 100, 1,  0, QSlider::Horizontal,
+			 this, "tSlider" );
+    timeSB->setGeometry( WIDTH , 7*HEIGHT/2 + HEIGHT/2, 2*SBARWIDTH/3, HEIGHT/2 );
+    //timeSB->setTickmarks(QSlider::Below);
+    timeSB->setTracking(FALSE);
+    what->add(timeSB, i18n("set playing time elapsed"));
 
     ix = WIDTH ;
     iy += HEIGHT;
@@ -1385,6 +1410,7 @@ void KMidi::stopClicked()
      looping = false;
      if (flag_new_playlist) resetSong(); 
      replayPB->setOn( FALSE );
+     timeSB->setValue(0);
      randomplay = false;
      shufflebutton->setOn( FALSE );
      if (status != KPAUSED && status != KSTOPPED) pipe_int_write(MOTIF_PAUSE);
@@ -1837,6 +1863,7 @@ void KMidi::ReadPipe(){
 		/*		printf("GUI: TOTALTIME %s\n",local_string);*/
 		max_sec=cseconds;
 		nbvoice = currplaytime = 0;
+     		timeSB->setValue(0);
 		for (int l=0; l<LYRBUFL; l++) lyric_time[l] = -1;
 		lyric_head = 0; lyric_tail = 0;
                 led[LYRICS_LED]->setColor(Qt::black);
@@ -2023,7 +2050,6 @@ void KMidi::ReadPipe(){
 
 
 		currplaytime = cseconds + 1;
-	
 	    }
 	    break;
 	    /*	
@@ -2172,6 +2198,8 @@ void KMidi::ReadPipe(){
 				minutes, seconds);
 			//		    printf("GUI CURTIME %s\n",local_string);	
 			setLEDs(local_string);
+			if (timestopped) timestopped--;
+			else timeSB->setValue(100*cseconds/max_sec);
 	
 		    }
 
