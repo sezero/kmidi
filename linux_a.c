@@ -82,8 +82,12 @@ static int open_output(void)
 
   
   /* Open the audio device */
+/*
   fd=open(dpm.name, O_RDWR | O_NDELAY);
   if (fd<0) fd=open(dpm.name, O_RDWR | O_NDELAY);
+*/
+  fd=open(dpm.name, O_WRONLY | O_NDELAY);
+  if (fd<0) fd=open(dpm.name, O_WRONLY | O_NDELAY);
   if (fd<0)
     {
       ctl->cmsg(CMSG_ERROR, VERB_NORMAL, "%s: %s",
@@ -159,7 +163,7 @@ static int open_output(void)
       close(fd);
       return -1;	  
     }
-  if (tmp != dpm.rate)
+  if (tmp != (int)dpm.rate)
     {
       ctl->cmsg(CMSG_WARNING, VERB_VERBOSE,
 	   "Output rate adjusted to %d Hz (requested %d Hz)", tmp, dpm.rate);

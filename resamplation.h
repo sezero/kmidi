@@ -1,3 +1,16 @@
+/*	$Id:$	*/
+
+
+#ifdef LOOKUP_HACK
+#define MAX_DATAVAL 127
+#define MIN_DATAVAL -128
+#else
+#define MAX_DATAVAL 32767
+#define MIN_DATAVAL -32768
+#endif
+
+#define OVERSHOOT_STEP 50
+
 #ifdef FILTER_INTERPOLATION
 #ifndef ENVELOPE_PITCH_MODULATION
 #define ENVELOPE_PITCH_MODULATION
@@ -6,7 +19,7 @@
 
 #if !defined(FILTER_INTERPOLATION) && defined(ENVELOPE_PITCH_MODULATION)
 #define CCVARS \
-	int cc_count=vp->modulation_counter;
+	uint32 cc_count=vp->modulation_counter;
 #define MODULATE_NONVIB_PITCH \
 		if (!cc_count--) { \
 		    cc_count = control_ratio - 1; \
@@ -21,7 +34,7 @@
 #ifndef FILTER_INTERPOLATION
 # define INTERPVARS      int32   ofsd, v0, v1, v2, v3, temp, overshoot;
 # define BUTTERWORTH_COEFFICIENTS \
-			overshoot = src[(se>>FRACTION_BITS)-1] / OVERSHOOT_STEP; \
+			overshoot = (int32)src[(int)(se>>FRACTION_BITS)-1] / OVERSHOOT_STEP; \
 			if (overshoot < 0) overshoot = -overshoot;
 # define RESAMPLATION \
 	if (ofs >= se) { \
@@ -49,14 +62,14 @@
 		      ((((((5*v0 - 11*v1 + 7*temp - v3)* \
 		       (int32)ofs)>>FRACTION_BITS)*(int32)ofs)>>(FRACTION_BITS+2))-1))*(int32)ofs; \
 		v1 = (v1 + v2)/(6L<<FRACTION_BITS); \
-		*dest++ = (v1 > 32767)? 32767: ((v1 < -32768)? -32768: v1); \
+		*dest++ = (v1 > MAX_DATAVAL)? MAX_DATAVAL: ((v1 < MIN_DATAVAL)? MIN_DATAVAL: v1); \
 		ofs=ofsd; \
 	}
 #else
 # define INTERPVARS      int32   ofsd, v0, v1, v2, v3, temp, overshoot; \
 			float insamp, outsamp, a0, a1, a2, b0, b1, \
 			    x0=vp->current_x0, x1=vp->current_x1, y0=vp->current_y0, y1=vp->current_y1; \
-			int cc_count=vp->modulation_counter, bw_index=vp->bw_index; \
+			uint32 cc_count=vp->modulation_counter, bw_index=vp->bw_index, ofsdu; \
 			sample_t newsample;
 # define BUTTERWORTH_COEFFICIENTS \
 			a0 = butterworth[bw_index][0]; \
@@ -64,7 +77,7 @@
 			a2 = butterworth[bw_index][2]; \
 			b0 = butterworth[bw_index][3]; \
 			b1 = butterworth[bw_index][4]; \
-			overshoot = src[(se>>FRACTION_BITS)-1] / OVERSHOOT_STEP; \
+			overshoot = (int32)src[(int)(se>>FRACTION_BITS)-1] / OVERSHOOT_STEP; \
 			if (overshoot < 0) overshoot = -overshoot;
 # define RESAMPLATION \
 	if (ofs >= se) { \
@@ -102,9 +115,9 @@
 			((outsamp < MIN_DATAVAL)? MIN_DATAVAL: (sample_t)outsamp); \
 	        } \
 	}else{ \
-		ofsd=ofs; \
-                v0 = (int32)src[(ofs>>FRACTION_BITS)-1]; \
-                v3 = (int32)src[(ofs>>FRACTION_BITS)+2]; \
+		ofsdu=ofs; \
+                v0 = (int32)src[(int)(ofs>>FRACTION_BITS)-1]; \
+                v3 = (int32)src[(int)(ofs>>FRACTION_BITS)+2]; \
                 ofs &= FRACTION_MASK; \
                 temp=v2; \
 		v2 = (6*v2 + \
@@ -139,7 +152,7 @@
 		    newsample = (outsamp > MAX_DATAVAL)? MAX_DATAVAL: \
 			((outsamp < MIN_DATAVAL)? MIN_DATAVAL: (sample_t)outsamp); \
 		} \
-		ofs=ofsd; \
+		ofs=ofsdu; \
 	} \
 	*dest++ = newsample;
 #define REMEMBER_FILTER_STATE \
@@ -186,7 +199,7 @@
                 v0 = (v3 - v0*ofsd)/(6L << FRACTION_BITS); \
                 v1 = (v1 - v2)*ofsd>>(FRACTION_BITS+1); \
 		v1 += v0; \
-		*dest++ = (v1 > 32767)? 32767: ((v1 < -32768)? -32768: v1); \
+		*dest++ = (v1 > MAX_DATAVAL)? MAX_DATAVAL: ((v1 < MIN_DATAVAL)? MIN_DATAVAL: v1); \
 	}
 #elif defined(LINEAR_INTERPOLATION)
 # if defined(LOOKUP_HACK) && defined(LOOKUP_INTERPOLATION)

@@ -26,7 +26,8 @@
 /* #define BB_SIZE (AUDIO_BUFFER_SIZE*128) */
 #define BB_SIZE (AUDIO_BUFFER_SIZE*256)
 static unsigned char *bbuf = 0;
-static int bboffset = 0, bbcount = 0, outchunk = 0;
+static int bboffset = 0, bbcount = 0;
+static uint32 outchunk = 0;
 static int starting_up = 1, flushing = 0;
 static int out_count = 0;
 static int total_bytes = 0;
@@ -39,6 +40,7 @@ int b_out_count()
 void b_out(int fd, int *buf, int ocount)
 {
   int ret;
+  uint32 ucount;
 
   if (ocount < 0) {
 	out_count = bboffset = bbcount = outchunk = 0;
@@ -48,6 +50,8 @@ void b_out(int fd, int *buf, int ocount)
 	total_bytes = 0;
 	return;
   }
+
+  ucount = (uint32)ocount;
 
   if (!bbuf) {
     bbcount = bboffset = 0;
@@ -74,9 +78,9 @@ void b_out(int fd, int *buf, int ocount)
 	total_bytes = AUDIO_BUFFER_SIZE*2;
   }
 
-  if (ocount && !outchunk) outchunk = ocount;
-  if (starting_up && ocount + bboffset + bbcount >= BB_SIZE) starting_up = 0;
-  if (!ocount) { outchunk = starting_up = 0; flushing = 1; }
+  if (ucount && !outchunk) outchunk = ucount;
+  if (starting_up && ucount + bboffset + bbcount >= BB_SIZE) starting_up = 0;
+  if (!ucount) { outchunk = starting_up = 0; flushing = 1; }
   else flushing = 0;
 
   if (starting_up || flushing) output_buffer_full = PRESUMED_FULLNESS;
@@ -110,7 +114,7 @@ void b_out(int fd, int *buf, int ocount)
 		bboffset = 0;
 	    }
 	/* fprintf(stderr, "BLOCK %d ", bbcount); */
-	    if (ocount && bboffset + bbcount + ocount <= BB_SIZE && !flushing) break;
+	    if (ucount && bboffset + bbcount + ucount <= BB_SIZE && !flushing) break;
 	    usleep(250);
 	}
 	else {
@@ -123,14 +127,14 @@ void b_out(int fd, int *buf, int ocount)
 	}
     }
     else {
-	if (!ret && bboffset + bbcount + ocount <= BB_SIZE && !flushing) break;
+	if (!ret && bboffset + bbcount + ucount <= BB_SIZE && !flushing) break;
 	if (!ret) usleep(250);
 	else {
 	    out_count += ret;
 	    bboffset += ret;
 	    bbcount -= ret;
 	}
-	/* fprintf(stderr, "[%d:%d:f=%d/%d]\n", bbcount, ocount, output_buffer_full, BB_SIZE); */
+	/* fprintf(stderr, "[%d:%d:f=%d/%d]\n", bbcount, ucount, output_buffer_full, BB_SIZE); */
 	if (!bbcount) bboffset = 0;
 	else if (bbcount < 0 || bboffset + bbcount > BB_SIZE) {
 	    fprintf(stderr, "b_out.c:Uh oh.\n");
@@ -142,10 +146,10 @@ void b_out(int fd, int *buf, int ocount)
     }
   }
 
-  if (!ocount) { flushing = 0; starting_up = 1; out_count = bbcount = bboffset = 0; return; }
+  if (!ucount) { flushing = 0; starting_up = 1; out_count = bbcount = bboffset = 0; return; }
 
-  memcpy(bbuf + bboffset + bbcount, buf, ocount);
-  bbcount += ocount;
+  memcpy(bbuf + bboffset + bbcount, buf, ucount);
+  bbcount += ucount;
 
 #ifndef KMIDI
   if (starting_up) return;
@@ -172,11 +176,11 @@ void b_out(int fd, int *buf, int ocount)
 	}
     }
     else {
-	if (!ret && bboffset + bbcount + ocount <= BB_SIZE && !flushing) break;
+	if (!ret && bboffset + bbcount + ucount <= BB_SIZE && !flushing) break;
 	out_count += ret;
 	bboffset += ret;
 	bbcount -= ret;
-	/*fprintf(stderr, "{%d:%d:r=%d}\n", bbcount,ocount,ret); */
+	/*fprintf(stderr, "{%d:%d:r=%d}\n", bbcount,ucount,ret); */
 	if (!bbcount) bboffset = 0;
 	else if (bbcount < 0 || bboffset + bbcount > BB_SIZE) {
 	    fprintf(stderr, "b_out.c:output error\n");

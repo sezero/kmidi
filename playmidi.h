@@ -126,7 +126,7 @@ typedef struct {
   uint32
     orig_frequency, frequency,
     sample_offset, loop_start, loop_end;
-  uint32
+  int32
     envelope_volume, modulation_volume;
   uint32
     envelope_target, modulation_target;

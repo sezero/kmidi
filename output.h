@@ -35,8 +35,8 @@ typedef struct {
   uint32 rate, encoding;
   int fd; /* file descriptor for the audio device */
   int32 extra_param[5]; /* e.g. buffer fragments, output channel, ... */
-  char *id_name, id_character;
-  char *name; /* default device or file name */
+  const char *id_name, id_character;
+  const char *name; /* default device or file name */
 
   int (*open_output)(void); /* 0=success, 1=warning, -1=fatal error */
   void (*close_output)(void);

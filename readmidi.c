@@ -1007,10 +1007,6 @@ static MidiEvent *groom_list(int32 divisions, uint32 *eventsp, uint32 *samplesp)
 	      skip_this_event=1;
 	      break;
 	    }
-	/* This is not what I want to do, which is to use
-	   bank 0 for a variation bank only if there is no
-	   real patch available -- but that's not easy.
-	 */
 	  if (XG_System_On && meep->event.a > 0 && meep->event.a < 48) {
 	      channel[meep->event.channel].variationbank=meep->event.a;
 	      ctl->cmsg(CMSG_WARNING, VERB_VERBOSE,

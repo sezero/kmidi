@@ -45,6 +45,11 @@ int recompute_envelope(int v)
 
   stage = voice[v].envelope_stage;
 
+#if 0
+if (voice[v].envelope_offset[stage] >> 23 > 127)
+fprintf(stderr, "offset %d\n", voice[v].envelope_offset[stage]>>23);
+#endif
+
   if (stage>5)
     {
       /* Envelope ran out. */
@@ -71,17 +76,41 @@ int recompute_envelope(int v)
     }
   voice[v].envelope_stage=stage+1;
 
+#if 0
+fprintf(stderr, "v=%d stage %d, inc %ld[%ld], vol %ld[%ld], offset %ld[%ld]\n", v,
+stage, voice[v].envelope_increment, voice[v].envelope_increment>>23,
+ voice[v].envelope_volume, voice[v].envelope_volume>>23,
+ voice[v].envelope_offset[stage], voice[v].envelope_offset[stage]>>23);
+#endif
+
+
 #ifdef tplus
-  if (voice[v].envelope_volume==voice[v].envelope_offset[stage] ||
-      (stage > 2 && voice[v].envelope_volume < voice[v].envelope_offset[stage]))
+  if (voice[v].envelope_volume==(int)voice[v].envelope_offset[stage] ||
+      (stage > 2 && voice[v].envelope_volume < (int)voice[v].envelope_offset[stage]))
 #else
   if (voice[v].envelope_volume==voice[v].envelope_offset[stage])
+#endif
+
+#if 0
+  if ( (voice[v].envelope_increment >= 0 && voice[v].envelope_volume >= voice[v].envelope_offset[stage])
+    || (voice[v].envelope_increment < 0  && voice[v].envelope_volume <= voice[v].envelope_offset[stage]) )
 #endif
     return recompute_envelope(v);
   voice[v].envelope_target=voice[v].envelope_offset[stage];
   voice[v].envelope_increment = voice[v].envelope_rate[stage];
-  if (voice[v].envelope_target<voice[v].envelope_volume)
+  if ((int)voice[v].envelope_target<voice[v].envelope_volume)
     voice[v].envelope_increment = -voice[v].envelope_increment;
+
+#if 0
+fprintf(stderr, "	cont:v=%d, stage %d, inc %ld[%ld], vol %ld[%ld], offset %ld[%ld]\n", v,
+stage, voice[v].envelope_increment, voice[v].envelope_increment>>23,
+ voice[v].envelope_volume, voice[v].envelope_volume>>23,
+ voice[v].envelope_offset[stage], voice[v].envelope_offset[stage]>>23);
+#endif
+
+
+
+
   return 0;
 }
 
@@ -105,6 +134,11 @@ void apply_envelope_to_amp(int v)
 	{
 	  lamp *= vol_table[voice[v].envelope_volume>>23];
 	  ramp *= vol_table[voice[v].envelope_volume>>23];
+#if 0
+if (voice[v].envelope_volume>>23 > 127)
+fprintf(stderr,"env vol %d >>23 = %d\n", voice[v].envelope_volume,
+voice[v].envelope_volume >> 23);
+#endif
 	}
 
       la = FRSCALE(lamp,AMP_BITS);
@@ -167,11 +201,12 @@ void apply_envelope_to_amp(int v)
 static int update_envelope(int v)
 {
   voice[v].envelope_volume += voice[v].envelope_increment;
+  if (voice[v].envelope_volume<0) voice[v].envelope_volume = 0;
   /* Why is there no ^^ operator?? */
   if (((voice[v].envelope_increment < 0) &&
-       (voice[v].envelope_volume <= voice[v].envelope_target)) ||
+       (voice[v].envelope_volume <= (int)voice[v].envelope_target)) ||
       ((voice[v].envelope_increment > 0) &&
-	   (voice[v].envelope_volume >= voice[v].envelope_target)))
+	   (voice[v].envelope_volume >= (int)voice[v].envelope_target)))
     {
       voice[v].envelope_volume = voice[v].envelope_target;
       if (recompute_envelope(v))

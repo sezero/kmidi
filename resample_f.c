@@ -43,17 +43,6 @@
 static int dont_cspline = 0;
 #endif
 
-#ifdef LOOKUP_HACK
-#define MAX_DATAVAL 127
-#define MIN_DATAVAL -128
-#else
-#define MAX_DATAVAL 32767
-#define MIN_DATAVAL -32768
-#endif
-
-
-#define OVERSHOOT_STEP 50
-
 #define LINEAR_INTERPOLATION
 #define CSPLINE_INTERPOLATION
 #define FILTER_INTERPOLATION

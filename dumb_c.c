@@ -33,10 +33,10 @@
 #include "playmidi.h"
 
 static void ctl_refresh(void);
-static void ctl_total_time(int tt);
+static void ctl_total_time(uint32 tt);
 static void ctl_master_volume(int mv);
 static void ctl_file_name(char *name);
-static void ctl_current_time(int ct);
+static void ctl_current_time(uint32 ct);
 static void ctl_note(int v);
 static void ctl_program(int ch, int val);
 static void ctl_volume(int channel, int val);
@@ -127,9 +127,9 @@ static int cmsg(int type, int verbosity_level, char *fmt, ...)
 
 static void ctl_refresh(void) { }
 
-static void ctl_total_time(int tt)
+static void ctl_total_time(uint32 tt)
 {
-  int mins, secs;
+  uint32 mins, secs;
   if (ctl.trace_playing)
     {
       secs=tt/play_mode->rate;
@@ -147,9 +147,9 @@ static void ctl_file_name(char *name)
     fprintf(outfp, "Playing %s\n", name);
 }
 
-static void ctl_current_time(int ct)
+static void ctl_current_time(uint32 ct)
 {
-  int mins, secs;
+  uint32 mins, secs;
   if (ctl.trace_playing)
     {
       secs=ct/play_mode->rate;

@@ -88,12 +88,12 @@ static void make_inst(SFInsts *rec, Layer *lay, SFInfo *sf, int pr_idx, int in_i
 static int32 calc_root_pitch(Layer *lay, SFInfo *sf, SampleList *sp);
 static void convert_volume_envelope(Layer *lay, SFInfo *sf, SampleList *sp, int banknum, int preset);
 static void convert_modulation_envelope(Layer *lay, SFInfo *sf, SampleList *sp, int banknum, int preset);
-static int32 to_offset(int offset);
-static int32 calc_rate(int diff, double msec);
+static uint32 to_offset(uint32 offset);
+static uint32 calc_rate(uint32 diff, double msec);
 static double to_msec(Layer *lay, SFInfo *sf, int index);
 static FLOAT_T calc_volume(Layer *lay, SFInfo *sf);
-static int32 calc_sustain(Layer *lay, SFInfo *sf, int banknum, int preset);
-static int32 calc_modulation_sustain(Layer *lay, SFInfo *sf, int banknum, int preset);
+static uint32 calc_sustain(Layer *lay, SFInfo *sf, int banknum, int preset);
+static uint32 calc_modulation_sustain(Layer *lay, SFInfo *sf, int banknum, int preset);
 #ifndef SF_SUPPRESS_TREMOLO
 static void convert_tremolo(Layer *lay, SFInfo *sf, SampleList *sp);
 static void convert_lfo(Layer *lay, SFInfo *sf, SampleList *sp);
@@ -1532,17 +1532,18 @@ static int32 calc_root_pitch(Layer *lay, SFInfo *sf, SampleList *sp)
 
 static void convert_volume_envelope(Layer *lay, SFInfo *sf, SampleList *sp, int banknum, int preset)
 {
-	int32 sustain = calc_sustain(lay, sf, banknum, preset);
+	uint32 sustain = calc_sustain(lay, sf, banknum, preset);
 	double delay = to_msec(lay, sf, SF_delayEnv2);
 	double attack = to_msec(lay, sf, SF_attackEnv2);
 	double hold = to_msec(lay, sf, SF_holdEnv2);
 	double decay = to_msec(lay, sf, SF_decayEnv2);
 	double release = to_msec(lay, sf, SF_releaseEnv2);
-	int32 volume = (int32)(calc_volume(lay,sf));
+	FLOAT_T vol = calc_volume(lay,sf);
+	uint32 volume;
 	/* int milli = play_mode->rate/1000; */
 #ifdef EXAMINE_SOME_ENVELOPES
 	static int no_shown = 0;
-no_shown = banknum==0 && (preset == 11 || preset == 64);
+no_shown = banknum==128 && preset == 25;
 if (no_shown) {
 printf("PRESET %d\n",preset);
 	printf("sustainEnv2 %d delayEnv2 %d attackEnv2 %d holdEnv2 %d decayEnv2 %d releaseEnv2 %d\n",
@@ -1556,6 +1557,10 @@ printf("PRESET %d\n",preset);
 		decay, release, delay);
 }
 #endif
+
+	if (vol > 255.0) volume = 255;
+	else if (vol < 1.0) volume = 0;
+	else volume = (uint32)vol;
 
 	if (!lay->set[SF_releaseEnv2] && banknum < 128) release = 400;
 	if (!lay->set[SF_decayEnv2] && banknum < 128) decay = 400;
@@ -1618,13 +1623,14 @@ if (no_shown) {
 
 static void convert_modulation_envelope(Layer *lay, SFInfo *sf, SampleList *sp, int banknum, int preset)
 {
-	int32 sustain = calc_modulation_sustain(lay, sf, banknum, preset);
+	uint32 sustain = calc_modulation_sustain(lay, sf, banknum, preset);
 	double delay = to_msec(lay, sf, SF_delayEnv1);
 	double attack = to_msec(lay, sf, SF_attackEnv1);
 	double hold = to_msec(lay, sf, SF_holdEnv1);
 	double decay = to_msec(lay, sf, SF_decayEnv1);
 	double release = to_msec(lay, sf, SF_releaseEnv1);
-	int32 volume = 255;
+	FLOAT_T vol = calc_volume(lay,sf);
+	uint32 volume;
 #ifdef EXAMINE_SOME_ENVELOPES
 	static int no_shown = 0;
 no_shown = banknum==0 && (preset == 11 || preset == 64);
@@ -1642,6 +1648,9 @@ printf("PRESET %d\n",preset);
 }
 #endif
 
+	if (vol > 255.0) volume = 255;
+	else if (vol < 1.0) volume = 0;
+	else volume = (uint32)vol;
 
 
 /* ramp from 0 to <volume> in <attack> msecs */
@@ -1696,33 +1705,35 @@ if (no_shown) {
 }
 
 /* convert from 8bit value to fractional offset (15.15) */
-static int32 to_offset(int offset)
+static uint32 to_offset(uint32 offset)
 {
 	if (offset >255) return 255 << (7+15);
-	return (int32)offset << (7+15);
+	return (uint32)offset << (7+15);
 }
 
 /* calculate ramp rate in fractional unit;
  * diff = 8bit, time = msec
  */
-static int32 calc_rate(int diff, double msec)
+static uint32 calc_rate(uint32 diff, double msec)
 {
     double rate;
 
     diff <<= (7+15);
     /* rate = ((double)diff / play_mode->rate) * control_ratio * 1000.0 / msec; */
+    /** rate = ( (double)diff * 1000.0 ) / (msec * CONTROLS_PER_SECOND); **/
+    /** rate = ( (double)diff * 1000.0 ) / CONTROLS_PER_SECOND; **/
     rate = ( (double)diff * 1000.0 ) / (msec * CONTROLS_PER_SECOND);
     /* rate *= 2;  ad hoc adjustment ?? */
     if (rate < 10.0) return 10;
-    return (int32)rate;
+    return (uint32)rate;
 
 /*
  *	control_ratio = play_mode->rate / CONTROLS_PER_SECOND;
  *	samples per control = (samples per sec) / (controls per sec)
  *	rate is amp-change per control
  *		diff per msec
- *		diff/1000 per sec
- *		(diff/1000 per sec) / (controls per sec) = amp change per control
+ *		diff*1000 per sec
+ *		(diff*1000 per sec) / (controls per sec) = amp change per control
  *			diff/(msec/1000) = (diff * 1000) / msec = amp change per sec
  *			((diff * 1000)/msec) / CONTROLS_PER_SECOND = amp change per control
  *			= (diff * 1000) / (msec * CONTROLS_PER_SECOND)
@@ -1768,7 +1779,7 @@ static FLOAT_T calc_volume(Layer *lay, SFInfo *sf)
 }
 
 /* convert sustain volume to linear volume */
-static int32 calc_sustain(Layer *lay, SFInfo *sf, int banknum, int preset)
+static uint32 calc_sustain(Layer *lay, SFInfo *sf, int banknum, int preset)
 {
 	int32 level;
 	if (!lay->set[SF_sustainEnv2])
@@ -1783,7 +1794,7 @@ static int32 calc_sustain(Layer *lay, SFInfo *sf, int banknum, int preset)
 	return TO_VOLUME(level);
 }
 /* convert sustain volume to linear volume */
-static int32 calc_modulation_sustain(Layer *lay, SFInfo *sf, int banknum, int preset)
+static uint32 calc_modulation_sustain(Layer *lay, SFInfo *sf, int banknum, int preset)
 {
 	int32 level;
 	if (!lay->set[SF_sustainEnv1])
@@ -1979,6 +1990,7 @@ printf(" f=%d depth=%d (shift %d)\n", (int)freq, (int)sp->v.vibrato_depth, (int)
 static void calc_cutoff(Layer *lay, SFInfo *sf, SampleList *sp)
 {
 	int16 val;
+
 	if (! lay->set[SF_initialFilterFc]) {
 		val = 13500;
 	} else {

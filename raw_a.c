@@ -49,7 +49,7 @@
 
 static int open_output(void); /* 0=success, 1=warning, -1=fatal error */
 static void close_output(void);
-static void output_data(int32 *buf, int32 count);
+static void output_data(int32 *buf, uint32 count);
 static void flush_output(void);
 static void purge_output(void);
 
@@ -97,7 +97,7 @@ static int open_output(void)
   return 0;
 }
 
-static void output_data(int32 *buf, int32 count)
+static void output_data(int32 *buf, uint32 count)
 {
   if (!(dpm.encoding & PE_MONO)) count*=2; /* Stereo samples */
   

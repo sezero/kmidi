@@ -43,16 +43,6 @@
 static int dont_cspline = 0;
 #endif
 
-#ifdef LOOKUP_HACK
-#define MAX_DATAVAL 127
-#define MIN_DATAVAL -128
-#else
-#define MAX_DATAVAL 32767
-#define MIN_DATAVAL -32768
-#endif
-
-
-#define OVERSHOOT_STEP 50
 
 #define LINEAR_INTERPOLATION
 #define CSPLINE_INTERPOLATION
@@ -120,15 +110,15 @@ int recompute_modulation(int v)
   voice[v].modulation_stage=stage+1;
 
 #ifdef tplus
-  if (voice[v].modulation_volume==voice[v].sample->modulation_offset[stage] ||
-      (stage > 2 && voice[v].modulation_volume < voice[v].sample->modulation_offset[stage]))
+  if (voice[v].modulation_volume==(int)voice[v].sample->modulation_offset[stage] ||
+      (stage > 2 && voice[v].modulation_volume < (int)voice[v].sample->modulation_offset[stage]))
 #else
   if (voice[v].modulation_volume==voice[v].sample->modulation_offset[stage])
 #endif
     return recompute_modulation(v);
   voice[v].modulation_target=voice[v].sample->modulation_offset[stage];
   voice[v].modulation_increment = voice[v].sample->modulation_rate[stage];
-  if (voice[v].modulation_target<voice[v].modulation_volume)
+  if ((int)voice[v].modulation_target<voice[v].modulation_volume)
     voice[v].modulation_increment = -voice[v].modulation_increment;
   return 0;
 }
@@ -147,11 +137,12 @@ int update_modulation(int v)
 
 
   voice[v].modulation_volume += voice[v].modulation_increment;
+  if (voice[v].modulation_volume < 0) voice[v].modulation_volume = 0;
   /* Why is there no ^^ operator?? */
   if (((voice[v].modulation_increment < 0) &&
-       (voice[v].modulation_volume <= voice[v].modulation_target)) ||
+       (voice[v].modulation_volume <= (int)voice[v].modulation_target)) ||
       ((voice[v].modulation_increment > 0) &&
-	   (voice[v].modulation_volume >= voice[v].modulation_target)))
+	   (voice[v].modulation_volume >= (int)voice[v].modulation_target)))
     {
       voice[v].modulation_volume = voice[v].modulation_target;
       if (recompute_modulation(v))

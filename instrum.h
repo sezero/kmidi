@@ -30,7 +30,7 @@ typedef struct {
   uint8
     root_tune, fine_tune;
 
-  int32
+  uint32
     envelope_rate[7], envelope_offset[7],
     modulation_rate[7], modulation_offset[7];
   FLOAT_T
@@ -40,7 +40,9 @@ typedef struct {
   int32 
     tremolo_sweep_increment, tremolo_phase_increment, 
     lfo_sweep_increment, lfo_phase_increment, 
-    vibrato_sweep_increment, vibrato_control_ratio,
+    vibrato_sweep_increment;
+  uint32
+    vibrato_control_ratio,
     cutoff_freq;
   uint8
     reverberation, chorusdepth,
