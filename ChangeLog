@@ -1,6 +1,11 @@
+2000-02-28  Greg Lee  <lee@hawaii.edu>
+
+	* fix glib configuration
+	* move motif files to TIMIDITY
+
 2000-02-27  Greg Lee  <lee@hawaii.edu>
 
-	* reorganize source dir; timidity to sudir
+	* reorganize source dir; timidity to subdir
 	  TIMIDITY and is configured and compiled
 	* new timidity GTK+ interface
 

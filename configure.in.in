@@ -467,8 +467,9 @@ dnl configure must check ncurses header with -I/usr/include/ncurses option.
 		],
 		$lib_user32_test)
 	])
-   LIBS="$LIBS $lib_curses_opt"
+dnl   LIBS="$LIBS $lib_curses_opt"
    EXTRALIBS="$EXTRALIBS $lib_curses_opt"
+   EXTRATLIBS="$EXTRATLIBS $lib_curses_opt"
    EXTRADEFS="$EXTRADEFS -DIA_NCURSES"
     case "$target" in
       *-*-freebsd*)
@@ -485,8 +486,9 @@ CONFIG_INTERFACE(slang,SLANG,s,
 	[ enable_slang=no
 	  AC_MSG_WARN(slang interface is not enabled) ])
     AC_CHECK_HEADERS(slang/slang.h slang.h)
-    LIBS="$LIBS -lslang"
+dnl    LIBS="$LIBS -lslang"
     EXTRALIBS="$EXTRALIBS -lslang"
+    EXTRATLIBS="$EXTRATLIBS -lslang"
     EXTRADEFS="$EXTRADEFS -DIA_SLANG"
    ])
 
@@ -516,7 +518,8 @@ CONFIG_INTERFACE(tcltk,TCLTK,k,
 
     CPPFLAGS="$tcl_include_dir $tk_includes $CPPFLAGS"
     LDFLAGS="$tcl_libdir $tk_libdir $LDFLAGS"
-    LIBS="$LIBS $lib_dl_opt"
+dnl    LIBS="$LIBS $lib_dl_opt"
+    EXTRATLIBS="$EXTRATLIBS $lib_dl_opt"
 
     tcl_lib=
     tk_lib=
@@ -538,7 +541,7 @@ CONFIG_INTERFACE(tcltk,TCLTK,k,
     else
       tcltk_dep='tclIndex'
     fi
-    LIBS=`echo $LIBS | sed "s/-lX11/$tk_lib $tcl_lib -lX11/"`
+dnl    LIBS=`echo $LIBS | sed "s/-lX11/$tk_lib $tcl_lib -lX11/"`
     EXTRATLIBS=`echo $EXTRATLIBS | sed "s/-lX11/$tk_lib $tcl_lib -lX11/"`
     case "$target" in
       *-*-bsdi*)
@@ -598,7 +601,7 @@ CONFIG_INTERFACE(gtk, GTK, g,
   [
     AM_PATH_GLIB(1.1.3,
     [ AM_PATH_GTK(1.1.3,
-      [ LIBS="$LIBS $GTK_LIBS $GLIB_LIBS "
+      [
         EXTRATLIBS="$EXTRATLIBS $GTK_LIBS $GLIB_LIBS "
         EXTRACT_CPPFLAGS(EXTRATCFLAGS,CFLAGS,$GLIB_CFLAGS)
         EXTRACT_CPPFLAGS(EXTRATCFLAGS,CFLAGS,$GTK_CFLAGS)
