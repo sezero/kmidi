@@ -43,7 +43,7 @@
 #include <qlayout.h>
 #include <kbuttonbox.h>
 #include <knuminput.h>
-#include <kcolorbtn.h>
+#include <kcolorbutton.h>
 //#include <khelpmenu.h>
 #include <qwhatsthis.h>
 

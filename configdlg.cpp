@@ -41,7 +41,7 @@
 #include <kiconloader.h>
 #include <kstandarddirs.h>
 #include <kglobal.h>
-//#include <kcolorbtn.h>
+//#include <kcolorbutton.h>
 
 #include "configdlg.h"
 #include "kmidi.h"

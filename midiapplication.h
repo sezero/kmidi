@@ -69,7 +69,7 @@
 #include <sys/ioctl.h>
 
 #include <kapplication.h>
-#include <kuniqueapp.h>
+#include <kuniqueapplication.h>
 
 class MidiApplication : public KUniqueApplication
 {
