@@ -1,5 +1,6 @@
 #!/bin/sh
 ln -sf ../alsa_a.cpp alsa_a.c
+ln -sf ../arts_a.cpp arts_a.c
 ln -sf ../b_out.cpp b_out.c
 ln -sf ../bag.cpp bag.c
 ln -sf ../bsd20_a.cpp bsd20_a.c

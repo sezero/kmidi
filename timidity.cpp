@@ -58,6 +58,8 @@ extern void effect_activate( int iSwitch ) ;
 extern int init_effect(void) ;
 #endif /*CHANNEL_EFFECT*/
 
+extern PlayMode arts_play_mode;
+
 int have_commandline_midis = 0;
 int output_device_open = 0;
 
@@ -645,7 +647,7 @@ int main(int argc, char **argv)
  
   if (play_mode->open_output()<0){
 
-      fprintf(stderr, "KMidi: Sorry, couldn't open %s.\n", play_mode->id_name);
+      /* fprintf(stderr, "KMidi: Sorry, couldn't open %s.\n", play_mode->id_name); */
       /*	  ctl->close();*/
       
       output_device_open = 0;
@@ -653,7 +655,19 @@ int main(int argc, char **argv)
       /*return 2;*/
   }
   else output_device_open = 1;
-      
+
+  if (!output_device_open && play_mode != &arts_play_mode) {
+	PlayMode *save_play_mode;
+	save_play_mode = play_mode;
+	play_mode = &arts_play_mode;
+	if (output_rate) play_mode->rate=output_rate;
+	if (output_name) play_mode->name=output_name;
+	if (play_mode->open_output()<0) play_mode = save_play_mode;
+	else {
+	  output_device_open = 1;
+	}
+  }
+ 
   if (ctl->open(need_stdin, need_stdout)) {
 
 	  fprintf(stderr, "Couldn't open %s\n", ctl->id_name);

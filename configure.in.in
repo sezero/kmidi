@@ -5,8 +5,6 @@ dnl (C)Copyright 1998 by Hiroshi Takekawa <t80679@hongo.ecc.u-tokyo.ac.jp>
 dnl modified for automake by Isaku Yamahata <yamahata@kusm.kyoto-u.ac.jp>
 dnl modified for automake by Masanao Izumo <mo@goice.co.jp> (1998.11)
 
-DO_NOT_COMPILE="$DO_NOT_COMPILE kmidi"
-
 EXTRACFLAGS=
 EXTRATCFLAGS=
 EXTRADEFS=

@@ -8,13 +8,14 @@
 
 VERSION = 0.2i
 
-INCLUDES = $(all_includes)
+INCLUDES = $(all_includes) `artsc-config --cflags`
 AM_CPPFLAGS = -DDEFAULT_PATH=\"$(TIMID_DIR)\" -DKMIDI $(EXTRADEFS) $(CPPFLAGS)
-#if GXXOPTIMIZE
-#KDE_CXXFLAGS = -O3 -fomit-frame-pointer -ffast-math -malign-double
-#endif
-LDFLAGS = $(all_libraries) $(KDE_RPATH)
-LDADD = $(LIB_KFILE) $(LIBALIB) $(LIBAUDIO) $(LIBMME) $(EXTRALIBS) -lsoundserver_idl -lartsflow
+if GXXOPTIMIZE
+KDE_CXXFLAGS = -O3 -fomit-frame-pointer -ffast-math -malign-double
+endif
+LDFLAGS = $(all_libraries) `artsc-config --libs` $(KDE_RPATH)
+#LDADD = $(LIB_KFILE) $(LIBALIB) $(LIBAUDIO) $(LIBMME) $(EXTRALIBS) -lsoundserver_idl -lartsflow
+LDADD = $(LIB_KFILE) $(LIBALIB) $(LIBAUDIO) $(LIBMME) $(EXTRALIBS)
 
 # Where to install the patches, config files, and MIDI files.
 # If you change this, it's a good idea to recompile the binary,

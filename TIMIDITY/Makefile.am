@@ -8,12 +8,12 @@
 
 VERSION = 0.2i
 
-INCLUDES = $(X_INCLUDES)
+INCLUDES = $(X_INCLUDES) `artsc-config --cflags`
 AM_CFLAGS = -DDEFAULT_PATH=\"$(TIMID_DIR)\" $(EXTRATDEFS) $(EXTRATCFLAGS)
 if GXXOPTIMIZE
-CFLAGS =
-AM_CPPFLAGSS = -O3 -fomit-frame-pointer -ffast-math -malign-double
+CFLAGS = -O3 -fomit-frame-pointer -ffast-math -malign-double
 endif
+LDFLAGS = `artsc-config --libs`
 LDADD = $(LIBALIB) $(LIBAUDIO) $(LIBMME) $(EXTRATLIBS) $(X_LIBS) -lm
 
 # Where to install the patches, config files, and MIDI files.
@@ -33,7 +33,7 @@ timidity_SOURCES = timidity.c common.c readmidi.c playmidi.c resample.c mix.c in
 	effects.c reverb_e.c chorus_e.c phaser_e.c celeste_e.c \
 	resample_l.c resample_f.c cfg.c \
 	b_out.c hpux_a.c linux_a.c linux_a2.c sun_a.c dec_a.c \
-	hpux_d_a.c alsa_a.c \
+	hpux_d_a.c alsa_a.c arts_a.c \
 	bsd20_a.c esd_a.c nas_a.c \
 	ncurs_c.c slang_c.c tk_c.c gtk_i.c ctl.c \
 	motif_c.c motif_i.c motif_p.c xaw_i.c xaw_c.c
