@@ -1402,6 +1402,10 @@ fprintf(stderr, "preset %d, root_freq %ld\n", preset, sp->v.root_freq);
 	if (lay->set[SF_initialFilterFc] || lay->set[SF_env1ToFilterFc])
 		calc_cutoff(lay, sf, sp);
 	else sp->cutoff_freq = 0;
+/*
+if (sp->cutoff_freq)
+printf("bank %d, program %d, f= %d (%d)\n", banknum, program, sp->cutoff_freq, lay->val[SF_initialFilterFc]);
+*/
 	if (lay->set[SF_initialFilterQ])
 		calc_filterQ(lay, sf, sp);
 	sp->v.cutoff_freq = sp->cutoff_freq;
@@ -1693,6 +1697,7 @@ static int32 calc_rate(int diff, double msec)
 #define TO_MSEC(tcents) (int32)(1000 * pow(2.0, (double)(tcents) / 1200.0))
 #define TO_MHZ(abscents) (int32)(8176.0 * pow(2.0,(double)(abscents)/1200.0))
 #define TO_HZ(abscents) (int32)(8.176 * pow(2.0,(double)(abscents)/1200.0))
+/* #define TO_HZ(abscents) (int32)(8176 * pow(2.0,(double)(abscents)/12000.0)) */
 #define TO_LINEAR(centibel) pow(10.0, -(double)(centibel)/200.0)
 /* #define TO_VOLUME(centibel) (uint8)(255 * (1.0 - (centibel) / (1200.0 * log10(2.0)))); */
 #define TO_VOLUME(centibel) (uint8)(255 * pow(10.0, -(double)(centibel)/200.0))
@@ -1881,14 +1886,12 @@ static void calc_cutoff(Layer *lay, SFInfo *sf, SampleList *sp)
 		}
 	}
 	if (lay->set[SF_env1ToFilterFc]) {
-		/* val += lay->val[SF_env1ToFilterFc]; */
-		sp->v.modEnvToFilterFc = lay->val[SF_env1ToFilterFc];
+		sp->v.modEnvToFilterFc = pow(2.0, ((FLOAT_T)lay->val[SF_env1ToFilterFc]/1200.0));
 	}
 	else sp->v.modEnvToFilterFc = 0;
-	if (val < 6500 || val >= 13500)
-		sp->cutoff_freq = 0;
-	else
-		sp->cutoff_freq = TO_HZ(val);
+
+	sp->cutoff_freq = TO_HZ(val);
+
 }
 
 static void calc_filterQ(Layer *lay, SFInfo *sf, SampleList *sp)

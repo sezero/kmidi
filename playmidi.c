@@ -896,6 +896,7 @@ static void clone_voice(Instrument *ip, int v, MidiEvent *e, uint8 clone_type, i
       voice[w].control_counter=0;
       voice[w].modulation_counter=0;
       recompute_envelope(w);
+      voice[w].bw_index = (voice[w].sample->cutoff_freq+50) / 100;
       recompute_modulation(w);
       apply_envelope_to_amp(w);
     }
@@ -1211,6 +1212,7 @@ printf("(new rel time = %ld)\n",
       voice[i].modulation_stage=ATTACK;
       voice[i].modulation_volume=0;
       voice[i].modulation_counter=0;
+      voice[i].bw_index = (voice[i].sample->cutoff_freq+50) / 100;
       recompute_envelope(i);
       recompute_modulation(i);
       apply_envelope_to_amp(i);

@@ -34,7 +34,7 @@ typedef struct {
     envelope_rate[7], envelope_offset[7],
     modulation_rate[7], modulation_offset[7];
   FLOAT_T
-    volume, resonance;
+    volume, resonance, modEnvToFilterFc;
   sample_t *data;
   int32 
     tremolo_sweep_increment, tremolo_phase_increment, 
@@ -51,7 +51,7 @@ typedef struct {
   uint8
     attenuation, freq_center;
   int32
-    freq_scale, modEnvToFilterFc;
+    freq_scale;
 } Sample;
 
 /* Bits in modes: */

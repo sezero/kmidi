@@ -87,20 +87,33 @@ static int cutoff_ix;
 # define INTERPVARS      int32   ofsd, v0, v1, v2, v3, temp; \
 			float insamp, outsamp, a0, a1, a2, b0, b1, \
 			    x0=vp->current_x0, x1=vp->current_x1, y0=vp->current_y0, y1=vp->current_y1; \
+			int cc_count=vp->modulation_counter, bw_index=vp->bw_index; \
 			sample_t insamp16;
 # define BUTTERWORTH_COEFFICIENTS \
-			a0 = butterworth[cutoff_ix][0]; \
-			a1 = butterworth[cutoff_ix][1]; \
-			a2 = butterworth[cutoff_ix][2]; \
-			b0 = butterworth[cutoff_ix][3]; \
-			b1 = butterworth[cutoff_ix][4];
+			a0 = butterworth[bw_index][0]; \
+			a1 = butterworth[bw_index][1]; \
+			a2 = butterworth[bw_index][2]; \
+			b0 = butterworth[bw_index][3]; \
+			b1 = butterworth[bw_index][4];
 # define RESAMPLATION \
         v1 = (int32)src[(ofs>>FRACTION_BITS)]; \
         v2 = (int32)src[(ofs>>FRACTION_BITS)+1]; \
 	if(dont_cspline || \
 	   ((ofs-(1L<<FRACTION_BITS))<ls)||((ofs+(2L<<FRACTION_BITS))>le)){ \
-	    if (cutoff_ix) { \
-                    insamp16 = (sample_t)(v1 + (((v2-v1) * (ofs & FRACTION_MASK)) >> FRACTION_BITS)); \
+		if (dont_filter_melodic) bw_index = 0; \
+		else if (!cc_count--) { \
+		    cc_count = control_ratio - 1; \
+		    if (calc_bw_index(v)) { \
+			bw_index = vp->bw_index; \
+			a0 = butterworth[bw_index][0]; \
+			a1 = butterworth[bw_index][1]; \
+			a2 = butterworth[bw_index][2]; \
+			b0 = butterworth[bw_index][3]; \
+			b1 = butterworth[bw_index][4]; \
+		    } \
+		} \
+	        if (bw_index) { \
+                    insamp16 = (sample_t)(v1 + ((int32)((v2-v1) * (ofs & FRACTION_MASK)) >> FRACTION_BITS)); \
                     insamp = (float)insamp16; \
 		    outsamp = a0 * insamp + a1 * x0 + a2 * x1 - b0 * y0 - b1 * y1; \
 		    x1 = x0; \
@@ -109,8 +122,8 @@ static int cutoff_ix;
 		    y0 = outsamp; \
 		    *dest++ = (outsamp > MAX_DATAVAL)? MAX_DATAVAL: ((v1 < MIN_DATAVAL)? MIN_DATAVAL: \
 				(sample_t)outsamp); \
-	    }else \
-                *dest++ = (sample_t)(v1 + (((v2-v1) * (ofs & FRACTION_MASK)) >> FRACTION_BITS)); \
+	        }else \
+                *dest++ = (sample_t)(v1 + ((int32)((v2-v1) * (ofs & FRACTION_MASK)) >> FRACTION_BITS)); \
 	}else{ \
 		ofsd=ofs; \
                 v0 = (int32)src[(ofs>>FRACTION_BITS)-1]; \
@@ -125,8 +138,20 @@ static int cutoff_ix;
 		      ((((((5*v0 - 11*v1 + 7*temp - v3)* \
 		       ofs)>>FRACTION_BITS)*ofs)>>(FRACTION_BITS+2))-1))*ofs; \
 		v1 = (v1 + v2)/(6L<<FRACTION_BITS); \
-		if (cutoff_ix) { \
-		    insamp16 = (sample_t)((v1 > 32767)? 32767: ((v1 < -32768)? -32768: v1)); \
+		if (dont_filter_melodic) bw_index = 0; \
+		else if (!cc_count--) { \
+		    cc_count = control_ratio - 1; \
+		    if (calc_bw_index(v)) { \
+			bw_index = vp->bw_index; \
+			a0 = butterworth[bw_index][0]; \
+			a1 = butterworth[bw_index][1]; \
+			a2 = butterworth[bw_index][2]; \
+			b0 = butterworth[bw_index][3]; \
+			b1 = butterworth[bw_index][4]; \
+		    } \
+		} \
+		if (bw_index) { \
+		    insamp16 = (sample_t)((v1 > MAX_DATAVAL)? MAX_DATAVAL: ((v1 < MIN_DATAVAL)? MIN_DATAVAL: v1)); \
                     insamp = (float)insamp16; \
 		    outsamp = a0 * insamp + a1 * x0 + a2 * x1 - b0 * y0 - b1 * y1; \
 		    x1 = x0; \
@@ -136,14 +161,16 @@ static int cutoff_ix;
 		    *dest++ = (outsamp > MAX_DATAVAL)? MAX_DATAVAL: ((v1 < MIN_DATAVAL)? MIN_DATAVAL: \
 				(sample_t)outsamp); \
 		}else \
-		    *dest++ = (v1 > 32767)? 32767: ((v1 < -32768)? -32768: v1); \
+		    *dest++ = (v1 > MAX_DATAVAL)? MAX_DATAVAL: ((v1 < MIN_DATAVAL)? MIN_DATAVAL: v1); \
 		ofs=ofsd; \
 	}
 #define REMEMBER_FILTER STATE \
 	vp->current_x0=x0; \
 	vp->current_x1=x1; \
 	vp->current_y0=y0; \
-	vp->current_y1=y1;
+	vp->current_y1=y1; \
+	vp->bw_index=bw_index; \
+	vp->modulation_counter=cc_count;
 #endif
 #elif defined(LAGRANGE_INTERPOLATION)
 # define INTERPVARS      int32   ofsd, v0, v1, v2, v3;
@@ -267,6 +294,27 @@ static int update_modulation_signal(int v)
   return 0;
 }
 
+static int calc_bw_index(int v)
+{
+  FLOAT_T mod_amount=voice[v].sample->modEnvToFilterFc;
+  int32 freq = voice[v].sample->cutoff_freq;
+
+  if (mod_amount) {
+	if (update_modulation_signal(v)) mod_amount = 0;
+	else freq =
+	(int32)( ( (double)(voice[v].modulation_volume >> 22) * mod_amount * (double)freq ) / 255.0 );
+/*
+printf("v%d freq %d (was %d), modvol %d, mod_amount %f\n", v, (int)freq, (int)voice[v].sample->cutoff_freq,
+(int)voice[v].modulation_volume>>22,
+mod_amount);
+*/
+	if (freq < 150) freq = 150;
+	voice[v].bw_index = (freq+50) / 100;
+	return 1;
+  }
+  voice[v].bw_index = (freq+50) / 100;
+  return 0;
+}
 
 /*************** resampling with fixed increment *****************/
 
@@ -347,7 +395,7 @@ REMEMBER_FILTER_STATE
   return resample_buffer+resample_buffer_offset;
 }
 
-static sample_t *rs_loop(Voice *vp, uint32 count)
+static sample_t *rs_loop(int v, Voice *vp, uint32 count)
 {
   /* Play sample until end-of-loop, skip back and continue. */
   INTERPVARS
@@ -407,7 +455,7 @@ REMEMBER_FILTER_STATE
   return resample_buffer+resample_buffer_offset;
 }
 
-static sample_t *rs_bidir(Voice *vp, uint32 count)
+static sample_t *rs_bidir(int v, Voice *vp, uint32 count)
 {
   INTERPVARS
   int32
@@ -673,7 +721,7 @@ REMEMBER_FILTER_STATE
   return resample_buffer+resample_buffer_offset;
 }
 
-static sample_t *rs_vib_loop(Voice *vp, uint32 count)
+static sample_t *rs_vib_loop(int v, Voice *vp, uint32 count)
 {
   /* Play sample until end-of-loop, skip back and continue. */
   INTERPVARS
@@ -759,7 +807,7 @@ REMEMBER_FILTER_STATE
   return resample_buffer+resample_buffer_offset;
 }
 
-static sample_t *rs_vib_bidir(Voice *vp, uint32 count)
+static sample_t *rs_vib_bidir(int v, Voice *vp, uint32 count)
 {
   INTERPVARS
   int32
@@ -990,20 +1038,20 @@ static sample_t *vib_resample_voice(int v, uint32 *countptr, int mode)
 
     /* vp->cache = NULL; */
     if(mode == 0)
-	return rs_vib_loop(vp, *countptr);
+	return rs_vib_loop(v, vp, *countptr);
     if(mode == 1)
 	return rs_vib_plain(v, countptr);
-    return rs_vib_bidir(vp, *countptr);
+    return rs_vib_bidir(v, vp, *countptr);
 }
 
 static sample_t *normal_resample_voice(int v, uint32 *countptr, int mode)
 {
     Voice *vp = &voice[v];
     if(mode == 0)
-	return rs_loop(vp, *countptr);
+	return rs_loop(v, vp, *countptr);
     if(mode == 1)
 	return rs_plain(v, countptr);
-    return rs_bidir(vp, *countptr);
+    return rs_bidir(v, vp, *countptr);
 }
 
 sample_t *resample_voice(int v, uint32 *countptr)
@@ -1075,13 +1123,11 @@ void do_lowpass(Sample *sample, uint32 srate, sample_t *buf, uint32 count, int32
     double a0=0, a1=0, a2=0, b0=0, b1=0;
     double x0=0, x1=0, y0=0, y1=0;
     sample_t samp;
-    double outsamp, insamp;
-    int i, findex, cc;
-    int32 current_freq, mod_amount=0;
+    double outsamp, insamp, mod_amount=0;
+    int findex, cc;
+    int32 current_freq;
 
-    if (freq < 349) return;
-
-    if (freq > 12000) freq = 12000;
+    if (freq < 100) return;
 
     if (freq > srate * 2) {
     	ctl->cmsg(CMSG_ERROR, VERB_NORMAL,
@@ -1093,7 +1139,8 @@ void do_lowpass(Sample *sample, uint32 srate, sample_t *buf, uint32 count, int32
 
     if (sample->modEnvToFilterFc)
 	mod_amount = sample->modEnvToFilterFc;
-    if (mod_amount < 0) mod_amount = 0;
+
+    if (!mod_amount && freq >= 13500) return;
 
     voice[0].sample = sample;
 
@@ -1109,10 +1156,12 @@ void do_lowpass(Sample *sample, uint32 srate, sample_t *buf, uint32 count, int32
 	if (!cc) {
 	    if (mod_amount) {
 		if (update_modulation_signal(0)) mod_amount = 0;
-		else current_freq = ((voice[0].modulation_volume >> 22) * freq) / 255;
+		else current_freq =
+		(int32)( ( (double)(voice[0].modulation_volume >> 22) * mod_amount * (double)freq ) / 255.0 );
 	    }
 	    cc = control_ratio;
 	    findex = (current_freq+50) / 100;
+	    if (findex > 99) findex = 99;
 	    a0 = butterworth[findex][0];
 	    a1 = butterworth[findex][1];
 	    a2 = butterworth[findex][2];

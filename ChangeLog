@@ -1,3 +1,8 @@
+1999-10-11  Greg Lee  <lee@hawaii.edu>
+
+	* sndfont.c/resample.c: modulate cutoff filter
+	* resample.c: cast right-shifted number to signed
+
 1999-10-09  Greg Lee  <lee@hawaii.edu>
 
 	* resample.c: cutoff filter is faster

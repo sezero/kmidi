@@ -153,7 +153,8 @@ typedef struct {
 #ifdef tplus
     vibrato_delay, orig_vibrato_control_ratio, modulation_wheel,
 #endif
-    envelope_stage, modulation_stage, control_counter, modulation_counter, panning, panned;
+    envelope_stage, modulation_stage, control_counter,
+    modulation_counter, bw_index, panning, panned;
 
 #ifdef tplus
   /* for portamento */
