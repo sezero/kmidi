@@ -1,9 +1,9 @@
 #
 #
 
-all: $(srcdir)/../TIMIDITY/buildhack
+all: ../TIMIDITY/buildhack
 
-$(srcdir)/../TIMIDITY/buildhack:
-	(cd $(srcdir)/../TIMIDITY && $(srcdir)/makelinks $(srcdir)/..)
-	touch $(srcdir)/../TIMIDITY/buildhack
+../TIMIDITY/buildhack:
+	( cd ../TIMIDITY && $(srcdir)/../TIMIDITY/makelinks $(srcdir)/.. )
+	touch ../TIMIDITY/buildhack
 
