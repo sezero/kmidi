@@ -35,7 +35,7 @@ METASOURCES = kmidi.moc  playlist.moc bwlednum.moc configdlg.moc log.moc
 SUBDIRS = config bitmaps patch
 
 appsdir = $(kde_appsdir)/Multimedia
-apps_DATA = KMidi.kdelnk
+apps_DATA = kmidi.desktop
 
 kde_icon_DATA = kmidi.xpm
 
