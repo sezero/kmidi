@@ -1,4 +1,5 @@
 /* 
+	$Id$
 
     TiMidity -- Experimental MIDI to WAVE converter
     Copyright (C) 1995 Tuukka Toivonen <toivonen@clinet.fi>
@@ -87,8 +88,10 @@ static int open_output(void)
       return -1;
     }
 
-  fcntl(fd, F_SETFL, fcntl(fd, F_GETFL, 0) & ~O_NDELAY);
-
+  /*fcntl(fd, F_SETFL, O_NONBLOCK);*/
+  /*fcntl(fd, F_SETFL, fcntl(fd, F_GETFL, 0) & ~O_NDELAY);*/
+/* Shouldn't this be: ?? */
+  fcntl(fd, F_SETFL, fcntl(fd, F_GETFL, 0) | O_NDELAY);
 
   /* They can't mean these */
   dpm.encoding &= ~(PE_ULAW|PE_BYTESWAP);
@@ -202,15 +205,14 @@ static int open_output(void)
   
   return warnings;
 }
-#ifdef ADAGIO
 int current_sample_count()
 {
   count_info auinfo;
 
   if (ioctl(dpm.fd, SNDCTL_DSP_GETOPTR, &auinfo)<0) return -1;
-  return auinfo.bytes;
+  if (dpm.encoding & PE_MONO) return auinfo.bytes;
+  return auinfo.bytes / 2;
 }
-#endif
 
 static void output_data(int32 *buf, int32 count)
 {
