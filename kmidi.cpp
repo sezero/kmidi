@@ -572,16 +572,11 @@ void KMidi::drawPanel()
     statusLA->setText("    ");
     what->add(statusLA, i18n("what's happening now"));
 
-
-	
     looplabel = new QLabel( this );
     looplabel->setGeometry( WIDTH -25 +2*SBARWIDTH/3 +45, 6, 60, 13 );
     looplabel->setFont( QFont( "Helvetica", 10, QFont::Bold ) );
     looplabel->setAlignment( AlignLeft );
     looplabel->setText("");
-
-
-
 
 
     properties2LA = new QLabel( this );
@@ -670,34 +665,38 @@ void KMidi::drawPanel()
     volSB = new QSlider( 0, 100, 5,  volume, QSlider::Horizontal,
 			 this, "Slider" );
     volSB->setGeometry( WIDTH , 3*HEIGHT + HEIGHT/2, 2*SBARWIDTH/3, HEIGHT /2 );
-    what->add(volSB, i18n("adjust the volume (keep it pretty low)"));
+    what->add(volSB, i18n("Adjust the volume here.<br>" \
+	"(Keep it pretty low, and<br>" \
+	"use <i>Kmix</i> to adjust<br>" \
+	"the mixer volumes, if<br>" \
+	"you want it louder.)"));
 
     iy = 0;
     ix = WIDTH + SBARWIDTH;
 
     playPB = makeButton( ix, iy, WIDTH, HEIGHT, i18n("Play/Pause") );
     playPB->setToggleButton( TRUE );
-    what->add(playPB, i18n("if playing, pause, else start playing"));
+    what->add(playPB, i18n("If playing, pause,<br>else start playing."));
 
     totalwidth = ix + WIDTH;
 
     iy += HEIGHT;
     stopPB = makeButton( ix, iy, WIDTH/2 , HEIGHT, i18n("Stop") );
-    what->add(stopPB, i18n("stop playing this song"));
+    what->add(stopPB, i18n("Stop playing this song."));
 
     ix += WIDTH/2 ;
     replayPB = makeButton( ix, iy, WIDTH/2 , HEIGHT, i18n("Replay") );
     replayPB->setToggleButton( TRUE );
-    what->add(replayPB, i18n("keep playing the same song"));
+    what->add(replayPB, i18n("Keep replaying<br> the same song."));
 
     ix = WIDTH + SBARWIDTH;
     iy += HEIGHT;
     bwdPB = makeButton( ix, iy, WIDTH/2 , HEIGHT, i18n("Bwd") );
-    what->add(bwdPB, i18n("jump backwards 15 seconds"));
+    what->add(bwdPB, i18n("Jump backwards 15 seconds."));
 
     ix += WIDTH/2;
     fwdPB = makeButton( ix, iy, WIDTH/2 , HEIGHT, i18n("Fwd") );
-    what->add(fwdPB, i18n("jump forward 15 seconds"));
+    what->add(fwdPB, i18n("Jump forward 15 seconds."));
 
     ix = WIDTH + SBARWIDTH;
     iy += HEIGHT;
@@ -705,15 +704,17 @@ void KMidi::drawPanel()
     iy += HEIGHT/2;
 
     prevPB = makeButton( ix, iy, WIDTH/2 , HEIGHT, i18n("Prev") );
-    what->add(prevPB, i18n("play the previous song on the play list"));
+    what->add(prevPB, i18n("Play the previous song<br> on the play list."));
 
     ix += WIDTH/2 ;
     nextPB = makeButton( ix, iy, WIDTH/2 , HEIGHT, i18n("Next") );
-    what->add(nextPB, i18n("play the next song on the play list"));
+    what->add(nextPB, i18n("Play the next song<br> on the play list."));
 
 
     ix = WIDTH + WIDTH/2;
     iy += HEIGHT;
+
+    QString polyled = i18n("These leds show<br>the number of notes<br>being played.");
 
     for (int i = 0; i < 17; i++) if (i < 7 || i > 10) {
         led[i] = new KLed(led_color, this);
@@ -721,7 +722,54 @@ void KMidi::drawPanel()
         led[i]->setShape(KLed::Rectangular);
         led[i]->setGeometry(WIDTH/8 + i * WIDTH/4,3*HEIGHT+HEIGHT/6, WIDTH/6, HEIGHT/5);
 	led[i]->setColor(Qt::black);
+	if (i>10) what->add(led[i], polyled);
     }
+
+    what->add(led[STATUS_LED], i18n("The <i>status</i> led is<br>" \
+	"<b>red</b> when KMidi is<br>" \
+	"stopped, <b>yellow</b> when<br>" \
+	"paused, otherwise:<br>" \
+	"<b>blue</b> when looping on<br>" \
+	"the same song<br>" \
+	"<b>magenta</b> when selecting<br>" \
+	"songs randomly<br>" \
+	"or <b>green</b> when KMidi is<br>" \
+	"playing or ready to play." ));
+
+    what->add(led[LOADING_LED], i18n("The <i>loading</i> led<br>" \
+	"blinks <b>yellow</b> when<br>" \
+	"patches are being<br>" \
+	"loaded from the hard drive." ));
+
+    what->add(led[LYRICS_LED], i18n("The <i>lyrics</i> led<br>" \
+	"lights up when a<br>" \
+	"synchronized midi text<br>" \
+	"event is being displayed<br>" \
+	"in the <i>info</i> window." ));
+
+    what->add(led[BUFFER_LED], i18n("The <i>buffer</i> led<br>" \
+	"is orangeish when there is<br>" \
+	"danger of a dropout, but<br>" \
+	"greenish when all is ok." ));
+
+    what->add(led[CSPLINE_LED], i18n("The <i>interpolation</i> led<br>" \
+	"is on when c-spline or<br>LaGrange interpolation<br>" \
+	"is being used for resampling." ));
+
+    what->add(led[REVERB_LED], i18n("The <i>echo</i> led<br>" \
+	"is on when KMidi is<br>" \
+	"not too busy to generate<br>" \
+	"extra echo notes<br>" \
+	"for reverberation effect.<br>" \
+	"It's bright when you've<br>" \
+	"asked for extra reverberation." ));
+    what->add(led[CHORUS_LED], i18n("The <i>detune</i> led<br>" \
+	"is on when KMidi is<br>" \
+	"not too busy to generate<br>" \
+	"extra detuned notes<br>" \
+	"for chorusing effect.<br>" \
+	"It's bright when you've<br>" \
+	"asked for extra chorusing." ));
 
     ichecks = new QButtonGroup( );
     ichecks->setExclusive(TRUE);
@@ -732,10 +780,10 @@ void KMidi::drawPanel()
         ich[i]->setGeometry(WIDTH/8 + (i+7) * WIDTH/4,3*HEIGHT, WIDTH/6, HEIGHT/2);
     }
     ich[1]->setChecked( TRUE );
-    what->add(ich[0], i18n("resample using linear interpolation"));
-    what->add(ich[1], i18n("resample using c-spline interpolation"));
-    what->add(ich[2], i18n("resample using LaGrange interpolation"));
-    what->add(ich[3], i18n("resample using c-spline<br>interpolation with<br>the low pass filter"));
+    what->add(ich[0], i18n("Resample using linear interpolation."));
+    what->add(ich[1], i18n("Resample using c-spline interpolation."));
+    what->add(ich[2], i18n("Resample using LaGrange interpolation."));
+    what->add(ich[3], i18n("Resample using c-spline<br>interpolation with<br>the low pass filter."));
     connect( ichecks, SIGNAL(clicked(int)), SLOT(updateIChecks(int)) );
 
     regularheight = iy;
@@ -745,7 +793,7 @@ void KMidi::drawPanel()
     meter->led_color = led_color;
     meter->background_color = background_color;
     meter->setGeometry(ix,iy,SBARWIDTH - WIDTH/2, 3* HEIGHT - 1);
-    what->add(meter, i18n("notes being played on the midi channels"));
+    what->add(meter, i18n("The display shows notes<br> being played on the<br>16 or 32 midi channels."));
     meter->hide();
     extendedheight = iy + 3*HEIGHT;
     extendedsize = QSize (totalwidth, extendedheight);
@@ -753,7 +801,8 @@ void KMidi::drawPanel()
     ix = 0;
     logwindow = new LogWindow(this,"logwindow");
     logwindow->setGeometry(ix,extendedheight, totalwidth, infowindowheight);
-    what->add(logwindow, i18n("info about the file being played"));
+    what->add(logwindow, i18n("Here is information<br>" \
+	"extracted from the midi<br>file currently being played."));
     logwindow->resize(totalwidth, infowindowheight);
     logwindow->hide();
 
@@ -765,7 +814,11 @@ void KMidi::drawPanel()
     iy = regularheight;
     patchbox = new QComboBox( FALSE, this );
     patchbox->setGeometry(ix, iy, WIDTH + WIDTH/2, HEIGHT);
-    what->add(patchbox, i18n("which patchset to use"));
+    what->add(patchbox, i18n("Choose a patchset.<br>" \
+	"(You can add patchsets by<br>" \
+	"downloading them from somewhere<br>" \
+	"and editing the file<br>" \
+	"$KDEDIR/share/apps/kmidi/<br>config/timidity.cfg .)"));
     patchbox->setFont( QFont( "helvetica", 10, QFont::Normal) );
     int lx;
     for (lx = 30; lx > 0; lx--) if (cfg_names[lx-1]) break;
@@ -779,7 +832,7 @@ void KMidi::drawPanel()
     iy += HEIGHT;
     playbox = new QComboBox( FALSE, this, "song" );
     playbox->setGeometry(ix, iy, WIDTH + WIDTH/2, HEIGHT);
-    what->add(playbox, i18n("select a midi file to play"));
+    what->add(playbox, i18n("Select a midi file<br>to play from this<br>play list."));
     //playbox->setFont( QFont( "helvetica", 10, QFont::Normal) );
     connect( playbox, SIGNAL(activated(int)), SLOT(setSong(int)) );
     playbox->hide();
@@ -788,7 +841,10 @@ void KMidi::drawPanel()
 
     playlistbox = new QComboBox( FALSE, this, "_playlists" );
     playlistbox->setGeometry(ix, iy, WIDTH + WIDTH/2, HEIGHT);
-    what->add(playlistbox, i18n("the playlist files"));
+    what->add(playlistbox, i18n("These are the playlist files<br>" \
+	"you've created using<br> the <i>playlist editor</i>.<br>" \
+	"Click on one, and its<br>contents will replace<br>" \
+	"the play list above."));
     //playlistbox->setFont( QFont( "helvetica", 10, QFont::Normal) );
     connect( playlistbox, SIGNAL( activated( int ) ), this, SLOT( plActivated( int ) ) );
     playlistbox->hide();
@@ -825,11 +881,46 @@ void KMidi::drawPanel()
     rcb3->hide();
     rcb4->hide();
 
+    what->add(rcb1, i18n("There are three settings:<br>" \
+	"<b>off</b> for no extra stereo notes<br>" \
+	"<b>no change</b> for normal stereo<br>" \
+	"<b>checked/on</b> for notes panned<br>" \
+	"left and right artificially.") );
+    what->add(rcb2, i18n("There are three settings:<br>" \
+	"<b>off</b> for no extra echo notes<br>" \
+	"<b>no change</b> for echoing<br>" \
+	"when a patch specifies<br>reverberation, or<br>" \
+	"<b>checked/on</b> for added reverb<br>" \
+	"for all instruments.") );
+    what->add(rcb3, i18n("There are three settings:<br>" \
+	"<b>off</b> for no extra detuned notes<br>" \
+	"<b>no change</b> for detuned notes<br>" \
+	"when a patch specifies<br>chorusing, or<br>" \
+	"<b>checked/on</b> for added chorusing<br>" \
+	"for all instruments.") );
+    what->add(rcb4, i18n("There are three settings:<br>" \
+	"<b>off</b> for only name and lyrics<br>" \
+	"shown in the <i>info</i> window;<br>" \
+	"<b>no change</b> for all text<br>" \
+	"messages to be shown, and<br>" \
+	"<b>checked/on</b> to display also<br>" \
+	"information about patches<br>" \
+	"as they are loaded from disk.") );
+
     iy += HEIGHT;
     effectbutton = makeButton( ix,          iy, WIDTH/2, HEIGHT, "eff" );
     effectbutton->setToggleButton( TRUE );
     effectbutton->setFont( QFont( "helvetica", 10, QFont::Bold) );
-    what->add(effectbutton, i18n("use special effects filters"));
+    what->add(effectbutton, i18n("When this button is down,<br>" \
+	"filters are used for the<br>" \
+	"<i>midi</i> channel effects<br>" \
+	"<b>chorus</b>, <b>reverberation</b>,<br>" \
+	"<b>celeste</b>, and <b>phaser</b>.<br>" \
+	"When it is off, <b>chorus</b> is<br>" \
+	"done instead with extra detuned<br>" \
+	"notes, and <b>reverberation</b> is<br>" \
+	"done with echo notes, but<br>the other effects are<br>not done." ));
+
     connect( effectbutton, SIGNAL(toggled(bool)), SLOT(setEffects(bool)) );
     effectbutton->hide();
 
@@ -837,7 +928,9 @@ void KMidi::drawPanel()
     voicespin->setValue(current_voices);
     voicespin->setGeometry( ix +WIDTH/2, iy, WIDTH/2, HEIGHT );
     voicespin->setFont( QFont( "helvetica", 10, QFont::Bold) );
-    what->add(voicespin, i18n("set maximum notes<br>that can be played at one time"));
+    what->add(voicespin, i18n("Use this to set the maximum<br>notes that can be played<br>" \
+	"at one time.  Use a lower<br>" \
+	"setting to avoid dropouts."));
     connect( voicespin, SIGNAL( valueChanged(int) ),
 	     SLOT( voicesChanged(int) ) );
     voicespin->hide();
@@ -850,13 +943,26 @@ void KMidi::drawPanel()
     connect( meterspin, SIGNAL( valueChanged(int) ),
 	     SLOT( meterfudgeChanged(int) ) );
     meterspin->setFont( QFont( "helvetica", 10, QFont::Bold) );
-    what->add(meterspin, i18n("delay before played<br>note is shown on channel meter"));
+    what->add(meterspin, i18n("This setting is a delay<br>" \
+	"in centiseconds before a played<br>" \
+	"note is displayed on the<br>" \
+	"channel meter to the left.<br>" \
+	"It may help to syncronize the<br>" \
+	"display with the music."));
     meterspin->hide();
 
     filterbutton = makeButton( ix +WIDTH/2,     iy, WIDTH/2,   HEIGHT, "filt" );
     filterbutton->setToggleButton( TRUE );
     filterbutton->setFont( QFont( "helvetica", 10, QFont::Bold) );
-    what->add(filterbutton, i18n("use low pass<br>filter"));
+    what->add(filterbutton, i18n("When this filter button<br>" \
+	"is on, a low pass filter<br>" \
+	"is used for drum patches<br>" \
+	"when they are first loaded<br>" \
+	"and when the patch itself<br>" \
+	"requests this.  The filter<br>" \
+	"is also used for melodic voices<br>" \
+	"if you have chosed the<br><i>cspline+filter</i><br>" \
+	"interpolation option."));
     connect( filterbutton, SIGNAL(toggled(bool)), SLOT(setFilter(bool)) );
     filterbutton->hide();
 }
@@ -1800,6 +1906,7 @@ void KMidi::ReadPipe(){
                 led[LYRICS_LED]->setColor(Qt::black);
 
 		if(starting_up){
+		    led[STATUS_LED]->setColor(Qt::green);
 		    starting_up = false;
 		    return;
 		}
@@ -2036,7 +2143,7 @@ void KMidi::ReadPipe(){
     if (status != last_status) {
 	QColor c;
 	switch (status) {
-	    case KNONE:		c = Qt::black; break;
+	    case KNONE:		c = Qt::green; break;
 	    case KPLAYING:	c = Qt::green; break;
 	    case KSTOPPED:	c = Qt::red; break;
 	    case KLOOPING:	c = Qt::blue; break;
@@ -2052,6 +2159,7 @@ void KMidi::ReadPipe(){
 	else if (randomplay) c = Qt::magenta;
 	last_status = status;
 	led[STATUS_LED]->setColor(c);
+	led[STATUS_LED]->setColor(Qt::green);
     }
 
     if (last_loading_blink && currplaytime) {
