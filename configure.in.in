@@ -456,6 +456,7 @@ dnl
 
 dnl ncurses
 AC_MSG_CHECKING(enable_ncurses)
+AM_CONDITIONAL(ENABLE_NCURSES, false)
 if test "x$enable_ncurses" = xyes; then
 
 CONFIG_INTERFACE(ncurses,NCURSES,n,
@@ -510,6 +511,7 @@ fi
 
 dnl slang
 AC_MSG_CHECKING(enable_slang)
+AM_CONDITIONAL(ENABLE_SLANG, false)
 if test "x$enable_slang" = xyes; then
 
 CONFIG_INTERFACE(slang,SLANG,s,
@@ -533,6 +535,7 @@ fi
 
 dnl Motif
 AC_MSG_CHECKING(enable_motif)
+AM_CONDITIONAL(ENABLE_MOTIF, false)
 if test "x$enable_motif" = xyes; then
 
 CONFIG_INTERFACE(motif,MOTIF,m,
@@ -558,6 +561,7 @@ fi
 
 dnl Tcl/Tk
 AC_MSG_CHECKING(enable_tcltk)
+AM_CONDITIONAL(ENABLE_TCLTK, false)
 if test "x$enable_tcltk" = xyes; then
 
 CONFIG_INTERFACE(tcltk,TCLTK,k,
@@ -615,6 +619,7 @@ fi
 
 dnl X Athena Widget
 AC_MSG_CHECKING(enable_xaw)
+AM_CONDITIONAL(ENABLE_XAW, false)
 if test "x$enable_xaw" = xyes; then
 
 CONFIG_INTERFACE(xaw,XAW,a,
@@ -665,6 +670,7 @@ fi
 
 dnl GTK+
 AC_MSG_CHECKING(enable_gtk)
+AM_CONDITIONAL(ENABLE_GTK, false)
 if test "x$enable_gtk" = xyes; then
 
 CONFIG_INTERFACE(gtk, GTK, g,
