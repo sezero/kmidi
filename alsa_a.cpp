@@ -48,11 +48,19 @@
 #ifdef __cplusplus
 #undef __cplusplus
 extern "C" {
+#ifdef HAVE_ALSA_ASOUNDLIB_H
+#include <alsa/asoundlib.h>
+#elif defined(HAVE_SYS_ASOUNDLIB_H)
 #include <sys/asoundlib.h>
+#endif
 }
 #define __cplusplus
 #else
+#ifdef HAVE_ALSA_ASOUNDLIB_H
+#include <alsa/asoundlib.h>
+#elif defined(HAVE_SYS_ASOUNDLIB_H)
 #include <sys/asoundlib.h>
+#endif
 #endif
 
 #ifdef ORIG_TIMPP
