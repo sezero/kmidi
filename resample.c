@@ -521,7 +521,7 @@ static sample_t *rs_vib_loop(Voice *vp, uint32 count)
   int
     vibflag=0;
 
-  if (!incr) return resample_buffer;
+  if (!incr) return resample_buffer+resample_buffer_offset;
 
   while (count)
     {

@@ -115,6 +115,7 @@ KMidi::KMidi( QWidget *parent, const char *name ) :
 
     drawPanel();
     loadBitmaps();
+    setPalettePropagation( QWidget::AllChildren );
     setColors();
     setToolTips();
 
@@ -142,8 +143,7 @@ KMidi::KMidi( QWidget *parent, const char *name ) :
     timer = new QTimer( this );
     readtimer = new QTimer( this);
 
-    logwindow = new LogWindow(NULL,"logwindow");
-    logwindow->hide();
+
     configdlg = new ConfigDlg(this,&config, "_configdlg");
     //playlistdlg = new PlaylistDialog( NULL , "_pldlg", playlist, &current_playlist_num, listplaylists);
 
@@ -175,7 +175,7 @@ KMidi::KMidi( QWidget *parent, const char *name ) :
     srandom(time(0L));
     adjustSize();
     setMinimumSize( regularsize );
-    setMaximumSize( extendedsize );
+    //setMaximumSize( fullsize );
 
     resize( regularsize );
 
@@ -653,12 +653,22 @@ void KMidi::drawPanel()
     meter->led_color = led_color;
     meter->background_color = background_color;
     meter->setGeometry(ix,iy,SBARWIDTH - WIDTH/2, 3* HEIGHT - 1);
-    metershown = FALSE;
     meter->hide();
     extendedheight = iy + 3*HEIGHT;
+    extendedsize = QSize (totalwidth, extendedheight);
+
+    ix = 0;
+    logwindow = new LogWindow(this,"logwindow");
+    logwindow->setGeometry(ix,extendedheight, totalwidth, 100);
+    logwindow->resize(totalwidth, 100);
+    //logwindow->setBackgroundColor( background_color );
+    //logwindow->led_color = led_color;
+    //logwindow->background_color = background_color;
+    logwindow->hide();
+    extendedheight += 100;
 
     regularsize = QSize (totalwidth, regularheight);
-    extendedsize = QSize (totalwidth, extendedheight);
+    fullsize = QSize (totalwidth, extendedheight);
 
     // Choose patch set
     ix = 0;
@@ -878,15 +888,15 @@ void KMidi::setEffects( bool down )
 
 void KMidi::logoClicked(){
 
-    if(metershown == TRUE){
-	metershown = FALSE;
+    if(meter->isVisible()){
 	resize( regularsize );
 	meter->hide();
+	logwindow->hide();
 	return;
     }
-    metershown = TRUE;
-    resize( extendedsize );
+    resize( fullsize );
     meter->show();
+    logwindow->show();
 }
 
 void KMidi::loadBitmaps() {
@@ -1087,11 +1097,16 @@ void KMidi::speedupslot(){
     if(!logwindow)
 	return;
 
-    if(logwindow->isVisible())
+    if(logwindow->isVisible()) {
 	logwindow->hide();
-    else
+	if (meter->isVisible()) resize( extendedsize );
+	else resize( regularsize );
+    }
+    else {
+	resize( fullsize );
+	if (~meter->isVisible()) meter->show();
 	logwindow->show();
-
+    }
 }
 
 void KMidi::nextClicked(){
@@ -1794,27 +1809,40 @@ void KMidi::writeconfig(){
 
 void KMidi::setColors(){
 
-
+    QPalette cp = palette();
 
     backdrop->setBackgroundColor(background_color);
+    //logwindow->setBackgroundColor(background_color);
 
 /*			 foreground, button, light, dark, mid, text, base   */
-    QColorGroup colgrp( led_color, background_color, yellow,yellow , yellow,
-                        led_color, white );
+    //QColorGroup colgrp( led_color, background_color, yellow,yellow , yellow,
+    //                    led_color, white );
 
-    statusLA->setPalette( QPalette(colgrp,colgrp,colgrp) );
-    looplabel->setPalette( QPalette(colgrp,colgrp,colgrp) );
-    //    titleLA->setPalette( QPalette(colgrp,colgrp,colgrp) );
-    propertiesLA->setPalette( QPalette(colgrp,colgrp,colgrp) );
-    properties2LA->setPalette( QPalette(colgrp,colgrp,colgrp) );
-    volLA->setPalette( QPalette(colgrp,colgrp,colgrp) );
-    //    speedLA->setPalette( QPalette(colgrp,colgrp,colgrp) );
-    totaltimelabel->setPalette( QPalette(colgrp,colgrp,colgrp) );
-    modlabel->setPalette( QPalette(colgrp,colgrp,colgrp) );
-    song_count_label->setPalette( QPalette(colgrp,colgrp,colgrp) );
+    //QColorGroup colgrp( led_color, background_color, yellow,yellow , yellow,
+    //                    led_color, background_color );
+
+    QColorGroup norm( led_color, background_color, cp.normal().light(), cp.normal().dark(),
+	cp.normal().mid(), led_color, background_color );
+    QColorGroup dis( led_color, background_color, cp.disabled().light(), cp.disabled().dark(),
+	cp.disabled().mid(), led_color, background_color );
+    QColorGroup act( led_color, background_color, cp.active().light(), cp.active().dark(),
+	cp.active().mid(), led_color, background_color );
+    QPalette np(norm, dis, act);
+
+    logwindow->setPalette( np );
+    statusLA->setPalette( np );
+    looplabel->setPalette( np );
+    //    titleLA->setPalette( np );
+    propertiesLA->setPalette( np );
+    properties2LA->setPalette( np );
+    volLA->setPalette( np );
+    //    speedLA->setPalette( np );
+    totaltimelabel->setPalette( np );
+    modlabel->setPalette( np );
+    song_count_label->setPalette( np );
 				/* normal, disabled, active */
-    //patchbox->setPalette( QPalette(colgrp,colgrp,colgrp) );
-    //playbox->setPalette( QPalette(colgrp,colgrp,colgrp) );
+    //patchbox->setPalette( np );
+    //playbox->setPalette( np );
 
     for (int u = 0; u<=4;u++){
 	trackTimeLED[u]->setLEDoffColor(background_color);
@@ -1876,14 +1904,21 @@ void KMidi::resizeEvent(QResizeEvent *e){
 
     int h = (e->size()).height();
 
-    if (h > extendedsize.height() - 10 && !metershown) {
+    if (h > extendedsize.height()) logwindow->resize(extendedsize.width(), h - extendedsize.height());
+
+    if (h > extendedsize.height() - 10 && !meter->isVisible()) {
 	meter->show();
-	metershown = TRUE;
+    }
+    if (h > fullsize.height() - 10 && !logwindow->isVisible()) {
+	logwindow->show();
     }
 
-    if (h < regularsize.height() + 10 && metershown) {
+    if (h < regularsize.height() + 10 && meter->isVisible()) {
+	if (logwindow->isVisible()) logwindow->hide();
 	meter->hide();
-	metershown = FALSE;
+    }
+    if (h < extendedsize.height() + 10 && logwindow->isVisible()) {
+	logwindow->hide();
     }
 }
 

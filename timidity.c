@@ -130,12 +130,19 @@ static void help(void)
 	 "  -C n    Set ratio of sampling and control frequencies\n"
 	 "\n"
 	 "  -# n    Select patch set\n"
+#ifdef CHANNEL_EFFECT
+	 "  -E      Effects filter\n"
+#endif /*CHANNEL_EFFECT*/
+#ifdef tplus
+	 "  -m      Disable portamento\n"
+#endif
 	 "  -L dir  Append dir to search path\n"
 	 "  -c file Read extra configuration file\n"
 	 "  -I n    Use program n as the default\n"
 	 "  -P file Use patch file for all programs\n"
 	 "  -D n    Play drums on channel n\n"
 	 "  -Q n    Ignore channel n\n"
+	 "  -R n    Reverb options (1)(+2)(+4)\n"
 	 "  -F      Enable fast panning\n"
 	 "  -U      Unload instruments from memory between MIDI files\n"
 	 "\n"

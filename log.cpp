@@ -31,6 +31,8 @@
 
 myMultiEdit::myMultiEdit(QWidget *parent, const char *name)
   : QMultiLineEdit(parent, name){
+  // doesn't work:
+  //setTableFlags( tableFlags() & ~Tbl_hScrollBar );
 }
 
 myMultiEdit::~myMultiEdit(){
@@ -48,28 +50,18 @@ bool  myMultiEdit::rowYPos(int row, int& yPos){
 }
 
 LogWindow::LogWindow(QWidget *parent, const char *name)
-  : QDialog(parent, name, FALSE)
+  : QWidget(parent, name)
 {
   setCaption(i18n("Info Window"));
 
 
   text_window = new myMultiEdit(this,"logwindow");
-  text_window->setGeometry(2,5,500, 300);
   text_window->setFocusPolicy ( QWidget::NoFocus );
   text_window->setReadOnly( TRUE );
 
-  dismiss = new QPushButton(this,"dismissbutton");
-  dismiss->setGeometry(330,340,70,30);
-  dismiss->setText(i18n("Dismiss"));
-
-  connect(dismiss,SIGNAL(clicked()),SLOT(hideit()));
- 
   stringlist = new QStrList(TRUE); // deep copies
   stringlist->setAutoDelete(TRUE);
 
-  adjustSize();
-  setMinimumSize(width(),height());
-  
   sltimer = new QTimer(this);
   connect(sltimer,SIGNAL(timeout()),this,SLOT(updatewindow()));
   timerset = false;
@@ -78,13 +70,6 @@ LogWindow::LogWindow(QWidget *parent, const char *name)
 
 
 LogWindow::~LogWindow() {
-}
-
-
-void LogWindow::hideit(){
-
-  this->hide();
-
 }
 
 void LogWindow::updatewindow(){
@@ -188,24 +173,15 @@ void LogWindow::clear(){
   }
 
 }
-		  
 
-void LogWindow::statusLabel(const char* ) {
-
-  /*  statuslabel->setText(n);*/
-
-}
-
-
-
-void LogWindow::resizeEvent(QResizeEvent* ){
+void LogWindow::resizeEvent(QResizeEvent*e ){
 
   int w = width() ;
   int h = height();
+    int mh = (e->size()).height();
+    int mw = (e->size()).width();
 
-  text_window->setGeometry(0,5,w  ,h - 42);
-  dismiss->setGeometry(w - 72 , h - 32, 70, 30);
-  
+  text_window->resize(w, h);
 }
 
 void LogWindow::enter() {

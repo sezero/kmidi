@@ -1474,11 +1474,11 @@ static void show_markers(int32 until_time)
     for (i = 0, j = 0; j < 1024 && j < len; j++)
 	if (buf[j] == '\n') {
 	    buf[j] = '\0';
-	    if (j - i > 0) ctl->cmsg(CMSG_INFO, VERB_NORMAL, buf + i);
-	    else ctl->cmsg(CMSG_INFO, VERB_NORMAL, " ");
+	    if (j - i > 0) ctl->cmsg(CMSG_INFO, VERB_ALWAYS, buf + i);
+	    else ctl->cmsg(CMSG_INFO, VERB_ALWAYS, " ");
 	    i = j + 1;
 	}
-    if (i < j) ctl->cmsg(CMSG_INFO, VERB_NORMAL, "~%s", buf + i);
+    if (i < j) ctl->cmsg(CMSG_INFO, VERB_ALWAYS, "~%s", buf + i);
 }
 #endif
 

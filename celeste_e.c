@@ -153,7 +153,7 @@ static void ActionStereo( celeste_effect* pThis , int32* pStereoBuffer , int32 c
 	{
 		int32* pCur = pStereoBuffer;	
 		int32* pEnd = pStereoBuffer + 2 * count ;				
-		int32  x , y , xd , yd , v1 , v2 , tmp ;
+		int32  x , xd , v1 , v2 , tmp ;
 		for( ; pCur != pEnd ; ++ pCur )
 		{			
 			x = *pCur / G ;			

@@ -49,7 +49,7 @@ void newLine();
 };
 
 
-class LogWindow : public QDialog {
+class LogWindow : public QWidget {
 
 Q_OBJECT
 
@@ -58,11 +58,9 @@ public:
   ~LogWindow();
 
   void insertStr(const QString &);
-  void statusLabel(const char *);
   void clear();
 
 private slots:
-    void hideit();
     void updatewindow();
 
 private:
@@ -75,28 +73,9 @@ private:
   QStrList *stringlist;
   void enter();
   QFrame *fline;
-  QPushButton *dismiss;
   myMultiEdit *text_window;
 
-  QLabel *statuslabel;
 
 };
 #endif
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 

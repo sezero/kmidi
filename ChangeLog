@@ -1,3 +1,8 @@
+1999-09-26  Greg Lee  <lee@hawaii.edu>
+
+	* kmidi.cpp, log.cpp: put info window in panel
+	* playmidi.c: fix reverb bug
+
 1999-09-20  Greg Lee  <lee@hawaii.edu>
 
 	* sf2 volume envelopes

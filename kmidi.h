@@ -139,9 +139,9 @@ public:
 	QSpinBox 	*voicespin;
 	QPushButton 	*rbuttond;
 	MeterWidget	*meter;
-	bool 		metershown;
 	QSize		regularsize;
 	QSize		extendedsize;
+	QSize		fullsize;
     
 	QPixmap folder_pixmap;
 	QPixmap file_pixmap;
