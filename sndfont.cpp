@@ -503,7 +503,7 @@ InstrumentLayer *load_sbk_patch(char *name, int gm_num, int bank, int percussion
 #endif
 	if (inst) {
 		nlp = lp;
-		lp=safe_malloc(sizeof(InstrumentLayer));
+		lp=(InstrumentLayer*) safe_malloc(sizeof(InstrumentLayer));
 		patch_memory += sizeof(InstrumentLayer);
 		lp->lo = LO_VAL(ip->velrange);
 		lp->hi = HI_VAL(ip->velrange);
@@ -585,7 +585,7 @@ static int load_one_side(SFInsts *rec, SampleList *sp, int sample_count, Sample 
 		sample->data = (sample_t *)(rec->contents + sp->startsample);
 		else
 #endif
-		sample->data = safe_malloc(sp->endsample);
+		sample->data = (sample_t *) safe_malloc(sp->endsample);
 #ifndef READ_WHOLE_SF_FILE
 		patch_memory += sp->endsample;
 #else
