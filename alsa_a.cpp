@@ -573,9 +573,16 @@ void playback_write_error(void)
 		exit(1);
 	}
 	if (status.status == SND_PCM_STATUS_UNDERRUN) {
-		printf("underrun at position %u!!!\n", status.scount);
+		//printf("underrun at position %u!!!\n", status.scount);
 		if (snd_pcm_plugin_prepare(handle, SND_PCM_CHANNEL_PLAYBACK)<0) {
 			fprintf(stderr, "underrun: playback channel prepare error\n");
+			exit(1);
+		}
+		return;		/* ok, data should be accepted again */
+	}
+	if (status.status == SND_PCM_STATUS_READY) {
+		if (snd_pcm_plugin_prepare(handle, SND_PCM_CHANNEL_PLAYBACK)<0) {
+			fprintf(stderr, "ready: playback channel prepare error\n");
 			exit(1);
 		}
 		return;		/* ok, data should be accepted again */
