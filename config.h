@@ -269,7 +269,7 @@ typedef char int8;
 	#endif
 #else
 	#define XCHG_SHORT(x) ((((x)&0xFF)<<8) | (((x)>>8)&0xFF))
-	#ifdef __i486__
+	#if defined(__i486__) && defined(__GNUC__)
 		#define XCHG_LONG(x) \
 			({ int32 __value; \
 			asm ("bswap %1; movl %1,%0" : "=g" (__value) : "r" (x)); \
