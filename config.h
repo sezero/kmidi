@@ -252,7 +252,7 @@ typedef float FLOAT_T;
 # endif        
 #endif /* linux */
 
-#ifdef __FreeBSD__
+#if defined(__FreeBSD__) || defined(__NetBSD__)
 #include <errno.h>
 #include <machine/endian.h>
 #if BYTE_ORDER == LITTLE_ENDIAN
