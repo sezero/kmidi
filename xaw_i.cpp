@@ -45,6 +45,9 @@
 #include <sys/types.h>
 #include <pwd.h>
 #include <sys/stat.h>
+#ifndef ORIG_XAW
+#include <dirent.h>
+#endif
 #include "xaw.h"
 #include <X11/IntrinsicP.h>
 #include <X11/StringDefs.h>
@@ -284,6 +287,8 @@ static void completeDir(Widget w,XEvent *e, XtPointer data);
 static void ctl_channel_note(int ch, int note, int velocity);
 static void drawKeyboardAll(Display *disp,Drawable pix);
 static void redrawAction(Widget w,XEvent *e,String *v,Cardinal *n);
+static void randomAction(Widget w,XEvent *e,String *v,Cardinal *n);
+static void repeatAction(Widget w,XEvent *e,String *v,Cardinal *n);
 static void redrawCaption(Widget w,XEvent *e,String *v,Cardinal *n);
 static void exchgWidth(Widget w,XEvent *e,String *v,Cardinal *n);
 static void toggletrace(Widget w,XEvent *e,String *v,Cardinal *n);
@@ -296,9 +301,13 @@ static void closeParent(Widget w, XEvent *e, String *v, Cardinal *n);
 static void createOptions(void);
 static void createFlist(void);
 
-static int configcmp();
-static void pauseAction(),soundkeyAction(),speedAction(),voiceAction();
-static Boolean IsTracePlaying(),IsEffectiveFile();
+static int configcmp(char *s, int *num);
+static void pauseAction(Widget w,XEvent *e,String *v,Cardinal *n);
+static void soundkeyAction(Widget w,XEvent *e,String *v,Cardinal *n);
+static void speedAction(Widget w,XEvent *e,String *v,Cardinal *n);
+static void voiceAction(Widget w,XEvent *e,String *v,Cardinal *n);
+static Boolean IsTracePlaying(void);
+static Boolean IsEffectiveFile(char *file);
 extern void a_pipe_write(char *);
 extern int a_pipe_read(char *,int);
 extern int a_pipe_nread(char *buf, int n);
@@ -423,7 +432,7 @@ static const char *iconname = "timidity.xbm";
 #define BM_REPEAT		9
 static char *dotfile = NULL;
 
-const char *cfg_items[]= {"Tracing", "ConfirmExit", "Disp:file", "Disp:volume",
+static const char *cfg_items[]= {"Tracing", "ConfirmExit", "Disp:file", "Disp:volume",
 		"Disp:button", "RepeatPlay", "AutoStart", "Disp:text",
 		"Disp:time", "Disp:trace", "CurVol", "ShufflePlay",
 		"AutoExit", "CurFileMode", "ExtOptions", "ChorusOption","File"};
@@ -459,7 +468,11 @@ static int bm_height[MAXBITMAP], bm_width[MAXBITMAP],
 static Pixmap bm_Pixmap[MAXBITMAP];
 static int max_files, init_options = 0, init_chorus = 0;
 static char basepath[PATH_MAX];
+#ifdef ORIG_XAW
 static String *dirlist = NULL, dirlist_top, *flist = NULL;
+#else
+static String dirlist[1000], dirlist_top, *flist = NULL;
+#endif
 static Dimension trace_width, trace_height, menu_width;
 static int total_time = 0, curr_time;
 static float thumbj;
@@ -753,7 +766,7 @@ static void aboutCB(Widget w,XtPointer data,XtPointer dummy) {
   static char *info[]= {"TiMidity++ version %s - Xaw interface",
                       "- MIDI to WAVE converter and player -",
                       "by Masanao Izumo and Tomokazu Harada",
-                      "modified by Yoshishige Arai"," ",NULL};
+                      "modified by Yoshishige Arai and Greg Lee"," ",NULL};
 
   if(!(popup_shell_exist & ABOUT_WINDOW)) {
     popup_about= XtVaCreatePopupShell("popup_about",transientShellWidgetClass,
@@ -1560,6 +1573,7 @@ static void handle_input(XtPointer data,int *source,XtInputId *id) {
     if(pp != NULL) {
       while(*pp != NULL) free(*pp++);
       free(current_flist);
+      current_flist = NULL;
     }
     current_flist = (char **)safe_malloc(sizeof(char *) * (n+1));
     if ('\0' != *dotfile) {
@@ -1741,12 +1755,23 @@ static void setDirAction(Widget w,XEvent *e,String *v,Cardinal *n) {
     p = strrchr(basepath, '/');
     if (*(p+1) == '\0') *p = '\0';
     lrs.string = "";
+#ifdef ORIG_XAW
     if(dirlist != NULL)
     {
 	free(dirlist_top);
 	free(dirlist);
 	dirlist = NULL;
     }
+#else
+    /*if(dirlist[0] != NULL)*/
+    {
+	int i;
+	for (i = 0; i < 1000; i++) {
+	  if (dirlist[i]) free(dirlist[i]);
+	  dirlist[i] = NULL;
+	}
+    }
+#endif
     setDirList(load_flist, cwd_l, &lrs);
   }
 }
@@ -1776,6 +1801,9 @@ static int dirlist_cmp (const void *p1, const void *p2)
 static void setDirList(Widget list, Widget label, XawListReturnStruct *lrs) {
 #ifdef ORIG_XAW
   URL dirp;
+#else
+  DIR *dirp;
+  struct dirent *dent;
 #endif
   struct stat st;
   char currdir[PATH_MAX], filename[PATH_MAX];
@@ -1789,7 +1817,47 @@ static void setDirList(Widget list, Widget label, XawListReturnStruct *lrs) {
       return;
   }
 
-#ifdef ORIG_XAW
+#ifndef ORIG_XAW
+  if (NULL != (dirp=opendir(currdir))) {
+    char fullpath[PATH_MAX];
+
+    /* if(dirlist[0] != NULL) */
+    {
+	int i;
+	for (i = 0; i < 1000; i++) {
+	  if (dirlist[i]) free(dirlist[i]);
+	  dirlist[i] = NULL;
+	}
+    }
+    i = 0; d_num = 0; f_num = 0;
+    while ((dent = readdir(dirp)) != NULL) {
+      strcpy(filename, dent->d_name);
+      sprintf(fullpath, "%s/%s", currdir, filename);
+      if(stat(fullpath, &st) == -1) continue;
+      if(dent->d_name[0] == '.' && dent->d_name[1] == '\0') continue;
+      if (currdir[0] == '/' && currdir[1] == '\0' && filename[0] == '.'
+          && filename[1] == '.' && filename[2] == '\0') continue;
+      if(S_ISDIR(st.st_mode)) {
+        strcat(filename, "/"); d_num++;
+      } else {
+        f_num++;
+      }
+      if (dirlist[i]) free(dirlist[i]);
+      dirlist[i] = (char *)malloc(strlen(filename)+1);
+      strcpy(dirlist[i], filename);
+      i++;
+      if (i > 998) break;
+    }
+    if (dirlist[i]) free(dirlist[i]);
+    dirlist[i] = NULL;
+    qsort (dirlist, i, sizeof (char *), dirlist_cmp);
+    snprintf(local_buf, sizeof(local_buf), "%d Directories, %d Files", d_num, f_num);
+    XawListChange(list,dirlist,0,0,True);
+    //XawListChange(list,dirlist,i,0,True);
+    //XawListChange(list,dirlist,i,0,False);
+  }
+  else
+#else
   if (NULL != (dirp=url_dir_open(currdir))) {
     char *fullpath;
     MBlockList pool;
@@ -1799,7 +1867,9 @@ static void setDirList(Widget list, Widget label, XawListReturnStruct *lrs) {
     if(dirlist != NULL)
     {
 	free(dirlist_top);
+	dirlist_top = NULL;
 	free(dirlist);
+	dirlist = NULL;
     }
     init_string_table(&strtab);
     i = 0; d_num = 0; f_num = 0;
@@ -2193,14 +2263,49 @@ static void completeDir(Widget w,XEvent *e, XtPointer data)
   if(full.basename != NULL) {
     int len, match = 0;
     char filename[PATH_MAX], matchstr[PATH_MAX],*path = "/";
-    char *fullpath;
 #ifdef ORIG_XAW
+    char *fullpath;
     URL dirp;
+#else
+    char fullpath[PATH_MAX];
+    DIR *dirp;
+    struct dirent *dent;
 #endif
 
     len = strlen(full.basename);
     if(strlen(full.dirname)) path = full.dirname;
-#ifdef ORIG_XAW
+
+#ifndef ORIG_XAW
+  if (NULL != (dirp=opendir(path))) {
+
+    while ((dent = readdir(dirp)) != NULL) {
+      strcpy(filename, dent->d_name);
+        if (!strncmp(full.basename, filename, len)) {
+          struct stat st;
+          sprintf(fullpath, "%s/%s", full.dirname, filename);
+
+          if (stat(fullpath, &st) == -1)
+            continue;
+          if (!match)
+            strcpy(matchstr, filename);
+          else
+            strmatch(matchstr, filename);
+          match++;
+          if(S_ISDIR(st.st_mode) && (!strcmp(filename,full.basename))) {
+            strcpy(matchstr, filename);
+            strcat(matchstr, "/"); match = 1; break;
+          }
+        }
+    }
+
+    if (match) {
+        sprintf(filename, "%s/%s", full.dirname, matchstr);
+        XtVaSetValues(load_d,XtNvalue,filename,NULL);
+    }
+
+  }
+
+#else
     if (NULL != (dirp=url_dir_open(path))) {
       MBlockList pool;
       init_mblock(&pool);
@@ -2695,7 +2800,7 @@ static void fdeleteCB(Widget w,XtPointer data,XtPointer call_data) {
   sprintf(local_buf,"d %d",n);
   a_pipe_write(local_buf);
   --max_files;
-  free(flist[n]);
+  if (flist[n]) { free(flist[n]); flist[n] = NULL; }
   for(i= n; i<max_files; i++) {
     p= strchr(flist[i+1],'.');
     snprintf(local_buf,sizeof(local_buf),"%d%s",i+1,p);
@@ -2728,9 +2833,8 @@ static void fdelallCB(Widget w,XtPointer data,XtPointer call_data) {
 
   stopCB(w,NULL,NULL);
   a_pipe_write("A");
-  for(i=0; i<max_files; i++) free(flist[i]);
+  for(i=0; i<max_files; i++) { if (flist[i]) free(flist[i]); flist[i] = NULL; }
   max_files= 0;
-  flist[0]= NULL;
   if(popup_shell_exist & FLIST_WINDOW) {
     Dimension h,w;
     XawListChange(file_list,NULL,max_files,360,True);
@@ -3487,7 +3591,9 @@ void a_start_interface(int pipe_in) {
   XtAddCallback(time_l,XtNcallback,(XtCallbackProc)filemenuAction,NULL);
 
   XtRealizeWidget(toplevel);
+#ifdef ORIG_XAW
   dirlist = NULL;
+#endif
   lrs.string = "";
   setDirList(load_flist, cwd_l, &lrs);
   XtSetKeyboardFocus(base_f, base_f);
@@ -3611,12 +3717,16 @@ void a_start_interface(int pipe_in) {
     a_pipe_read(local_buf,sizeof(local_buf));
     addOneFile(max_files,i,local_buf,True);
   }
+ if (dotfile_flist && dot_nfile) {
   for(i=0;i<dot_nfile;i++) {
+   if (dotfile_flist[i])
     snprintf(local_buf,sizeof(local_buf),"X %s\n",dotfile_flist[i]);
-    free(dotfile_flist[i]);
+    if (dotfile_flist[i]) free(dotfile_flist[i]);
+    dotfile_flist[i] = NULL;
     a_pipe_write(local_buf);
   }
   free(dotfile_flist);
+ }
   for (i = 0; i < XtNumber(file_menu); i++) {
     bsb=XtVaCreateManagedWidget(file_menu[i].name,
             (file_menu[i].trap ? smeBSBObjectClass:smeLineObjectClass),
