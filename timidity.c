@@ -1,4 +1,5 @@
 /*
+	$Id$
 
     TiMidity -- Experimental MIDI to WAVE converter
     Copyright (C) 1995 Tuukka Toivonen <toivonen@clinet.fi>
@@ -52,12 +53,19 @@ int getopt(int, char **, char *);
 
 int free_instruments_afterwards=0;
 static char def_instr_name[256]="";
-static int cfg_select = 0;
+int cfg_select = 0;
+#ifdef CHANNEL_EFFECT
+extern void effect_activate( int iSwitch ) ;
+extern int init_effect() ;
+#endif /*CHANNEL_EFFECT*/
 
 #ifdef KMIDI
 int have_commandline_midis = 0;
 int output_device_open = 1;
 #endif /* KMIDI */
+#ifdef tplus
+extern int opt_portamento;
+#endif
 
 #ifdef __WIN32__
 int intr;
@@ -160,7 +168,6 @@ static void help(void)
 	 "   `u'    unsigned output\n"
 	 "   `x'    byte-swapped output\n");
 
-#ifndef KMIDI
   printf("\nAvailable interfaces (-i option):\n\n");
   while (*cmp)
 	 {
@@ -171,7 +178,6 @@ static void help(void)
 	 "   `v'    more verbose (cumulative)\n"
 	 "   `q'    quieter (cumulative)\n"
 	 "   `t'    trace playing\n\n");
-#endif /* KMIDI */
 }
 
 #ifndef KMIDI
@@ -302,6 +308,53 @@ static int set_ctl(char *cp)
   return 1;
 }
 
+#ifdef KMIDI
+char *cfg_names[30];
+#endif
+
+
+void clear_config(void)
+{
+    ToneBank *bank=0;
+    int i, j;
+
+    for (i = 0; i < MAXBANK; i++)
+    {
+		if (tonebank[i])
+		{
+			bank = tonebank[i];
+			for (j = 0; j < MAXPROG; j++)
+			  if (bank->tone[j].name)
+			  {
+			     free(bank->tone[j].name);
+			     bank->tone[j].name = 0;
+			  }
+			if (i > 0)
+			{
+			     free(tonebank[i]);
+			     tonebank[i] = 0;
+			}
+		}
+		if (drumset[i])
+		{
+			bank = drumset[i];
+			for (j = 0; j < MAXPROG; j++)
+			  if (bank->tone[j].name)
+			  {
+			     free(bank->tone[j].name);
+			     bank->tone[j].name = 0;
+			  }
+			if (i > 0)
+			{
+			     free(drumset[i]);
+			     drumset[i] = 0;
+			}
+		}
+    }
+
+    memset(drumset[0], 0, sizeof(ToneBank));
+    memset(tonebank[0], 0, sizeof(ToneBank));
+}
 
 #define MAXWORDS 10
 
@@ -319,7 +372,7 @@ int read_config_file(char *name)
 
   if (rcf_count>50)
 	 {
-		fprintf(stderr, "Probable source loop in configuration files");
+    		ctl->cmsg(CMSG_ERROR, VERB_NORMAL, "Probable source loop in configuration files");
 		return (-1);
 	 }
 
@@ -339,7 +392,7 @@ int read_config_file(char *name)
 	{
 	  if (words < 2)
 		 {
-	      fprintf(stderr, "%s: line %d: No directory given\n", name, line);
+    	      ctl->cmsg(CMSG_ERROR, VERB_NORMAL, "%s: line %d: No directory given\n", name, line);
 	      return -2;
 		 }
 	  for (i=1; i<words; i++)
@@ -350,7 +403,7 @@ int read_config_file(char *name)
 	{
 	  if (words < 2)
 		 {
-	      fprintf(stderr, "%s: line %d: No patchset number given\n", name, line);
+    	      ctl->cmsg(CMSG_ERROR, VERB_NORMAL, "%s: line %d: No patchset number given\n", name, line);
 	      return -2;
 		 }
 	  cfg_condition=atoi(w[1]);
@@ -363,11 +416,19 @@ int read_config_file(char *name)
       /******* source ********/
 		else if (!strcmp(w[0], "source"))
 	{
+#ifdef KMIDI
+	 if (cfg_condition >= 0 && cfg_condition < 30 && words == 2
+		&& !rcf_count && !cfg_names[cfg_condition])
+	  {
+	    cfg_names[cfg_condition] = (char *)safe_malloc(strlen(w[1])+1);
+	    strcpy(cfg_names[cfg_condition], w[1]);
+	  }
+#endif
 	 if (cfg_condition < 0 || cfg_condition == cfg_select)
 	  {
 	  if (words < 2)
 	         {
-	      fprintf(stderr, "%s: line %d: No file name given\n", name, line);
+    	      ctl->cmsg(CMSG_ERROR, VERB_NORMAL, "%s: line %d: No patchset number given\n", name, line);
 	      return -2;
 		 }
 	  for (i=1; i<words; i++)
@@ -385,7 +446,7 @@ int read_config_file(char *name)
 	{
 	  if (words < 2)
 		 {
-	      fprintf(stderr, "%s: line %d: No number given after \"voices\"\n", name, line);
+    	      ctl->cmsg(CMSG_ERROR, VERB_NORMAL, "%s: line %d: No number given after \"voices\"\n", name, line);
 	      return -2;
 		 }
 	  voices=atoi(w[1]);
@@ -397,8 +458,7 @@ int read_config_file(char *name)
 	{
 	  if (words != 2)
 	    {
-	      fprintf(stderr, 
-				"%s: line %d: Must specify exactly one patch name\n",
+    	      ctl->cmsg(CMSG_ERROR, VERB_NORMAL, "%s: line %d: Must specify exactly one patch name\n",
 		      name, line);
 	      return -2;
 	    }
@@ -410,28 +470,30 @@ int read_config_file(char *name)
 	{
 	  if (words < 2)
 	    {
-	      fprintf(stderr, "%s: line %d: No drum set number given\n", 
+    	      ctl->cmsg(CMSG_ERROR, VERB_NORMAL, "%s: line %d: No drum set number given\n", 
 		      name, line);
 			return -2;
 	    }
 	  i=atoi(w[1]);
 	  if (i<0 || i>127)
 		 {
-	      fprintf(stderr, 
+    	      ctl->cmsg(CMSG_ERROR, VERB_NORMAL,
 		      "%s: line %d: Drum set must be between 0 and 127\n",
 				name, line);
 	      return -2;
 		 }
 	  if (!drumset[i])
 	         {
-	      drumset[i]=safe_malloc(sizeof(ToneBank));
+	      		drumset[i]=safe_malloc(sizeof(ToneBank));
 			memset(drumset[i], 0, sizeof(ToneBank));
 		 }
 	  banknum=i;
 	  bank=drumset[i];
+	  font_type=FONT_NORMAL;
 	  if (words > 2)
 		{
 			if (!strcmp(w[2], "sbk")) font_type = FONT_SBK;
+			else if (!strcmp(w[2], "sf")) font_type = FONT_SBK;
 			else if (!strcmp(w[2], "fff")) font_type = FONT_FFF;
 		}
 	}
@@ -440,14 +502,15 @@ int read_config_file(char *name)
 	{
 	  if (words < 2)
 		 {
-	      fprintf(stderr, "%s: line %d: No bank number given\n", 
+    	      ctl->cmsg(CMSG_ERROR, VERB_NORMAL,
+	      		"%s: line %d: No bank number given\n", 
 				name, line);
 	      return -2;
 		 }
 	  i=atoi(w[1]);
 	  if (i<0 || i>127)
 	    {
-	      fprintf(stderr, 
+    	      ctl->cmsg(CMSG_ERROR, VERB_NORMAL,
 		      "%s: line %d: Tone bank must be between 0 and 127\n",
 				name, line);
 	      return -2;
@@ -459,9 +522,11 @@ int read_config_file(char *name)
 	         }
 	  banknum=i;
 	  bank=tonebank[i];
+	  font_type=FONT_NORMAL;
 	  if (words > 2)
 		{
 			if (!strcmp(w[2], "sbk")) font_type = FONT_SBK;
+			else if (!strcmp(w[2], "sf")) font_type = FONT_SBK;
 			else if (!strcmp(w[2], "fff")) font_type = FONT_FFF;
 		}
 	}
@@ -476,9 +541,11 @@ int read_config_file(char *name)
 	         }
 	  banknum=i;
 	  bank=tonebank[i];
+	  font_type=FONT_NORMAL;
 	  if (words > 1)
 		{
 			if (!strcmp(w[1], "sbk")) font_type = FONT_SBK;
+			else if (!strcmp(w[2], "sf")) font_type = FONT_SBK;
 			else if (!strcmp(w[1], "fff")) font_type = FONT_FFF;
 		}
 	}
@@ -488,7 +555,8 @@ int read_config_file(char *name)
 	  extern int loadfff(char *, int, int);
 	  if (words < 2)
 		 {
-	      fprintf(stderr, "%s: line %d: No fff filename given\n", 
+    	      ctl->cmsg(CMSG_ERROR, VERB_NORMAL,
+	      		"%s: line %d: No fff filename given\n", 
 				name, line);
 	      return -2;
 		 }
@@ -500,38 +568,30 @@ int read_config_file(char *name)
 	{
 	  /* not implemented: this is just for Adagio --gl */ ;
 	}
-      /******* sbk/soundfont ********/
-		else if (!strcmp(w[0], "soundfont") || !strcmp(w[0], "sbk"))
+      /******* sf/soundfont ********/
+		else if (!strcmp(w[0], "soundfont") || !strcmp(w[0], "sbk") || !strcmp(w[0], "sf"))
 	{
-	      int sf_order = 0;
 	      int sf_oldbank, sf_newbank = banknum;
 	      if (bank && bank == drumset[banknum]) sf_newbank += 256;
 	      sf_oldbank = sf_newbank;
 	      if (words < 2) {
-		      fprintf(stderr, "%s: line %d: No soundfont file given\n", 
+    	      	      ctl->cmsg(CMSG_ERROR, VERB_NORMAL,
+			 "%s: line %d: No soundfont file given\n", 
 			      name, line);
 		      return -2;
 	      }
 	      for (j = 2; j < words; j++) {
 		      if (!(cp = strchr(w[j], '='))) {
-			      fprintf(stderr, "%s: line %d: bad patch option %s\n",
+    	      	      ctl->cmsg(CMSG_ERROR, VERB_NORMAL,
+			      "%s: line %d: bad patch option %s\n",
 				      name, line, w[j]);
 			      return -2;
 		      }
 		      *cp++=0;
-		      if (!strcmp(w[j], "order")) {
+		      if (!strcmp(w[j], "oldbank")) {
 			      k = atoi(cp);
 			      if (k < 0 || (*cp < '0' || *cp > '9')) {
-				      fprintf(stderr,
-					      "%s: line %d: order must be a digit", name, line);
-				      return -2;
-			      }
-			      sf_order = k;
-		      }
-		      else if (!strcmp(w[j], "oldbank")) {
-			      k = atoi(cp);
-			      if (k < 0 || (*cp < '0' || *cp > '9')) {
-				      fprintf(stderr,
+    	      	      		      ctl->cmsg(CMSG_ERROR, VERB_NORMAL,
 					      "%s: line %d: oldbank must be a number", name, line);
 				      return -2;
 			      }
@@ -539,70 +599,28 @@ int read_config_file(char *name)
 		      }
 
 	      }
-	      init_soundfont(w[1], sf_order, sf_oldbank, sf_newbank);
-	}
-      /******* font ********/
-		else if (!strcmp(w[0], "font"))
-	{
-	      int bank, preset, keynote;
-	      if (words < 2) {
-		      fprintf(stderr, "%s: line %d: no font command\n", name, line);
-		      return -2;
-	      }
-	      if (!strcmp(w[1], "exclude")) {
-		      if (words < 3) {
-			      fprintf(stderr, "%s: line %d: No bank/preset/key is given\n", 
-				      name, line);
-			      return -2;
-		      }
-		      bank = atoi(w[2]);
-		      if (words >= 4)
-			      preset = atoi(w[3]);
-		      else
-			      preset = -1;
-		      if (words >= 5)
-			      keynote = atoi(w[4]);
-		      else
-			      keynote = -1;
-		      exclude_soundfont(bank, preset, keynote);
-	      } else if (!strcmp(w[1], "order")) {
-		      int order;
-		      if (words < 4) {
-			      fprintf(stderr, "%s: line %d: No order/bank is given\n", 
-				      name, line);
-			      return -2;
-		      }
-		      order = atoi(w[2]);
-		      bank = atoi(w[3]);
-		      if (words >= 5)
-			      preset = atoi(w[4]);
-		      else
-			      preset = -1;
-		      if (words >= 6)
-			      keynote = atoi(w[5]);
-		      else
-			      keynote = -1;
-		      order_soundfont(bank, preset, keynote, order);
-	      }
+	      init_soundfont(w[1], sf_oldbank, sf_newbank);
 	}
       /******* patch declaration ********/
 		else
 	{
 	if ((words < 2) || (*w[0] < '0' || *w[0] > '9'))
 	  {
-		 fprintf(stderr, "%s: line %d: syntax error\n", name, line);
+    	      	 ctl->cmsg(CMSG_ERROR, VERB_NORMAL,
+		 		"%s: line %d: syntax error\n", name, line);
 		 return -2;
 	  }
 	i=atoi(w[0]);
 	if (i<0 || i>127)
 	  {
-	    fprintf(stderr, "%s: line %d: Program must be between 0 and 127\n",
+    	    ctl->cmsg(CMSG_ERROR, VERB_NORMAL,
+	    		"%s: line %d: Program must be between 0 and 127\n",
 		    name, line);
 	    return -2;
 	  }
 	if (!bank)
 	  {
-	    fprintf(stderr, 
+    	    ctl->cmsg(CMSG_ERROR, VERB_NORMAL,
 			 "%s: line %d: Must specify tone bank or drum set "
 		    "before assignment\n",
 		    name, line);
@@ -620,7 +638,8 @@ int read_config_file(char *name)
 	  {
 	    if (!(cp=strchr(w[j], '=')))
 	      {
-		fprintf(stderr, "%s: line %d: bad patch option %s\n",
+    	        ctl->cmsg(CMSG_ERROR, VERB_NORMAL,
+			"%s: line %d: bad patch option %s\n",
 			name, line, w[j]);
 		return -2;
 	      }
@@ -632,7 +651,7 @@ int read_config_file(char *name)
 		k=atoi(cp);
 		if ((k<0 || k>MAX_AMPLIFICATION) || (*cp < '0' || *cp > '9'))
 		  {
-			 fprintf(stderr,
+    	        	 ctl->cmsg(CMSG_ERROR, VERB_NORMAL,
 			    "%s: line %d: amplification must be between "
 				 "0 and %d\n", name, line, MAX_AMPLIFICATION);
 			 return -2;
@@ -644,7 +663,7 @@ int read_config_file(char *name)
 		k=atoi(cp);
 		if ((k<0 || k>127) || (*cp < '0' || *cp > '9'))
 		  {
-			 fprintf(stderr,
+    	        	 ctl->cmsg(CMSG_ERROR, VERB_NORMAL,
 				 "%s: line %d: note must be between 0 and 127\n",
 			    name, line);
 		    return -2;
@@ -664,7 +683,7 @@ int read_config_file(char *name)
 		if ((k<0 || k>127) ||
 			 (k==0 && *cp!='-' && (*cp < '0' || *cp > '9')))
 		  {
-			 fprintf(stderr,
+    	        	 ctl->cmsg(CMSG_ERROR, VERB_NORMAL,
 				 "%s: line %d: panning must be left, right, "
 				 "center, or between -100 and 100\n",
 				 name, line);
@@ -680,7 +699,8 @@ int read_config_file(char *name)
 		  bank->tone[i].strip_loop=0;
 		else
 		  {
-			 fprintf(stderr, "%s: line %d: keep must be env or loop\n",
+    	        	 ctl->cmsg(CMSG_ERROR, VERB_NORMAL,
+			 	"%s: line %d: keep must be env or loop\n",
 				 name, line);
 			 return -2;
 		  }
@@ -695,14 +715,16 @@ int read_config_file(char *name)
 		  bank->tone[i].strip_tail=1;
 		else
 		  {
-			 fprintf(stderr, "%s: line %d: strip must be env, loop, or tail\n",
+    	        	 ctl->cmsg(CMSG_ERROR, VERB_NORMAL,
+			 	"%s: line %d: strip must be env, loop, or tail\n",
 				 name, line);
 			 return -2;
 		  }
 			}
 		 else
 			{
-		fprintf(stderr, "%s: line %d: bad patch option %s\n",
+    	        ctl->cmsg(CMSG_ERROR, VERB_NORMAL,
+			"%s: line %d: bad patch option %s\n",
 			name, line, w[j]);
 		return -2;
 			}
@@ -711,13 +733,16 @@ int read_config_file(char *name)
 	 }
   if (ferror(fp))
 	 {
-		fprintf(stderr, "Can't read %s: %s\n", name, sys_errlist[errno]);
+    	        ctl->cmsg(CMSG_ERROR, VERB_NORMAL,
+			"Can't read %s: %s\n", name, sys_errlist[errno]);
 		close_file(fp);
 		return -2;
 	 }
   close_file(fp);
   return 0;
 }
+
+int reverb_options=7;
 
 #ifdef KMIDI	
 extern void createKApplication(int *argc, char **argv);
@@ -795,8 +820,11 @@ int main(int argc, char **argv)
 #endif
 
   command_cutoff_allowed = 1;
+#ifdef CHANNEL_EFFECT
+  init_effect() ;
+#endif /*CHANNEL_EFFECT*/
 
-  while ((c=getopt(argc, argv, "UI:P:L:c:A:C:ap:fo:O:s:Q:FD:hi:#:q"
+  while ((c=getopt(argc, argv, "UI:P:L:c:A:C:ap:fo:O:s:Q:R:FD:hi:#:qEm"
 #if defined(AU_LINUX) || defined(AU_WIN32)
 			"B:" /* buffer fragments */
 #endif
@@ -813,11 +841,19 @@ int main(int argc, char **argv)
 	if (read_config_file(optarg)) cmderr++;
 	else got_a_configuration=1;
 	break;
+#ifdef CHANNEL_EFFECT
+		case 'E':  effect_activate( 1 ); break ;
+#endif /* CHANNEL_EFFECT */
+#ifdef tplus
+		case 'm':  opt_portamento = 0; break ;
+#endif
 
 		case 'Q':
 	if (set_channel_flag(&quietchannels, atoi(optarg), "Quiet channel"))
 	  cmderr++;
 	break;
+
+		case 'R': reverb_options = atoi(optarg); break;
 
 		case 'D':
 	if (set_channel_flag(&drumchannels, atoi(optarg), "Drum channel"))
@@ -966,7 +1002,7 @@ int main(int argc, char **argv)
       
       output_device_open = 0;
 
-      /*      return 2; */
+      /*return 2;*/
   }
       
   if (ctl->open(need_stdin, need_stdout)){
@@ -986,14 +1022,10 @@ int main(int argc, char **argv)
 	}
 #endif /* not KMIDI */
 
-#ifndef KMIDI
+
 		if (!control_ratio)
-	{
-#else /* KMIDI */
+        {
 
-  if (!control_ratio){
-
-#endif /* KMIDI */
 	  control_ratio = play_mode->rate / CONTROLS_PER_SECOND;
 	  if(control_ratio<1)
 		 control_ratio=1;
@@ -1017,12 +1049,9 @@ int main(int argc, char **argv)
 		/* Return only when quitting */
 #ifdef KMIDI
 
-  /*      printf("apg-opt %d\n",argc-optind);*/
-  if(argc-optind > 0 )
-    have_commandline_midis = 1;
-  else
-    have_commandline_midis = 0;
-  
+	if(argc-optind > 0 ) have_commandline_midis = 1;
+	else have_commandline_midis = 0;
+ 
 #endif /* KMIDI */
 		ctl->pass_playing_list(argc-optind, &argv[orig_optind]);
 
