@@ -55,7 +55,7 @@ public:
   ~ConfigDlg() {}
 
 
-  struct configstruct * ConfigDlg::getData();
+  struct configstruct * getData();
 
 private slots:
   void cancelbutton();

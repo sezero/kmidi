@@ -8,6 +8,9 @@
  * $Id$
  * 
  * $Log$
+ * Revision 1.3  1999/03/01 23:37:24  kulow
+ * CVS_SILENT ported to Qt 2.0
+ *
  * Revision 1.2.6.1  1999/02/22 22:28:05  kulow
  * CVS_SILENT replaced old qt header names with new ones
  *
@@ -117,8 +120,8 @@ private:
 
 private:	// Disabled copy constructor and operator=
 
-    BW_LED_Number( const BW_LED_Number & ) {}
-    BW_LED_Number &operator=( const BW_LED_Number & ) { return *this; }
+    BW_LED_Number( const BW_LED_Number & );
+    BW_LED_Number &operator=( const BW_LED_Number & );
 
 };
 
