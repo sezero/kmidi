@@ -135,14 +135,11 @@ AC_ARG_WITH(default-output,
 
 if test "x$au_enable_default" = xyes; then
   case "$target" in
-    *-*-linux*|*-*-freebsd*)
+    *-*-linux*|*-*-freebsd*|*-*-netbsd|*-*-bsdi2.1|*-*-bsdi3.?|*-*-bsdi4.?)
       au_enable_oss=yes
       ;;
     *-*-bsdi2.0)
       au_enable_sb_dsp=yes
-      ;;
-    *-*-bsdi2.1|*-*-bsdi3.?|*-*-bsdi4.?)
-      au_enable_oss=yes
       ;;
     *-*-hpux*)
       au_enable_hpux=yes
@@ -157,9 +154,6 @@ if test "x$au_enable_default" = xyes; then
       au_enable_sun=yes
       ;;
     *-*-solaris*)
-      au_enable_sun=yes
-      ;;
-    *-*-netbsd*)
       au_enable_sun=yes
       ;;
     *-*-openbsd*)
@@ -181,7 +175,7 @@ if test "x$au_enable_oss" = xyes; then
     AC_MSG_RESULT(yes - <sys/soundcard.h>)
   else
     case "$target" in
-      *linux*|*freebsd*|*bsdi*)
+      *linux*|*freebsd*|*bsdi*|*netbsd*)
 	dnl <linux/soundcard.h> or <machine/soundcard.h>
 	AC_MSG_RESULT(yes)
 	;;
