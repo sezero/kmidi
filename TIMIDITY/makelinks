@@ -20,6 +20,7 @@ for lfile in cfg ; do
     if [ ! -h ${lfile}.l ]; then ln -s ${srcdir}/${lfile}.l . ; fi
 done
 
+# LEAVE THIS ONE AT THE END!!
 for other in BITMAPS ; do
     if [ ! -h ${other} ]; then ln -s ${srcdir}/${other} . ; fi
 done
