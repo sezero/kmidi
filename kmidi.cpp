@@ -166,6 +166,27 @@ KMidi::KMidi( QWidget *parent, const char *name ) :
     resize( regularsize );
 
     //setFixedSize(this->width(),this->height());
+    setAcceptDrops(TRUE);
+}
+
+void KMidi::dropEvent( QDropEvent * e )
+{
+
+    QStringList files;
+    if ( QUrlDrag::decodeLocalFiles( e, files ) ) {
+	for (QStringList::Iterator i=files.begin(); i!=files.end(); ++i)
+	    playlist->insert(0, *i);
+        redoplaybox();
+	setSong(0);
+    }
+}
+
+void KMidi::dragEnterEvent( QDragEnterEvent *e )
+{
+    if ( QUrlDrag::canDecode( e ) )
+    {
+	e->accept();
+    }
 }
 
 
@@ -740,6 +761,7 @@ void KMidi::setSong( int number )
 	redoplaybox();
 	return;
     }
+    playbox->setCurrentItem(number);
     song_number = number + 1;
 	
     fileName = playbox->text(number);

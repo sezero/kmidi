@@ -41,8 +41,8 @@
 #include <qframe.h>
 #include <qcheckbox.h>
 #include <qlayout.h>
-#include <kcolordlg.h>
 #include <kbuttonbox.h>
+#include <kcolorbtn.h>
 
 struct configstruct{
   QColor led_color;
@@ -70,22 +70,17 @@ protected:
     KAboutWidget *about;
     QWidget *pages[3];
 public slots:
-    //void okPressed();
     void tabChanged(int);
 
-private slots:
+protected slots:
   void cancelbutton();
   void okbutton();
-  void set_led_color();
-  void set_background_color();
+  void set_led_color( const QColor & );
+  void set_background_color( const QColor & );
   void help();
   void ttclicked();
 
-signals:
-  void color_change();
-
 public:
-  bool colors_changed;
   QSize configsize, aboutsize;
 
 private:
@@ -100,20 +95,10 @@ private:
   QPushButton *helpbutton;
 
   QLabel *label1;
-  QFrame *qframe1;
-  QPushButton *button1;
+  KColorButton *button1;
 
   QLabel *label2;
-  QFrame *qframe2;
-  QPushButton *button2;
-
-  QLabel *label3;
-  QFrame *qframe3;
-  //QPushButton *button3;
-
-  QLabel *label4;
-  QFrame *qframe4;
-  QPushButton *button4;
+  KColorButton *button2;
 
   QLabel *tooltipslabel;
   QCheckBox *ttcheckbox;

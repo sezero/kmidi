@@ -50,6 +50,7 @@
 #include <qgroupbox.h>
 #include <qwidget.h>
 #include <qpainter.h>
+#include <qdragobject.h>
 
 #include <pwd.h>
 #include <stdlib.h>
@@ -260,6 +261,8 @@ public slots:
 	void		voicesChanged( int );
 	void		meterfudgeChanged( int );
 	void		updateRChecks( int );
+    void dropEvent( QDropEvent * );
+    void dragEnterEvent( QDragEnterEvent *e );
 };
 
 

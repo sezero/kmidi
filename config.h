@@ -120,7 +120,7 @@ typedef float FLOAT_T;
 */
 #define MAX_VOICES	MAX_DSPVOICES
 #else
-#define MAX_VOICES	64
+#define MAX_VOICES	128
 #endif
 #endif
 
@@ -149,7 +149,8 @@ typedef float FLOAT_T;
 /* 1000 here will give a control ratio of 22:1 with 22 kHz output.
    Higher CONTROLS_PER_SECOND values allow more accurate rendering
    of envelopes and tremolo. The cost is CPU time. */
-#define CONTROLS_PER_SECOND 1000
+/*#define CONTROLS_PER_SECOND 1000*/
+#define CONTROLS_PER_SECOND 2000
 
 /* Strongly recommended. This option increases CPU usage by half, but
    without it sound quality is very poor. */
@@ -180,7 +181,8 @@ typedef float FLOAT_T;
    a sample is 1048576 samples (2 megabytes in memory). The GUS gets
    by with just 9 bits and a little help from its friends...
    "The GUS does not SUCK!!!" -- a happy user :) */
-#define FRACTION_BITS 12
+/*#define FRACTION_BITS 12*/
+#define FRACTION_BITS 14
 
 /* For some reason the sample volume is always set to maximum in all
    patch files. Define this for a crude adjustment that may help

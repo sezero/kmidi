@@ -1,3 +1,10 @@
+1999-08-26  Greg Lee  <lee@hawaii.edu>
+
+	* config.h: up controls/sec, FRACTINT, MAX_VOICES
+	* configdlg.cpp/h: use KColorButton
+	* kmidi.desktop: I play karaoke
+	* kmidi.cpp/h: accept drops
+
 1999-08-23  Greg Lee  <lee@hawaii.edu>
 
 	* install sample midis in appdata

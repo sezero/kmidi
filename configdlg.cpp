@@ -52,7 +52,8 @@
 #include <ktabctl.h>
 #include <kiconloader.h>
 #include <kstddirs.h>
-//#include <kglobal.h>
+#include <kglobal.h>
+//#include <kcolorbtn.h>
 
 #include "configdlg.h"
 #include "kmidi.h"
@@ -79,7 +80,6 @@ ConfigDlg::ConfigDlg(QWidget *parent, struct configstruct *data, const char *nam
     configdata.tooltips = data->tooltips;
   }
 
-  colors_changed = false;
 
     /*
      * add a tabctrl widget
@@ -108,35 +108,23 @@ ConfigDlg::ConfigDlg(QWidget *parent, struct configstruct *data, const char *nam
   configsize = QSize( 320+20, 260+80 );
 
   label1 = new QLabel(w);
-  label1->setGeometry(20,25,135,25);
+  label1->setGeometry(60,25,135,25);
   label1->setText(i18n("LED Color:"));
 
-  qframe1 = new QFrame(w);
-  qframe1->setGeometry(155,25,30,25);	
-  qframe1->setFrameStyle(QFrame::WinPanel | QFrame::Sunken);
-  qframe1->setBackgroundColor(configdata.led_color);
-
-  button1 = new QPushButton(w);
-  button1->setGeometry(205,25,100,25);
-  button1->setText(i18n("Change"));
-  connect(button1,SIGNAL(clicked()),this,SLOT(set_led_color()));
+  button1 = new KColorButton(configdata.led_color, w);
+  button1->setGeometry(205,25,100,45);
+  connect(button1,SIGNAL(changed( const QColor & )),this,SLOT(set_led_color( const QColor & )));
 
   label2 = new QLabel(w);
-  label2->setGeometry(20,65,135,25);
+  label2->setGeometry(60,85,135,25);
   label2->setText(i18n("Background Color:"));
 
-  qframe2 = new QFrame(w);
-  qframe2->setGeometry(155,65,30,25);	
-  qframe2->setFrameStyle(QFrame::WinPanel | QFrame::Sunken);
-  qframe2->setBackgroundColor(configdata.background_color);
-
-  button2 = new QPushButton(w);
-  button2->setGeometry(205,65,100,25);
-  button2->setText(i18n("Change"));
-  connect(button2,SIGNAL(clicked()),this,SLOT(set_background_color()));
+  button2 = new KColorButton(configdata.background_color, w);
+  button2->setGeometry(205,85,100,45);
+  connect(button2,SIGNAL(changed( const QColor & )),this,SLOT(set_background_color( const QColor & )));
 
   ttcheckbox = new QCheckBox(i18n("Show Tool Tips"), w, "tooltipscheckbox");
-  ttcheckbox->setGeometry(30,110,135,25);
+  ttcheckbox->setGeometry(30,150,135,25);
   ttcheckbox->setFixedSize( ttcheckbox->sizeHint() );
   ttcheckbox->setChecked(configdata.tooltips);
   connect(ttcheckbox,SIGNAL(clicked()),this,SLOT(ttclicked()));
@@ -240,19 +228,20 @@ void ConfigDlg::cancelbutton() {
 //  reject();
 }
 
-void ConfigDlg::set_led_color(){
+void ConfigDlg::set_led_color( const QColor &newColor ) {
 
-
-  KColorDialog::getColor(configdata.led_color);
-  qframe1->setBackgroundColor(configdata.led_color);
+  //KColorDialog::getColor(configdata.led_color);
+  configdata.led_color = newColor;
+  //qframe1->setBackgroundColor(configdata.led_color);
 
 
 }
 
-void ConfigDlg::set_background_color(){
+void ConfigDlg::set_background_color( const QColor &newColor ) {
 
-  KColorDialog::getColor(configdata.background_color);
-  qframe2->setBackgroundColor(configdata.background_color);
+  //KColorDialog::getColor(configdata.background_color);
+  configdata.background_color = newColor;
+  //qframe2->setBackgroundColor(configdata.background_color);
 
 }
 
