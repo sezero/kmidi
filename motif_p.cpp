@@ -103,7 +103,7 @@ void pipe_int_read(int *c)
  *              STRINGS                  *
  *****************************************/
 
-void pipe_string_write(char *str)
+void pipe_string_write(const char *str)
 {
    int len, slen;
 

@@ -78,11 +78,11 @@
 void pipe_int_write(int c);
 void pipe_int_read(int *c);
 
-void pipe_string_write(char *str);
+void pipe_string_write(const char *str);
 void pipe_string_read(char *str);
 
-void pipe_open();
-int pipe_read_ready();
+void pipe_open(void);
+int pipe_read_ready(void);
 
 void Launch_Motif_Process(int pipe_number);
 

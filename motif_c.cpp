@@ -56,8 +56,8 @@ static void ctl_reset(void);
 static int ctl_open(int using_stdin, int using_stdout);
 static void ctl_close(void);
 static int ctl_read(int32 *valp);
-static int cmsg(int type, int verbosity_level, char *fmt, ...);
-static void ctl_pass_playing_list(int number_of_files, char *list_of_files[]);
+static int cmsg(int type, int verbosity_level, const char *fmt, ...);
+static void ctl_pass_playing_list(int number_of_files, const char *list_of_files[]);
 
 /**********************************************/
 /* export the interface functions */
@@ -79,7 +79,7 @@ ControlMode ctl=
 /***********************************************************************/
 /* Put controls on the pipe                                            */
 /***********************************************************************/
-static int cmsg(int type, int verbosity_level, char *fmt, ...)
+static int cmsg(int type, int verbosity_level, const char *fmt, ...)
 {
     char local[255];
 
@@ -381,7 +381,7 @@ static int ctl_read(int32 *valp)
   return(ctl_blocking_read(valp));
 }
 
-static void ctl_pass_playing_list(int number_of_files, char *list_of_files[])
+static void ctl_pass_playing_list(int number_of_files, const char *list_of_files[])
 {
     int i=0;
     char file_to_play[1000];

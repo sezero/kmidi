@@ -125,11 +125,11 @@ EXTRALIBS += -lslang
 
 #Don't select the MOTIF interface -- it's not working now (gl).
 # Select the MOTIF interface
-##SYSTEM += -DMOTIF
-##SYSEXTRAS += motif_c.cpp motif_i.cpp motif_p.cpp
+SYSTEM += -DMOTIF
+SYSEXTRAS += motif_c.cpp motif_i.cpp motif_p.cpp
 #EXTRAINCS += -I/usr/local/X11R5/include -L/usr/local/X11R5/lib
-##EXTRAINCS += -I/usr/include/X11
-##EXTRALIBS += -L/usr/X11R6/lib -lXm -lXt -lX11
+EXTRAINCS += -I/usr/include/X11
+EXTRALIBS += -L/usr/X11R6/lib -lXm -lXt -lX11
 # Solaris needs libgen?
 #EXTRALIBS += -lgen
 

@@ -39,7 +39,8 @@ kmidi_SOURCES = kmidi.cpp  playlist.cpp bwlednum.cpp configdlg.cpp log.cpp \
 	bsd20_a.cpp esd_a.cpp nas_a.cpp \
 	b_out.cpp fffload.cpp \
 	effects.cpp reverb_e.cpp chorus_e.cpp phaser_e.cpp celeste_e.cpp \
-	resample_l.cpp resample_f.cpp midiapplication.cpp kmidiframe.cpp
+	resample_l.cpp resample_f.cpp midiapplication.cpp kmidiframe.cpp \
+	kmidifiledlg.cpp
 
 sf2cfg_SOURCES = sf2cfg.cpp readsbk.cpp
 sf2cfg_LDADD =
@@ -49,10 +50,10 @@ noinst_HEADERS = kmidi.h  playlist.h bwlednum.h configdlg.h \
 	config.h common.h readmidi.h playmidi.h resample.h mix.h instrum.h \
 	tables.h controls.h output.h filter.h log.h version.h filepic.h \
 	cduppic.h constants.h folderpic.h sbk.h sflayer.h ctl.h effects.h \
-	midiapplication.h kmidiframe.h
+	midiapplication.h kmidiframe.h kmidifiledlg.h
 
 METASOURCES = kmidi.moc  playlist.moc bwlednum.moc configdlg.moc log.moc \
-	docking.moc midiapplication.moc kmidiframe.moc table.moc
+	docking.moc midiapplication.moc kmidiframe.moc table.moc kmidifiledlg.moc
 
 SUBDIRS = config bitmaps patch midis
 

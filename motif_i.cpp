@@ -50,9 +50,14 @@
 #include <unistd.h>
 #include <stdarg.h>
 
-extern "C" {
+/* extern "C" { */
+/*
+#ifndef NeedFunctionPrototypes
+#define NeedFunctionPrototypes
+#endif
+*/
 
-#include <Intrinsic.h>
+#include <IntrinsicP.h>
 #include <Xm/Xm.h>
 #include <Xm/Form.h>
 #include <Xm/Text.h>
@@ -67,7 +72,7 @@ extern "C" {
 #include <Xm/FileSB.h>
 #include <Xm/ToggleB.h>
 
-}
+/* } */
 
 #include "config.h"
 #include "common.h"
@@ -76,6 +81,8 @@ extern "C" {
 #include "output.h"
 #include "controls.h"
 #include "motif.h"
+
+void handle_input(XtPointer client_data, int *source, XtInputId *id);
 
 XtAppContext context;
 XmStringCharSet char_set=XmSTRING_DEFAULT_CHARSET;
@@ -311,10 +318,7 @@ void openCB(Widget w,int client_data,XmFileSelectionBoxCallbackStruct *call_data
  * Receive DATA sent by the application on the pipe     *
  *                                                      *
  ********************************************************/
-void handle_input(client_data, source, id)
-    XtPointer client_data;
-    int *source;
-    XtInputId *id;
+void handle_input(XtPointer client_data, int *source, XtInputId *id)
 {
     int message;
      
@@ -618,29 +622,29 @@ void handle_input(client_data, source, id)
  *****************************************/
 
 /* adds an accelerator to a menu option. */
-void add_accelerator(Widget w,char *acc_text,char *key)
+void add_accelerator(Widget w, const char *acc_text, const char *key)
 {
     int ac;
     Arg al[10];
     
     ac=0;
     XtSetArg(al[ac],XmNacceleratorText,
-	     XmStringCreate(acc_text,char_set)); ac++;
+	     XmStringCreate((char *)acc_text,char_set)); ac++;
     XtSetArg(al[ac],XmNaccelerator,key); ac++;
     XtSetValues(w,al,ac);
 }
 
 /* Adds a toggle option to an existing menu. */
-Widget make_menu_toggle(char *item_name, int client_data, Widget menu)
+Widget make_menu_toggle(const char *item_name, int client_data, Widget menu)
 {
     int ac;
     Arg al[10];
     Widget item;
 
     ac = 0;
-    XtSetArg(al[ac],XmNlabelString, XmStringCreateLtoR(item_name,
+    XtSetArg(al[ac],XmNlabelString, XmStringCreateLtoR((char *)item_name,
 						       char_set)); ac++;
-    item=XmCreateToggleButton(menu,item_name,al,ac);
+    item=XmCreateToggleButton(menu,(char *)item_name,al,ac);
     XtManageChild(item);
     XtAddCallback(item, XmNvalueChangedCallback, 
 		  (XtCallbackProc) menuCB,(XtPointer) client_data);
@@ -649,7 +653,7 @@ Widget make_menu_toggle(char *item_name, int client_data, Widget menu)
 }
 
 /* Adds an option to an existing menu. */
-Widget make_menu_option(char *option_name, KeySym mnemonic,
+Widget make_menu_option(const char *option_name, KeySym mnemonic,
 			int client_data, Widget menu)
 {
     int ac;
@@ -658,7 +662,7 @@ Widget make_menu_option(char *option_name, KeySym mnemonic,
     
     ac = 0;
     XtSetArg(al[ac], XmNlabelString,
-	     XmStringCreateLtoR(option_name, char_set)); ac++;
+	     XmStringCreateLtoR((char *)option_name, char_set)); ac++;
     XtSetArg (al[ac], XmNmnemonic, mnemonic); ac++;
     b=XtCreateManagedWidget(option_name,xmPushButtonWidgetClass,
 			    menu,al,ac);
@@ -668,21 +672,21 @@ Widget make_menu_option(char *option_name, KeySym mnemonic,
 }
 
 /* Creates a new menu on the menu bar. */
-Widget make_menu(char *menu_name,KeySym  mnemonic, Widget menu_bar)
+Widget make_menu(const char *menu_name,KeySym  mnemonic, Widget menu_bar)
 {
     int ac;
     Arg al[10];
     Widget menu, cascade;
 
     ac = 0;
-    menu = XmCreatePulldownMenu (menu_bar, menu_name, al, ac);
+    menu = XmCreatePulldownMenu (menu_bar, (char *)menu_name, al, ac);
 
     ac = 0;
     XtSetArg (al[ac], XmNsubMenuId, menu); ac++;
     XtSetArg (al[ac], XmNmnemonic, mnemonic); ac++;
     XtSetArg(al[ac], XmNlabelString,
-        XmStringCreateLtoR(menu_name, char_set)); ac++;
-    cascade = XmCreateCascadeButton (menu_bar, menu_name, al, ac);
+        XmStringCreateLtoR((char *)menu_name, char_set)); ac++;
+    cascade = XmCreateCascadeButton (menu_bar, (char *)menu_name, al, ac);
     XtManageChild (cascade); 
 
     return(menu);

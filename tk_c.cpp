@@ -48,12 +48,12 @@ static void ctl_reset(void);
 static int ctl_open(int using_stdin, int using_stdout);
 static void ctl_close(void);
 static int ctl_read(int32 *valp);
-static int cmsg(int type, int verbosity_level, char *fmt, ...);
+static int cmsg(int type, int verbosity_level, const char *fmt, ...);
 static void ctl_pass_playing_list(int number_of_files, const char *list_of_files[]);
 static int ctl_blocking_read(int32 *valp);
 
 static void pipe_printf(const char *fmt, ...);
-static void pipe_puts(char *str);
+static void pipe_puts(const char *str);
 static int pipe_gets(char *str, int maxlen);
 static void pipe_open();
 static void pipe_error(char *st);
@@ -136,7 +136,7 @@ static int child_pid;	               /* Pid for child process */
 /* Put controls on the pipe                                            */
 /***********************************************************************/
 
-static int cmsg(int type, int verbosity_level, char *fmt, ...)
+static int cmsg(int type, int verbosity_level, const char *fmt, ...)
 {
 	char local[2048];
 #define TOO_LONG	2000
@@ -147,8 +147,10 @@ static int cmsg(int type, int verbosity_level, char *fmt, ...)
 		return 0;
 
 	va_start(ap, fmt);
+/*
 	if (strlen(fmt) > TOO_LONG)
 		fmt[TOO_LONG] = 0;
+*/
 	if (!ctl.opened) {
 		vfprintf(stderr, fmt, ap);
 		fprintf(stderr, "\n");
@@ -570,7 +572,7 @@ static void pipe_printf(const char *fmt, ...)
 	pipe_puts(buf);
 }
 
-static void pipe_puts(char *str)
+static void pipe_puts(const char *str)
 {
 	int len;
 	char lf = '\n';
@@ -710,7 +712,7 @@ static char *v_eval(const char *fmt, ...)
 
 static char *v_get2(const char *v1, const char *v2)
 {
-	return Tcl_GetVar2(my_interp, v1, v2, 0);
+	return Tcl_GetVar2(my_interp, (char *)v1, (char *)v2, 0);
 }
 
 
@@ -738,7 +740,7 @@ static int TraceCreate(ClientData clientData, Tcl_Interp *interp,
 	       CANVAS_WIN, WIN_WID, WIN_HGT);
 	v_eval("pack %s -side top -fill x", CANVAS_WIN);
 	for (i = 0; i < 32; i++) {
-		char *color;
+		const char *color;
 		v_eval("%s create text 0 0 -anchor n -fill white -text 00 "
 		       "-tags prog%d", CANVAS_WIN, i);
 		v_eval("%s create poly 0 0 0 0 0 0 -fill yellow -tags pos%d",

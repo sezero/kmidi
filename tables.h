@@ -64,5 +64,5 @@ extern struct short_voice_type {
 	const char *vname;
 #define SOLO_MASK 1
 	char flags;
-} gm_voice[], gs_drumset[];
+} gm_voice[];
 

@@ -231,6 +231,7 @@ public:
 	ConfigDlg       *configdlg;
 	PlaylistEdit    *playlistdlg;
 	KConfig 	*config;
+	QDir		current_dir;
 
 private:
 	void 		display_playmode();
@@ -263,6 +264,7 @@ public:
 	void		setVolumeCurve( int curve );
 	void		setSurround( int yesno );
 	void		postError(const QString& s);
+	void		set_current_dir(const QString &dir);
 
 signals:	
 	void		play();

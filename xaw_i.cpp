@@ -463,8 +463,8 @@ static Display *disp;
 static int screen;
 static Pixmap check_mark, arrow_mark, on_mark, off_mark, layer[2];
 
-static int bm_height[MAXBITMAP], bm_width[MAXBITMAP],
-  x_hot,y_hot, root_height, root_width;
+static unsigned int bm_height[MAXBITMAP], bm_width[MAXBITMAP];
+static int x_hot,y_hot, root_height, root_width;
 static Pixmap bm_Pixmap[MAXBITMAP];
 static int max_files, init_options = 0, init_chorus = 0;
 static char basepath[PATH_MAX];
@@ -508,7 +508,7 @@ static struct _app_resources {
 static XtResource xaw_resources[] ={
 #define offset(entry) XtOffset(struct _app_resources*, entry)
   {"bitmapDir", "BitmapDir", XtRString, sizeof(String),
-   offset(bitmap_dir), XtRString, XAW_BITMAP_DIR },
+   offset(bitmap_dir), XtRString, (XtPointer)XAW_BITMAP_DIR },
   {"arrangeTitle", "ArrangeTitle", XtRBoolean, sizeof(Boolean),
    offset(arrange_title), XtRImmediate, (XtPointer)False},
   {"saveList", "SaveList", XtRBoolean, sizeof(Boolean),
@@ -527,66 +527,66 @@ static XtResource xaw_resources[] ={
   {"menuWidth", "MenuWidth", XtRShort, sizeof(Dimension),
    offset(menu_width), XtRImmediate, (XtPointer)200},
   {"foreground", XtCForeground, XtRPixel, sizeof(Pixel),
-   offset(common_fgcolor), XtRString, "black"},
+   offset(common_fgcolor), XtRString, (XtPointer)"black"},
   {"background", XtCBackground, XtRPixel, sizeof(Pixel),
-   offset(common_bgcolor), XtRString, COMMON_BGCOLOR},
+   offset(common_bgcolor), XtRString, (XtPointer)COMMON_BGCOLOR},
   {"menubutton", "MenuButtonBackground", XtRPixel, sizeof(Pixel),
-   offset(menub_bgcolor), XtRString, "#CCFF33"},
+   offset(menub_bgcolor), XtRString, (XtPointer)"#CCFF33"},
   {"textbackground", "TextBackground", XtRPixel, sizeof(Pixel),
-   offset(text_bgcolor), XtRString, TEXTBG_COLOR},
+   offset(text_bgcolor), XtRString, (XtPointer)TEXTBG_COLOR},
   {"text2background", "Text2Background", XtRPixel, sizeof(Pixel),
-   offset(text2_bgcolor), XtRString, "gray80"},
+   offset(text2_bgcolor), XtRString, (XtPointer)"gray80"},
   {"toggleforeground", "ToggleForeground", XtRPixel, sizeof(Pixel),
-   offset(toggle_fgcolor), XtRString, "MediumBlue"},
+   offset(toggle_fgcolor), XtRString, (XtPointer)"MediumBlue"},
   {"buttonforeground", "ButtonForeground", XtRPixel, sizeof(Pixel),
-   offset(button_fgcolor), XtRString, "blue"},
+   offset(button_fgcolor), XtRString, (XtPointer)"blue"},
   {"buttonbackground", "ButtonBackground", XtRPixel, sizeof(Pixel),
-   offset(button_bgcolor), XtRString, COMMANDBUTTON_COLOR},
+   offset(button_bgcolor), XtRString, (XtPointer)COMMANDBUTTON_COLOR},
   {"velforeground", "VelForeground", XtRPixel, sizeof(Pixel),
-   offset(velocity_color), XtRString, "orange"},
+   offset(velocity_color), XtRString, (XtPointer)"orange"},
   {"veldrumforeground", "VelDrumForeground", XtRPixel, sizeof(Pixel),
-   offset(drumvelocity_color), XtRString, "red"},
+   offset(drumvelocity_color), XtRString, (XtPointer)"red"},
   {"volforeground", "VolForeground", XtRPixel, sizeof(Pixel),
-   offset(volume_color), XtRString, "LightPink"},
+   offset(volume_color), XtRString, (XtPointer)"LightPink"},
   {"expforeground", "ExpForeground", XtRPixel, sizeof(Pixel),
-   offset(expr_color), XtRString, "aquamarine"},
+   offset(expr_color), XtRString, (XtPointer)"aquamarine"},
   {"panforeground", "PanForeground", XtRPixel, sizeof(Pixel),
-   offset(pan_color), XtRString, "blue"},
+   offset(pan_color), XtRString, (XtPointer)"blue"},
   {"tracebackground", "TraceBackground", XtRPixel, sizeof(Pixel),
-   offset(trace_bgcolor), XtRString, "gray90"},
+   offset(trace_bgcolor), XtRString, (XtPointer)"gray90"},
   {"rimcolor", "RimColor", XtRPixel, sizeof(Pixel),
-   offset(rim_color), XtRString, "gray20"},
+   offset(rim_color), XtRString, (XtPointer)"gray20"},
   {"boxcolor", "BoxColor", XtRPixel, sizeof(Pixel),
-   offset(box_color), XtRString, "gray76"},
+   offset(box_color), XtRString, (XtPointer)"gray76"},
   {"captioncolor", "CaptionColor", XtRPixel, sizeof(Pixel),
-   offset(caption_color), XtRString, "DarkSlateGrey"},
+   offset(caption_color), XtRString, (XtPointer)"DarkSlateGrey"},
   {"sustainedkeycolor", "SustainedKeyColor", XtRPixel, sizeof(Pixel),
-   offset(sus_color), XtRString, "red4"},
+   offset(sus_color), XtRString, (XtPointer)"red4"},
   {"playingkeycolor", "PlayingKeyColor", XtRPixel, sizeof(Pixel),
-   offset(play_color), XtRString, "maroon1"},
+   offset(play_color), XtRString, (XtPointer)"maroon1"},
   {"reverbcolor", "ReverbColor", XtRPixel, sizeof(Pixel),
-   offset(rev_color), XtRString, "PaleGoldenrod"},
+   offset(rev_color), XtRString, (XtPointer)"PaleGoldenrod"},
   {"choruscolor", "ChorusColor", XtRPixel, sizeof(Pixel),
-   offset(cho_color), XtRString, "yellow"},
+   offset(cho_color), XtRString, (XtPointer)"yellow"},
   {"labelfont", "LabelFont", XtRFontStruct, sizeof(XFontStruct *),
-   offset(label_font), XtRString, "-adobe-helvetica-bold-r-*-*-14-*-75-75-*-*-*-*"},
+   offset(label_font), XtRString, (XtPointer)"-adobe-helvetica-bold-r-*-*-14-*-75-75-*-*-*-*"},
   {"volumefont", "VolumeFont", XtRFontStruct, sizeof(XFontStruct *),
-   offset(volume_font), XtRString, "-adobe-helvetica-bold-r-*-*-12-*-75-75-*-*-*-*"},
+   offset(volume_font), XtRString, (XtPointer)"-adobe-helvetica-bold-r-*-*-12-*-75-75-*-*-*-*"},
 #ifdef I18N
   {"textfontset", "TextFontSet", XtRFontSet, sizeof(XFontSet),
-   offset(text_font), XtRString, "-*-*-medium-r-normal--14-*-*-*-*-*-*-*"},
+   offset(text_font), XtRString, (XtPointer)"-*-*-medium-r-normal--14-*-*-*-*-*-*-*"},
   {"ttitlefont", "TtitleFont", XtRFontSet, sizeof(XFontSet),
-   offset(ttitle_font), XtRString, "-*-fixed-medium-r-normal--14-*-*-*-*-*-*-*"},
+   offset(ttitle_font), XtRString, (XtPointer)"-*-fixed-medium-r-normal--14-*-*-*-*-*-*-*"},
 #else
   {"textfont", XtCFont, XtRFontStruct, sizeof(XFontStruct *),
-   offset(text_font), XtRString, "-*-fixed-medium-r-normal--14-*-*-*-*-*-*-*"},
+   offset(text_font), XtRString, (XtPointer)"-*-fixed-medium-r-normal--14-*-*-*-*-*-*-*"},
   {"ttitlefont", "Ttitlefont", XtRFontStruct, sizeof(XFontStruct *),
-   offset(ttitle_font), XtRString, "-adobe-helvetica-bold-o-*-*-14-*-75-75-*-*-*-*"},
+   offset(ttitle_font), XtRString, (XtPointer)"-adobe-helvetica-bold-o-*-*-14-*-75-75-*-*-*-*"},
 #endif
   {"tracefont", "TraceFont", XtRFontStruct, sizeof(XFontStruct *),
-   offset(trace_font), XtRString, "7x14"},
+   offset(trace_font), XtRString, (XtPointer)"7x14"},
   {"labelfile", "LabelFile", XtRString, sizeof(String),
-   offset(file_text), XtRString, "file..."},
+   offset(file_text), XtRString, (XtPointer)"file..."},
 #undef offset
 };
 
@@ -2128,7 +2128,7 @@ static void redrawAction(Widget w,XEvent *e,String *v,Cardinal *n) {
 /*ARGSUSED*/
 static Boolean cursor_is_in = False;
 static void redrawCaption(Widget w,XEvent *e,String *v,Cardinal *n) {
-  char *p;
+  const char *p;
   int i;
 
   if(e->type == EnterNotify) {
@@ -2183,7 +2183,7 @@ static void redrawTrace(Boolean draw) {
   }
   XSetForeground(disp, gct, (cursor_is_in)? tracecolor:capcolor);
   for(i=0; i<pl[plane].col; i++) {
-    char *p;
+    const char *p;
     p = pl[plane].cap[i];
     XDrawString(disp,XtWindow(trace),gct,pl[plane].ofs[i]+4,16,p,strlen(p));
   }
@@ -3287,7 +3287,7 @@ void a_start_interface(int pipe_in) {
   XtAppContext app_con;
   char cbuf[PATH_MAX];
   Pixmap bmPixmap;
-  int bmwidth, bmheight;
+  unsigned int bmwidth, bmheight;
   int i, j, k, tmpi;
   int argc=1;
   float thumb, l_thumb, l_thumbj;
@@ -3326,7 +3326,7 @@ void a_start_interface(int pipe_in) {
   XtSetLanguageProc(NULL,NULL,NULL);
 #endif
   toplevel=XtVaAppInitialize(&app_con,APP_CLASS,NULL,ZERO,&argc,&argv,
-                         fallback_resources,NULL);
+                         (char **)fallback_resources,NULL);
   XtGetApplicationResources(toplevel,(caddr_t)&app_resources,xaw_resources,
                           XtNumber(xaw_resources),NULL,0);
   bitmapdir = app_resources.bitmap_dir;
@@ -3548,8 +3548,8 @@ void a_start_interface(int pipe_in) {
   load_info = XtVaCreateManagedWidget("cwd_info",labelWidgetClass,popup_load_f,
             XtNborderWidth,0, XtNwidth,250, XtNheight,20, XtNresizable,False,
             XtNbackground,text2bgcolor, XtNfromVert,load_vport, NULL);
-  XawDialogAddButton(load_d, "OK", popdownLoad,"Y");
-  XawDialogAddButton(load_d, "add", popdownLoad,"A");
+  XawDialogAddButton(load_d, "OK", popdownLoad,(void *)"Y");
+  XawDialogAddButton(load_d, "add", popdownLoad,(void *)"A");
   XawDialogAddButton(load_d, "cancel", popdownLoad,NULL);
 #ifndef WIDGET_IS_LABEL_WIDGET
   lyric_t=XtVaCreateManagedWidget("lyric_text",asciiTextWidgetClass,base_f,

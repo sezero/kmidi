@@ -2453,6 +2453,18 @@ void KMidi::ReadPipe(){
 
 }
 
+void KMidi::set_current_dir(const QString &dir) {
+
+   if (!dir.isEmpty()){
+    if ( !current_dir.setCurrent(dir)){
+      QString str = i18n("Can not enter directory: %1\n").arg(dir);
+      KMessageBox::sorry(this, str);
+      return;
+    }
+   }
+
+   current_dir  = QDir::current();
+}
 
 void KMidi::readconfig(){
     int e_state, v_state, s_state;
@@ -2466,6 +2478,10 @@ void KMidi::readconfig(){
 
     config=KApplication::kApplication()->config();
     config->setGroup("KMidi");
+
+    QString str = config->readEntry("Directory");
+    if ( !str.isNull() ) set_current_dir(str);
+    else set_current_dir(QString(""));
 
     volume = config->readNumEntry("Volume", 40);
     current_voices = config->readNumEntry("Polyphony", DEFAULT_VOICES);
@@ -2510,6 +2526,7 @@ void KMidi::writeconfig(){
 
     config->setGroup("KMidi");
 
+    //config->writeEntry("Directory", current_dir.filePath("."));
     if(tooltips)
 	config->writeEntry("ToolTips", 1);
     else

@@ -42,7 +42,6 @@
 #include <ktmainwindow.h>
 #include <kmenubar.h>
 
-
 #include "docking.h"
 
 

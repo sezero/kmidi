@@ -34,7 +34,8 @@
 //#include <kmessagebox.h>
 
 #include <khelpmenu.h>
-#include <kfiledialog.h>
+//#include <kfiledialog.h>
+#include <kmidifiledlg.h>
 
 #include "kmidi.h"
 
@@ -418,10 +419,12 @@ printf("file %s\n", (*i).ascii());
         kmidi->redoplaybox();
 	kmidi->setSong(0);
     }
-#else
+#endif
 
+#if 0
     //QString filename=KFileDialog::getOpenFileURL(QString::null, QString::null,this);
-    QString filename = KFileDialog::getOpenFileName(QString::null, QString::null, this);
+    //QString filename = KFileDialog::getOpenFileName(QString::null, QString::null, this);
+    QString filename = KMidiFileDlg::getOpenFileName(QString::null, QString::null, this);
     if (!filename.isNull())
     {
 	kmidi->playlist->insert(0, filename);
@@ -430,6 +433,9 @@ printf("file %s\n", (*i).ascii());
 	//kmidi->resetSong();
     }
 #endif
+
+    QString dpath = kmidi->current_dir.absPath();
+    KMidiFileDlg::getOpenDialog(dpath, QString::null, this);
 }
 void KMidiFrame::doViewMenuItem(int id) {
     if (id == m_off_id) kmidi->logoClicked();
