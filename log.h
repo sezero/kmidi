@@ -31,8 +31,8 @@
 #include<qpainter.h>
 #include<qpixmap.h>
 #include<qlabel.h>
-#include<qmlined.h>
-#include<qpushbt.h>
+#include<qmultilinedit.h>
+#include<qpushbutton.h>
 #include <qtimer.h>
 #include <qstrlist.h>
 

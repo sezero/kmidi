@@ -43,7 +43,7 @@
 #include "cduppic.h"
 #include "folderpic.h"
 
-/*#include <qsocknot.h> */
+/*#include <qsocketnotifier.h> */
 
 #include <stdio.h>
 #include <stdlib.h>

@@ -24,23 +24,23 @@
 #ifndef PLAY_LIST_H
 #define PLAY_LIST_H
 
-#include <qdatetm.h> 
-#include <qlined.h>
+#include <qdatetime.h> 
+#include <qlineedit.h>
 #include <qdialog.h>
 #include <qwidget.h>
 #include <qlabel.h>
 #include <qstrlist.h> 
 #include <qlistbox.h> 
-#include <qpushbt.h>
-#include <qfiledlg.h>
+#include <qpushbutton.h>
+#include <qfiledialog.h>
 #include <qfile.h>
-#include <qtstream.h> 
+#include <qtextstream.h> 
 #include <qdir.h>
 #include <qstrlist.h>
 #include <qpainter.h>
-#include <qapp.h>    
-#include <qmsgbox.h>
-#include <qpopmenu.h>
+#include <qapplication.h>    
+#include <qmessagebox.h>
+#include <qpopupmenu.h>
 #include <qkeycode.h>
 #include <qmenubar.h> 
 

@@ -8,6 +8,12 @@
  * $Id$
  * 
  * $Log$
+ * Revision 1.2.6.1  1999/02/22 22:28:05  kulow
+ * CVS_SILENT replaced old qt header names with new ones
+ *
+ * Revision 1.2  1998/04/06 18:44:11  wuebben
+ * Bernd: layout changes
+ *
  * Revision 1.3  1997/10/25 15:15:35  wuebben
  * Bernd: fixed the segfault error if you had no permiision to access the cdrom
  * drive
@@ -45,7 +51,7 @@
 #define BW_LED_NUM_H
 
 #include "qframe.h"
-#include "qbitarry.h"
+#include "qbitarray.h"
 
 
 class BW_LED_Number : public QFrame	

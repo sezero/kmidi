@@ -29,14 +29,14 @@
 #ifndef _CONFIG_DLG_H_
 #define _CONFIG_DLG_H_
 
-#include <qgrpbox.h> 
+#include <qgroupbox.h> 
 #include <qdialog.h>
-#include <qlined.h>
-#include <qpushbt.h>
+#include <qlineedit.h>
+#include <qpushbutton.h>
 #include <qpainter.h>
 #include <qlabel.h>
 #include <qframe.h>
-#include <qchkbox.h>
+#include <qcheckbox.h>
 #include <kcolordlg.h>
 
 struct configstruct{
