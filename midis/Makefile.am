@@ -6,6 +6,8 @@ exampledir = $(kde_datadir)/kmidi
 
 EXTRA_DIST = $(example_DATA)
 
-messages:
+messages: _translatorinfo.cpp
+	mv _translatorinfo.cpp ..
 	(cd .. && $(XGETTEXT) *.cpp -o $(podir)/kmidi.pot)
+	rm -f ../_translatorinfo.cpp
 
