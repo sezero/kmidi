@@ -26,6 +26,8 @@
 
 extern int opt_effect;
 int XG_effect_chorus_is_celeste_flag = 0;
+int XG_effect_chorus_is_flanger_flag = 0;
+int XG_effect_chorus_is_phaser_flag = 0;
 
 /**************************************************************************/
 /**	null terminated list of effects types
@@ -306,7 +308,7 @@ static void do_compute_data_default(uint32 count)
 		if (voice[i].echo_delay_count >= count) voice[i].echo_delay_count -= count;
 		else
 		  {
-	            mix_voice(buffer_pointer+voice[i].echo_delay_count, i, count-voice[i].echo_delay_count);
+	            mix_voice(buffer_pointer+voice[i].echo_delay_count, i, count - voice[i].echo_delay_count);
 		    voice[i].echo_delay_count = 0;
 		  }
 	    }
@@ -383,7 +385,9 @@ void effect_ctrl_change( MidiEvent* pCurrentEvent )
  */
 static void reset_XG_effect_info() {
 
-	XG_effect_chorus_is_celeste_flag = 0;
+	XG_effect_chorus_is_celeste_flag =
+	 XG_effect_chorus_is_flanger_flag =
+	 XG_effect_chorus_is_phaser_flag = 0;
 
 	if (XG_System_chorus_type >= 0) {
 	    /* int subtype = XG_System_chorus_type & 0x07; */
@@ -397,10 +401,12 @@ static void reset_XG_effect_info() {
 		  XG_effect_chorus_is_celeste_flag = 1;
 		  break;
 		case 3: /* flanger */
+		  XG_effect_chorus_is_flanger_flag = 1;
 		  break;
 		case 4: /* symphonic : cf Children of the Night /128 bad, /1024 ok */
 		  break;
 		case 8: /* phaser */
+		  XG_effect_chorus_is_phaser_flag = 1;
 		  break;
 	      default:
 		  break;

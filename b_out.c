@@ -21,6 +21,8 @@
 #include "config.h"
 #include "output.h"
 
+#define PRESUMED_FULLNESS 20
+
 /* #define BB_SIZE (AUDIO_BUFFER_SIZE*128) */
 #define BB_SIZE (AUDIO_BUFFER_SIZE*256)
 static unsigned char *bbuf = 0;
@@ -42,7 +44,7 @@ void b_out(int fd, int *buf, int ocount)
 	out_count = bboffset = bbcount = outchunk = 0;
 	starting_up = 1;
 	flushing = 0;
-	output_buffer_full = 100;
+	output_buffer_full = PRESUMED_FULLNESS;
 	total_bytes = 0;
 	return;
   }
@@ -70,7 +72,6 @@ void b_out(int fd, int *buf, int ocount)
     else
 #endif /* SNDCTL_DSP_GETOSPACE */
 	total_bytes = AUDIO_BUFFER_SIZE*2;
-
   }
 
   if (ocount && !outchunk) outchunk = ocount;
@@ -78,7 +79,7 @@ void b_out(int fd, int *buf, int ocount)
   if (!ocount) { outchunk = starting_up = 0; flushing = 1; }
   else flushing = 0;
 
-  if (starting_up || flushing) output_buffer_full = 100;
+  if (starting_up || flushing) output_buffer_full = PRESUMED_FULLNESS;
   else {
 	int samples_queued;
 #ifdef SNDCTL_DSP_GETODELAY
@@ -86,7 +87,9 @@ void b_out(int fd, int *buf, int ocount)
 #endif
 	    samples_queued = 0;
 
-	output_buffer_full = ((bbcount+samples_queued) * 100) / (BB_SIZE + total_bytes);
+	if (!samples_queued) output_buffer_full = PRESUMED_FULLNESS;
+	else output_buffer_full = ((bbcount+samples_queued) * 100) / (BB_SIZE + total_bytes);
+/* fprintf(stderr," %d",output_buffer_full); */
   }
 
   ret = 0;

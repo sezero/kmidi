@@ -446,7 +446,7 @@ void recompute_freq(int v)
   /* what to do if incr is 0? --gl */
   /* if (!a) a++; */
   a += 0.5;
-  if (!(int32)(a)) a = 1;
+  if ((int32)a < 1) a = 1;
 
   if (sign) 
     a = -a; /* need to preserve the loop direction */
@@ -891,8 +891,10 @@ printf(" -> delay %d\n", voice[w].echo_delay);
 #if 0
 	voice[w].velocity = (voice[w].velocity * chorus) / (128+96);
 	voice[v].velocity = voice[w].velocity;
-#endif
 	voice[w].volume = (voice[w].volume * chorus) / (128+96);
+	voice[v].volume = voice[w].volume;
+#endif
+	voice[w].volume *= 0.9;
 	voice[v].volume = voice[w].volume;
 	recompute_amp(v);
         apply_envelope_to_amp(v);
@@ -906,7 +908,12 @@ printf(" -> delay %d\n", voice[w].echo_delay);
 	voice[w].vibrato_phase = 20;*/
 
 	voice[w].echo_delay += 30 * milli;
-
+#ifdef tplus
+	if (chorus > 42) chorus = 42;    /* higher choruss detune notes too much */
+	if(channel[ voice[w].channel ].pitchbend + chorus < 0x2000)
+            voice[w].orig_frequency *= bend_fine[chorus];
+	else voice[w].orig_frequency /= bend_fine[chorus];
+#endif
 	if (XG_System_chorus_type >= 0) {
 	    int subtype = XG_System_chorus_type & 0x07;
 	    int chtype = XG_System_chorus_type >> 3;
@@ -914,11 +921,11 @@ printf(" -> delay %d\n", voice[w].echo_delay);
 		case 0: /* no effect */
 		  break;
 		case 1: /* chorus */
+		  /* voice[w].orig_frequency += (voice[w].orig_frequency/128) * chorus; */
 		  if (subtype) voice[w].vibrato_depth *= 2;
 		  break;
 		case 2: /* celeste */
 		  voice[w].orig_frequency += (voice[w].orig_frequency/128) * chorus;
-		  voice[w].velocity = voice[v].velocity;
 		  break;
 		case 3: /* flanger */
 		  voice[w].vibrato_sweep = chorus * 4;
@@ -938,6 +945,7 @@ printf(" -> delay %d\n", voice[w].echo_delay);
   voice[w].loop_start = voice[w].sample->loop_start;
   voice[w].loop_end = voice[w].sample->loop_end;
   voice[w].echo_delay_count = voice[w].echo_delay;
+  if (reverb) voice[w].echo_delay *= 2;
 
   recompute_freq(w);
   recompute_amp(w);
@@ -1344,11 +1352,10 @@ static void kill_note(int i)
   ctl->note(i);
 }
 
-static void reduce_polyphony()
+static void reduce_polyphony_by_one()
 {
   int i=voices, lowest=-1; 
   int32 lv=0x7FFFFFFF, v;
-
 
   /* Look for the decaying note with the lowest volume */
   i=voices;
@@ -1369,17 +1376,23 @@ static void reduce_polyphony()
 	}
     }
 
-  if (lowest != -1) kill_note(i);
+  if (lowest != -1) {
+	kill_note(i);
+  }
 
 }
 
+static void reduce_polyphony(int by)
+{
+  while (by--) reduce_polyphony_by_one();
+}
 
-static void check_quality()
+static int check_quality()
 {
 #ifdef QUALITY_DEBUG
   static int debug_count = 0;
 #endif
-  int obf = output_buffer_full;
+  int obf = output_buffer_full, retvalue = 1;
 
 #ifdef QUALITY_DEBUG
 if (!debug_count) {
@@ -1390,12 +1403,15 @@ if (!debug_count) {
 debug_count--;
 #endif
 
-  if (obf < 1) voice_reserve = (2*voices) / 3;
-  else if (obf <  5) voice_reserve = voices / 2;
-  else if (obf < 10) voice_reserve = voices / 3;
-  else if (obf < 20) voice_reserve = voices / 4;
-  else if (obf < 30) voice_reserve = voices / 5;
-  else if (obf < 40) voice_reserve = voices / 6;
+
+  if (obf < 1) voice_reserve = (4*voices) / 5;
+  else if (obf <  5) voice_reserve = 3*voices / 4;
+  else if (obf < 10) voice_reserve = 2*voices / 3;
+  else if (obf < 20) voice_reserve = voices / 2;
+  else if (obf < 30) voice_reserve = voices / 3;
+  else if (obf < 40) voice_reserve = voices / 4;
+  else if (obf < 50) voice_reserve = voices / 5;
+  else if (obf < 60) voice_reserve = voices / 6;
   /* else voice_reserve = 0; */
   else voice_reserve = voices / 10; /* to be able to find a stereo clone */
 
@@ -1412,29 +1428,36 @@ debug_count--;
   if (obf < 20) dont_filter = 1;
   else if (obf > 80) dont_filter = 0;
 */
-  if (obf < 20 && current_polyphony > voices / 2) {
-	reduce_polyphony();
+  if (obf < 60) {
+	reduce_polyphony(voices/10);
   }
-  if (obf < 10 && current_polyphony > voices / 3) {
-	reduce_polyphony();
-	reduce_polyphony();
+  if (obf < 50) {
+	reduce_polyphony(voices/10);
   }
-  if (obf < 8 && current_polyphony > voices / 4) {
-	reduce_polyphony();
-	reduce_polyphony();
-	reduce_polyphony();
+  if (obf < 40) {
+	reduce_polyphony(voices/9);
   }
-  if (obf < 5 && current_polyphony > voices / 5) {
-	reduce_polyphony();
-	reduce_polyphony();
-	reduce_polyphony();
-	reduce_polyphony();
+  if (obf < 30) {
+	reduce_polyphony(voices/8);
   }
-  if (obf < 4 && current_polyphony > voices / 6) {
-	reduce_polyphony();
-	reduce_polyphony();
-	reduce_polyphony();
-	reduce_polyphony();
+  if (obf < 20) {
+	reduce_polyphony(voices/6);
+  }
+  if (obf < 10) {
+	reduce_polyphony(voices/5);
+  }
+  if (obf < 8) {
+	reduce_polyphony(voices/4);
+  }
+  if (obf < 5) {
+	reduce_polyphony(voices/4);
+  }
+  if (obf < 4) {
+	reduce_polyphony(voices/4);
+  }
+  if (obf < 2) {
+	reduce_polyphony(voices/4);
+	retvalue = 0;
   }
 
   if (command_cutoff_allowed) dont_filter_melodic = 0;
@@ -1442,14 +1465,13 @@ debug_count--;
 
   dont_filter_drums = 0;
 
+  return retvalue;
 }
 
 static void note_on(MidiEvent *e)
 {
   int i=voices, lowest=-1; 
   int32 lv=0x7FFFFFFF, v;
-
-  check_quality();
 
   current_polyphony = 0;
 
@@ -1459,6 +1481,13 @@ static void note_on(MidiEvent *e)
 	lowest=i; /* Can't get a lower volume than silence */
 	else current_polyphony++;
     }
+
+  if (!check_quality())
+    {
+      lost_notes++;
+      return;
+    }
+
 
   if (voices - current_polyphony <= voice_reserve)
     lowest = -1;
@@ -1670,8 +1699,8 @@ static void adjust_panning(int c)
     if ((voice[i].channel==c) &&
 	(voice[i].status & (VOICE_ON | VOICE_SUSTAINED)) )
       {
-/* FIXME */
-	if (voice[i].right_sample) continue;
+	if (voice[i].clone_voice >= 0) continue;
+	if (voice[i].clone_type != NOT_CLONE) continue;
 	voice[i].panning=channel[c].panning;
 	recompute_amp(i);
 	apply_envelope_to_amp(i);

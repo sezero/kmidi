@@ -253,8 +253,8 @@ void KMidi::setToolTips()
 	QToolTip::add( playlistbox,	i18n("Select Playlist") );
 	QToolTip::add( meterspin,	i18n("Sync Meter") );
 	QToolTip::add( rcb1,		i18n("Stereo Voice: norm/xtra/off") );
-	QToolTip::add( rcb2,		i18n("Reverb: norm/xtra/off") );
-	QToolTip::add( rcb3,		i18n("Chorus: norm/xtra/off") );
+	QToolTip::add( rcb2,		i18n("Echo: norm/xtra/off") );
+	QToolTip::add( rcb3,		i18n("Detune: norm/xtra/off") );
 	QToolTip::add( rcb4,		i18n("Verbosity: norm/xtra/off") );
 	QToolTip::add( effectbutton,	i18n("Effects") );
 	QToolTip::add( voicespin,	i18n("Set Polyphony") );

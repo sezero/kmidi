@@ -1,0 +1,29 @@
+
+TiMidity has a tone generator, two envelope generators, three low frequency
+sine-wave oscillators, a low pass filter, and an effects unit.
+
+The tone generator resamples instrument patches at the basic frequencies appropriate
+for specific notes being played.
+
+The envelope generators modulate each note with successively an attack phase, a
+hold phase, a decay, and a release.  One of the generators affects amplitude,
+and the other affects the cutoff frequency of the low pass filter.
+
+The low frequency oscillators modulate amplitude (for tremolo), frequency (for
+vibrato), and the low pass filter cutoff frequency.
+
+The effects unit supplies echo, detuning, reverberation, chorusing, celeste, and
+phaser effects.  Echo (done by generating extra echo notes) and reverbration
+(done with a filter) implement midi reverberation.  Detuning (done by generating
+extra pitch bent notes) and chorusing (done with a filter) implement midi
+chorusing.
+
+(The low pass filter is active only when KMidi's "filt" button is pressed on;
+the effects filters are active only when KMidi's "eff" button is pressed on.)
+
+Instruments may have either one or two tone elements, and for each of these,
+a patch set may provide separate patches for different note-velocity ranges
+(commonly for pianos) and for different note-pitch ranges.  GUS patch sets,
+however, provide only one tone element and one velocity range per instrument.
+
+

@@ -554,18 +554,22 @@ void mix_voice(int32 *buf, int v, uint32 c)
 {
   Voice *vp=voice+v;
   sample_t *sp;
+  uint32 count=c;
   if (vp->status&VOICE_DIE)
     {
-      if (c>=MAX_DIE_TIME)
-	c=MAX_DIE_TIME;
-      sp=resample_voice(v, &c);
-      ramp_out(sp, buf, v, c);
+/* this seems no longer useful: resample kill voices
+   before they get here
+*/
+      if (count>=MAX_DIE_TIME)
+	count=MAX_DIE_TIME;
+      sp=resample_voice(v, &count);
+      ramp_out(sp, buf, v, count);
       vp->status=VOICE_FREE;
     }
   else
     {
-      sp=resample_voice(v, &c);
-      if (c<1)
+      sp=resample_voice(v, &count);
+      if (count<1)
 	{
           vp->status=VOICE_FREE;
 	  return;
@@ -574,25 +578,25 @@ void mix_voice(int32 *buf, int v, uint32 c)
 	{
 	  /* Mono output. */
 	  if (vp->envelope_increment || vp->tremolo_phase_increment)
-	    mix_mono_signal(sp, buf, v, c);
+	    mix_mono_signal(sp, buf, v, count);
 	  else
-	    mix_mono(sp, buf, v, c);
+	    mix_mono(sp, buf, v, count);
 	}
       else
 	{
 	  if (vp->panned == PANNED_MYSTERY)
 	    {
 	      if (vp->envelope_increment || vp->tremolo_phase_increment)
-		mix_mystery_signal(sp, buf, v, c);
+		mix_mystery_signal(sp, buf, v, count);
 	      else
-		mix_mystery(sp, buf, v, c);
+		mix_mystery(sp, buf, v, count);
 	    }
 	  else if (vp->panned == PANNED_CENTER)
 	    {
 	      if (vp->envelope_increment || vp->tremolo_phase_increment)
-		mix_center_signal(sp, buf, v, c);
+		mix_center_signal(sp, buf, v, count);
 	      else
-		mix_center(sp, buf, v, c);
+		mix_center(sp, buf, v, count);
 	    }
 	  else
 	    { 
@@ -601,9 +605,9 @@ void mix_voice(int32 *buf, int v, uint32 c)
 	      if (vp->panned == PANNED_RIGHT) buf++;
 	      
 	      if (vp->envelope_increment || vp->tremolo_phase_increment)
-		mix_single_signal(sp, buf, v, c);
+		mix_single_signal(sp, buf, v, count);
 	      else 
-		mix_single(sp, buf, v, c);
+		mix_single(sp, buf, v, count);
 	    }
 	}
     }

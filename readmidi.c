@@ -886,8 +886,11 @@ static MidiEvent *groom_list(int32 divisions, uint32 *eventsp, uint32 *samplesp)
 	  else
 	    {
 	      new_value=meep->event.a;
+#if 0
 	      if ((current_program[meep->event.channel] != SPECIAL_PROGRAM)
 		  && (current_program[meep->event.channel] != new_value))
+#endif
+	      if (current_program[meep->event.channel] != new_value)
 		current_program[meep->event.channel] = new_value;
 	      else
 		skip_this_event=1;
@@ -897,6 +900,11 @@ static MidiEvent *groom_list(int32 divisions, uint32 *eventsp, uint32 *samplesp)
 	case ME_NOTEON:
 	  if (counting_time)
 	    counting_time=1;
+#if 0
+/* trying to play canyon.mid, but this doesn't work */
+	  if (meep->event.channel == 15 && current_program[15] == SPECIAL_PROGRAM)
+	    channel[15].kit = current_kit[15] = 127;
+#endif
 	  if (current_kit[meep->event.channel])
 	    {
 	      int dset = current_set[meep->event.channel];

@@ -1,3 +1,17 @@
+1999-10-24  Greg Lee  <lee@hawaii.edu>
+
+	* resample.c: fixed bug in note terminations
+	  but now it sounds worse
+	* b_out.c: lie about room in buffer at start up
+	  to prevent too much polyphony at beginning of
+	  some songs
+	* playmidi.c: try harder to prevent dropouts;
+	  revise detuning
+	* config/piano+guitar: strip envelope of guitar
+	  for strings
+	* ctl.c: kmidi shouldn't kill timidity on exit
+	* kmidi.cpp: rename reverb/chorus to echo/detune
+
 1999-10-23  Greg Lee  <lee@hawaii.edu>
 
 	* playmidi.c: fix panning

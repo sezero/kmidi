@@ -506,10 +506,12 @@ static sample_t *rs_loop(int v, Voice *vp, uint32 *countptr)
       ofs += incr;
       if (ofs>=le)
 	{
-	  if (vp->status & (VOICE_OFF | VOICE_FREE))
-	    vp->echo_delay -= ll >> FRACTION_BITS;
-	  if (vp->echo_delay >= 0)
-	    ofs -= ll; /* Hopefully the loop is longer than an increment. */
+	  if (vp->status & (VOICE_OFF | VOICE_FREE | VOICE_DIE))
+	    {
+	    	vp->echo_delay -= ll >> FRACTION_BITS;
+	  	if (vp->echo_delay >= 0) ofs -= ll;
+	    }
+	  else ofs -= ll; /* Hopefully the loop is longer than an increment. */
 	}
       if (ofs >= se + (overshoot << FRACTION_BITS))
 	{
@@ -840,10 +842,12 @@ static sample_t *rs_vib_loop(int v, Voice *vp, uint32 *countptr)
       ofs += incr;
       if (ofs>=le)
 	{
-	  if (vp->status & (VOICE_OFF | VOICE_FREE))
-	    vp->echo_delay -= ll >> FRACTION_BITS;
-	  if (vp->echo_delay >= 0)
-	    ofs -= ll; /* Hopefully the loop is longer than an increment. */
+	  if (vp->status & (VOICE_OFF | VOICE_FREE | VOICE_DIE))
+	    {
+	    	vp->echo_delay -= ll >> FRACTION_BITS;
+	  	if (vp->echo_delay >= 0) ofs -= ll;
+	    }
+	  else ofs -= ll; /* Hopefully the loop is longer than an increment. */
 	}
       if (ofs >= se + (overshoot << FRACTION_BITS))
 	{

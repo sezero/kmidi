@@ -28,6 +28,8 @@
 
 
 extern int XG_effect_chorus_is_celeste_flag;
+extern int XG_effect_chorus_is_flanger_flag;
+extern int XG_effect_chorus_is_phaser_flag;
 
 /**************************************************************************/
 /**	 exported from playmidi.c

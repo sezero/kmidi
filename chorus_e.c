@@ -241,7 +241,10 @@ static void CtrlReset( chorus_effect* pThis )
 
 static void CtrlChange( chorus_effect* pThis , MidiEvent* pCurrentEvent )
 {
-	if( pCurrentEvent->b == ME_CHORUSDEPTH )
+	if( pCurrentEvent->b ==  ME_CELESTE ||
+	    (pCurrentEvent->b ==  ME_CHORUSDEPTH && XG_effect_chorus_is_celeste_flag) )
+	if( pCurrentEvent->b == ME_CHORUSDEPTH && !XG_effect_chorus_is_celeste_flag &&
+		!XG_effect_chorus_is_phaser_flag)
 	{
 		if( pCurrentEvent->a != 0 )
 		{

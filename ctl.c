@@ -489,7 +489,8 @@ static void ctl_close(void)
 	if (ctl.opened) {
 	  pipe_int_write(CLOSE_MESSAGE);
 
-	  kill(child_pid, SIGTERM);
+	  /*kill(child_pid, SIGTERM);*/
+	  /* wait((int *)0); */
 	  shm_free(100);
 	  ctl.opened=0;
 	}
