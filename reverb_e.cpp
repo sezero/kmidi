@@ -349,7 +349,7 @@ static void Destruct( reverb_effect* pThis  )
 Effect* ReverbCtor() 
 {
 	reverb_effect* pReturn = 0 ;
-	pReturn = malloc( sizeof( reverb_effect ) ) ;
+	pReturn =(reverb_effect*) malloc( sizeof( reverb_effect ) ) ;
 	memset( pReturn , 0 , sizeof( reverb_effect ) ) ;
 	
 	pReturn->m_pfnActionMono =  &ActionMono ;
