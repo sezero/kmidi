@@ -2040,11 +2040,11 @@ void KMidi::ReadPipe(){
 		      playlist->append(file.absFilePath());
 		      have_commandline_midis = 1;
 		    }
-		    else{
-		      QString string = i18n("%1\nis not readable or doesn't exist.").arg(filename);
-		      KMessageBox::sorry(0, string);
-
-		    }
+		    //else{
+		    //  QString string = i18n("%1\nis not readable or doesn't exist.").arg(filename);
+		    //  KMessageBox::sorry(0, string);
+		    //
+		    //}
 		  }	
 		
 		if( !have_commandline_midis) {

@@ -28,6 +28,7 @@ static const int NUMROWS = 17;
 Table::Table( int width, int height, QWidget *parent, const char *name )
     : QTableView(parent,name)
 {
+    int n;
 
     setAutoUpdate(true);
     setFocusPolicy( NoFocus );
@@ -35,12 +36,18 @@ Table::Table( int width, int height, QWidget *parent, const char *name )
     setNumCols( NUMCOLS );			// set number of col's in table
     setNumRows( NUMROWS );			// set number of rows in table
     setCellHeight( height/NUMROWS );			// set height of cell in pixels
+
+    cell_width[0] = 20;
+    cell_width[1] = 100;
+    cell_width[2] = 27;
+    cell_width[8] = 27;
+    for (n=3; n<8; n++) cell_width[n] = (width - (20+100+27+27)) / 5;
+
     setTableFlags( Tbl_clipCellPainting );	// avoid drawing outside cell
     resize( width, height );				// set default size in pixels
 
     contents = new QString[ NUMROWS * NUMCOLS ];	// make room for contents
 
-    int n;
     for (n=1; n<NUMROWS; n++) contents[indexOf( n, 0 )].setNum(n);
 
     contents[indexOf(0,0)] = QString("C");
@@ -56,7 +63,7 @@ Table::Table( int width, int height, QWidget *parent, const char *name )
     for (n=0; n<16; n++) {
 	c_flags[n] = 0;
 	t_expression[n] = 0;
-	t_panning[n] = 64;
+	t_panning[n] = 0;
 	t_reverberation[n] = 0;
 	t_chorusdepth[n] = 0;
 	t_volume[n] = 0;
@@ -75,13 +82,7 @@ Table::~Table()
 
 int Table::cellWidth( int col )
 {
-   int leftover = width() - (20+100+27);
-   switch (col) {
-	case 0: return 20;
-	case 1: return 100;
-	case 2: return 27;
-	default: return leftover/6;
-   }
+   return cell_width[col];
 }
 
 void Table::clearChannels( void )
@@ -98,7 +99,7 @@ void Table::clearChannels( void )
         contents[indexOf( chan, 8 )] = QString::null;
 	t_expression[chan-1] = 0;
 	c_flags[chan-1] = 0;
-	t_panning[chan-1] = 64;
+	t_panning[chan-1] = 0;
 	t_reverberation[chan-1] = 0;
 	t_chorusdepth[chan-1] = 0;
 	t_volume[chan-1] = 0;
@@ -130,51 +131,48 @@ void Table::setProgram( int chan, int val, const char *inst, int bank, int varia
 void Table::setExpression( int chan, int val )
 {
     if (chan < 0 || chan > 15) return;
-    contents[indexOf( chan+1, 3 )].setNum(val);
-    t_expression[chan] = val;
+    int wid = (cell_width[3]-8)*val/128;
+
+    contents[indexOf( chan+1, 3 )].setNum(wid);
+    t_expression[chan] = wid;
 	updateCell( chan+1, 3 );
 }
 
 void Table::setPanning( int chan, int val )
 {
     if (chan < 0 || chan > 15) return;
-    contents[indexOf( chan+1, 4 )].setNum(val);
-    t_panning[chan] = val;
+    int wid = (cell_width[4]/2 - 4)*(val - 64)/64;
+    contents[indexOf( chan+1, 4 )].setNum(wid);
+    t_panning[chan] = wid;
 	updateCell( chan+1, 4 );
 }
 
 void Table::setReverberation( int chan, int val )
 {
     if (chan < 0 || chan > 15) return;
-    contents[indexOf( chan+1, 5 )].setNum(val);
-    t_reverberation[chan] = val;
+    int wid = (cell_width[5]-8)*val/128;
+    contents[indexOf( chan+1, 5 )].setNum(wid);
+    t_reverberation[chan] = wid;
 	updateCell( chan+1, 5 );
 }
 
 void Table::setChorusDepth( int chan, int val )
 {
     if (chan < 0 || chan > 15) return;
-    contents[indexOf( chan+1, 6 )].setNum(val);
-    t_chorusdepth[chan] = val;
+    int wid = (cell_width[6]-8)*val/128;
+    contents[indexOf( chan+1, 6 )].setNum(wid);
+    t_chorusdepth[chan] = wid;
 	updateCell( chan+1, 6 );
 }
 
 void Table::setVolume( int chan, int val )
 {
     if (chan < 0 || chan > 15) return;
-    contents[indexOf( chan+1, 7 )].setNum(val);
-    t_volume[chan] = val;
+    int wid = (cell_width[7]-8)*val/128;
+    contents[indexOf( chan+1, 7 )].setNum(wid);
+    t_volume[chan] = wid;
 	updateCell( chan+1, 7 );
 }
-
-//void Table::setPitchbend( int chan, int val )
-//{
-//}
-
-//void Table::setSustain( int chan, int val )
-//{
-//}
-
 
 /*
   Return content of cell
@@ -245,7 +243,7 @@ void Table::paintCell( QPainter* p, int row, int col )
 	p->drawText( 3, 0, w, h, AlignLeft, contents[indexOf(row,col)] );
 
     else if (col==3) {
-	int wid = (w-8)*t_expression[chan]/128;
+	int wid = t_expression[chan];
 	if (wid > 0) {
 	    if (c_flags[chan] & FLAG_PERCUSSION)
 		p->fillRect(4,4,wid,h-8, QColor("yellow"));
@@ -253,30 +251,24 @@ void Table::paintCell( QPainter* p, int row, int col )
 	}
     }
     else if (col==4) {
-	int wid, pan = t_panning[chan];
-	if (pan > 64) {
-	    wid = (w/2 - 4)*(pan - 64)/64;
-	    if (wid > 0) p->fillRect(w/2,4,wid,h-8, QColor("green"));
-	}
-	else if (pan < 64) {
-	    wid = (w/2 - 4)*(64 - pan)/64;
-	    if (wid > 0) p->fillRect(w/2 - wid,4,wid,h-8, QColor("blue"));
-	}
+	int wid = t_panning[chan];
+	if (wid > 0) p->fillRect(w/2,4,wid,h-8, QColor("green"));
+	else if (wid < 0) p->fillRect(w/2 + wid,4,-wid,h-8, QColor("blue"));
     }
     else if (col==5) {
-	int wid = (w-8)*t_reverberation[chan]/128;
+	int wid = t_reverberation[chan];
 	if (wid > 0) {
-	    p->fillRect(4,4,wid,h-8, QColor("RoyalBlue"));
+	    p->fillRect(4,4,wid,h-8, QColor("SlateBlue2"));
 	}
     }
     else if (col==6) {
-	int wid = (w-8)*t_chorusdepth[chan]/128;
+	int wid = t_chorusdepth[chan];
 	if (wid > 0) {
 	    p->fillRect(4,4,wid,h-8, QColor("coral2"));
 	}
     }
     else if (col==7) {
-	int wid = (w-8)*t_volume[chan]/128;
+	int wid = t_volume[chan];
 	if (wid > 0) {
 	    if (c_flags[chan] & FLAG_PERCUSSION)
 		p->fillRect(4,4,wid,h-8, QColor("yellow"));

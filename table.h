@@ -31,8 +31,6 @@ public:
     void setReverberation( int chan, int val );
     void setChorusDepth( int chan, int val );
     void setVolume( int chan, int val );
-    //void setPitchbend( int chan, int val );
-    //void setSustain( int chan, int val );
     int c_flags[16];
 
 protected:
@@ -49,6 +47,7 @@ private:
     int t_reverberation[16];
     int t_chorusdepth[16];
     int t_volume[16];
+    int cell_width[9];
 
 };
 
