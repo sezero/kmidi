@@ -298,10 +298,9 @@ public:
 static int open_output(void) /* 0=success, 1=warning, -1=fatal error */
 {
 	Dispatcher dispatcher;
-	SimpleSoundServer_var server;
+	SimpleSoundServer server(Reference("global:Arts_SimpleSoundServer"));
 
-	server = SimpleSoundServer_base::_fromString("global:Arts_SimpleSoundServer");
-	if(!server)
+	if(server.isNull())
 	{
 		cerr << "Can't connect to sound server" << endl;
 		return -1;
@@ -329,10 +328,11 @@ static int open_output(void) /* 0=success, 1=warning, -1=fatal error */
 	    fpip_in = pipeDispatch[0];
 	    fpip_out = pipeAppli[1];
 
-	    Sender *sender = new Sender(fpip_in);
-	    server->attach(sender);
-	    sender->start();
+	    ByteSoundProducer sender = new Sender(fpip_in);
+	    server.attach(sender);
+	    sender.start();
 	    dispatcher.run();
+	    server.detach(sender); // not reached
 
 	    exit(0);
 	}
