@@ -1,3 +1,8 @@
+1999-10-30  Greg Lee  <lee@hawaii.edu>
+
+	* ctl.c/kmidi.cpp: improve meter display (still no
+	  good at sustained notes)
+
 1999-10-29  Greg Lee  <lee@hawaii.edu>
 
 	* get docking and resizing to work better

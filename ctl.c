@@ -33,9 +33,13 @@
 #include <sys/types.h>
 #include <sys/wait.h>
 #include "../config.h"
+
+#ifdef NOW_USING_SEMAPHORES
 #ifdef HAVE_SYS_SEM_H
 #include <sys/sem.h>
 #endif
+#endif
+
 #ifdef _SCO_DS
 #include <sys/socket.h>
 #endif
@@ -55,6 +59,7 @@
 #include "constants.h"
 #include "ctl.h"
 
+#ifdef NOW_USING_SEMAPHORES
 #ifdef _SEM_SEMUN_UNDEFINED
    union semun
    {
@@ -63,6 +68,7 @@
      unsigned short int *array;
      struct seminfo *__buf;
    };
+#endif
 #endif
 
 static void ctl_refresh(void);
@@ -151,7 +157,9 @@ PanelInfo *Panel;
 static int songoffset = 0;
 
 static int shmid;	/* shared memory id */
+#ifdef NOW_USING_SEMAPHORES
 static int semid;	/* semaphore id */
+#endif
 static int child_killed = 0;
 
 static int pipeAppli[2],pipeMotif[2];
@@ -289,12 +297,14 @@ static void ctl_current_time(int ct)
     pipe_int_write(v);
 }
 
+static int realcount[MAXDISPCHAN];
 
 static void ctl_channel_note(int ch, int note, int vel, int start)
 {
 	int slot;
 	ch &= 0x1f;
 	slot = Panel->cindex[ch];
+	Panel->notecount[slot][ch] = realcount[ch];
 	if (start != -1 && start > Panel->ctime[slot][ch]) {
 		int i = slot;
 		while (i < NQUEUE && Panel->ctime[i][ch] != -1) i++;
@@ -331,6 +341,8 @@ static void ctl_note(int v)
 	if (!ctl.trace_playing) 
 		return;
 
+	if (voice[v].clone_type != 0) return;
+
 	start = voice[v].starttime/(play_mode->rate/100);
 	ch = voice[v].channel;
 	ch &= 0x1f;
@@ -349,10 +361,12 @@ static void ctl_note(int v)
 	    case VOICE_FREE: 
 	      vel = 0;
 	      start = -1;
-	      if (Panel->notecount[slot][ch]) Panel->notecount[slot][ch]--;
+	      /** if (Panel->notecount[slot][ch]) Panel->notecount[slot][ch]--; **/
+	      if (realcount[ch] > 0) realcount[ch]--;
 	      break;
 	    case VOICE_ON:
-	      Panel->notecount[slot][ch]++;
+	      /** Panel->notecount[slot][ch]++; **/
+	      realcount[ch]++;
 	      break;
 	    case VOICE_OFF:
 	      vel = 0;
@@ -435,6 +449,7 @@ static void ctl_reset(void)
 #endif
 
 	for (i = 0; i < MAXDISPCHAN; i++) {
+		realcount[i] = 0;
 		ctl_program(i, channel[i].program);
 		ctl_volume(i, channel[i].volume);
 		ctl_expression(i, channel[i].expression);
@@ -996,6 +1011,7 @@ static void shm_alloc(void)
 		exit(1);
 	}
 
+#ifdef NOW_USING_SEMAPHORES
 	semid = semget(IPC_PRIVATE, 1, IPC_CREAT|0600);
 	if (semid < 0) {
 	    perror("semget");
@@ -1006,6 +1022,7 @@ static void shm_alloc(void)
 	/* bin semaphore: only call once at first */
 #if 0
 	semaphore_V(semid);
+#endif
 #endif
 
 	if ((Panel = (PanelInfo *)shmat (shmid, (char *)0, SHM_RND)) == (PanelInfo *) -1) {
@@ -1020,17 +1037,21 @@ static void shm_alloc(void)
 static void shm_free(int sig)
 {
 	int status;
+#ifdef NOW_USING_SEMAPHORES
 #if defined(linux) || defined(__FreeBSD__)
 	union semun dmy;
 #else /* Solaris 2.x, BSDI, OSF/1, HPUX */
 	void *dmy;
 #endif
+#endif
 
 	kill(child_pid, SIGTERM);
 	while(wait(&status) != child_pid)
 	    ;
+#ifdef NOW_USING_SEMAPHORES
 	memset(&dmy, 0, sizeof(dmy)); /* Shut compiler warning up :-) */
 	semctl(semid, 0, IPC_RMID, dmy);
+#endif
 	shmctl(shmid, IPC_RMID, NULL);
 	shmdt((char *)Panel);
 	if (sig != 100)

@@ -123,7 +123,6 @@ public slots:
 protected:
 	void		closeEvent( QCloseEvent *e );  
 	bool		event( QEvent *e );
-        void		resizeEvent(QResizeEvent *e);
 
 };
 

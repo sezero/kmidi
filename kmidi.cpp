@@ -156,9 +156,6 @@ void KMidiFrame::dragEnterEvent( QDragEnterEvent *e )
     }
 }
 
-void KMidiFrame::resizeEvent(QResizeEvent *e){
-//fprintf(stderr,"fram size %d x %d\n", (e->size()).width(), (e->size()).height() );
-}
 
 KMidi::KMidi( QWidget *parent, const char *name )
     : QWidget( parent, name )
@@ -417,11 +414,13 @@ void MeterWidget::remeter()
 		if (ch >= MAXDISPCHAN/2) x1 += BAR_WID / 2;
 		amplitude = -1;
 		slot = Panel->mindex[ch];
-		chnotes = Panel->notecount[slot][ch];
+		chnotes = 0;
+
 		while ( 1 ) {
 		  notetime = Panel->ctime[slot][ch];
 		  //if (notetime == -1 || notetime > meterpainttime) break;
 		  if (notetime != -1 && notetime <= meterpainttime) {
+		    chnotes = Panel->notecount[slot][ch];
 		    if (Panel->v_flags[slot][ch]) {
 			if (Panel->v_flags[slot][ch] == FLAG_NOTE_OFF) {
 				if (!chnotes) Panel->ctotal[slot][ch] -= DELTA_VEL;
@@ -432,22 +431,24 @@ void MeterWidget::remeter()
 			} else {
 				Panel->v_flags[slot][ch] = 0;
 			}
-			/*if (amplitude < Panel->ctotal[slot][ch])*/
-				amplitude = Panel->ctotal[slot][ch];
-			if (amplitude < 20) amplitude = 20;
+			if (amplitude < Panel->ctotal[slot][ch])
+			    amplitude = Panel->ctotal[slot][ch];
+			//if (amplitude < 20) amplitude = 20;
 		    }
 		    if (!chnotes && amplitude > 0) {
-			amplitude -= DELTA_VEL;
+			amplitude -= 2*DELTA_VEL;
 			if (Panel->c_flags[ch] & FLAG_PERCUSSION)
 				amplitude -= 3*DELTA_VEL;
 			if (amplitude < 0) amplitude = 0;
 		    }
+		    if (chnotes && amplitude < 20) amplitude = 20;
 		    Panel->ctime[slot][ch] = -1;
 		  }
 		  slot++;
 		  if (slot == NQUEUE) slot = 0;
 		  if (slot == Panel->mindex[ch]) break;
-		}
+		} /* while */
+
 		Panel->mindex[ch] = slot;
 		if (amplitude < 0 && lastvol[ch]) {
 			if (!chnotes) amplitude = lastvol[ch];
