@@ -2,7 +2,7 @@
 	$Id$
 */
 
-#if defined(linux) || defined(__FreeBSD__) || defined(sun)
+/* #if defined(linux) || defined(__FreeBSD__) || defined(sun) */
 
 #include <stdio.h>
 #include <unistd.h>
@@ -31,6 +31,12 @@ static uint32 outchunk = 0;
 static int starting_up = 1, flushing = 0;
 static int out_count = 0;
 static int total_bytes = 0;
+
+#if defined(AU_OSS) || defined(AU_SUN)
+#define WRITEDRIVER(fd,buf,cnt) write(fd,buf,cnt)
+#else
+#define WRITEDRIVER(fd,buf,cnt) driver_output_data(buf,cnt)
+#endif
 
 int b_out_count()
 {
@@ -103,9 +109,9 @@ void b_out(int fd, int *buf, int ocount)
 #endif
   while (bbcount) {
     if (outchunk && bbcount >= outchunk)
-        ret = write(fd, bbuf + bboffset, outchunk);
+        ret = WRITEDRIVER(fd, bbuf + bboffset, outchunk);
     else if (flushing)
-        ret = write(fd, bbuf + bboffset, bbcount);
+        ret = WRITEDRIVER(fd, bbuf + bboffset, bbcount);
     if (ret < 0) {
 	if (errno == EINTR) continue;
 	else if (errno == EWOULDBLOCK) {
@@ -157,9 +163,9 @@ void b_out(int fd, int *buf, int ocount)
 
   if (ret >= 0) while (bbcount) {
     if (outchunk && bbcount >= outchunk)
-        ret = write(fd, bbuf + bboffset, outchunk);
+        ret = WRITEDRIVER(fd, bbuf + bboffset, outchunk);
     else
-        ret = write(fd, bbuf + bboffset, bbcount);
+        ret = WRITEDRIVER(fd, bbuf + bboffset, bbcount);
     if (ret < 0) {
 	if (errno == EINTR) continue;
 	else if (errno == EWOULDBLOCK) {
@@ -190,4 +196,4 @@ void b_out(int fd, int *buf, int ocount)
     }
   }
 }
-#endif
+/* #endif */

@@ -34,7 +34,7 @@
 
 */
 
-#ifdef AU_HPUX
+#ifdef AU_HPUX_ALIB
 /* #if defined(hpux) || defined(__hpux) */
 
 #include <stdlib.h>
@@ -282,9 +282,13 @@ static void output_data(int32 *buf, int32 count)
 
 static void close_output(void)
 {
-    close( streamSocket );
-    ASetCloseDownMode( audio, AKeepTransactions, NULL );
-    ACloseAudio( audio, NULL );
+    if(dpm.fd != -1)
+    {
+	close( streamSocket );
+	ASetCloseDownMode( audio, AKeepTransactions, NULL );
+	ACloseAudio( audio, NULL );
+	dpm.fd = -1;
+    }
 }
 
 static void flush_output(void)
@@ -293,4 +297,8 @@ static void flush_output(void)
 static void purge_output(void)
 {}
 
+int current_sample_count(uint32 ct)
+{
+  return (int)ct;
+}
 #endif /*defined(hpux) || defined(__hpux)*/

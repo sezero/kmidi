@@ -189,7 +189,7 @@ if test "x$au_enable_irix" = xyes; then
     *) AC_MSG_WARN(may not work on $target) ;;
   esac
   SYSEXTRAS="$SYSEXTRAS audriv_a.c audriv_al.c"
-  EXTRALIBS="$EXTRASLIBS -laudio"
+  EXTRALIBS="$EXTRALIBS -laudio"
 else
   AC_MSG_RESULT(no)
 fi
@@ -344,10 +344,10 @@ else
 fi
 
 dnl Pseudo audio device (Undocumented).
-if test "x$au_enable_none" = xyes; then
-    EXTRADEFS="$EXTRADEFS -DAU_NONE -DAU_AUDRIV"
-    SYSEXTRAS="$SYSEXTRAS audriv_a.c audriv_none.c"
-fi
+dnl if test "x$au_enable_none" = xyes; then
+dnl     EXTRADEFS="$EXTRADEFS -DAU_NONE -DAU_AUDRIV"
+dnl     SYSEXTRAS="$SYSEXTRAS audriv_a.c audriv_none.c"
+dnl fi
 
 
 dnl

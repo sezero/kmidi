@@ -748,8 +748,14 @@ if (percussion /* && (gm_num >= 42 && gm_num <= 51) */) {
 
 
       /* Then read the sample data */
+      /* Then read the sample data */
+#ifdef tplus
+      sp->data = (sample_t *)safe_malloc(sp->data_length+1);
+      lp->size += sp->data_length+1;
+#else
       sp->data = safe_malloc(sp->data_length);
       lp->size += sp->data_length;
+#endif
       if (1 != fread(sp->data, sp->data_length, 1, fp))
 	goto fail;
 
@@ -758,7 +764,11 @@ if (percussion /* && (gm_num >= 42 && gm_num <= 51) */) {
 	  int32 i=sp->data_length;
 	  uint8 *cp=(uint8 *)(sp->data);
 	  uint16 *tmp,*new;
+#ifdef tplus
+	  tmp = new = (uint16 *)safe_malloc(sp->data_length*2+2);
+#else
 	  tmp=new=safe_malloc(sp->data_length*2);
+#endif
 	  while (i--)
 	    *tmp++ = (uint16)(*cp++) << 8;
 	  cp=(uint8 *)(sp->data);
@@ -860,6 +870,13 @@ if (percussion /* && (gm_num >= 42 && gm_num <= 51) */) {
       sp->data_length /= 2; /* These are in bytes. Convert into samples. */
       sp->loop_start /= 2;
       sp->loop_end /= 2;
+
+#ifdef tplus
+      /* The sample must be padded out by 1 extra sample, so that
+         round off errors in the offsets used in interpolation will not
+         cause a "pop" by reading random data beyond data_length */
+      sp->data[sp->data_length] = sp->data[sp->data_length-1];
+#endif
 
       /* Then fractional samples */
       sp->data_length <<= FRACTION_BITS;

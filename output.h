@@ -49,8 +49,8 @@ typedef struct {
 extern PlayMode *play_mode_list[], *play_mode;
 
 extern int output_buffer_full;
-extern int current_sample_count(void);
-
+extern int current_sample_count(uint32 ct);
+extern int driver_output_data(char *buf, uint32 count);
 /* Conversion functions -- These overwrite the int32 data in *lp with
    data in another format */
 

@@ -251,7 +251,7 @@ extern int XG_System_reverb_type;
 extern int XG_System_chorus_type;
 extern int XG_System_variation_type;
 
-#define ISDRUMCHANNEL(c) ((drumchannels & (1<<(c))))
+#define ISDRUMCHANNEL(c) ((drumchannels & (1<<(c%16))))
 
 #ifndef ADAGIO
 extern int play_midi(MidiEvent *el, uint32 events, uint32 samples);

@@ -247,10 +247,10 @@ static int open_output(void)
   return warnings;
 }
 
-int current_sample_count()
+int current_sample_count(uint32 ct)
 {
   extern int ioctl();
-  if (ioctl(dpm.fd, AUDIO_GETINFO, &auinfo)<0) return -1;
+  if (ioctl(dpm.fd, AUDIO_GETINFO, &auinfo)<0) return (int)ct;
   return auinfo.play.samples;
 }
 

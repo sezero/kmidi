@@ -272,15 +272,11 @@ static void ctl_current_time(uint32 ct)
 {
 
     int i,v, flags=0;
-#if defined(linux) || defined(__FreeBSD__) || defined(sun)
     int centisecs, realct;
-    realct = current_sample_count();
+    realct = current_sample_count(ct);
     if (realct < 0) realct = 0;
     else realct += songoffset;
     centisecs = realct / (play_mode->rate/100);
-#else
-    int centisecs=(int)(ct/(play_mode->rate/100));
-#endif
 
     if (!ctl.trace_playing) 
 	return;

@@ -205,7 +205,7 @@ static int open_output(void)
 }
 
 
-int current_sample_count()
+int current_sample_count(uint32 ct)
 {
 #ifndef SNDCTL_DSP_GETODELAY
 #ifdef SNDCTL_DSP_GETOPTR

@@ -599,10 +599,10 @@ static void recompute_amp(int v)
 
 static int current_polyphony = 0;
 
-#define NOT_CLONE (uint8)0
-#define STEREO_CLONE (uint8)1
-#define REVERB_CLONE (uint8)2
-#define CHORUS_CLONE (uint8)3
+#define NOT_CLONE 0
+#define STEREO_CLONE 1
+#define REVERB_CLONE 2
+#define CHORUS_CLONE 3
 
 
 /* just a variant of note_on() */
@@ -936,7 +936,11 @@ fprintf(stderr,"REVERB_CLONE v%d vol=%f pan=%d reverb=%d delay=%dms\n", w, voice
 
 	voice[w].echo_delay += 30 * milli;
 #ifdef tplus
-	if (chorus > 42) chorus = 42;    /* higher choruss detune notes too much */
+#if 0
+	if (chorus > 42) chorus = 42;    /* higher chorus detune notes too much */
+#else
+	chorus /= 3;
+#endif
 	if(channel[ voice[w].channel ].pitchbend + chorus < 0x2000)
             voice[w].orig_frequency *= bend_fine[chorus];
 	else voice[w].orig_frequency /= bend_fine[chorus];
@@ -1273,6 +1277,7 @@ printf("(new rel time = %ld)\n",
     voice[i].panning=drumpan;
 
 #ifdef tplus
+  voice[i].porta_control_counter = 0;
   if(channel[ch].portamento && !channel[ch].porta_control_ratio)
       update_portamento_controls(ch);
   if(channel[ch].porta_control_ratio)
@@ -1640,10 +1645,12 @@ static void finish_note(int i)
          of its loop, if any. In any case, this voice dies when it
          hits the end of its data (ofs>=data_length). */
       voice[i].status=VOICE_OFF;
+      ctl->note(i);
     }
   { int v;
     if ( (v=voice[i].clone_voice) >= 0)
       {
+	voice[i].clone_voice = -1;
         finish_note(v);
       }
   }

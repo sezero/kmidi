@@ -1,3 +1,13 @@
+1999-12-04  Greg Lee  <lee@hawaii.edu>
+
+	* instrum.c,playmidi.c: bug fixes
+	  from TiM++ 2.8.0
+	* port alsa and (2nd) hpux drivers (untested)
+
+1999-12-03  Greg Lee  <lee@hawaii.edu>
+
+	* configuration from TiMidity++
+
 1999-12-02  Greg Lee  <lee@hawaii.edu>
 
 	* first commandline file didn't play

@@ -41,7 +41,6 @@
 */
 
 #ifdef AU_DEC
-/* #ifdef __osf__ */
 
 #include <unistd.h>
 #include <fcntl.h>
@@ -56,7 +55,7 @@
 
 static int open_output(void); /* 0=success, 1=warning, -1=fatal error */
 static void close_output(void);
-static void output_data(int32 *buf, int32 count);
+static void output_data(int32 *buf, uint32 count);
 static void flush_output(void);
 static void purge_output(void);
 
@@ -236,7 +235,7 @@ static int open_output(void)
 
 /* Output of audio data from timidity */
 
-static void output_data(int32 *buf, int32 count)
+static void output_data(int32 *buf, uint32 count)
 {
 
   MMRESULT	status;
@@ -295,4 +294,8 @@ static void purge_output(void)
  }
 } 
 
+int current_sample_count(uint32 ct)
+{
+  return (int)ct;
+}
 #endif /* __osf__ */
