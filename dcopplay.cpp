@@ -1,6 +1,9 @@
 #include <kapplication.h>
 #include <dcopclient.h>
 #include <qfileinfo.h>
+#include <iostream>
+
+using namespace std;
 
 int main( int argc, char** argv )
 {
@@ -19,8 +22,8 @@ int main( int argc, char** argv )
     stream << file.absFilePath();
 
     if (kapp->dcopClient()->send( "kmidi", "kmidi", "play(QString)", params))
-      debug("ok");
+      cerr << "ok" << endl;
     else
-      debug("ko");
+      cerr << "ko" << endl;
 
 }
