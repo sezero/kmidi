@@ -70,7 +70,6 @@ PlayMode dpm = {
   output_count
 };
 
-
 /*************************************************************************/
 /* We currently only honor the PE_MONO bit, the sample rate, and the
    number of buffer fragments. We try 16-bit signed data first, and
@@ -177,6 +176,8 @@ static void arts_pipe_error(const char *st)
 
 #include <arts/soundserver.h>
 #include <arts/stdsynthmodule.h>
+
+using namespace Arts;
 
 //#include <stdio.h>
 //#include <unistd.h>
@@ -330,7 +331,8 @@ static int open_output(void) /* 0=success, 1=warning, -1=fatal error */
 	    fpip_in = pipeDispatch[0];
 	    fpip_out = pipeAppli[1];
 
-	    ByteSoundProducer sender = new Sender(fpip_in);
+	    ByteSoundProducer sender;
+		sender = ByteSoundProducer::_from_base(new Sender(fpip_in));
 	    server.attach(sender);
 	    sender.start();
 	    dispatcher.run();
