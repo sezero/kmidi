@@ -1917,8 +1917,8 @@ extern "C" {
 	pipenumber = _pipenumber;
 
 	kmidi = new KMidi;
-       	thisapp->enableSessionManagement(true);
-	thisapp->setWmCommand("kmidi");
+       	/* thisapp->enableSessionManagement(true); */
+	/* thisapp->setWmCommand("kmidi"); */
 	thisapp->setTopWidget(kmidi);
 	kmidi->setCaption(kapp->getCaption());
 	kmidi->show();

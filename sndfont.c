@@ -1104,7 +1104,7 @@ else printf("NO CFG NAME!\n");
 	}
 
 	if (lay->set[SF_sampleFlags]) sampleFlags = lay->val[SF_sampleFlags];
-	else if (lay->set[SF_startloopAddrs]/* && banknum < 128*/) sampleFlags = 1;
+	/* else if (lay->set[SF_startloopAddrs]) sampleFlags = 1; */
 	else sampleFlags = 0;
 
 	if (sampleFlags == 2) sampleFlags = 0;
@@ -1458,7 +1458,7 @@ static void convert_volume_envelope(Layer *lay, SFInfo *sf, SampleList *sp, int 
 	/* int milli = play_mode->rate/1000; */
 #ifdef EXAMINE_SOME_ENVELOPES
 	static int no_shown = 0;
-no_shown = banknum==0 && (preset >= 60 && preset <= 60);
+no_shown = banknum==0 && (preset >= 56 && preset <= 56);
 if (no_shown) {
 printf("PRESET %d\n",preset);
 	printf("sustainEnv2 %d delayEnv2 %d attackEnv2 %d holdEnv2 %d decayEnv2 %d releaseEnv2 %d\n",
@@ -1686,7 +1686,7 @@ static void convert_vibrato(Layer *lay, SFInfo *sf, SampleList *sp)
 #endif
 
 	if (!shift) return;
-	if (!freq) return;
+	/* if (!freq) return; */
 
 	/* pitch shift in cents (= 1/100 semitone) */
 	if (sf->version == 1)

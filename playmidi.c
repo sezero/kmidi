@@ -648,6 +648,10 @@ static void clone_voice(Instrument *ip, int v, MidiEvent *e, uint8 clone_type)
 
   if (clone_type == REVERB_CLONE) chorus = 0;
   else if (clone_type == CHORUS_CLONE) reverb = 0;
+  else if (clone_type == STEREO_CLONE) reverb = chorus = 0;
+
+  if (reverb > 127) reverb = 127;
+  if (chorus > 127) chorus = 127;
 
   if (clone_type == REVERB_CLONE) {
 	 if ( (reverb_options & OPT_REVERB_EXTRA) && reverb < 90)
@@ -737,6 +741,7 @@ static void clone_voice(Instrument *ip, int v, MidiEvent *e, uint8 clone_type)
 	/**voice[w].echo_delay += (reverb>>2) * milli;**/
 	voice[w].echo_delay += (reverb>>4) * milli;
 /* 500, 250, 100, 50 too long; 25 pretty good */
+	if (voice[w].echo_delay > 30*milli) voice[w].echo_delay = 30*milli;
 	voice[w].envelope_rate[3] /= 2;
 	if (XG_System_reverb_type >= 0) {
 	    int subtype = XG_System_reverb_type & 0x07;
