@@ -75,6 +75,7 @@ static int cmsg(int type, int verbosity_level, const char *fmt, ...);
 /**********************************************/
 /* export the interface functions */
 
+#undef ctl
 #define ctl ncurses_control_mode
 
 ControlMode ctl= 

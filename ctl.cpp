@@ -110,6 +110,7 @@ static void shm_free(int sig);
 
 /**********************************************/
 
+#undef ctl
 #ifdef KMIDI
 #define ctl kmidi_control_mode
 #else

@@ -56,6 +56,7 @@ static int output_count(uint32 ct);
 
 /* export the playback mode */
 
+#undef dpm
 #ifdef LINUX_SECOND_DEVICE
 #define dpm linux_play_mode_two
 #else

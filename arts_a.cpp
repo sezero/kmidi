@@ -51,6 +51,7 @@ static int output_count(uint32 ct);
 
 /* export the playback mode */
 
+#undef dpm
 #define dpm arts_play_mode
 
 PlayMode dpm = {

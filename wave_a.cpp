@@ -42,10 +42,12 @@
 #include "output.h"
 #include "controls.h"
 
+#if !defined(OPEN_MODE)
 #ifdef __WIN32__
 #define OPEN_MODE O_WRONLY | O_CREAT | O_TRUNC | O_BINARY
 #else
 #define OPEN_MODE O_WRONLY | O_CREAT | O_TRUNC
+#endif
 #endif
 
 static int open_output(void); /* 0=success, 1=warning, -1=fatal error */
