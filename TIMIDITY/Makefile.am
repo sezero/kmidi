@@ -18,8 +18,7 @@ LDADD = $(LIBALIB) $(LIBAUDIO) $(LIBMME) $(EXTRATLIBS) $(X_LIBS) -lkdefakes -lm
 # or you'll need to invoke timidity with the -L option.
 TIMID_DIR = $(kde_datadir)/kmidi/config
 
-appsdir = $(kde_appsdir)/Multimedia/More
-apps_DATA = timidity.desktop
+xdg_apps_DATA = timidity.desktop
 
 install-data-local: uninstall.desktop
 	$(mkinstalldirs) $(DESTDIR)$(kde_appsdir)/Multimedia
