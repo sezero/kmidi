@@ -28,7 +28,7 @@
 #include <qtextstream.h>
 
 #include <kconfig.h>
-#include <klineeditdlg.h>
+#include <kinputdialog.h>
 #include <klocale.h>
 #include <kstandarddirs.h>
 #include <kmessagebox.h>
@@ -562,10 +562,10 @@ void PlaylistEdit::checkList(){
 
 
 void PlaylistEdit::newPlaylist(){
-	KLineEditDlg dlg(i18n("Enter name:"), QString::null, this);
-	dlg.setCaption(i18n("New Playlist"));
-	if (dlg.exec()) {
-	  QString plf = dlg.text();
+    bool ok;
+    QString plf = KInputDialog::getText( i18n( "New Playlist" ),
+        i18n( "Enter name:" ), QString::null, &ok, this );
+	if (ok) {
 	  plf += ".plist";
           QString path = locateLocal("appdata", plf);
 	  listsonglist->append(path);
