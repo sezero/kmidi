@@ -25,7 +25,6 @@
 #endif
 #endif
 
-#include <malloc.h>
 #include "config.h"
 #include "common.h"
 #include "instrum.h"
