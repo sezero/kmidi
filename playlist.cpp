@@ -28,6 +28,7 @@
 #include <qtextstream.h>
 
 #include <kconfig.h>
+#include <kglobalsettings.h>
 #include <kinputdialog.h>
 #include <klocale.h>
 #include <kstandarddirs.h>
@@ -131,8 +132,8 @@ PlaylistEdit::PlaylistEdit(const char *name, QStringList *playlist,
 
   vpanner = new QSplitter(Vertical, this, "_panner");
   hpanner = new QSplitter(Horizontal, vpanner, "_panner");
-  vpanner->setOpaqueResize( TRUE );
-  hpanner->setOpaqueResize( TRUE );
+  vpanner->setOpaqueResize( KGlobalSettings::opaqueResize() );
+  hpanner->setOpaqueResize( KGlobalSettings::opaqueResize() );
   what->add(vpanner, i18n("You can drag this<br>\nbar up or down.") );
   what->add(hpanner, i18n("You can drag this<br>\nbar left or right.") );
 
