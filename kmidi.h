@@ -116,10 +116,6 @@ public:
 	bool		docking;
 	bool		autodock;
 
-public slots:
-
-	void		dropEvent( QDropEvent * );
-	void		dragEnterEvent( QDragEnterEvent *e );
 
 protected:
 	void		closeEvent( QCloseEvent *e );  
@@ -304,6 +300,7 @@ public slots:
 	void		updateRChecks( int );
 	void		updateIChecks( int );
 	void		dropEvent( QDropEvent * );
+	void		dragEnterEvent( QDragEnterEvent *e );
 	void		plActivated( int );
 	void		acceptPlaylist();
 };

@@ -63,6 +63,16 @@ port commands.  (The info window shows port commands when present.)
 The KMidi display of channel activity is limited to two sets of 16 channels.
 
 
+			Volume
+
+I've reduced the volumes levels TiMidity generates quite a lot, as compared with
+the original implementation.  This minimizes clipping and gives an increased
+dynamic range.  (There are some artifacts now at low volumes, unfortunately.)
+If you need more volume, I suggest you turn up the volume somewhere else, either
+use KMix to turn up the mixer volume for /dev/dsp, or turn up earphones,
+amplified speakers, or whatever.
+
+
 			Computation Issues
 
 TiMidity can fall behind in computing data to send out to the sound driver, and
@@ -86,14 +96,14 @@ much data it has buffered up.  I know how to do this for Hannu Savolainen's OSS
 driver (Linux and some other systems), perhaps for older Suns (it used to work),
 but not for other drivers.
 
-You can lighten TiMidity's computational burden by various manoeuvres: (1) reduce
+You can lighten TiMidity's computational burden by various maneuvers: (1) reduce
 the permitted polyphony (spin box on lower panel), (2) press off the "eff" button,
 (3) choose cheaper resampling interpolation (one of the checkboxes on the upper
 panel further to the left), (4) turn off echo, detuning, or stereo using the left
 three checkboxes on the lower panel.   Of course, there is attendant loss in
 quality.  Having the "filt" button on doesn't cost anything unless you've also
-chosen the "cspline+filter" interpolation option (since drum patches are filtered
-only when they are first loaded -- not while playing).
+chosen the "cspline+filter" interpolation option -- then drum patches are filtered
+only when they are first loaded -- not while playing.
 
 
 			Memory Issues

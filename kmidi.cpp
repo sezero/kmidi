@@ -114,7 +114,6 @@ KMidiFrame::KMidiFrame( const char *name ) :
         if(docking){
         dock_widget->dock();
     }
-    setAcceptDrops(TRUE);
 
 }
 
@@ -143,19 +142,6 @@ void KMidiFrame::closeEvent( QCloseEvent *e ){
     quitPending = true;
     kmidi->quitClicked();
     e->accept();
-}
-
-void KMidiFrame::dropEvent( QDropEvent * e )
-{
-    kmidi->dropEvent(e);
-}
-
-void KMidiFrame::dragEnterEvent( QDragEnterEvent *e )
-{
-    if ( QUrlDrag::canDecode( e ) )
-    {
-	e->accept();
-    }
 }
 
 
@@ -244,6 +230,14 @@ KMidi::KMidi( QWidget *parent, const char *name )
 
     setAcceptDrops(TRUE);
 
+}
+
+void KMidi::dragEnterEvent( QDragEnterEvent *e )
+{
+    if ( QUrlDrag::canDecode( e ) )
+    {
+	e->accept();
+    }
 }
 
 
