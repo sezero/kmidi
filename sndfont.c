@@ -1849,7 +1849,7 @@ static void convert_lfo(Layer *lay, SFInfo *sf, SampleList *sp)
 #if 0
 printf("(lev=%d", (int)level);
 #endif
-	sp->v.modLfoToFilterFc = pow(2.0, ((FLOAT_T)level/12000.0));
+	sp->v.modLfoToFilterFc = pow(2.0, ((FLOAT_T)level/1200.0));
 
 	/* frequency in mHz */
 	if (lay->set[SF_freqLfo1]) freq = lay->val[SF_freqLfo1];
@@ -1970,14 +1970,14 @@ static void calc_cutoff(Layer *lay, SFInfo *sf, SampleList *sp)
 		}
 	}
 	if (lay->set[SF_env1ToFilterFc]) {
-		/*sp->v.modEnvToFilterFc = pow(2.0, ((FLOAT_T)lay->val[SF_env1ToFilterFc]/1200.0));*/
-		sp->v.modEnvToFilterFc = pow(2.0, ((FLOAT_T)lay->val[SF_env1ToFilterFc]/12000.0));
+		sp->v.modEnvToFilterFc = pow(2.0, ((FLOAT_T)lay->val[SF_env1ToFilterFc]/1200.0));
+		/* sp->v.modEnvToFilterFc = pow(2.0, ((FLOAT_T)lay->val[SF_env1ToFilterFc]/12000.0)); */
 /* printf("val %d -> %f\n", (int)lay->val[SF_env1ToFilterFc], sp->v.modEnvToFilterFc); */
 	}
 	else sp->v.modEnvToFilterFc = 0;
 
 	if (lay->set[SF_env1ToPitch]) {
-		sp->v.modEnvToPitch = pow(2.0, ((FLOAT_T)lay->val[SF_env1ToPitch]/12000.0));
+		sp->v.modEnvToPitch = pow(2.0, ((FLOAT_T)lay->val[SF_env1ToPitch]/1200.0));
 /* printf("mE %d -> %f\n", (int)lay->val[SF_env1ToPitch], sp->v.modEnvToPitch); */
 	}
 	else sp->v.modEnvToPitch = 0;

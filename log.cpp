@@ -122,7 +122,7 @@ void LogWindow::clear(){
 
 }
 
-void LogWindow::resizeEvent(QResizeEvent*e ){
+void LogWindow::resizeEvent(QResizeEvent* ){
 
   int w = width() ;
   int h = height();

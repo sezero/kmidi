@@ -30,6 +30,8 @@
 #include <sys/ioctl.h>
 #include <signal.h>
 #include <sys/ioctl.h>
+#include <sys/types.h>
+#include <sys/wait.h>
 #ifdef _SCO_DS
 #include <sys/socket.h>
 #endif
@@ -241,14 +243,11 @@ static void ctl_file_name(char *name)
     pipe_string_write(name);
 }
 
-#if defined(linux) || defined(__FreeBSD__)
-extern current_sample_count();
-#endif
 static void ctl_current_time(int ct)
 {
 
     int i,v, flags=0;
-#if defined(linux) || defined(__FreeBSD__)
+#if defined(linux) || defined(__FreeBSD__) || defined(sun)
     int centisecs, realct;
     realct = current_sample_count();
     if (realct < 0) realct = ct;

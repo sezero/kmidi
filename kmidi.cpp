@@ -835,7 +835,7 @@ void KMidi::setPatch( int index )
 
 void KMidi::setSong( int number )
 {
-    if (!playlist->count() || number > playlist->count()) {
+    if (!playlist->count() || number > (int)playlist->count()) {
 	redoplaybox();
 	return;
     }

@@ -2634,7 +2634,6 @@ static void read_seq(unsigned char *from, unsigned char *to)
   unsigned char type, vc, arg, vel;
   short p1, p2;
   unsigned char *next;
-  extern current_sample_count();
   extern time_expired;
 
   if (!current_sample) ptime = stime = posttime = lastbehind = 0;

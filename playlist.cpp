@@ -207,7 +207,7 @@ void PlaylistDialog::redoDisplay() {
 
   redoplist();
 
-  if (plistbox->count() >= *playlist_ptr) {
+  if ((int)plistbox->count() >= *playlist_ptr) {
     plistbox->setCurrentItem(*playlist_ptr);
     current_playlist = plistbox->text((uint) *playlist_ptr);
     current_playlist += ".plist";

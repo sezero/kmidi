@@ -373,13 +373,13 @@ static int calc_bw_index(int v)
   if (!voice[v].lfo_phase_increment && update_modulation_signal(v)) return 0;
 
 /* printf("mod_amount %f ", mod_amount); */
-  if (voice[v].lfo_volume) {
+  if (voice[v].lfo_volume>0.001) {
 	if (mod_amount) mod_amount *= voice[v].lfo_volume;
 	else mod_amount = voice[v].lfo_volume;
 /* printf("lfo %f -> mod %f ", voice[v].lfo_volume, mod_amount); */
   }
 
-  if (mod_amount > 0.2 && mod_amount < 20.0) {
+  if (mod_amount > 0.001) {
     if (voice[v].modulation_volume)
        freq =
 	(int32)( (double)freq*(1.0 + (mod_amount - 1.0) * (voice[v].modulation_volume>>22) / 255.0) );
