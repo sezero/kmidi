@@ -56,7 +56,10 @@
 
 #ifdef HAVE_STRING_H
 #include <string.h>
+#else
+#include <strings.h>
 #endif
+
 
 #include "common.h"
 #include "instrum.h"
@@ -65,6 +68,7 @@
 #include "controls.h"
 #include "version.h"
 
+#define NCCC (char *)
 /*
  * For the set_color pairs (so called 'objects')
  * see the ctl_open()
@@ -80,6 +84,7 @@ static void ctl_master_volume(int mv);
 static void ctl_file_name(char *name);
 static void ctl_current_time(uint32 ct);
 static void ctl_note(int v);
+static void ctl_note_display(void);
 static void ctl_program(int ch, int val, const char *name);
 static void ctl_volume(int ch, int val);
 static void ctl_expression(int ch, int val);
@@ -113,7 +118,21 @@ ControlMode ctl=
 /* foreground/background checks disabled since switching to curses */
 /* static int in_foreground=1; */
 static int ctl_helpmode=0;
+
 static int msg_row = 0;
+static uint32 current_centiseconds = 0;
+static int songoffset = 0, current_voices = 0;
+
+extern MidiEvent *current_event;
+
+typedef struct {
+  uint8 status, channel, note, velocity, voices;
+  uint32 time;
+} OldVoice;
+#define MAX_OLD_NOTES 200
+static OldVoice old_note[MAX_OLD_NOTES];
+static int leading_pointer=0, trailing_pointer=0;
+
 
 static void _ctl_refresh(void)
 {
@@ -142,7 +161,15 @@ static void ctl_head(void)
 static void ctl_refresh(void)
 {
   if (ctl.trace_playing)
-    _ctl_refresh();
+    {
+       ctl_current_time(0);
+       ctl_note_display();
+       SLsmg_gotorc(4,48);
+       SLsmg_bold();
+       SLsmg_printf(NCCC"%2d", current_voices);
+       SLsmg_normal();
+       _ctl_refresh();
+    }
 }
 
 static void ctl_help_mode(void)
@@ -168,13 +195,13 @@ static void ctl_help_mode(void)
       SLsmg_gotorc(0,0);
       SLsmg_erase_eol();
       SLsmg_write_string(
-            "V=Louder    b=Skip back      "
+            NCCC"V=Louder    b=Skip back      "
             "n=Next file      r=Restart file");
 
       SLsmg_gotorc(1,0);
       SLsmg_erase_eol();
       SLsmg_write_string(
-            "v=Softer    f=Skip forward   "
+            NCCC"v=Softer    f=Skip forward   "
             "p=Previous file  q=Quit program");
         SLsmg_normal();
       _ctl_refresh();
@@ -189,16 +216,19 @@ static void ctl_total_time(uint32 tt)
 
   SLsmg_gotorc(4,6+6+3);
   SLsmg_bold();
-  SLsmg_printf("%3d:%02d", mins, secs);
+  SLsmg_printf(NCCC"%3d:%02d", mins, secs);
   SLsmg_normal();
   _ctl_refresh();
+
+  songoffset = 0;
+  current_centiseconds = 0;
 }
 
 static void ctl_master_volume(int mv)
 {
   SLsmg_gotorc(4,SLtt_Screen_Cols-5);
   SLsmg_bold();
-  SLsmg_printf("%03d %%", mv);
+  SLsmg_printf(NCCC"%03d %%", mv);
   SLsmg_normal();
   _ctl_refresh();
 }
@@ -215,51 +245,95 @@ static void ctl_file_name(char *name)
 
 static void ctl_current_time(uint32 ct)
 {
-  int i,v;
-  int mins, secs=(int)ct/play_mode->rate;
+  /*int i,v;*/
+  int centisecs, realct;
+  int mins, secs;
+
   if (!ctl.trace_playing) 
     return;
 
+  realct = current_sample_count(ct);
+  if (realct < 0) realct = 0;
+  else realct += songoffset;
+  centisecs = realct / (play_mode->rate/100);
+  current_centiseconds = (uint32)centisecs;
+
+  secs=centisecs/100;
   mins=secs/60;
   secs-=mins*60;
   SLsmg_gotorc(4,6);
   SLsmg_bold();
-  SLsmg_printf("%3d:%02d", mins, secs);
+  SLsmg_printf(NCCC"%3d:%02d", mins, secs);
+/*
   v=0;
   i=voices;
   while (i--)
     if (voice[i].status!=VOICE_FREE) v++;
   SLsmg_gotorc(4,48);
-  SLsmg_printf("%2d", v);
+  SLsmg_printf(NCCC"%2d", v);
+*/
   SLsmg_normal();
   _ctl_refresh();
 }
 
 static void ctl_note(int v)
 {
-  int xl;
+  int i, n;
   if (!ctl.trace_playing) 
     return;
-  xl=voice[v].note%(SLtt_Screen_Cols-24);
-  SLsmg_gotorc(8+(voice[v].channel&0x0f),xl+3);
-  switch(voice[v].status)
+  if (voice[v].clone_type != 0) return;
+
+  old_note[leading_pointer].status = voice[v].status;
+  old_note[leading_pointer].channel = voice[v].channel;
+  old_note[leading_pointer].note = voice[v].note;
+  old_note[leading_pointer].velocity = voice[v].velocity;
+  old_note[leading_pointer].time = current_event->time / (play_mode->rate/100);
+  n=0;
+  i=voices;
+  while (i--)
+    if (voice[i].status!=VOICE_FREE) n++;
+  old_note[leading_pointer].voices = n;
+  leading_pointer++;
+  if (leading_pointer == MAX_OLD_NOTES) leading_pointer = 0;
+
+}
+
+static void ctl_note_display(void)
+{
+  int xl;
+  int v = trailing_pointer;
+  uint32 then;
+
+  then = old_note[v].time;
+
+  while (then <= current_centiseconds && v != leading_pointer)
     {
-    case VOICE_DIE:
-      SLsmg_write_char(',');
-      break;
-    case VOICE_FREE: 
-      SLsmg_write_char('.');
-      break;
-    case VOICE_ON:
-        SLsmg_bold();
-      SLsmg_write_char('0'+(10*voice[v].velocity)/128); 
-      SLsmg_normal();
-      break;
-    case VOICE_OFF:
-    case VOICE_SUSTAINED:
-      SLsmg_write_char('0'+(10*voice[v].velocity)/128);
-      break;
+	  xl=old_note[v].note%(SLtt_Screen_Cols-24);
+	  SLsmg_gotorc(8+(old_note[v].channel&0x0f),xl+3);
+	  switch(old_note[v].status)
+	    {
+	    case VOICE_DIE:
+	      SLsmg_write_char(',');
+	      break;
+	    case VOICE_FREE: 
+	      SLsmg_write_char('.');
+	      break;
+	    case VOICE_ON:
+	        SLsmg_bold();
+	      SLsmg_write_char('0'+(10*old_note[v].velocity)/128); 
+	      SLsmg_normal();
+	      break;
+	    case VOICE_OFF:
+	    case VOICE_SUSTAINED:
+	      SLsmg_write_char('0'+(10*old_note[v].velocity)/128);
+	      break;
+	    }
+	  current_voices = old_note[v].voices;
+	  v++;
+	  if (v == MAX_OLD_NOTES) v = 0;
+	  then = old_note[v].time;
     }
+  trailing_pointer = v;
 }
 
 static void ctl_program(int ch, int val, const char *name)
@@ -270,11 +344,11 @@ static void ctl_program(int ch, int val, const char *name)
   if (ISDRUMCHANNEL(ch))
     {
         SLsmg_bold();
-      SLsmg_printf("%03d", val);
+      SLsmg_printf(NCCC"%03d", val);
         SLsmg_normal();
     }
   else
-    SLsmg_printf("%03d", val);
+    SLsmg_printf(NCCC"%03d", val);
 }
 
 static void ctl_volume(int ch, int val)
@@ -283,7 +357,7 @@ static void ctl_volume(int ch, int val)
     return;
   ch &= 0x0f;
   SLsmg_gotorc(8+ch, SLtt_Screen_Cols-16);
-  SLsmg_printf("%3d", (val*100)/127);
+  SLsmg_printf(NCCC"%3d", (val*100)/127);
 }
 
 static void ctl_expression(int ch, int val)
@@ -292,7 +366,7 @@ static void ctl_expression(int ch, int val)
     return;
   ch &= 0x0f;
   SLsmg_gotorc(8+ch, SLtt_Screen_Cols-12);
-  SLsmg_printf("%3d", (val*100)/127);
+  SLsmg_printf(NCCC"%3d", (val*100)/127);
 }
 
 static void ctl_panning(int ch, int val)
@@ -302,13 +376,13 @@ static void ctl_panning(int ch, int val)
   ch &= 0x0f;
   SLsmg_gotorc(8+ch, SLtt_Screen_Cols-8);
   if (val==NO_PANNING)
-    SLsmg_write_string("   ");
+    SLsmg_write_string(NCCC"   ");
   else if (val<5)
-    SLsmg_write_string(" L ");
+    SLsmg_write_string(NCCC" L ");
   else if (val>123)
-    SLsmg_write_string(" R ");
+    SLsmg_write_string(NCCC" R ");
   else if (val>60 && val<68)
-    SLsmg_write_string(" C ");
+    SLsmg_write_string(NCCC" C ");
   else
     {
       /* wprintw(dftwin, "%+02d", (100*(val-64))/64); */
@@ -319,7 +393,7 @@ static void ctl_panning(int ch, int val)
         val=-val;
       }
       else SLsmg_write_char('+');
-      SLsmg_printf("%02d", val);
+      SLsmg_printf(NCCC"%02d", val);
     }
 }
 
@@ -361,6 +435,11 @@ static void ctl_reset(void)
       ctl_sustain(i, channel[i].sustain);
       ctl_pitch_bend(i, channel[i].pitchbend);
     }
+  for (i=0; i<MAX_OLD_NOTES; i++)
+    {
+      old_note[i].time = 0;
+    }
+  leading_pointer = trailing_pointer = current_voices = 0;
   _ctl_refresh();
 }
 
@@ -398,9 +477,9 @@ static int ctl_open(int using_stdin, int using_stdout)
   }
   SLang_init_tty(7, 0, 0);
   SLsmg_init_smg();
-  SLtt_set_color (20, "Normal", "lightgray", "black");
-  SLtt_set_color (21, "HighLight", "white", "black");
-  SLtt_set_color (22, "Reverse", "black", "white");
+  SLtt_set_color (20, NCCC"Normal", NCCC"lightgray", NCCC"black");
+  SLtt_set_color (21, NCCC"HighLight", NCCC"white", NCCC"black");
+  SLtt_set_color (22, NCCC"Reverse", NCCC"black", NCCC"white");
   SLtt_Use_Ansi_Colors = 1;
   SLtt_Term_Cannot_Scroll = 1;
 
@@ -417,7 +496,7 @@ static int ctl_open(int using_stdin, int using_stdout)
       SLsmg_gotorc(4,6+6+1);
       SLsmg_write_char('/');
       SLsmg_gotorc(4,40);
-      SLsmg_printf("Voices:    / %d", voices);
+      SLsmg_printf(NCCC"Voices:    / %d", voices);
     }
   else
     {
@@ -462,7 +541,13 @@ static void ctl_close(void)
 static int ctl_read(int32 *valp)
 {
   int c;
-
+  if (last_rc_command)
+    {
+	*valp = last_rc_arg;
+	c = last_rc_command;
+	last_rc_command = 0;
+	return c;
+    }
   if (!SLang_input_pending(0))
     return RC_NONE;
 

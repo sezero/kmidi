@@ -39,6 +39,12 @@
 #endif
 #endif
 
+#ifdef HAVE_STRING_H
+#include <string.h>
+#else
+#include <strings.h>
+#endif
+
 #include "common.h"
 #include "instrum.h"
 #include "playmidi.h"
@@ -53,6 +59,7 @@ static void ctl_master_volume(int mv);
 static void ctl_file_name(char *name);
 static void ctl_current_time(uint32 ct);
 static void ctl_note(int v);
+static void ctl_note_display(void);
 static void ctl_program(int ch, int val, const char *name);
 static void ctl_volume(int ch, int val);
 static void ctl_expression(int ch, int val);
@@ -86,8 +93,22 @@ ControlMode ctl=
 /* foreground/background checks disabled since switching to curses */
 /* static int in_foreground=1; */
 static int ctl_helpmode=0;
+static int maxy, maxx;
+static int save_master_volume;
+static char save_file_name[50];
+static int screen_bugfix = 0;
+static uint32 current_centiseconds = 0;
+static int songoffset = 0, current_voices = 0;
 
-static int songoffset = 0;
+extern MidiEvent *current_event;
+
+typedef struct {
+  uint8 status, channel, note, velocity, voices;
+  uint32 time;
+} OldVoice;
+#define MAX_OLD_NOTES 200
+static OldVoice old_note[MAX_OLD_NOTES];
+static int leading_pointer=0, trailing_pointer=0;
 
 static WINDOW *dftwin=0, *msgwin=0;
 
@@ -100,13 +121,20 @@ static void _ctl_refresh(void)
 static void ctl_refresh(void)
 {
   if (ctl.trace_playing)
+    {
+       ctl_current_time(0);
+       ctl_note_display();
+  wmove(dftwin, 4,48);
+  wprintw(dftwin, (char *)"%2d", current_voices);
+  wattroff(dftwin, A_BOLD);
+    }
+  /*if (ctl.trace_playing)*/
     _ctl_refresh();
 }
 
 /* This is taken from TiMidity++. */
 static void re_init_screen(void)
 {
-    static int screen_bugfix = 0;
     if(screen_bugfix)
 	return;
     screen_bugfix = 1;
@@ -135,7 +163,7 @@ static void ctl_help_mode(void)
       /* And here I thought the point of curses was that you could put
 	 stuff on windows without having to worry about whether this
 	 one is overlapping that or the other way round... */
-      helpwin=newwin(2,COLS,0,0);
+      helpwin=newwin(2,maxx,0,0);
       wattron(helpwin, A_REVERSE);
       werase(helpwin); 
       waddstr(helpwin, 
@@ -160,11 +188,15 @@ static void ctl_total_time(uint32 tt)
   wprintw(dftwin, (char *)"%3d:%02d", mins, secs);
   wattroff(dftwin, A_BOLD);
   _ctl_refresh();
+
+  songoffset = 0;
+  current_centiseconds = 0;
 }
 
 static void ctl_master_volume(int mv)
 {
-  wmove(dftwin, 4,COLS-5);
+  save_master_volume = mv;
+  wmove(dftwin, 4,maxx-5);
   wattron(dftwin, A_BOLD);
   wprintw(dftwin, (char *)"%03d %%", mv);
   wattroff(dftwin, A_BOLD);
@@ -173,6 +205,8 @@ static void ctl_master_volume(int mv)
 
 static void ctl_file_name(char *name)
 {
+  strncpy(save_file_name, name, 50);
+  save_file_name[49] = '\0';
   wmove(dftwin, 3,6);
   wclrtoeol(dftwin );
   wattron(dftwin, A_BOLD);
@@ -183,10 +217,9 @@ static void ctl_file_name(char *name)
 
 static void ctl_current_time(uint32 ct)
 {
-  int i,v;
+  /*int i,v;*/
   int centisecs, realct;
   int mins, secs;
-
 
   if (!ctl.trace_playing) 
     return;
@@ -195,6 +228,7 @@ static void ctl_current_time(uint32 ct)
   if (realct < 0) realct = 0;
   else realct += songoffset;
   centisecs = realct / (play_mode->rate/100);
+  current_centiseconds = (uint32)centisecs;
 
   secs=centisecs/100;
   mins=secs/60;
@@ -202,41 +236,78 @@ static void ctl_current_time(uint32 ct)
   wmove(dftwin, 4,6);
   wattron(dftwin, A_BOLD);
   wprintw(dftwin, (char *)"%3d:%02d", mins, secs);
+/*
   v=0;
   i=voices;
   while (i--)
     if (voice[i].status!=VOICE_FREE) v++;
+*/
+/*
   wmove(dftwin, 4,48);
   wprintw(dftwin, (char *)"%2d", v);
   wattroff(dftwin, A_BOLD);
+*/
   _ctl_refresh();
 }
 
 static void ctl_note(int v)
 {
-  int xl;
+  int i, n;
   if (!ctl.trace_playing) 
     return;
-  xl=voice[v].note%(COLS-24);
-  wmove(dftwin, 8+(voice[v].channel & 0x0f),xl+3);
-  switch(voice[v].status)
+  if (voice[v].clone_type != 0) return;
+
+  old_note[leading_pointer].status = voice[v].status;
+  old_note[leading_pointer].channel = voice[v].channel;
+  old_note[leading_pointer].note = voice[v].note;
+  old_note[leading_pointer].velocity = voice[v].velocity;
+  old_note[leading_pointer].time = current_event->time / (play_mode->rate/100);
+  n=0;
+  i=voices;
+  while (i--)
+    if (voice[i].status!=VOICE_FREE) n++;
+  old_note[leading_pointer].voices = n;
+  leading_pointer++;
+  if (leading_pointer == MAX_OLD_NOTES) leading_pointer = 0;
+
+}
+
+static void ctl_note_display(void)
+{
+  int xl;
+  int v = trailing_pointer;
+  uint32 then;
+
+  then = old_note[v].time;
+
+  while (then <= current_centiseconds && v != leading_pointer)
     {
-    case VOICE_DIE:
-      waddch(dftwin, ',');
-      break;
-    case VOICE_FREE: 
-      waddch(dftwin, '.');
-      break;
-    case VOICE_ON:
-      wattron(dftwin, A_BOLD);
-      waddch(dftwin, '0'+(10*voice[v].velocity)/128); 
-      wattroff(dftwin, A_BOLD);
-      break;
-    case VOICE_OFF:
-    case VOICE_SUSTAINED:
-      waddch(dftwin, '0'+(10*voice[v].velocity)/128);
-      break;
+	  xl=old_note[v].note%(maxx-24);
+	  wmove(dftwin, 8+(old_note[v].channel & 0x0f),xl+3);
+	  switch(old_note[v].status)
+	    {
+	    case VOICE_DIE:
+	      waddch(dftwin, ',');
+	      break;
+	    case VOICE_FREE: 
+	      waddch(dftwin, '.');
+	      break;
+	    case VOICE_ON:
+	      wattron(dftwin, A_BOLD);
+	      waddch(dftwin, '0'+(10*old_note[v].velocity)/128); 
+	      wattroff(dftwin, A_BOLD);
+	      break;
+	    case VOICE_OFF:
+	    case VOICE_SUSTAINED:
+	      waddch(dftwin, '0'+(10*old_note[v].velocity)/128);
+	      break;
+	    }
+	  current_voices = old_note[v].voices;
+	  v++;
+	  if (v == MAX_OLD_NOTES) v = 0;
+	  then = old_note[v].time;
     }
+  trailing_pointer = v;
 }
 
 static void ctl_program(int ch, int val, const char *name)
@@ -244,7 +315,7 @@ static void ctl_program(int ch, int val, const char *name)
   if (!ctl.trace_playing) 
     return;
   ch &= 0x0f;
-  wmove(dftwin, 8+ch, COLS-20);
+  wmove(dftwin, 8+ch, maxx-20);
   if (ISDRUMCHANNEL(ch))
     {
       wattron(dftwin, A_BOLD);
@@ -260,7 +331,7 @@ static void ctl_volume(int ch, int val)
   if (!ctl.trace_playing) 
     return;
   ch &= 0x0f;
-  wmove(dftwin, 8+ch, COLS-16);
+  wmove(dftwin, 8+ch, maxx-16);
   wprintw(dftwin, (char *)"%3d", (val*100)/127);
 }
 
@@ -269,7 +340,7 @@ static void ctl_expression(int ch, int val)
   if (!ctl.trace_playing) 
     return;
   ch &= 0x0f;
-  wmove(dftwin, 8+ch, COLS-12);
+  wmove(dftwin, 8+ch, maxx-12);
   wprintw(dftwin, (char *)"%3d", (val*100)/127);
 }
 
@@ -278,7 +349,7 @@ static void ctl_panning(int ch, int val)
   if (!ctl.trace_playing) 
     return;
   ch &= 0x0f;
-  wmove(dftwin, 8+ch, COLS-8);
+  wmove(dftwin, 8+ch, maxx-8);
   if (val==NO_PANNING)
     waddstr(dftwin, "   ");
   else if (val<5)
@@ -306,7 +377,7 @@ static void ctl_sustain(int ch, int val)
   if (!ctl.trace_playing) 
     return;
   ch &= 0x0f;
-  wmove(dftwin, 8+ch, COLS-4);
+  wmove(dftwin, 8+ch, maxx-4);
   if (val) waddch(dftwin, 'S');
   else waddch(dftwin, ' ');
 }
@@ -316,7 +387,7 @@ static void ctl_pitch_bend(int ch, int val)
   if (!ctl.trace_playing) 
     return;
   ch &= 0x0f;
-  wmove(dftwin, 8+ch, COLS-2);
+  wmove(dftwin, 8+ch, maxx-2);
   if (val>0x2000) waddch(dftwin, '+');
   else if (val<0x2000) waddch(dftwin, '-');
   else waddch(dftwin, ' ');
@@ -330,7 +401,7 @@ static void ctl_reset(void)
   for (i=0; i<16; i++)
     {
       wmove(dftwin, 8+i, 3);
-      for (j=0; j<COLS-24; j++)
+      for (j=0; j<maxx-24; j++)
 	waddch(dftwin, '.');
       ctl_program(i, channel[i].program, channel[i].name);
       ctl_volume(i, channel[i].volume);
@@ -339,6 +410,11 @@ static void ctl_reset(void)
       ctl_sustain(i, channel[i].sustain);
       ctl_pitch_bend(i, channel[i].pitchbend);
     }
+  for (i=0; i<MAX_OLD_NOTES; i++)
+    {
+      old_note[i].time = 0;
+    }
+  leading_pointer = trailing_pointer = current_voices = 0;
   _ctl_refresh();
 }
 
@@ -350,9 +426,72 @@ static void ctl_reset(void)
 static SCREEN *oldscr;
 #endif
 
-static int ctl_open(int using_stdin, int using_stdout)
+static void draw_windows(void)
 {
   int i;
+  werase(dftwin);
+  wmove(dftwin, 0,0);
+  waddstr(dftwin, "TiMidity v" TIMID_VERSION);
+  wmove(dftwin, 0,maxx-52);
+  waddstr(dftwin, "(C) 1995 Tuukka Toivonen <toivonen@clinet.fi>");
+  wmove(dftwin, 1,0);
+  waddstr(dftwin, "Press 'h' for help with keys, or 'q' to quit.");
+  wmove(dftwin, 3,0);
+  waddstr(dftwin, "File:");
+  wmove(dftwin, 4,0);
+  if (ctl.trace_playing)
+    {
+      waddstr(dftwin, "Time:");
+      wmove(dftwin, 4,6+6+1);
+      waddch(dftwin, '/');
+      wmove(dftwin, 4,40);
+      wprintw(dftwin, (char *)"Voices:    / %d", voices);
+    }
+  else
+    {
+      waddstr(dftwin, "Playing time:");
+    }
+  wmove(dftwin, 4,maxx-20);
+  waddstr(dftwin, "Master volume:");
+  if (save_master_volume) ctl_master_volume(save_master_volume);
+  if (save_file_name[0]) ctl_file_name(save_file_name);
+  wmove(dftwin, 5,0);
+  for (i=0; i<maxx; i++)
+    waddch(dftwin, '_');
+  if (ctl.trace_playing)
+    {
+      wmove(dftwin, 6,0);
+      waddstr(dftwin, "Ch");
+      wmove(dftwin, 6,maxx-20);
+      waddstr(dftwin, "Prg Vol Exp Pan S B");
+      wmove(dftwin, 7,0);
+      for (i=0; i<maxx; i++)
+	waddch(dftwin, '-');
+      for (i=0; i<16; i++)
+	{
+	  wmove(dftwin, 8+i, 0);
+	  wprintw(dftwin, (char *)"%02d", i+1);
+	}
+    }
+  else
+    {
+      if (msgwin) wresize(msgwin, maxy-6, maxx);
+      else
+	{
+          msgwin=newwin(maxy-6,maxx,6,0);
+          scrollok(msgwin, TRUE);
+          werase(msgwin);
+	}
+      touchwin(msgwin);
+      wrefresh(msgwin);
+    }
+  touchwin(dftwin);
+  wrefresh(dftwin);
+  screen_bugfix = 0;
+}
+
+static int ctl_open(int using_stdin, int using_stdout)
+{
 #ifdef CURSED_REDIR_HACK
   FILE *infp=stdin, *outfp=stdout;
   SCREEN *dftscr;
@@ -394,64 +533,16 @@ static int ctl_open(int using_stdin, int using_stdout)
   /*leaveok(stdscr, 1);*/
   idlok(stdscr, 1);
   keypad(stdscr, TRUE);
+  curs_set(0);
+  getmaxyx(stdscr,maxy,maxx);
   ctl.opened=1;
 
   if (ctl.trace_playing)
     dftwin=stdscr;
   else
-    dftwin=newwin(6,COLS,0,0);
+    dftwin=newwin(6,maxx,0,0);
 
-  werase(dftwin);
-  wmove(dftwin, 0,0);
-  waddstr(dftwin, "TiMidity v" TIMID_VERSION);
-  wmove(dftwin, 0,COLS-52);
-  waddstr(dftwin, "(C) 1995 Tuukka Toivonen <toivonen@clinet.fi>");
-  wmove(dftwin, 1,0);
-  waddstr(dftwin, "Press 'h' for help with keys, or 'q' to quit.");
-  wmove(dftwin, 3,0);
-  waddstr(dftwin, "File:");
-  wmove(dftwin, 4,0);
-  if (ctl.trace_playing)
-    {
-      waddstr(dftwin, "Time:");
-      wmove(dftwin, 4,6+6+1);
-      waddch(dftwin, '/');
-      wmove(dftwin, 4,40);
-      wprintw(dftwin, (char *)"Voices:    / %d", voices);
-    }
-  else
-    {
-      waddstr(dftwin, "Playing time:");
-    }
-  wmove(dftwin, 4,COLS-20);
-  waddstr(dftwin, "Master volume:");
-  wmove(dftwin, 5,0);
-  for (i=0; i<COLS; i++)
-    waddch(dftwin, '_');
-  if (ctl.trace_playing)
-    {
-      wmove(dftwin, 6,0);
-      waddstr(dftwin, "Ch");
-      wmove(dftwin, 6,COLS-20);
-      waddstr(dftwin, "Prg Vol Exp Pan S B");
-      wmove(dftwin, 7,0);
-      for (i=0; i<COLS; i++)
-	waddch(dftwin, '-');
-      for (i=0; i<16; i++)
-	{
-	  wmove(dftwin, 8+i, 0);
-	  wprintw(dftwin, (char *)"%02d", i+1);
-	}
-    }
-  else
-    {
-      msgwin=newwin(LINES-6-1,COLS,6,0);
-      werase(msgwin);
-      scrollok(msgwin, TRUE);
-      /*leaveok(msgwin, TRUE);*/
-      wrefresh(msgwin);
-    }
-  _ctl_refresh();
+  draw_windows();
   
   return 0;
 }
@@ -517,7 +608,15 @@ static int ctl_read(int32 *valp)
 	case KEY_LEFT:
 	 songoffset -=
 	  *valp=play_mode->rate;
+	 if (songoffset<0) songoffset=0;
 	  return RC_BACK;
+#ifdef KEY_RESIZE
+	case KEY_RESIZE:
+  	  getmaxyx(stdscr,maxy,maxx);
+	  draw_windows();
+	  ctl_reset();
+	  return RC_NONE;
+#endif
 	  /* case ' ':
 	     return RC_TOGGLE_PAUSE; */
 	}
@@ -592,13 +691,16 @@ static int cmsg(int type, int verbosity_level, const char *fmt, ...)
 	  wattroff(msgwin, A_REVERSE);
 	  waddch(msgwin, '\n');
 	  if (type==CMSG_FATAL)
-	    sleep(2);
+	    {
+      	      wrefresh(msgwin);
+	      sleep(2);
+	    }
 	  break;
 	}
+      wrefresh(msgwin);
     }
 
   va_end(ap);
-  if (!ctl.trace_playing) wrefresh(msgwin);
   return 0;
 }
 

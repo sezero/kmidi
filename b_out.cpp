@@ -176,6 +176,7 @@ void b_out(int fd, int *buf, int ocount)
         ret = WRITEDRIVER(fd, bbuf + bboffset, outchunk);
     else
         ret = WRITEDRIVER(fd, bbuf + bboffset, bbcount);
+    ctl->refresh();
     if (ret < 0) {
 	if (errno == EINTR) continue;
 	else if (errno == EWOULDBLOCK) {
