@@ -86,17 +86,14 @@ static void parse_inst(SFInsts *rec, Layer *pr_lay, SFInfo *sf, int preset, int 
 static void parse_inst_layer(Layer *lay, SFInfo *sf, int idx);
 static int search_sample(Layer *lay);
 static void append_layer(Layer *dst, Layer *src, SFInfo *sf);
-static void make_inst(SFInsts *rec, Layer *lay, SFInfo *sf, int pr_idx, int in_idx, int inum, uint16 range, int num_i);
+static void make_inst(SFInsts *rec, Layer *lay, SFInfo *sf, int pr_idx, int in_idx, int inum,
+	uint16 pk_range, uint16 pv_range, int num_i);
 static int32 calc_root_pitch(Layer *lay, SFInfo *sf, SampleList *sp);
 #ifndef SF_SUPPRESS_ENVELOPE
 static void convert_volume_envelope(Layer *lay, SFInfo *sf, SampleList *sp, int banknum, int preset);
 #endif
 static int32 to_offset(int offset);
-#ifdef tplussbkuse
 static int32 calc_rate(int diff, double msec);
-#else
-static int32 calc_rate(int diff, int time);
-#endif
 static double to_msec(Layer *lay, SFInfo *sf, int index);
 static FLOAT_T calc_volume(Layer *lay, SFInfo *sf);
 static int32 calc_sustain(Layer *lay, SFInfo *sf, int banknum, int preset);
@@ -758,14 +755,16 @@ static void parse_inst(SFInsts *rec, Layer *pr_lay, SFInfo *sf, int preset, int 
 {
 	int from_ndx, to_ndx;
 	int i, sample;
-	uint16 range=0;
+	uint16 pv_range=0, pk_range=0;
 	Layer lay, glay;
 
 	from_ndx = sf->insthdr[inst].bagNdx;
 	to_ndx = sf->insthdr[inst+1].bagNdx;
 
 	if (pr_lay->set[SF_velRange])
-		range = pr_lay->val[SF_velRange];
+		pv_range = pr_lay->val[SF_velRange];
+	if (pr_lay->set[SF_keyRange])
+		pk_range = pr_lay->val[SF_keyRange];
 
 	memcpy(&glay, pr_lay, sizeof(Layer));
 	for (i = from_ndx; i < to_ndx; i++) {
@@ -777,7 +776,7 @@ static void parse_inst(SFInsts *rec, Layer *pr_lay, SFInfo *sf, int preset, int 
 		else {
 			/* append_layer(&lay, &glay, sf); */
 			merge_layer(&lay, &glay);
-			make_inst(rec, &lay, sf, preset, inst, inum, range, num_i);
+			make_inst(rec, &lay, sf, preset, inst, inum, pk_range, pv_range, num_i);
 		}
 	}
 }
@@ -822,6 +821,46 @@ static void append_layer(Layer *dst, Layer *src, SFInfo *sf)
 	}
 }
 
+static char kvec[2][128];
+static void clear_kvec()
+{
+	int i;
+	for (i=0; i<128; i++) {
+		kvec[0][i] = kvec[1][i] = 0;
+	}
+}
+static void new_kvec(int lr)
+{
+	int i;
+	for (i=0; i<128; i++) {
+		kvec[lr][i] = 0;
+	}
+}
+static void union_kvec(int lr, int kr)
+{
+	int i;
+	if (!kr || kr<0) return;
+	for (i=0; i<128; i++)
+	    if (i >= LO_VAL(kr) && i <= HI_VAL(kr)) kvec[lr][i] = 1;
+
+}
+static int intersect_kvec(int lr, int kr)
+{
+	int i;
+	if (!kr || kr<0) return 0;
+	for (i=0; i<128; i++)
+	    if (i >= LO_VAL(kr) && i <= HI_VAL(kr) && kvec[lr][i]) return 1;
+	return 0;
+}
+static int subset_kvec(int lr, int kr)
+{
+	int i;
+	if (!kr || kr<0) return 0;
+	for (i=0; i<128; i++)
+	    if (i >= LO_VAL(kr) && i <= HI_VAL(kr) && !kvec[lr][i]) return 0;
+	return 1;
+}
+
 static char vvec[2][128];
 
 static void clear_vvec()
@@ -831,20 +870,20 @@ static void clear_vvec()
 		vvec[0][i] = vvec[1][i] = 0;
 	}
 }
-static void union_vvec(int lr, int kr)
+static void union_vvec(int lr, int vr)
 {
 	int i;
-	if (!kr || kr<0) return;
+	if (!vr || vr<0) return;
 	for (i=0; i<128; i++)
-	    if (i >= LO_VAL(kr) && i <= HI_VAL(kr)) vvec[lr][i] = 1;
+	    if (i >= LO_VAL(vr) && i <= HI_VAL(vr)) vvec[lr][i] = 1;
 
 }
-static int intersect_vvec(int lr, int kr)
+static int intersect_vvec(int lr, int vr)
 {
 	int i;
-	if (!kr || kr<0) return 0;
+	if (!vr || vr<0) return 0;
 	for (i=0; i<128; i++)
-	    if (i >= LO_VAL(kr) && i <= HI_VAL(kr) && vvec[lr][i]) return 1;
+	    if (i >= LO_VAL(vr) && i <= HI_VAL(vr) && vvec[lr][i]) return 1;
 	return 0;
 }
 
@@ -881,7 +920,11 @@ static int intersect_rvec(int lr, int kr)
 	return 0;
 }
 /* convert layer info to timidity instrument strucutre */
+static void make_inst(SFInsts *rec, Layer *lay, SFInfo *sf, int pr_idx, int in_idx, int inum,
+	uint16 pk_range, uint16 pv_range, int num_i)
+/*
 static void make_inst(SFInsts *rec, Layer *lay, SFInfo *sf, int pr_idx, int in_idx, int inum, uint16 range, int num_i)
+*/
 {
 	int banknum = sf->presethdr[pr_idx].bank;
 	int preset = sf->presethdr[pr_idx].preset;
@@ -896,18 +939,23 @@ static void make_inst(SFInsts *rec, Layer *lay, SFInfo *sf, int pr_idx, int in_i
 	InstList *ip;
 	tsampleinfo *sample;
 	SampleList *sp;
+#if 0
 #ifdef DO_LINKED_WAVES
 	int linked_wave;
 #endif
-	int sampleFlags, stereo_chan, keyrange, x_chan = 0;
+#endif
+	int sampleFlags, stereo_chan = 0, keyrange, x_chan = 0;
 	static int lastpreset = -1;
 	static int lastbanknum = -1;
 	static int lastvelrange = -1;
 	static int lastrange = -1;
 	static int last_chan = -1;
 	static int lastinum = -1;
+	static int laststereo_chan = 0;
+	static int lastpk_range = 0;
 
-	if (range) velrange = range;
+	if (pk_range) velrange = 0;
+	else if (pv_range) velrange = pv_range;
 	else if (lay->set[SF_velRange]) velrange = lay->val[SF_velRange];
 	else velrange = 0;
 
@@ -919,11 +967,13 @@ LO_VAL(velrange), HI_VAL(velrange));
 
 	sample = &sf->sampleinfo[lay->val[SF_sampleId]];
 #ifdef DO_LINKED_WAVES
+#if 0
 	linked_wave = sample->samplelink;
 	if (linked_wave && linked_wave < sfinfo.nrinfos) {
 		if (inum == -1) sample = &sf->sampleinfo[linked_wave - 1];
-		else make_inst(rec, lay, sf, pr_idx, in_idx, -1, velrange, num_i);
+		else make_inst(rec, lay, sf, pr_idx, in_idx, -1, pk_range, velrange, num_i);
 	}
+#endif
 #endif
 	if (sample->sampletype & 0x8000) /* is ROM sample? */
 		return;
@@ -992,20 +1042,14 @@ else printf("NO CFG NAME!\n");
 	if (lay->set[SF_keyRange]) keyrange = lay->val[SF_keyRange];
 	else keyrange = 0;
 
-	if (lastbanknum != banknum) {
+	if (lastbanknum != banknum || lastpreset != preset) {
 		lastbanknum = banknum;
 		lastpreset = preset;
 		lastvelrange = velrange;
 		lastrange = -1;
 		clear_rvec();
 		clear_vvec();
-	}
-	if (lastpreset != preset) {
-		lastpreset = preset;
-		lastvelrange = velrange;
-		lastrange = -1;
-		clear_rvec();
-		clear_vvec();
+		clear_kvec();
 	}
 	if (lastvelrange != velrange) {
 		lastvelrange = velrange;
@@ -1017,26 +1061,26 @@ else printf("NO CFG NAME!\n");
 		lastinum = inum;
 	}
 
-	if (banknum < 128 && range) {
-		if (range == lastrange) x_chan = last_chan;
-		else if (!intersect_vvec(0, range)) x_chan = 0;
-		else if (!intersect_vvec(1, range)) x_chan = 1;
+	if (banknum < 128 && pv_range && !pk_range) {
+		if (pv_range == lastrange) x_chan = last_chan;
+		else if (!intersect_vvec(0, pv_range)) x_chan = 0;
+		else if (!intersect_vvec(1, pv_range)) x_chan = 1;
 		else {
 		ctl->cmsg(CMSG_INFO, VERB_NOISY,
 		  "sndfont: invalid velocity range in bank %d preset %d: low %d, high %d",
-			banknum, preset, LO_VAL(range), HI_VAL(range));
+			banknum, preset, LO_VAL(pv_range), HI_VAL(pv_range));
 		return;
 		}
-		if (range != lastrange) {
+		if (pv_range != lastrange) {
 		#if 0
 		ctl->cmsg(CMSG_ERROR, VERB_NORMAL,
 		  "sndfont: x_chan %d vel range in bank %d preset %d: low %d, high %d",
-			x_chan, banknum, preset, LO_VAL(range), HI_VAL(range));
+			x_chan, banknum, preset, LO_VAL(pv_range), HI_VAL(pv_range));
 		#endif
 			last_chan = x_chan;
 			clear_rvec();
-			union_vvec(x_chan, range);
-			lastrange = range;
+			union_vvec(x_chan, pv_range);
+			lastrange = pv_range;
 		}
 		#if 0
 		else if (intersect_rvec(x_chan, keyrange))
@@ -1056,7 +1100,35 @@ else printf("NO CFG NAME!\n");
 	if (x_chan != 0) return;
 
 	/* melodic preset with 2 instruments: put 2nd one at right */
-	if (banknum < 128 && num_i == 2 && !range) stereo_chan = inum;
+	if (banknum < 128 && num_i > 1 && (!pv_range || pk_range)) {
+		if (!pk_range) {
+		    if (inum == 0) stereo_chan = 0;
+		    else stereo_chan = 1;
+		}
+		else if (pk_range == lastpk_range) {
+		    stereo_chan = laststereo_chan;
+		    if (!subset_kvec(stereo_chan, keyrange)) return;
+		}
+		else {
+		    if (!intersect_kvec(0, pk_range)) stereo_chan = 0;
+		    else {
+			stereo_chan = 1;
+			new_kvec(stereo_chan);
+		    }
+		    #if 0
+		    else {
+			ctl->cmsg(CMSG_INFO, VERB_NOISY,
+		  	"sndfont: invalid preset key range in bank %d preset %d: low %d, high %d",
+				banknum, preset, LO_VAL(pk_range), HI_VAL(pk_range));
+			return;
+		    }
+		    #endif
+		    laststereo_chan = stereo_chan;
+		    lastpk_range = pk_range;
+		    union_kvec(stereo_chan, pk_range);
+		    if (!subset_kvec(stereo_chan, keyrange)) return;
+		}
+	}
 	else if (!intersect_rvec(0, keyrange)) stereo_chan = 0;
 	else if (!intersect_rvec(1, keyrange)) stereo_chan = 1;
 	else if (!subset_rvec(0, keyrange)) stereo_chan = 0;
@@ -1069,6 +1141,15 @@ else printf("NO CFG NAME!\n");
 	}
 
 	union_rvec(stereo_chan, keyrange);
+
+#if 0
+if (pk_range)
+	ctl->cmsg(CMSG_ERROR, VERB_NORMAL,
+	  "adding chan %d in bank %d preset %d: low %d, high %d (preset low %d high %d; vel lo %d hi %d)",
+		stereo_chan, banknum, preset, LO_VAL(keyrange), HI_VAL(keyrange),
+		LO_VAL(pk_range), HI_VAL(pk_range),
+		LO_VAL(velrange), HI_VAL(velrange));
+#endif
 
 	if (ip == NULL) {
 		ip = (InstList*)safe_malloc(sizeof(InstList));
@@ -1547,6 +1628,7 @@ static int32 calc_rate(int diff, double msec)
     diff <<= (7+15);
     /* rate = ((double)diff / play_mode->rate) * control_ratio * 1000.0 / msec; */
     rate = ( (double)diff * 1000.0 ) / (msec * CONTROLS_PER_SECOND);
+    rate *= 2; /* ad hoc adjustment */
     if (rate < 10.0) return 10;
     return (int32)rate;
 
