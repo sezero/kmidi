@@ -369,7 +369,8 @@ KMidiFrame::~KMidiFrame(){
 //}
 
 bool KMidiFrame::queryClose() {
-
+    if( kapp->sessionSaving())
+	return true;
     kmidi->quitClicked();
     return true;
 }

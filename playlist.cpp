@@ -195,6 +195,8 @@ PlaylistEdit::~PlaylistEdit(){
 //    e->ignore();
 //}
 bool PlaylistEdit::queryClose(){
+    if( kapp->sessionSaving())
+	return true;
     hide();
     return false;
 }
