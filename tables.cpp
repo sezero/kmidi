@@ -16,7 +16,7 @@
 
     You should have received a copy of the GNU General Public License
     along with this program; if not, write to the Free Software
-    Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
     The 8-bit uLaw to 16-bit PCM and the 13-bit-PCM to 8-bit uLaw
     tables were lifted from the rsynth-2.0 sources.  The README says:
