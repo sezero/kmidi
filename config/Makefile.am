@@ -1,5 +1,5 @@
 #	$Id$
-CONFIG_FILES = gravis.cfg gsdrum.cfg midia.cfg mt32.cfg sndfont.cfg timidity.cfg wowpats.cfg chaos12-voices chaos8-voices megadrum megainst pila-voices sound-canvas-drums guitar piano piano+guitar drums
+CONFIG_FILES = gravis.cfg gsdrum.cfg midia.cfg mt32.cfg timidity.cfg wowpats.cfg chaos12-voices chaos8-voices megadrum megainst pila-voices sound-canvas-drums guitar piano piano+guitar drums
 TIMID_DIR = $(kde_datadir)/kmidi/config
 
 EXTRA_DIST = $(CONFIG_FILES)
