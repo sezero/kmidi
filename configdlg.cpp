@@ -154,7 +154,7 @@ ConfigDlg::ConfigDlg(QWidget *parent, struct configstruct *data, const char *nam
 // Page 2
     w = new QWidget(test, "_page2");
     about = new KAboutWidget(w, "_about");
-    QPixmap pm = BarIcon("kmidilogo");
+    QPixmap pm = UserIcon("kmidilogo");
     about->setLogo(pm);
     about->setCaption(i18n("About KMidi"));
     about->setVersion(i18n(KMIDIVERSION));
@@ -199,7 +199,7 @@ ConfigDlg::ConfigDlg(QWidget *parent, struct configstruct *data, const char *nam
 // Page 3
     w = new QWidget(test, "_page3");
     patches = new KAboutWidget(w, "_patches");
-    QPixmap km = BarIcon("mini-kmidi");
+    QPixmap km = BarIcon("kmidi");
     patches->setLogo(km);
     //patches->setCaption(i18n("Patchsets"));
     patches->setVersion(i18n("Where to get sets of patches."));

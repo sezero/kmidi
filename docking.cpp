@@ -39,7 +39,7 @@ DockWidget::DockWidget( KMidiFrame* parent, const char *name)
   : KDockWindow( parent, name )
 {
 
-  setPixmap( BarIcon("mini-kmidi") );
+  setPixmap( BarIcon("kmidi") );
 
   // popup menu for right mouse button
   QPopupMenu* popup_m = contextMenu();
