@@ -667,8 +667,13 @@ static int ctl_blocking_read(int32 *valp)
 	      case MOTIF_REVERB:
 		  pipe_int_read(&arg);
 		  *valp= arg;
+		  if (arg == 1) arg = 32;
+		  else if (arg == 2) arg = 64;
+		  else if (arg == 3) arg = 96;
+		  else if (arg == 4) arg = 127;
 		  global_reverb = arg;
 		  for (i=0; i<MAXCHAN; i++)
+		    if (channel[i].reverberation < arg)
 			channel[i].reverberation = arg;
 		  if (!pausing) return RC_NONE;
 		  break;
@@ -676,8 +681,13 @@ static int ctl_blocking_read(int32 *valp)
 	      case MOTIF_CHORUS:
 		  pipe_int_read(&arg);
 		  *valp= arg;
+		  if (arg == 1) arg = 32;
+		  else if (arg == 2) arg = 64;
+		  else if (arg == 3) arg = 96;
+		  else if (arg == 4) arg = 127;
 		  global_chorus = arg;
 		  for (i=0; i<MAXCHAN; i++)
+		    if (channel[i].chorusdepth < arg)
 			channel[i].chorusdepth = arg;
 		  if (!pausing) return RC_NONE;
 		  break;

@@ -1757,7 +1757,7 @@ static void adjust_panning(int c)
     if ((voice[i].channel==c) &&
 	(voice[i].status & (VOICE_ON | VOICE_SUSTAINED)) )
       {
-	if (voice[i].clone_voice >= 0) continue;
+	/* if (voice[i].clone_voice >= 0) continue; */
 	if (voice[i].clone_type != NOT_CLONE) continue;
 	voice[i].panning=channel[c].panning;
 	recompute_amp(i);

@@ -1,6 +1,11 @@
+1999-12-15  Greg Lee  <lee@hawaii.edu>
+
+	* fix setting global reverb and chorus depth
+
 1999-12-14  Greg Lee  <lee@hawaii.edu>
 
 	* bar graphics for channel view
+	* sndfont.cpp: percussion should not be dry
 
 1999-12-13  Greg Lee  <lee@hawaii.edu>
 
