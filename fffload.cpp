@@ -8,20 +8,17 @@
  * $Id$
  */
 
+#include <sys/types.h>
+#include <sys/stat.h>
+
 #include <stdio.h>
 #include <fcntl.h>
 #include <ctype.h>
 #include <errno.h>
 #include <unistd.h>
-#include <sys/types.h>
-#include <sys/stat.h>
 #include <strings.h>
 
-#if defined (__FreeBSD__) || defined(__bsdi__)
 #include <stdlib.h>
-#else
-#include <malloc.h>
-#endif
 
 #include "config.h"
 #include "common.h"
