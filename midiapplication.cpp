@@ -27,13 +27,13 @@
 #include <stdlib.h>
 #include <unistd.h>
 
-#include <kuniqueapp.h>
+#include <kuniqueapplication.h>
 
 #include "kmidi.h"
 #include "midiapplication.h"
 #include "kmidiframe.h"
 
-#include <kstddirs.h>
+#include <kstandarddirs.h>
 #include <kglobal.h>
 #include <klocale.h>
 #include <kaboutdata.h>

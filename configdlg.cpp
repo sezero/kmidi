@@ -25,7 +25,7 @@
  *
  */
 
-#include <kapp.h>
+#include <kapplication.h>
 #include <qpushbutton.h>
 #include <qlabel.h>
 #include <qgroupbox.h>
@@ -39,7 +39,7 @@
 #include <klocale.h>
 #include <ktabctl.h>
 #include <kiconloader.h>
-#include <kstddirs.h>
+#include <kstandarddirs.h>
 #include <kglobal.h>
 //#include <kcolorbtn.h>
 

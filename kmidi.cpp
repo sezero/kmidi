@@ -81,7 +81,7 @@ const char * whatsthis_image[] = {
 
 #include "playlist.h"
 #include "midiapplication.h"
-#include <kstddirs.h>
+#include <kstandarddirs.h>
 #include <kglobal.h>
 #include "kmidiframe.h"
 

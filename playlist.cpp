@@ -29,7 +29,7 @@
 
 #include <kconfig.h>
 #include <klocale.h>
-#include <kstddirs.h>
+#include <kstandarddirs.h>
 #include <kmessagebox.h>
 
 #include "playlist.h"
