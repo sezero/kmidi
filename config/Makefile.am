@@ -9,20 +9,20 @@ EXTRA_DIST = $(CONFIG_FILES)
 SUBDIRS = patch
 
 install-data-local:
-	$(mkinstalldirs) $(TIMID_DIR)
+	$(mkinstalldirs) $(DESTDIR)$(TIMID_DIR)
 	@for i in $(CONFIG_FILES); do \
-	  if [ ! -f "$(TIMID_DIR)/$$i" ] ; then  \
+	  if [ ! -f "$(DESTDIR)$(TIMID_DIR)/$$i" ] ; then  \
 	    echo "$(INSTALL_DATA) $(srcdir)/$$i $(DESTDIR)$(TIMID_DIR)"; \
 	    $(INSTALL_DATA) $(srcdir)/$$i $(DESTDIR)$(TIMID_DIR) ; \
           fi ; \
         done
-	if [ ! -f "$(TIMID_DIR)/tclIndex" -a -f "$(TIMID_DIR)/misc.tcl" ] ; then  \
-	  (cd $(TIMID_DIR); sed -e s@%TCL_DIR%@$(TIMID_DIR)@g $(srcdir)/tkmidity.ptcl > tkmidity.tcl ) ; \
-	  (cd $(TIMID_DIR); echo 'auto_mkindex . *.tcl; exit' | tclsh ) ; \
+	if [ ! -f "$(DESTDIR)$(TIMID_DIR)/tclIndex" -a -f "$(DESTDIR)$(TIMID_DIR)/misc.tcl" ] ; then  \
+	  (cd $(DESTDIR)$(TIMID_DIR); sed -e s@%TCL_DIR%@$(TIMID_DIR)@g $(srcdir)/tkmidity.ptcl > tkmidity.tcl ) ; \
+	  (cd $(DESTDIR)$(TIMID_DIR); echo 'auto_mkindex . *.tcl; exit' | tclsh ) ; \
 	fi
 
 uninstall-local:
 	for i in $(CONFIG_FILES); do \
-	  rm -f $(TIMID_DIR)/$$i ; \
+	  rm -f $(DESTDIR)$(TIMID_DIR)/$$i ; \
 	done
 

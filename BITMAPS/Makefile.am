@@ -9,10 +9,9 @@ TIMID_DIR = $(kde_datadir)/kmidi/config
 EXTRA_DIST = $(CONFIG_FILES)
 
 install-data-local:
-	$(mkinstalldirs) $(TIMID_DIR)
-	$(mkinstalldirs) $(TIMID_DIR)/BITMAPS
+	$(mkinstalldirs) $(DESTDIR)$(TIMID_DIR)/BITMAPS
 	@for i in $(CONFIG_FILES); do \
-	  if [ ! -f "$(TIMID_DIR)/BITMAPS/$$i" ] ; then  \
+	  if [ ! -f "$(DESTDIR)$(TIMID_DIR)/BITMAPS/$$i" ] ; then  \
 	    echo "$(INSTALL_DATA) $(srcdir)/$$i $(DESTDIR)$(TIMID_DIR)/BITMAPS"; \
 	    $(INSTALL_DATA) $(srcdir)/$$i $(DESTDIR)$(TIMID_DIR)/BITMAPS ; \
           fi ; \
@@ -20,6 +19,6 @@ install-data-local:
 
 uninstall-local:
 	for i in $(CONFIG_FILES); do \
-	  rm -f $(TIMID_DIR)/BITMAPS/$$i ; \
+	  rm -f $(DESTDIR)$(TIMID_DIR)/BITMAPS/$$i ; \
 	done
 
