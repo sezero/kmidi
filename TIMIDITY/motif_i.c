@@ -35,7 +35,7 @@
      - Add timidity icon with filename displaying to play midi while 
        I work without having that big blue window in the corner of 
        my screen :)
-     - Solve the problem of concurent scale value modification
+     - Solve the problem of concurrent scale value modification
 
    21/5/95
      - Add menus, file selection box
@@ -213,7 +213,7 @@ void Generic_scaleCB(Widget widget, int data, XtPointer call_data)
 
 /* 
  * Detect when a mouse button is pushed or released in a scale area to
- * avoid concurent scale value modification while holding it with the mouse
+ * avoid concurrent scale value modification while holding it with the mouse
  */
 void Locator_btn(Widget w,XtPointer client_data,XEvent *event,Boolean *cont)
 { 

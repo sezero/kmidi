@@ -151,7 +151,7 @@ static void error_report (int snd_error)
 	    dpm.name, snd_strerror (snd_error));
 }
 
-/*return value == 0 sucess
+/*return value == 0 success
                == -1 fails
  */
 static int check_sound_cards (int* card__, int* device__,
@@ -258,7 +258,7 @@ static int check_sound_cards (int* card__, int* device__,
   return 0;
 }
 
-/*return value == 0 sucess
+/*return value == 0 success
                == 1 warning
                == -1 fails
  */

@@ -8,7 +8,7 @@
  */
 
 /*
-	remarks about occured changes
+	remarks about occurred changes
 
 	+ each note from a voice was directly mixed in the common_buffer 
 	in order to add channel effect we need to insert an extra and inefficient mixing
@@ -18,7 +18,7 @@
 	the only optimisation I see from now is to keep track of empty
 	channel_buffer in order to skip them from processing and mixing
 	
-	+ I tried to keep the C but yet modular style of prog , hope it'll be usefull
+	+ I tried to keep the C but yet modular style of prog , hope it'll be useful
 	
 	+ this experimental add on can be switched on and off with the define CHANNEL_EFFECT
 */
@@ -45,8 +45,8 @@ extern int32 *buffer_pointer;
 #define FRACTION ( 1 << FRACTION_BITS ) 
 
 /**************************************************************************/
-/**	cirbuff structure : manage a circular buffer : given x it retreives x * z-1 , x * z-2 ...    
- *	accesible values are (ptr->m_pCur)[0] , (ptr->m_pCur)[-1] ... (ptr->m_pCur)[ -m_count + 1 ]
+/**	cirbuff structure : manage a circular buffer : given x it retrieves x * z-1 , x * z-2 ...    
+ *	accessible values are (ptr->m_pCur)[0] , (ptr->m_pCur)[-1] ... (ptr->m_pCur)[ -m_count + 1 ]
  */
 typedef struct 
 {

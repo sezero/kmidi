@@ -85,7 +85,7 @@ typedef struct
 	void *m_pfnDestruct ;	
 
 /*---------------------------------------------------*/	
-/* additionnal parameters */
+/* additional parameters */
 
 	/** m_uiNullCount : number of last null samples or 0 
 	 */
