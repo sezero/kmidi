@@ -22,6 +22,7 @@
 #include <qfileinfo.h>
 #include <qdir.h>
 #include <klocale.h>
+#include <kglobal.h>
 #include <kurl.h>
 #include <kurlcombobox.h>
 #include <kdiroperator.h>
@@ -87,7 +88,7 @@ void KMidiFileDlg::closeFbox()
     *lastDirectory = ops->url();
     KSimpleConfig *c = new KSimpleConfig(QString::fromLatin1("kdeglobals"),
                                          false);
-    saveConfig( c, ConfigGroup );
+    writeConfig( c, ConfigGroup );
     saveRecentFiles( KGlobal::config() );
     delete c;
 }
