@@ -1,6 +1,7 @@
 1999-10-28  Greg Lee  <lee@hawaii.edu>
 
-	* kmidi.cpp: try to straighten out resizing
+	* kmidi.cpp: try to straighten out resizing;
+	  add arg to KApplication
 	* sndfont.c: don't use lfo to modulate filter cutoff
 	  when initial filter cutoff has not been set
 

@@ -2130,8 +2130,7 @@ void KMidi::resizeEvent(QResizeEvent *e){
 extern "C" {
 
     void createKApplication(int *argc, char **argv){
-	//thisapp = new KApplication(*argc, argv, "kmidi");
-	thisapp = new KApplication(*argc, argv);
+	thisapp = new KApplication(*argc, argv, "kmidi");
     }
     
     int Launch_KMidi_Process(int _pipenumber){
