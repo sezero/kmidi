@@ -387,8 +387,7 @@ void PlaylistDialog::savePlaylistbyName(const QString &name){
     return;
 
 
-  QString home = QDir::homeDirPath();
-  home = home + "/.kde/share/apps/kmidi";
+  QString home = KApplication::localkdedir();
   QDir savedir(home);
 
   if(!savedir.exists()){
@@ -428,9 +427,8 @@ void PlaylistDialog::loadPlaylist(const QString &name){
      
   current_playlist = name;
   
-  QString home = QDir::homeDirPath();
-  home = home + "/.kde/share/apps/kmidi";
-  
+  QString home = KApplication::localkdedir() + "/share/apps/kmidi";
+
   QDir savedir(home);
 
   if(!savedir.exists()){

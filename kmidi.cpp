@@ -455,9 +455,7 @@ void KMidi::makedirs(){
   QDir dir;
   QString d;
 
-  d = getHomeDir();
-
-  d += "/.kde";
+  d = KApplication::localkdedir();
   dir.setPath(d);
   if(!dir.exists()){
     dir.mkdir(d);
@@ -759,13 +757,13 @@ void KMidi::aboutClicked()
   label->setGeometry(140,40,160,170);
 
   QString labelstring;
-  labelstring.sprintf(i18n("KMidi %s\n"\
+  labelstring = i18n("KMidi %1\n"\
 		   "Copyright (c) 1997-98\nBernd Johannes Wuebben\n"\
 		   "wuebben@kde.org\n\n"\
 		   "KMidi contains code from:\n"
 		   "TiMidity version 0.2.i\n"
 		   "Copyright (c) \nTuukka Toivonen\n"\
-		   "toivonen@clinet.fi\n"), KMIDIVERSION);
+		   "toivonen@clinet.fi\n").arg(KMIDIVERSION);
 
   label->setAlignment(AlignLeft|WordBreak|ExpandTabs);
   label->setText(labelstring);
@@ -871,8 +869,7 @@ void KMidi::PlayCommandlineMods(){
 void KMidi::loadplaylist(){
 
 
-    QString home = QDir::homeDirPath();
-    home = home + "/.kde/share/apps/kmidi";
+    QString home = KApplication::localkdedir() + "/share/apps/kmidi";
 
     QDir savedir(home);
 
@@ -1007,7 +1004,7 @@ void KMidi::ReadPipe(){
 		    }
 		    else{
 		      QString string;
-		      string.sprintf(i18n("%s\nis not readable or doesn't exist."),filename);
+		      string = i18n("%1\nis not readable or doesn't exist.").arg(filename);
 		      KMsgBox::message(NULL, i18n("KMidi Warning"), string,
 				       KMsgBox::EXCLAMATION);
 
@@ -1361,14 +1358,14 @@ void KMidi::display_playmode(){
     QString properties;
     QString properties2;
 
-    properties.sprintf(i18n("%d bit %s %s"),
-		       play_mode->encoding & PE_16BIT ? 16:8,
-		       play_mode->encoding & PE_SIGNED ? i18n("sig").ascii():i18n("usig").ascii(),
-		       play_mode->encoding &PE_ULAW ? i18n("uLaw").ascii():i18n("Linear").ascii());
+    properties = i18n("%1 bit %2 %3")
+		       .arg(play_mode->encoding & PE_16BIT ? 16:8)
+		       .arg(play_mode->encoding & PE_SIGNED ? i18n("sig"):i18n("usig"))
+		       .arg(play_mode->encoding & PE_ULAW ? i18n("uLaw"):i18n("Linear"));
 
-    properties2.sprintf(i18n("%d Hz %s"),
-		       play_mode->rate,
-		       play_mode->encoding & PE_MONO ? i18n("Mono").ascii():i18n("Stereo").ascii());
+    properties2 = i18n("%1 Hz %2")
+		       .arg(play_mode->rate)
+		       .arg(play_mode->encoding & PE_MONO ? i18n("Mono"):i18n("Stereo"));
 
     propertiesLA->setText(properties);
     properties2LA->setText(properties2);
