@@ -273,7 +273,7 @@ static int set_playback_info (void* handle__,
   struct snd_pcm_channel_setup setup;
   int tmp;
 
-//fprintf(stderr,"setting playback info\n");
+/*fprintf(stderr,"setting playback info\n");*/
   memset (&pcm_format, 0, sizeof (pcm_format));
   pcm_format.interleave = 1;
 
@@ -285,7 +285,7 @@ static int set_playback_info (void* handle__,
   playback_info.channel = SND_PCM_CHANNEL_PLAYBACK;
 
   tmp = snd_pcm_plugin_info (handle__, &playback_info);
-//fprintf(stderr,"tmp = %d from snd_pcm_channel_info\n",tmp);
+/*fprintf(stderr,"tmp = %d from snd_pcm_channel_info\n",tmp);*/
   if (tmp != 0)
     {
       error_report (tmp);
@@ -412,7 +412,7 @@ static int set_playback_info (void* handle__,
   if (*encoding__ & PE_16BIT)
     tmp *=2;
   playback_params.buf.block.frag_size = tmp;
-//fprintf(stderr,"frag_size %d\n", playback_params.buf.block.frag_size);
+/*fprintf(stderr,"frag_size %d\n", playback_params.buf.block.frag_size);*/
 
   if (extra_param[0] == 0)
     playback_params.buf.block.frags_max = 7;/*default value. What's value is apporpriate?*/
@@ -430,11 +430,11 @@ static int set_playback_info (void* handle__,
 
   playback_params.start_mode = SND_PCM_START_FULL;
   playback_params.stop_mode = SND_PCM_STOP_STOP;
-  //playback_params.stop_mode = SND_PCM_STOP_ROLLOVER;
+  /*playback_params.stop_mode = SND_PCM_STOP_ROLLOVER;*/
 
   tmp = snd_pcm_channel_params (handle__, &playback_params);
 
-//fprintf(stderr,"tmp = %d from snd_pcm_channel_params\n",tmp);
+/*fprintf(stderr,"tmp = %d from snd_pcm_channel_params\n",tmp);*/
   if (tmp != 0)
     {
       ctl->cmsg(CMSG_WARNING, VERB_NORMAL,
@@ -463,8 +463,8 @@ static int set_playback_info (void* handle__,
   setup_frags = setup.buf.block.frags;
   setup_frag_size = setup.buf.block.frag_size;
 
-//fprintf(stderr, "setup frags = %d\n", setup.buf.block.frags);
-//fprintf(stderr, "setup frag_size = %d\n", setup.buf.block.frag_size);
+/*fprintf(stderr, "setup frags = %d\n", setup.buf.block.frags);*/
+/*fprintf(stderr, "setup frag_size = %d\n", setup.buf.block.frag_size);*/
 
   if(snd_pcm_plugin_status(handle__, &playback_status) == 0)
     {
@@ -493,12 +493,12 @@ static int open_output(void)
   if (tmp != 0)
     return -1;
 
-//fprintf(stderr,"using card %d, device %d\n", card, device);
+/*fprintf(stderr,"using card %d, device %d\n", card, device);*/
   /* Open the audio device */
   ret = snd_pcm_open (&handle, card, device,
   	SND_PCM_OPEN_PLAYBACK|SND_PCM_OPEN_NONBLOCK);
-//  ret = snd_pcm_open (&handle, card, device, SND_PCM_OPEN_PLAYBACK);
-//fprintf(stderr,"ret was %d\n", ret);
+/*  ret = snd_pcm_open (&handle, card, device, SND_PCM_OPEN_PLAYBACK);*/
+/*fprintf(stderr,"ret was %d\n", ret);*/
 
   if (ret != 0)
     {
@@ -573,7 +573,7 @@ void playback_write_error(void)
 		exit(1);
 	}
 	if (status.status == SND_PCM_STATUS_UNDERRUN) {
-		//printf("underrun at position %u!!!\n", status.scount);
+		/*printf("underrun at position %u!!!\n", status.scount);*/
 		if (snd_pcm_plugin_prepare(handle, SND_PCM_CHANNEL_PLAYBACK)<0) {
 			fprintf(stderr, "underrun: playback channel prepare error\n");
 			exit(1);
@@ -596,12 +596,12 @@ void playback_write_error(void)
 
 static int driver_output_data(unsigned char *buf, uint32 count) {
 	int ret_value;
-//fprintf(stderr,"write %d bytes with buffer size %d\n",
-//		count, AUDIO_BUFFER_SIZE);
+/*fprintf(stderr,"write %d bytes with buffer size %d\n",
+		count, AUDIO_BUFFER_SIZE);*/
   if (count < (uint32)setup_frag_size ) return 0;
   ret_value = snd_pcm_plugin_write(handle, buf, setup_frag_size);
   if (ret_value < 0) {
-//fprintf(stderr,"ret_value = %d\n", ret_value);
+/*fprintf(stderr,"ret_value = %d\n", ret_value);*/
     playback_write_error();	  
     ret_value = 0;
   }
@@ -672,7 +672,7 @@ static void purge_output(void)
       exit (1);
   } 
 
-//fprintf(stderr, "setup frags = %d\n", setup.buf.block.frags);
+/*fprintf(stderr, "setup frags = %d\n", setup.buf.block.frags);*/
 }
 
 #endif
