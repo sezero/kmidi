@@ -625,7 +625,6 @@ void KMidi::drawPanel()
     timeSB = new QSlider( 0, 100, 1,  0, QSlider::Horizontal,
 			 this, "tSlider" );
     timeSB->setGeometry( WIDTH , 7*HEIGHT/2 + HEIGHT/2, 2*SBARWIDTH/3, HEIGHT/2 );
-    //timeSB->setTickmarks(QSlider::Below);
     timeSB->setTracking(FALSE);
     what->add(timeSB, i18n("set playing time elapsed"));
 
@@ -643,18 +642,6 @@ void KMidi::drawPanel()
     QString volumetext;
     volumetext.sprintf(i18n("Vol:%02d%%"),volume);
     volLA->setText( volumetext );
-
-
-    /*speedLA = new QLabel( this );
-      speedLA->setAlignment( AlignLeft );
-    speedLA->setGeometry( WIDTH -25 + 2*SBARWIDTH/3 +45, 24, 80, 13 );
-    speedLA->setFont( QFont( "helvetica", 10, QFont::Bold) );
-    */
-
-    /*    QString speedtext;
-    speedtext.sprintf(i18n("Spd:%3.0f%%"),100.0);
-    speedLA->setText( speedtext );
-    */
 
     modlabel = new QLabel( this );
     modlabel->setAlignment( AlignLeft );
@@ -738,7 +725,8 @@ void KMidi::drawPanel()
         led[i]->setLook(KLed::sunken);
         led[i]->setShape(KLed::Rectangular);
         //led[i]->setGeometry(WIDTH/8 + i * WIDTH/4,3*HEIGHT+HEIGHT/6, WIDTH/6, HEIGHT/5);
-        led[i]->setGeometry(WIDTH/8 + i * WIDTH/4,3*HEIGHT+HEIGHT/8, WIDTH/6, HEIGHT/4);
+        //led[i]->setGeometry(WIDTH/8 + i * WIDTH/4,3*HEIGHT+HEIGHT/8, WIDTH/6, HEIGHT/4);
+        led[i]->setGeometry(WIDTH/8 + i * WIDTH/4,3*HEIGHT+HEIGHT/10, WIDTH/6, HEIGHT/3);
 	led[i]->setColor(Qt::black);
 	if (i>10) what->add(led[i], polyled);
     }
@@ -2210,7 +2198,7 @@ void KMidi::ReadPipe(){
 			lyric_time[lyric_head] = message_time;
 			lyric_head++;
 			if (lyric_head == LYRBUFL) lyric_head = 0;
-			else led[LYRICS_LED]->setColor( QColor(205, 133, 63) ); //peru
+			else led[LYRICS_LED]->setColor( QColor(255, 165, 0) ); //orange1
 			break;
 		}
 
@@ -2329,16 +2317,14 @@ void KMidi::ReadPipe(){
 	//reverberation
 	if (last_various_flags & 2) led[REVERB_LED]->setColor(Qt::black);
         else {
-	    if (echo_state & 2) led[REVERB_LED]->setColor(Qt::blue);
-	    else if (echo_state & 1) led[REVERB_LED]->setColor(Qt::darkBlue);
-            else led[REVERB_LED]->setColor(Qt::black);
+	    if (!echo_state) led[REVERB_LED]->setColor(Qt::black);
+	    else led[REVERB_LED]->setColor(QColor(0,0,5*echo_state+235));
 	}
 	//chorus
 	if (last_various_flags & 4) led[CHORUS_LED]->setColor(Qt::black);
         else {
-	    if (detune_state & 2) led[CHORUS_LED]->setColor(Qt::yellow);
-	    else if (detune_state & 1) led[CHORUS_LED]->setColor(Qt::darkYellow);
-            else led[CHORUS_LED]->setColor(Qt::black);
+	    if (!detune_state) led[CHORUS_LED]->setColor(Qt::black);
+	    else led[CHORUS_LED]->setColor(QColor(5*echo_state+235,5*echo_state+235,0));
 	}
 	last_rcheck_flags = rcheck_flags;
     }

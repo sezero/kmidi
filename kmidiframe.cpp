@@ -82,27 +82,54 @@ KMidiFrame::KMidiFrame( const char *name ) :
     connect( view_options, SIGNAL(activated(int)), this, SLOT(doViewMenuItem(int)) );
     connect( view_options, SIGNAL(aboutToShow()), this, SLOT(fixViewItems()) );
 	m_on_id = view_options->insertItem(  i18n("Meter shown") );
+	view_options->setWhatsThis(m_on_id, i18n("When you can see this<br>" \
+				"menu, the channel meter<br>" \
+				"is always turned on.") );
 	m_off_id = view_options->insertItem(  i18n("Meter off") );
+	view_options->setWhatsThis(m_off_id, i18n("This turns off the channel<br>" \
+				"meter display, and also hides<br>" \
+				"this menu bar.") );
 	view_options->insertSeparator();
 	i_on_id = view_options->insertItem(  i18n("Info shown") );
+	view_options->setWhatsThis(i_on_id, i18n("Shows a window at the<br>" \
+				"bottom with info about the<br>" \
+				"midi file being played.") );
 	i_off_id = view_options->insertItem(  i18n("Info off") );
+	view_options->setWhatsThis(i_off_id, i18n("Turns off the info window<br>" \
+				"at the bottom.") );
     view_level = new QPopupMenu();
     CHECK_PTR( view_level );
     view_level->setCheckable( TRUE );
     view_options->insertSeparator();
     view_options->insertItem( i18n("Info level"), view_level);
         view_level->insertItem( i18n("Lyrics only") , 100);
+	view_level->setWhatsThis(100, i18n("The info window will<br>" \
+				"show only lyrics, if any,<br>" \
+				"and the name of the midi file.") );
         view_level->insertItem( i18n("Normal") , 101);
+	view_level->setWhatsThis(101, i18n("The info window shows<br>" \
+				"all displayable midi<br>" \
+				"messages.") );
         view_level->insertItem( i18n("Loading msgs") , 102);
+	view_level->setWhatsThis(102, i18n("Also shows new instruments<br>" \
+				"being loaded for playing<br>" \
+				"the next song.") );
         view_level->insertItem( i18n("debug 1") , 103);
+	view_level->setWhatsThis(103, i18n("Also shows instrument<br>" \
+				"volume computation.") );
         view_level->insertItem( i18n("debug 2") , 104);
+	view_level->setWhatsThis(104, i18n("Shows lots of additional<br>" \
+				"information (probably not useful).") );
     connect( view_level, SIGNAL(activated(int)), this, SLOT(doViewInfoLevel(int)) );
     connect( view_level, SIGNAL(aboutToShow()), this, SLOT(fixInfoLevelItems()) );
 
 
     QPopupMenu *editMenu = new QPopupMenu;
     menuBar->insertItem( i18n("&Edit"), editMenu, CTRL+Key_E);
-    editMenu->insertItem( i18n("Edit Playlist"), kmidi, SLOT(ejectClicked()));
+    editMenu->insertItem( i18n("Edit Playlist"), kmidi, SLOT(ejectClicked()), 0, 108);
+	editMenu->setWhatsThis(108, i18n("Transfer the current<br>" \
+				"play list to the Playlist Editor<br>" \
+				"and start him up.") );
 
 
 
@@ -113,9 +140,21 @@ KMidiFrame::KMidiFrame( const char *name ) :
     connect( stereo_options, SIGNAL(activated(int)), this, SLOT(doStereoMenuItem(int)) );
     connect( stereo_options, SIGNAL(aboutToShow()), this, SLOT(fixStereoItems()) );
 	stereo_options->insertItem(  i18n("No stereo patch"), 110 );
+	stereo_options->setWhatsThis(110, i18n("Prevents playing the<br>" \
+				"second instrument for those<br>" \
+				"patches that have two<br>" \
+				"(you probably don't want<br>" \
+				"to choose this option).") );
 	stereo_options->insertItem(  i18n("Normal stereo") , 111);
+	stereo_options->setWhatsThis(111, i18n("Plays both instruments<br>" \
+				"for those (sf2) patches<br>" \
+				"which have two.") );
 	stereo_options->insertItem(  i18n("Extra stereo") , 112);
-
+	stereo_options->setWhatsThis(112, i18n("For keyboard instruments,<br>" \
+				"lower notes come from the left<br>" \
+				"For other instruments, position is<br>" \
+				"made a function of note<br>" \
+				"velocity.") );
 
     reverb_options = new QPopupMenu();
     CHECK_PTR( reverb_options );
@@ -124,31 +163,67 @@ KMidiFrame::KMidiFrame( const char *name ) :
     connect( reverb_options, SIGNAL(activated(int)), this, SLOT(doReverbMenuItem(int)) );
     connect( reverb_options, SIGNAL(aboutToShow()), this, SLOT(fixReverbItems()) );
 	reverb_options->insertItem(  i18n("Dry"), 119 );
+	reverb_options->setWhatsThis(119, i18n("With the dry setting,<br>" \
+				"after notes are released,<br>" \
+				"they are ended by playing<br>" \
+				"through the ends of their<br>" \
+				"patches (which may cause some<br>" \
+				"clicking).  The wet setting makes<br>" \
+				"notes continues to the ends of<br>" \
+				"their volume envelopes.") );
     reverb_level = new QPopupMenu();
     CHECK_PTR( reverb_level );
     reverb_level->setCheckable( TRUE );
     reverb_options->insertSeparator();
     reverb_options->insertItem( i18n("Reverb level"), reverb_level);
         reverb_level->insertItem( i18n("default") , 160);
+	reverb_level->setWhatsThis(160, i18n("The reverberation level<br>" \
+				"is set according to the midi<br>" \
+				"channel setting and what the<br>" \
+				"instrument patch specifies.") );
         reverb_level->insertItem( i18n("midi level  32") , 161);
+	reverb_level->setWhatsThis(161, i18n("The reverberation level<br>" \
+				"is set to a minimum level of 32." ) );
         reverb_level->insertItem( i18n("midi level  64") , 162);
+	reverb_level->setWhatsThis(162, i18n("The reverberation level<br>" \
+				"is set to a minimum level of 64." ) );
         reverb_level->insertItem( i18n("midi level  96") , 163);
+	reverb_level->setWhatsThis(163, i18n("The reverberation level<br>" \
+				"is set to a minimum level of 96." ) );
         reverb_level->insertItem( i18n("midi level 127") , 164);
+	reverb_level->setWhatsThis(164, i18n("The reverberation level<br>" \
+				"is set to the maximem level of 127." ) );
     connect( reverb_level, SIGNAL(activated(int)), this, SLOT(doReverbLevel(int)) );
     connect( reverb_level, SIGNAL(aboutToShow()), this, SLOT(fixReverbLevelItems()) );
     reverb_options->insertSeparator();
 	reverb_options->insertItem(  i18n("No echo"), 120 );
+	reverb_options->setWhatsThis(120, i18n("Prevents playing extra<br>" \
+				"echo notes for reverberation.") );
 	reverb_options->insertItem(  i18n("Normal echo") , 121);
+	reverb_options->setWhatsThis(121, i18n("Extra echo notes are<br>" \
+				"played to get the effect<br>of reverberation.") );
     echo_level = new QPopupMenu();
     CHECK_PTR( echo_level );
     echo_level->setCheckable( TRUE );
     reverb_options->insertSeparator();
     reverb_options->insertItem( i18n("Echo level"), echo_level);
         echo_level->insertItem( i18n("default") , 130);
+	echo_level->setWhatsThis(130, i18n("The level for echo notes<br>" \
+				"is set according to the midi<br>" \
+				"channel setting and what the<br>" \
+				"instrument patch specifies.") );
         echo_level->insertItem( i18n("midi level  32") , 131);
+	echo_level->setWhatsThis(131, i18n("The echo level<br>" \
+				"is set to a minimum level of 32." ) );
         echo_level->insertItem( i18n("midi level  64") , 132);
+	echo_level->setWhatsThis(132, i18n("The echo level<br>" \
+				"is set to a minimum level of 64." ) );
         echo_level->insertItem( i18n("midi level  96") , 133);
+	echo_level->setWhatsThis(133, i18n("The echo level<br>" \
+				"is set to a minimum level of 96." ) );
         echo_level->insertItem( i18n("midi level 127") , 134);
+	echo_level->setWhatsThis(133, i18n("The echo level<br>" \
+				"is set to the maximem level of 127." ) );
     connect( echo_level, SIGNAL(activated(int)), this, SLOT(doEchoLevel(int)) );
     connect( echo_level, SIGNAL(aboutToShow()), this, SLOT(fixEchoLevelItems()) );
 
@@ -164,25 +239,54 @@ KMidiFrame::KMidiFrame( const char *name ) :
     chorus_level->setCheckable( TRUE );
     chorus_options->insertItem( i18n("Chorus level"), chorus_level);
         chorus_level->insertItem( i18n("default") , 170);
+	chorus_level->setWhatsThis(170, i18n("The chorus level<br>" \
+				"is set according to the midi<br>" \
+				"channel setting and what the<br>" \
+				"instrument patch specifies.") );
         chorus_level->insertItem( i18n("midi level  32") , 171);
+	chorus_level->setWhatsThis(171, i18n("The choruslevel<br>" \
+				"is set to a minimum level of 32." ) );
         chorus_level->insertItem( i18n("midi level  64") , 172);
+	chorus_level->setWhatsThis(172, i18n("The choruslevel<br>" \
+				"is set to a minimum level of 64." ) );
         chorus_level->insertItem( i18n("midi level  96") , 173);
+	chorus_level->setWhatsThis(173, i18n("The choruslevel<br>" \
+				"is set to a minimum level of 96." ) );
         chorus_level->insertItem( i18n("midi level 127") , 174);
+	chorus_level->setWhatsThis(174, i18n("The choruslevel<br>" \
+				"is set to the maximum level of 127." ) );
     connect( chorus_level, SIGNAL(activated(int)), this, SLOT(doChorusLevel(int)) );
     connect( chorus_level, SIGNAL(aboutToShow()), this, SLOT(fixChorusLevelItems()) );
     chorus_options->insertSeparator();
 	chorus_options->insertItem(  i18n("No detune"), 140 );
+	chorus_options->setWhatsThis(140, i18n("Prevents playing extra<br>" \
+				"detuned notes for chorus effect.") );
 	chorus_options->insertItem(  i18n("Normal detune") , 141);
+	chorus_options->setWhatsThis(141, i18n("Extra detuned notes are<br>" \
+				"played to get the effect<br>of chorusing") );
     detune_level = new QPopupMenu();
     CHECK_PTR( detune_level );
     detune_level->setCheckable( TRUE );
     chorus_options->insertSeparator();
     chorus_options->insertItem( i18n("Detune level"), detune_level);
         detune_level->insertItem( i18n("default") , 150);
+	detune_level->setWhatsThis(150, i18n("The level for detuned notes<br>" \
+				"is set according to the midi<br>" \
+				"channel setting and what the<br>" \
+				"instrument patch specifies for" \
+				"chorus level.") );
         detune_level->insertItem( i18n("midi level  32") , 151);
+	detune_level->setWhatsThis(151, i18n("The detuning level<br>" \
+				"is set to a minimum level of 32." ) );
         detune_level->insertItem( i18n("midi level  64") , 152);
+	detune_level->setWhatsThis(152, i18n("The detuning level<br>" \
+				"is set to a minimum level of 64." ) );
         detune_level->insertItem( i18n("midi level  96") , 153);
+	detune_level->setWhatsThis(153, i18n("The detuning level<br>" \
+				"is set to a minimum level of 96." ) );
         detune_level->insertItem( i18n("midi level 127") , 154);
+	detune_level->setWhatsThis(154, i18n("The detuning level<br>" \
+				"is set to the maximum level of 127." ) );
     connect( detune_level, SIGNAL(activated(int)), this, SLOT(doDetuneLevel(int)) );
     connect( detune_level, SIGNAL(aboutToShow()), this, SLOT(fixDetuneLevelItems()) );
 
