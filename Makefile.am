@@ -11,10 +11,10 @@ VERSION = 0.2i
 INCLUDES = $(all_includes)
 AM_CPPFLAGS = -DDEFAULT_PATH=\"$(TIMID_DIR)\" -DKMIDI $(EXTRADEFS) $(CPPFLAGS)
 if GXXOPTIMIZE
-KDE_CXXFLAGS += -O3 -fomit-frame-pointer -ffast-math -malign-double
+KDE_CXXFLAGS = -O3 -fomit-frame-pointer -ffast-math -malign-double
 endif
 LDFLAGS = $(all_libraries) $(KDE_RPATH)
-LDADD = $(LIB_KDEUI) $(LIBALIB) $(LIBAUDIO) $(LIBMME) $(LIB_KFILE) $(EXTRALIBS)
+LDADD = $(LIB_KFILE) $(LIBALIB) $(LIBAUDIO) $(LIBMME) $(EXTRALIBS)
 
 # Where to install the patches, config files, and MIDI files.
 # If you change this, it's a good idea to recompile the binary,
@@ -52,8 +52,7 @@ noinst_HEADERS = kmidi.h  playlist.h bwlednum.h configdlg.h \
 	cduppic.h constants.h folderpic.h sbk.h sflayer.h ctl.h effects.h \
 	midiapplication.h kmidiframe.h kmidifiledlg.h
 
-METASOURCES = kmidi.moc  playlist.moc bwlednum.moc configdlg.moc log.moc \
-	docking.moc midiapplication.moc kmidiframe.moc table.moc kmidifiledlg.moc
+METASOURCES = AUTO
 
 SUBDIRS = config bitmaps patch midis
 
@@ -65,7 +64,7 @@ KDE_ICON = kmidi
 picsdir = $(kde_datadir)/kmidi/pics
 pics_DATA = kmidilogo.png mini-kmidi.png
 
-EXTRA_DIST = $(apps_DATA) $(pics_DATA) 
+EXTRA_DIST = $(apps_DATA) $(pics_DATA)
 
 
 cfg.cpp: cfg.l

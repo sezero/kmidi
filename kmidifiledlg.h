@@ -1,4 +1,4 @@
-/*  
+/*
     KDE Icon Editor - a small graphics drawing program for the KDE
 
     Copyright (C) 1998 Thomas Tanghus (tanghus@kde.org)
@@ -17,7 +17,7 @@
     along with this library; see the file COPYING.LIB.  If not, write to
     the Free Software Foundation, Inc., 59 Temple Place - Suite 330,
     Boston, MA 02111-1307, USA.
-*/  
+*/
 
 #ifndef __KMIDIFILEDLG_H__
 #define __KMIDIFILEDLG_H__
@@ -30,12 +30,12 @@ class KMidiFileDlg : public KFileDialog
   Q_OBJECT
 public:
   KMidiFileDlg(const QString& dirName, const QString& filter= 0,
-		QWidget *parent= 0, const char *name= 0, 
+		QWidget *parent= 0, const char *name= 0,
 		bool modal = false );
 
   static void getOpenDialog(const QString& dir= QString::null,
-				const QString& filter= QString::null,
-				   QWidget *parent= 0, const char *name= 0);
+			    const QString& filter= QString::null,
+			    QWidget *parent= 0, const char *name= 0);
 
 protected:
 

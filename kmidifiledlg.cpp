@@ -1,4 +1,4 @@
-/*  
+/*
     KDE Icon Editor - a small graphics drawing program for the KDE
 
     Copyright (C) 1998 Thomas Tanghus (tanghus@kde.org)
@@ -17,7 +17,7 @@
     along with this library; see the file COPYING.LIB.  If not, write to
     the Free Software Foundation, Inc., 59 Temple Place - Suite 330,
     Boston, MA 02111-1307, USA.
-*/  
+*/
 
 #include <qfileinfo.h>
 #include <qdir.h>
@@ -29,13 +29,14 @@
 extern KMidi *kmidi;
 
 KMidiFileDlg::KMidiFileDlg(const QString& dirName, const QString& filter,
-				 QWidget *parent, const char *name, 
+				 QWidget *parent, const char *name,
 				 bool modal )
     : KFileDialog(dirName, filter, parent, name, modal)
 {
-//Can't catch this signal, for some reason.
- //connect(this,SIGNAL(fileSelected(const QString&)),this,SLOT(playFile(const QString&)));
- //connect(this,SIGNAL(fileSelected(const QString&)),SLOT(playFile(const QString&)));
+    connect(this,SIGNAL(fileSelected(const QString&)),
+	    SLOT(playFile(const QString&)));
+    setButtonOKText(i18n("Play"));
+    setButtonCancelText(i18n("Close"));
 }
 
 void KMidiFileDlg::playFile(const QString& fname)
@@ -76,9 +77,6 @@ void KMidiFileDlg::getOpenDialog(const QString& dir, const QString& filter,
     if (!dlg) {
 	dlg= new KMidiFileDlg(dir, filter, parent, name, false);
 	dlg->setCaption(i18n("Open"));
-//This doesn't work, either.
-// connect(dlg,SIGNAL(fileSelected(const QString&)),dlg,SLOT(playFile(const QString&)));
-// connect(dlg,SIGNAL(fileHighlighted(const QString&)),dlg,SLOT(playFile(const QString&)));
     }
 
     dlg->show();
