@@ -805,7 +805,7 @@ void KMidi::drawPanel()
 	"in the <i>info</i> window." ));
 
     what->add(led[BUFFER_LED], i18n("The <i>buffer</i> LED<br>\n"
-	"is orangeish when there is<br>\n"
+	"is orangish when there is<br>\n"
 	"danger of a dropout, but<br>\n"
 	"greenish when all is ok." ));
 

@@ -88,7 +88,7 @@ altogether.  So, depending on midi song, patchset, how fast your system is,
 even if you don't hear dropouts, you will notice a loss in quality as TiMidity
 gets busier.  KMidi's front panel lights give some picture of how desperate
 TiMidity is becoming in its effort to keep the music playing.  (Signs of
-desperation: the buffer led goes from healthy greenish to busy orangeish,
+desperation: the buffer led goes from healthy greenish to busy orangish,
 the interpolation led turns off (meaning linear interpolation is being used
 for resampling), the echo led goes off, or the detuning led goes off (meaning
 no extra echo or detuned notes are being played).
