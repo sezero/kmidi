@@ -823,6 +823,7 @@ static void make_inst(SFInsts *rec, Layer *lay, SFInfo *sf, int pr_idx, int in_i
 #ifdef DO_LINKED_WAVES
 	int linked_wave;
 #endif
+	int sampleFlags;
 
 	if (banknum == 128) which = 0;
 	/* more than 2 notes in chord?  sorry -- no can do */
@@ -920,6 +921,9 @@ else printf("NO CFG NAME!\n");
 		ip->rsamples++;
 	}
 
+	if (lay->set[SF_sampleFlags]) sampleFlags = lay->val[SF_sampleFlags];
+	else sampleFlags = 0;
+
 	/* set sample position */
 	sp->startsample = ((short)lay->val[SF_startAddrsHi] * 32768)
 		+ (short)lay->val[SF_startAddrs]
@@ -931,6 +935,9 @@ else printf("NO CFG NAME!\n");
 	if (sp->endsample > (1 << (32-FRACTION_BITS)))
 		ctl->cmsg(CMSG_ERROR, VERB_NORMAL,
 			  "sndfont: patch size %ld greater than max (%ld)", sp->endsample, 1<<(32-FRACTION_BITS));
+
+	if (lay->set[SF_startloopAddrs] && !lay->set[SF_sampleFlags] && banknum < 128) sampleFlags = 1;
+	if (!sampleFlags || sampleFlags == 2) strip_loop = 1;
 
 	/* set loop position */
 	sp->v.loop_start = ((short)lay->val[SF_startloopAddrsHi] * 32768)
@@ -1042,15 +1049,20 @@ if (strip_loop == 1) {
 
 	/* volume envelope & total volume */
 	sp->v.volume = calc_volume(lay,sf);
-	if (lay->val[SF_sampleFlags] == 1 || lay->val[SF_sampleFlags] == 3) {
-		sp->v.modes |= MODES_LOOPING|MODES_SUSTAIN;
-#ifndef SF_SUPPRESS_ENVELOPE
-		convert_volume_envelope(lay, sf, sp);
-#endif
-		if (lay->val[SF_sampleFlags] == 3)
+
+	if (sampleFlags == 1 || sampleFlags == 3) {
+		/* sp->v.modes |= MODES_LOOPING|MODES_SUSTAIN; */
+		sp->v.modes |= MODES_LOOPING;
+		if (sampleFlags == 1) sp->v.modes |= MODES_SUSTAIN;
+#if 0
+		if (sampleFlags == 3)
 			/* strip the tail */
 			sp->v.data_length = sp->v.loop_end + 1;
+#endif
 	}
+#ifndef SF_SUPPRESS_ENVELOPE
+	convert_volume_envelope(lay, sf, sp);
+#endif
 	if (strip_tail == 1) sp->v.data_length = sp->v.loop_end + 1;
 
       /* Strip any loops and envelopes we're permitted to */
