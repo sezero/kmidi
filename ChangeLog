@@ -1,3 +1,10 @@
+2000-07-15  Greg Lee  <lee@hawaii.edu>
+
+	* TIMIDITY/gtk_i.c: implement load playlist
+	* playmidi.cpp: import change from TiMidity++ 2.95
+	* TIMIDITY/xaw_c.c: fix change song locator (bar
+	  still not shown)
+
 2000-07-09  Greg Lee  <lee@hawaii.edu>
 
 	* kmidifiledialog: fix open file dialog

@@ -233,9 +233,18 @@ playlist_cb(GtkWidget *widget, guint data)
 	plfilesel = gtk_file_selection_new("");
 	gtk_file_selection_hide_fileop_buttons(GTK_FILE_SELECTION(plfilesel));
 
+#ifdef orig_tplus
 	pldir = g_getenv("TIMIDITY_PLAYLIST_DIR");
+#else
+	pldir = g_getenv("HOME");
+	pldir = g_strconcat(pldir, "/.kde/share/apps/kmidi", NULL);
+#endif
 	if(pldir != NULL) {
+#ifdef orig_tplus
 	    plpatt = g_strconcat(pldir, "/*.tpl", NULL);
+#else
+	    plpatt = g_strconcat(pldir, "/*.plist", NULL);
+#endif
 	    gtk_file_selection_set_filename(GTK_FILE_SELECTION(plfilesel),
 					    plpatt);
 	    g_free(plpatt);
@@ -253,7 +262,11 @@ playlist_cb(GtkWidget *widget, guint data)
 			 "Load Playlist":
 			 "Save Playlist");
     gtk_object_set_user_data(GTK_OBJECT(plfilesel), (gpointer)data);
+#ifdef orig_tplus
     gtk_file_selection_complete(GTK_FILE_SELECTION(plfilesel), "*.tpl");
+#else
+    gtk_file_selection_complete(GTK_FILE_SELECTION(plfilesel), "*.plist");
+#endif
 
     gtk_widget_show(plfilesel);
 } /* playlist_cb */

@@ -461,7 +461,7 @@ static int ctl_blocking_read(int32 *valp) {
       case 'T' :
 	a_pipe_read(local_buf,sizeof(local_buf));
         n=atoi(local_buf+2);
-	*valp= n * play_mode->rate;
+	songoffset = *valp= n * play_mode->rate;
         return RC_JUMP;
       case 'V' :
 	a_pipe_read(local_buf,sizeof(local_buf));

@@ -384,6 +384,15 @@ void recompute_freq(int v)
       int i=VIBRATO_SAMPLE_INCREMENTS;
       while (i--)
 	voice[v].vibrato_sample_increment[i]=0;
+#ifdef tplus29
+      if(voice[v].modulation_wheel > 0)
+      {
+	  voice[v].vibrato_control_ratio =
+	      (int32)(play_mode->rate * MODULATION_WHEEL_RATE
+		      / (2.0 * VIBRATO_SAMPLE_INCREMENTS));
+	  voice[v].vibrato_delay = 0;
+      }
+#endif
     }
 
 
@@ -400,7 +409,11 @@ void recompute_freq(int v)
   if(!voice[v].porta_control_ratio)
   {
 #endif
+#ifdef tplus29
+  if(tuning == 0 && pb == 0x2000)
+#else
   if (pb==0x2000 || pb<0 || pb>0x3FFF)
+#endif
     voice[v].frequency=voice[v].orig_frequency;
   else
     {
@@ -409,19 +422,36 @@ void recompute_freq(int v)
 	{
 	  /* Damn. Somebody bent the pitch. */
 	  int32 i=pb*channel[voice[v].channel].pitchsens + tuning;
+#ifdef tplus29
+tuning;
+	      if(i >= 0)
+		  channel[ch].pitchfactor =
+		      bend_fine[(i>>5) & 0xFF] * bend_coarse[(i>>13) & 0x7F];
+	      else
+	      {
+		  i = -i;
+		  channel[ch].pitchfactor = 1.0 /
+		      (bend_fine[(i>>5) & 0xFF] * bend_coarse[(i>>13) & 0x7F]);
+	      }
+#else
 	  if (pb<0)
 	    i=-i;
 	  channel[voice[v].channel].pitchfactor=
 	    bend_fine[(i>>5) & 0xFF] * bend_coarse[i>>13];
+#endif
 	}
+#ifndef tplus29
       if (pb>0)
+#endif
 	voice[v].frequency=
 	  (int32)(channel[voice[v].channel].pitchfactor *
 		  (double)(voice[v].orig_frequency));
+#ifndef tplus29
       else
 	voice[v].frequency=
 	  (int32)((double)(voice[v].orig_frequency) /
 		  channel[voice[v].channel].pitchfactor);
+#endif
     }
 #ifdef tplus
   }
