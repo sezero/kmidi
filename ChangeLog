@@ -1,3 +1,8 @@
+1999-04-02  Harri Porten  <porten@kde.org>
+
+	* kmidi.cpp: prev/next bugfix from John Birch <jb.nz@writeme.com>
+	* linux_a.c: timidity fix from Martin Weghofer
+
 1999-03-29  Harri Porten  <porten@kde.org>
 
 	* ported to Qt 2.0
