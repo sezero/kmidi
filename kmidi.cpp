@@ -712,7 +712,7 @@ void KMidi::aboutClicked()
   label->setAlignment(AlignLeft|WordBreak|ExpandTabs);
   label->setText(labelstring);
 
-  QPixmap pm = ICON("kmidilogo.xpm");
+  QPixmap pm = BarIcon("kmidilogo.xpm");
   QLabel *logo = new QLabel(box);
   logo->setPixmap(pm);
   logo->setGeometry(30, 50, pm.width(), pm.height());
