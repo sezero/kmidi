@@ -140,6 +140,8 @@ static void help(void)
 	 "  -R n    Reverb options (1)(+2)(+4) [7]\n"
 	 "  -k n    Resampling interpolation option (0-3) [1]\n"
 	 "  -r n    Max ram to hold patches in megabytes [60]\n"
+	 "  -X n    Midi expression is linear (0) or exponential (1-2) [1]\n"
+	 "  -V n    Midi volume is linear (0) or exponential (1-2) [1]\n"
 
 	 "  -F      Enable fast panning\n"
 	 "  -U      Unload instruments from memory between MIDI files\n"
@@ -390,7 +392,7 @@ int main(int argc, char **argv)
       need_stdout=0;
   int orig_optind;
 
-  int32 tmpi32, output_rate=DEFAULT_RATE;
+  int32 tmpi32, output_rate=0;
 
   char *output_name=0;
 
@@ -418,6 +420,7 @@ int main(int argc, char **argv)
 	if (argv[i][1] == 'h') break;
 	if (strlen(argv[i]) < 3) continue;
 	if (argv[i][1] != 'i') continue;
+	if (argv[i][2] == 'c') continue;
 	if (argv[i][2] != 'q') break;
   }
 
@@ -465,7 +468,7 @@ int main(int argc, char **argv)
 #endif /*CHANNEL_EFFECT*/
 
 
-  while ((c=getopt(argc, argv, "UI:P:L:c:A:C:ap:fo:O:s:Q:R:FD:hi:#:qEmk:r:"
+  while ((c=getopt(argc, argv, "UI:P:L:c:A:C:ap:fo:O:s:Q:R:FD:hi:#:qEmk:r:X:V:"
 #if defined(AU_LINUX) || defined(AU_WIN32)
 			"B:" /* buffer fragments */
 #endif
@@ -484,9 +487,6 @@ int main(int argc, char **argv)
 #ifdef CHANNEL_EFFECT
 		case 'E':  effect_activate( 1 ); break ;
 #endif /* CHANNEL_EFFECT */
-#ifdef tplusdontuse
-		case 'm':  opt_portamento = 0; break ;
-#endif
 
 		case 'Q':
 	if (set_channel_flag(&quietchannels, atoi(optarg), "Quiet channel"))
@@ -495,6 +495,14 @@ int main(int argc, char **argv)
 
 		case 'k':
 	current_interpolation = atoi(optarg);
+	break;
+
+		case 'X':
+	opt_expression_curve = atoi(optarg);
+	break;
+
+		case 'V':
+	opt_volume_curve = atoi(optarg);
 	break;
 
 		case 'r':
@@ -610,7 +618,7 @@ int main(int argc, char **argv)
 	 }
 
   /* Set play mode parameters */
-  play_mode->rate=output_rate;
+  if (output_rate) play_mode->rate=output_rate;
   if (output_name)
 	 {
 		play_mode->name=output_name;

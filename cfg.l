@@ -28,7 +28,7 @@
 static int prescanning;
 static char doing_drums = false;
 static char doing_sf = false;
-static int patchno = -1, i;
+static int patchno = -1, i, j;
 static char *patchname;
 static char cfg_flag = 1;
 static int tone_bank;
@@ -42,21 +42,10 @@ static int current_drumset = 0;
 
 static int cfg_condition = -1;
 
-/* new ... */
-  static ToneBank *bank=0;
-  static int banknum=0;
-  static int rcf_count=1;
-  static int font_type=FONT_NORMAL;
-/* end new */
-  static int setting_dsp_voices;
-  static int setting_dsp_volume;
-  static int setting_dsp_rate;
-  static int setting_dsp_channels;
-  static int setting_reverb;
-  static int setting_chorus_spread;
-  static int setting_vibrato_depth;
-  static int setting_vibrato_speed;
-  static int setting_vibrato_sweep;
+static ToneBank *bank=0;
+static int banknum=0;
+static int rcf_count=1;
+static int font_type=FONT_NORMAL;
 
 
 #define MAX_INCLUDE_DEPTH 40
@@ -309,11 +298,6 @@ cm	[ \t]*("#".*)?\n
 	doing_drums = true;
 	current_drumset = current_toneset;
 }
-"129-256 begin_multipatch default blank" {
-	doing_drums = true;
-}
-^.*"use_note".*		;
-^.*"override_patch".*	;
 
 ^{owh}[0-9,]+("="|{wh}){nm} {
 	const char *gm_name = NULL;
@@ -403,31 +387,48 @@ cm	[ \t]*("#".*)?\n
 	
 	BEGIN(P);
 }
-^{owh}"voices"{wh}[0-9]+	{ i=0; while(isspace(yytext[i])) i++;
-				  setting_dsp_voices = atoi(yytext+i+6);
-				}
-^{owh}"amplitude"{wh}[0-9]+	{ i=0; while(isspace(yytext[i])) i++;
-				  setting_dsp_volume = atoi(yytext+i+9);
-				}
-^{owh}"rate"{wh}[0-9]+		{ i=0; while(isspace(yytext[i])) i++;
-				  setting_dsp_rate = atoi(yytext+i+4);
-				}
-^{owh}"no stereo"		setting_dsp_channels = 1;
-^{owh}"reverb delay"{wh}[0-9]+	{ i=0; while(isspace(yytext[i])) i++;
-				  setting_reverb = atoi(yytext+i+12);
-				}
-^{owh}"chorus spread"{wh}[0-9]+	{ i=0; while(isspace(yytext[i])) i++;
-				  setting_chorus_spread = atoi(yytext+i+13);
-				}
-^{owh}"vibrato depth"{wh}[0-9]+	{ i=0; while(isspace(yytext[i])) i++;
-				  setting_vibrato_depth = atoi(yytext+i+13);
-				}
-^{owh}"vibrato speed"{wh}[0-9]+	{ i=0; while(isspace(yytext[i])) i++;
-				  setting_vibrato_speed = atoi(yytext+i+13);
-				}
-^{owh}"vibrato sweep"{wh}[0-9]+	{ i=0; while(isspace(yytext[i])) i++;
-				  setting_vibrato_sweep = atoi(yytext+i+13);
-				}
+
+^{owh}"-p"{owh}[0-9]+	{ if (prescanning) {
+		i=0; while(isspace(yytext[i])) i++;
+		j = atoi(yytext+i+2);
+		if (j > 1 && j < MAX_VOICES) voices = j;
+	} }
+^{owh}"-A"{wh}[0-9]+	{ if (prescanning) {
+		i=0; while(isspace(yytext[i])) i++;
+		j = atoi(yytext+i+2);
+		if (j > 1 && j < MAX_AMPLIFICATION) amplification = j;
+	} }
+^{owh}"-C"{wh}[0-9]+	{ if (prescanning) {
+		i=0; while(isspace(yytext[i])) i++;
+		j = atoi(yytext+i+2);
+		if (j > 1 && j < MAX_CONTROL_RATIO) control_ratio = j;
+	} }
+^{owh}"-s"{owh}[0-9]+	{ if (prescanning) {
+		i=0; while(isspace(yytext[i])) i++;
+		j = atoi(yytext+i+2);
+		if (j < 100) j *= 1000;
+		if (j > MIN_OUTPUT_RATE && j < MAX_OUTPUT_RATE) play_mode->rate = j;
+	} }
+^{owh}"-r"{owh}[0-9]+	{ if (prescanning) {
+		i=0; while(isspace(yytext[i])) i++;
+		j = atoi(yytext+i+2);
+		max_patch_memory = j * 1000000;
+	} }
+^{owh}"-k"{owh}[0-9]+	{ if (prescanning) {
+		i=0; while(isspace(yytext[i])) i++;
+		j = atoi(yytext+i+2);
+		if (j >= 0 && j <= 3) current_interpolation = j;
+	} }
+^{owh}"-X"{owh}[0-9]+	{ if (prescanning) {
+		i=0; while(isspace(yytext[i])) i++;
+		j = atoi(yytext+i+2);
+		if (j >= 0 && j <= 2) opt_expression_curve = j;
+	} }
+^{owh}"-V"{owh}[0-9]+	{ if (prescanning) {
+		i=0; while(isspace(yytext[i])) i++;
+		j = atoi(yytext+i+2);
+		if (j >= 0 && j <= 2) opt_volume_curve = j;
+	} }
 
 <P>{owh}"amp"{owh}"="{owh}[0-9]+	{
 	int i = 0;

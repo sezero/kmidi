@@ -1,3 +1,12 @@
+2000-01-05  Greg Lee  <lee@hawaii.edu>
+
+	* selected commandline options also settable
+	  in timidity.cfg, documented in timidity.1
+	* add commandline options for expression and
+	  volume curves
+	* allow for commandline argument "-icon"
+	* optimization compiler options
+
 2000-01-04  Greg Lee  <lee@hawaii.edu>
 
 	* kde interface is no longer started up if

@@ -139,6 +139,14 @@ Sets polyphony (maximum number of simultaneous voices) to
 .BI \-A " amplification"
 Multiplies the master volume by \fIamplification\fP%.
 .TP
+.BI \-X " curve"
+With the value 0, the midi expression controller affects the volume
+linearly.  With 1 (the default) or 2, it affects volume exponentially.
+.TP
+.BI \-V " curve"
+With the value 0, the midi volume controller affects the volume
+linearly.  With 1 (the default) or 2, it affects volume exponentially.
+.TP
 .BI \-C " ratio"
 Sets the ratio of sampling and control frequencies.  This determines how
 often envelopes are recalculated -- small ratios yield better quality
@@ -268,6 +276,42 @@ files.  Multiple files may be specified, and statements in later ones
 will override earlier ones.  The following statements can be used in a
 configuration file:
 .TP
+.BI \-p " voices"
+Sets polyphony (maximum number of simultaneous voices) to
+\fIvoices\fP.
+.TP
+.BI \-A " amplification"
+Multiplies the master volume by \fIamplification\fP%.
+.TP
+.BI \-X " curve"
+With the value 0, the midi expression controller affects the volume
+linearly.  With 1 (the default) or 2, it affects volume exponentially.
+.TP
+.BI \-V " curve"
+With the value 0, the midi volume controller affects the volume
+linearly.  With 1 (the default) or 2, it affects volume exponentially.
+.TP
+.BI \-C " ratio"
+Sets the ratio of sampling and control frequencies.  This determines how
+often envelopes are recalculated -- small ratios yield better quality
+but use more CPU time.
+.TP
+.BI \-s " frequency"
+Sets the resampling frequency.  Not all sound devices are capable of
+all frequencies -- an approximate frequency may be selected, depending
+on the implementation.
+.TP
+.B \-k " number"
+Select interpolation algorithm for resampling: 0 for linear interpolation,
+1 for cspline interpolation, 2 for LaGrange interpolation, 3 for
+cspline interpolation with low-pass filtering.
+.TP
+.B \-r " number"
+Set maximum of ram in megabytes to use up keeping patches from previously
+played midi files.  This should presumably be less than your total ram
+plus disk cache size.  The default is 60 megabytes.  It probably doesn't
+matter unless you're using big sf2 soundfont patchsets.
+.TP
 .BI dir " directory"
 Adds \fIdirectory\fP to the search path in the same manner as the
 \fB\-L\fP command line option.
@@ -294,7 +338,7 @@ be followed by \fBsbk\fP.
 The options allowed are:
 .RS
 .TP
-\fBoldbank=\fP\fIbanknumber\fP
+\fIbanknumber\fP
 The bank number given in the first preceding
 "bank"/"drumset" statement is to be used in place of
 the bank \fIbanknumber\fP given in the SoundFont itself.

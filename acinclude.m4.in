@@ -319,6 +319,11 @@ AC_DEFUN(EXTRACT_CPPFLAGS,
 done
 ])
 
+AC_DEFUN(KMIDI_OPTIMIZE,
+[
+AM_CONDITIONAL(GXXOPTIMIZE, test x$ac_cv_prog_gxx$kde_use_debug_code = xyesno)
+])
+
 AC_DEFUN(AC_SUBST_KMIDI,
 [
 AC_SUBST(EXTRACFLAGS)

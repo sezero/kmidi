@@ -10,7 +10,9 @@ VERSION = 0.2i
 
 INCLUDES = $(all_includes)
 AM_CPPFLAGS = -DDEFAULT_PATH=\"$(TIMID_DIR)\" -DKMIDI $(EXTRADEFS) $(CPPFLAGS)
-KDE_CXXFLAGS += -O3 -fomit-frame-pointer -ffast-math -malign-double -march=i586
+if GXXOPTIMIZE
+KDE_CXXFLAGS += -O3 -fomit-frame-pointer -ffast-math -malign-double
+endif
 LDFLAGS = $(all_libraries) $(KDE_RPATH)
 LDADD = $(LIB_KDEUI) $(LIBALIB) $(LIBAUDIO) $(LIBMME) $(LIB_KFILE) $(EXTRALIBS)
 
