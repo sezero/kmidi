@@ -369,7 +369,8 @@ static void ctl_note(int v)
 	      realcount[ch]++;
 	      break;
 	    case VOICE_OFF:
-	      vel = 0;
+	      start = -1;
+	      /** vel = 0; **/
 	      /* if (Panel->notecount[slot][ch]) Panel->notecount[slot][ch]--; */
 	    case VOICE_SUSTAINED:
 	      start = -1;

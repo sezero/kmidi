@@ -212,10 +212,13 @@ int current_sample_count()
   int samples_queued, samples_sent;
   extern int b_out_count();
 
-  if (ioctl(dpm.fd, SNDCTL_DSP_GETODELAY, &samples_queued) == -1)
+  samples = samples_sent = b_out_count();
+
+  if (samples_sent) {
+      if (ioctl(dpm.fd, SNDCTL_DSP_GETODELAY, &samples_queued) == -1)
 	samples_queued = 0;
-  samples_sent = b_out_count();
-  samples = samples_sent - samples_queued;
+      samples -= samples_queued;
+  }
   if (!(dpm.encoding & PE_MONO)) samples >>= 1;
   if (dpm.encoding & PE_16BIT) samples >>= 1;
 #else

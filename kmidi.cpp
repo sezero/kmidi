@@ -166,6 +166,7 @@ KMidi::KMidi( QWidget *parent, const char *name )
     looping = false;
     driver_error = false;
     last_status = status = KNONE;
+    flag_new_playlist = false;
     song_number = 1;
     current_voices = DEFAULT_VOICES;
     stereo_state = reverb_state = chorus_state = verbosity_state = 1;
@@ -231,6 +232,7 @@ KMidi::KMidi( QWidget *parent, const char *name )
 
     redoplaylistbox();
     playlistbox->setCurrentItem(current_playlist_num);
+    flag_new_playlist = false;
 
     srandom(time(0L));
     adjustSize();
@@ -420,7 +422,9 @@ void MeterWidget::remeter()
 		  notetime = Panel->ctime[slot][ch];
 		  //if (notetime == -1 || notetime > meterpainttime) break;
 		  if (notetime != -1 && notetime <= meterpainttime) {
-		    chnotes = Panel->notecount[slot][ch];
+		    if (chnotes < Panel->notecount[slot][ch])
+		        chnotes = Panel->notecount[slot][ch];
+		#if 0
 		    if (Panel->v_flags[slot][ch]) {
 			if (Panel->v_flags[slot][ch] == FLAG_NOTE_OFF) {
 				if (!chnotes) Panel->ctotal[slot][ch] -= DELTA_VEL;
@@ -433,15 +437,20 @@ void MeterWidget::remeter()
 			}
 			if (amplitude < Panel->ctotal[slot][ch])
 			    amplitude = Panel->ctotal[slot][ch];
-			//if (amplitude < 20) amplitude = 20;
 		    }
+		#else
+			if (amplitude < Panel->ctotal[slot][ch])
+			    amplitude = Panel->ctotal[slot][ch];
+		#endif
+		#if 0
 		    if (!chnotes && amplitude > 0) {
 			amplitude -= 2*DELTA_VEL;
 			if (Panel->c_flags[ch] & FLAG_PERCUSSION)
 				amplitude -= 3*DELTA_VEL;
 			if (amplitude < 0) amplitude = 0;
 		    }
-		    if (chnotes && amplitude < 20) amplitude = 20;
+		#endif
+		    if (chnotes && amplitude < 40) amplitude = 40;
 		    Panel->ctime[slot][ch] = -1;
 		  }
 		  slot++;
@@ -819,6 +828,7 @@ void KMidi::plActivated( int index )
 {
     current_playlist_num = index;
     loadplaylist(index);
+    if (status == KPLAYING) flag_new_playlist = true;
 }
  
 void KMidi::updateRChecks( int which )
@@ -923,6 +933,8 @@ void KMidi::redoplaybox()
 	playbox->insertItem(filenamestr);
 
     }
+    if (status != KPLAYING) setSong(0);
+    else flag_new_playlist = true;
 }
 
 void KMidi::redoplaylistbox()
@@ -1053,6 +1065,7 @@ void KMidi::setLEDs(const QString &symbols){
 int KMidi::randomSong(){
 
     int j;
+    flag_new_playlist = false;
     j=1+(int) (((double)playlist->count()) *rand()/(RAND_MAX+1.0));
     return j;
 }
@@ -1060,6 +1073,7 @@ int KMidi::randomSong(){
 
 void KMidi::randomClicked(){
 
+    flag_new_playlist = false;
     if(playlist->count() == 0) {
 	shufflebutton->setOn( FALSE );
 	randomplay = FALSE;
@@ -1122,10 +1136,6 @@ void KMidi::playClicked()
     return;
   }
 
-  int index;
-  index = song_number -1;
-
-
   if(status == KPLAYING){
     status = KPAUSED;
     playPB->setOn( FALSE );
@@ -1144,6 +1154,15 @@ void KMidi::playClicked()
 
   if (!playPB->isOn()) return;
 
+  if (flag_new_playlist) {
+    flag_new_playlist = false;
+    song_number = 1;
+  }
+
+  int index;
+  index = song_number -1;
+  if (index < 0) index = 0;
+
   if(((int)playlist->count()  > index) && (index >= 0)){
     setLEDs("OO:OO");
     nbvoice = currplaytime = 0;
@@ -1161,6 +1180,7 @@ void KMidi::playClicked()
 void KMidi::stopClicked()
 {
      looping = false;
+     flag_new_playlist = false;
      replayPB->setOn( FALSE );
      randomplay = false;
      shufflebutton->setOn( FALSE );
@@ -1177,6 +1197,8 @@ void KMidi::stopClicked()
 
 void KMidi::prevClicked(){
 
+    if (flag_new_playlist) song_number = 2;
+    flag_new_playlist = false;
     song_number --;
 
     if (song_number < 1)
@@ -1221,6 +1243,10 @@ void KMidi::infoslot(){
 
 void KMidi::nextClicked(){
 
+    if (flag_new_playlist) {
+	song_number = 0;
+	flag_new_playlist = false;
+    }
     if(playlist->count() == 0)
 	return;
     song_number = (randomplay) ? randomSong() : song_number + 1;
@@ -1324,12 +1350,12 @@ void KMidi::ejectClicked(){
 
     if(playlistdlg->exec()){
       updateUI();
-      status = KSTOPPED;
+      //status = KSTOPPED;
       redoplaylistbox();
       playlistbox->setCurrentItem(current_playlist_num);
-      playPB->setOn( FALSE );
-      timer->start( 200, TRUE );  // single shot
+      //playPB->setOn( FALSE );
       redoplaybox();
+      if (status != KPLAYING) timer->start( 200, TRUE );  // single shot
     }
 
 }
@@ -1497,6 +1523,7 @@ void KMidi::loadplaylist( int which ) {
 	f.close();
     }
     redoplaybox();
+    flag_new_playlist = false;
 
 }
 
@@ -1632,9 +1659,8 @@ void KMidi::ReadPipe(){
 		  /*or none of them was readable */
 		    loadplaylist(current_playlist_num);
 		}
-
-    		redoplaybox();
-
+    		else redoplaybox();
+		flag_new_playlist = false;
 
 		if(playlist->count() > 0){
 	
@@ -1677,8 +1703,6 @@ void KMidi::ReadPipe(){
 		    return;
 		}
 
-	
-
 		setLEDs("OO:OO");
 		if(randomplay){
 		    randomPlay();
@@ -1700,7 +1724,12 @@ void KMidi::ReadPipe(){
 		}
 		*/
 
-		if (song_number < 1)
+		if (flag_new_playlist)
+		    {
+			if (playlist->count()) song_number = 0;
+			flag_new_playlist = false;
+		    }
+		else if (song_number < 1)
 		    {
 			song_number = 1;
 		    }
@@ -1719,7 +1748,6 @@ void KMidi::ReadPipe(){
 			modlabel->setText("");
 			totaltimelabel->setText("--:--");
 			playPB->setOn( FALSE );
-      			//patchbox->setEnabled( TRUE );
 			status = KSTOPPED;
 			return;
 		    }

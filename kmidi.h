@@ -216,6 +216,7 @@ public:
 	QColor		led_color;
 	bool 		playing;
 	bool 		blink;
+	bool		flag_new_playlist;
 
 	bool		showmeterrequest;
 	bool		showinforequest;

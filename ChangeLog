@@ -2,6 +2,7 @@
 
 	* ctl.c/kmidi.cpp: improve meter display (still no
 	  good at sustained notes)
+	* kmidi.cpp: flag changes in playlist
 
 1999-10-29  Greg Lee  <lee@hawaii.edu>
 

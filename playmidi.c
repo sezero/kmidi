@@ -2323,7 +2323,6 @@ int play_midi(MidiEvent *eventlist, uint32 events, uint32 samples)
   skip_to(0);
 #ifdef KMIDI
   whensaytime = current_event->time;
-  ctl->current_time(1);
 #endif
 
   for (;;)
