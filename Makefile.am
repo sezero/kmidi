@@ -28,6 +28,7 @@ kmidi_SOURCES = kmidi.cpp  playlist.cpp bwlednum.cpp configdlg.cpp log.cpp \
 	tables.c controls.c output.c filter.c wave_a.c raw_a.c dumb_c.c \
 	sndfont.c readsbk.c ctl.c \
 	linux_a.c dec_a.c sun_a.c hpux_a.c hpux_d_a.c alsa_a.c \
+	bsd20_a.c esd_a.c nas_a.c \
 	b_out.c fffload.c \
 	effects.c reverb_e.c chorus_e.c phaser_e.c celeste_e.c \
 	resample_l.c resample_f.c midiapplication.cpp kmidiframe.cpp

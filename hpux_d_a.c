@@ -75,7 +75,7 @@ if (dpm.encoding & PE_ULAW)
 if (!(dpm.encoding & PE_16BIT))
   dpm.encoding &= ~PE_BYTESWAP;
 
-dpm.fd = open(dpm.name, O_WRONLY, 0);
+dpm.fd = open(dpm.name, O_WRONLY|O_NONBLOCK, 0);
 if(dpm.fd == -1)
     {
       ctl->cmsg(CMSG_ERROR, VERB_NORMAL, "%s: %s",
@@ -96,6 +96,7 @@ if(dpm.fd == -1)
 return 0;
 }
 
+#ifdef ORIG_TIMPP
 static void output_data(int32 *buf, uint32 count)
 {
     if (!(dpm.encoding & PE_MONO)) count*=2; /* Stereo samples */
@@ -127,6 +128,33 @@ static void output_data(int32 *buf, uint32 count)
 	}
 #endif
 }
+#else
+
+
+static void output_data(int32 *buf, uint32 count)
+{
+  int ocount;
+
+  if (!(dpm.encoding & PE_MONO)) count*=2; /* Stereo samples */
+  ocount = (int)count;
+
+  if (ocount) {
+    if (dpm.encoding & PE_16BIT)
+      {
+        /* Convert data to signed 16-bit PCM */
+        s32tos16(buf, count);
+        ocount *= 2;
+      }
+    else
+      {
+        /* Convert to 8-bit unsigned and write out. */
+        s32tou8(buf, count);
+      }
+  }
+
+  b_out(dpm.fd, (int *)buf, ocount);
+}
+#endif
 
 static void close_output(void)
 {
@@ -139,10 +167,12 @@ static void close_output(void)
 }
 
 static void flush_output(void) {
+    output_data(0, 0);
 }
 
 static void purge_output(void) {
 
+    b_out(dpm.fd, 0, -1);
     ioctl(dpm.fd, AUDIO_RESET, RESET_TX_BUF);
 
 }

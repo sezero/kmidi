@@ -32,7 +32,7 @@ static int starting_up = 1, flushing = 0;
 static int out_count = 0;
 static int total_bytes = 0;
 
-#if defined(AU_OSS) || defined(AU_SUN)
+#if defined(AU_OSS) || defined(AU_SUN) || defined(AU_BSDI) || defined(AU_ESD)
 #define WRITEDRIVER(fd,buf,cnt) write(fd,buf,cnt)
 #else
 #define WRITEDRIVER(fd,buf,cnt) driver_output_data(buf,cnt)

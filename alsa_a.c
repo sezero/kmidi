@@ -439,6 +439,9 @@ static int open_output(void)
       close_output ();
       return -1;
     }
+#ifdef ORIG_TIMPP
+  ret = snd_pcm_block_mode(handle, 0);
+#endif
 
   dpm.fd = snd_pcm_file_descriptor (handle);
   output_counter = 0;
@@ -494,7 +497,6 @@ int current_sample_count(uint32 ct)
 {
   int samples = -1;
   int samples_queued, samples_sent = (int)ct;
-  extern int b_out_count();
 
   samples = samples_sent = b_out_count();
 
@@ -534,10 +536,6 @@ static void output_data(int32 *buf, uint32 count)
   b_out(dpm.fd, (int *)buf, ocount);
 }
 
-static void close_output(void)
-{
-  close(dpm.fd);
-}
 
 static void flush_output(void)
 {

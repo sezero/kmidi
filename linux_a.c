@@ -45,7 +45,6 @@
 #include "output.h"
 #include "controls.h"
 
-extern void b_out(int fd, int *buf, int ocount);
 
 static int open_output(void); /* 0=success, 1=warning, -1=fatal error */
 static void close_output(void);
@@ -215,7 +214,6 @@ int current_sample_count(uint32 ct)
   int samples = -1;
 #ifdef SNDCTL_DSP_GETODELAY
   int samples_queued, samples_sent;
-  extern int b_out_count();
 
   samples = samples_sent = b_out_count();
 

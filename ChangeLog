@@ -3,6 +3,7 @@
 	* instrum.c,playmidi.c: bug fixes
 	  from TiM++ 2.8.0
 	* port alsa and (2nd) hpux drivers (untested)
+	* port bsdi, esd, nas drivers
 
 1999-12-03  Greg Lee  <lee@hawaii.edu>
 

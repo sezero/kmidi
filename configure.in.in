@@ -140,6 +140,7 @@ if test "x$au_enable_sun" = xyes; then
   case "$target" in
     *-*-sunos4*)
       if test -f /usr/demo/SOUND/libaudio.a; then
+	CPPFLAGS="$CPPFLAGS -I/usr/demo/SOUND/multimedia"
 	EXTRALIBS="$EXTRALIBS /usr/demo/SOUND/libaudio.a"
 	AC_MSG_RESULT(yes)
       else
@@ -148,6 +149,7 @@ if test "x$au_enable_sun" = xyes; then
       ;;
     *-*-solaris*)
       if test -f /usr/demo/SOUND/lib/libaudio.a; then
+	CPPFLAGS="$CPPFLAGS -I/usr/demo/SOUND/include"
 	EXTRALIBS="$EXTRALIBS /usr/demo/SOUND/lib/libaudio.a"
 	AC_MSG_RESULT(yes)
       else
@@ -202,8 +204,8 @@ if test "x$au_enable_mme" = xyes; then
   esac
   EXTRADEFS="$EXTRADEFS -DAU_DEC -DAU_AUDRIV"
   SYSEXTRAS="$SYSEXTRAS audriv_a.c audriv_mme.c"
-  CPPFLAGS="$CPPFLAGS -I/usr/opt/MME210/include"
-  EXTRALIBS="$EXTRALIBS /usr/opt/MME220/lib/libmme.a"
+  CPPFLAGS="$CPPFLAGS -I/usr/include/mme -I/usr/opt/MME210/include"
+  EXTRALIBS="$EXTRALIBS -L/usr/opt/MME220/lib -lmme"
 else
   AC_MSG_RESULT(no)
 fi
