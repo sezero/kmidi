@@ -197,7 +197,7 @@ static void DebugCircBuffer()
 /**************************************************************************/
 /** do_compute_data redefined from playmidi
  */ 
-void do_compute_data_effect(int32 count)
+void do_compute_data_effect(uint32 count)
 {
 	int idChannel , idVoice , byteCount , idEffect;
 	int32 *pBuffDestEnd ;
@@ -289,7 +289,7 @@ void do_compute_data_effect(int32 count)
 
 /** cut and paste from playmidi*/
 
-static void do_compute_data_default(int32 count)
+static void do_compute_data_default(uint32 count)
 {
   int i;
   if (!count) return; /* (gl) */
@@ -315,7 +315,7 @@ static void do_compute_data_default(int32 count)
 }
 /**************************************************************************/
 /**	switch beetween effect / no_effect mixing mode */
-void (*do_compute_data)(int32) = &do_compute_data_default ;
+void (*do_compute_data)(uint32) = &do_compute_data_default ;
 
 
 /**************************************************************************/

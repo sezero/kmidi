@@ -28,7 +28,7 @@ typedef struct {
 
 extern int32 quietchannels;
 
-extern MidiEvent *read_midi_file(FILE *mfp, int32 *count, int32 *sp);
+extern MidiEvent *read_midi_file(FILE *mfp, uint32 *count, uint32 *sp);
 
 struct meta_text_type {
     unsigned long time;

@@ -33,7 +33,7 @@ extern int XG_effect_chorus_is_celeste_flag;
 /**	 exported from playmidi.c
  */
 extern MidiEvent *event_list, *current_event;
-extern int32 sample_count, current_sample;
+extern uint32 sample_count, current_sample;
 extern int32 *buffer_pointer;
 
 /**************************************************************************/

@@ -621,7 +621,7 @@ static InstrumentLayer *load_instrument(char *name, int font_type, int percussio
       sp->envelope_rate[DELAY] = sp->envelope_offset[DELAY] = 0;
 
 #ifdef EXAMINE_SOME_ENVELOPES
-if (!bank && (gm_num >= 24 && gm_num <= 27)) {
+if (percussion /* && (gm_num >= 42 && gm_num <= 51) */) {
 	printf("\nPRESET %d:\n", gm_num);
 	printf(" attack(0): off %ld  rate %ld\n",
 		sp->envelope_offset[0] >>(7+15), sp->envelope_rate[0] >>(7+15));
@@ -637,6 +637,12 @@ if (!bank && (gm_num >= 24 && gm_num <= 27)) {
 		sp->envelope_offset[5] >>(7+15), sp->envelope_rate[5] >>(7+15));
 	printf("  delay(6): off %ld  rate %ld\n",
 		sp->envelope_offset[6] >>(7+15), sp->envelope_rate[6] >>(7+15));
+	printf("MODES: %s%s%s%s\n",
+      		(sp->modes & MODES_LOOPING)? "looping ":"",
+      		(sp->modes & MODES_SUSTAIN)? "sustain ":"",
+      		(sp->modes & MODES_PINGPONG)? "pingpong ":"",
+      		(sp->modes & MODES_REVERSE)? "reverse ":""
+	);
 }
 #endif
 

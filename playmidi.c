@@ -131,18 +131,18 @@ static int32 lost_notes, cut_notes, played_notes;
 #ifdef CHANNEL_EFFECT
 int32 common_buffer[AUDIO_BUFFER_SIZE*2], /* stereo samples */
              *buffer_pointer;
-static int32 buffered_count;
+static uint32 buffered_count;
 
 MidiEvent *event_list, *current_event;
-int32 sample_count;
-int32 current_sample;
+uint32 sample_count;
+uint32 current_sample;
 #else
 static int32 common_buffer[AUDIO_BUFFER_SIZE*2], /* stereo samples */
              *buffer_pointer;
-static int32 buffered_count;
+static uint32 buffered_count;
 
 static MidiEvent *event_list, *current_event;
-static int32 sample_count, current_sample;
+static uint32 sample_count, current_sample;
 #endif
 
 #ifdef tplus
@@ -1766,9 +1766,9 @@ static int apply_controls(void)
 #endif /* ADAGIO */
 
 #ifdef CHANNEL_EFFECT
-extern void (*do_compute_data)(int32) ;
+extern void (*do_compute_data)(uint32) ;
 #else
-static void do_compute_data(int32 count)
+static void do_compute_data(uint32 count)
 {
   int i;
   if (!count) return; /* (gl) */
@@ -1796,7 +1796,7 @@ static void do_compute_data(int32 count)
 
 /* count=0 means flush remaining buffered data to output device, then
    flush the device itself */
-static int compute_data(int32 count)
+static int compute_data(uint32 count)
 {
 #ifndef ADAGIO
   int rc;
@@ -1920,7 +1920,7 @@ static void update_channel_freq(int ch)
 #endif
 
 #ifndef ADAGIO
-int play_midi(MidiEvent *eventlist, int32 events, int32 samples)
+int play_midi(MidiEvent *eventlist, uint32 events, uint32 samples)
 {
   int rc;
 #ifdef KMIDI
@@ -2630,7 +2630,7 @@ static void read_seq(unsigned char *from, unsigned char *to)
 int play_midi_file(char *fn)
 {
   MidiEvent *event;
-  int32 events, samples;
+  uint32 events, samples;
   int rc;
   FILE *fp;
 

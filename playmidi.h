@@ -236,7 +236,7 @@ extern int XG_System_variation_type;
 #define ISDRUMCHANNEL(c) ((drumchannels & (1<<(c))))
 
 #ifndef ADAGIO
-extern int play_midi(MidiEvent *el, int32 events, int32 samples);
+extern int play_midi(MidiEvent *el, uint32 events, uint32 samples);
 extern int play_midi_file(char *fn);
 #endif
 extern void dumb_pass_playing_list(int number_of_files, char *list_of_files[]);

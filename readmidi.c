@@ -764,7 +764,7 @@ static void free_midi_list(void)
    events, marking used instruments for loading. Convert event times to
    samples: handle tempo changes. Strip unnecessary events from the list.
    Free the linked list. */
-static MidiEvent *groom_list(int32 divisions,int32 *eventsp,int32 *samplesp)
+static MidiEvent *groom_list(int32 divisions, uint32 *eventsp, uint32 *samplesp)
 {
   MidiEvent *groomed_list, *lp;
   MidiEventList *meep;
@@ -1047,7 +1047,7 @@ static MidiEvent *groom_list(int32 divisions,int32 *eventsp,int32 *samplesp)
   return groomed_list;
 }
 
-MidiEvent *read_midi_file(FILE *mfp, int32 *count, int32 *sp)
+MidiEvent *read_midi_file(FILE *mfp, uint32 *count, uint32 *sp)
 {
   int32 len, divisions;
   int16 format, tracks, divisions_tmp;

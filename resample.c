@@ -121,14 +121,14 @@ static int reduce_quality_flag = 0;
 /* So it isn't interpolation. At least it's final. */
 
 static sample_t resample_buffer[AUDIO_BUFFER_SIZE];
-static int resample_buffer_offset;
-static sample_t *vib_resample_voice(int, int32 *, int);
-static sample_t *normal_resample_voice(int, int32 *, int);
+static uint32 resample_buffer_offset;
+static sample_t *vib_resample_voice(int, uint32 *, int);
+static sample_t *normal_resample_voice(int, uint32 *, int);
 
 
 /*************** resampling with fixed increment *****************/
 
-static sample_t *rs_plain(int v, int32 *countptr)
+static sample_t *rs_plain(int v, uint32 *countptr)
 {
   /* Play sample until end, then free the voice. */
   INTERPVARS
@@ -198,7 +198,7 @@ static sample_t *rs_plain(int v, int32 *countptr)
   return resample_buffer+resample_buffer_offset;
 }
 
-static sample_t *rs_loop(Voice *vp, int32 count)
+static sample_t *rs_loop(Voice *vp, uint32 count)
 {
   /* Play sample until end-of-loop, skip back and continue. */
   INTERPVARS
@@ -251,7 +251,7 @@ static sample_t *rs_loop(Voice *vp, int32 count)
   return resample_buffer+resample_buffer_offset;
 }
 
-static sample_t *rs_bidir(Voice *vp, int32 count)
+static sample_t *rs_bidir(Voice *vp, uint32 count)
 {
   INTERPVARS
   int32
@@ -447,7 +447,7 @@ static int32 update_vibrato(Voice *vp, int sign)
   return (int32) a;
 }
 
-static sample_t *rs_vib_plain(int v, int32 *countptr)
+static sample_t *rs_vib_plain(int v, uint32 *countptr)
 {
 
   /* Play sample until end, then free the voice. */
@@ -463,7 +463,8 @@ static sample_t *rs_vib_plain(int v, int32 *countptr)
 #endif /* LAGRANGE_INTERPOLATION */
     le=vp->sample->data_length,
     ofs=vp->sample_offset,
-    incr=vp->sample_increment,
+    incr=vp->sample_increment;
+  uint32
     count=*countptr;
   int
     cc=vp->vibrato_control_counter;
@@ -497,7 +498,7 @@ static sample_t *rs_vib_plain(int v, int32 *countptr)
   return resample_buffer+resample_buffer_offset;
 }
 
-static sample_t *rs_vib_loop(Voice *vp, int32 count)
+static sample_t *rs_vib_loop(Voice *vp, uint32 count)
 {
   /* Play sample until end-of-loop, skip back and continue. */
   INTERPVARS
@@ -572,7 +573,7 @@ static sample_t *rs_vib_loop(Voice *vp, int32 count)
   return resample_buffer+resample_buffer_offset;
 }
 
-static sample_t *rs_vib_bidir(Voice *vp, int32 count)
+static sample_t *rs_vib_bidir(Voice *vp, uint32 count)
 {
   INTERPVARS
   int32
@@ -737,12 +738,12 @@ static int rs_update_porta(int v)
     return vp->porta_control_ratio;
 }
 
-static sample_t *porta_resample_voice(int v, int32 *countptr, int mode)
+static sample_t *porta_resample_voice(int v, uint32 *countptr, int mode)
 {
     Voice *vp=&voice[v];
-    int32 n = *countptr;
+    uint32 n = *countptr;
     int32 i;
-    sample_t *(* resampler)(int, int32 *, int);
+    sample_t *(* resampler)(int, uint32 *, int);
     int cc = vp->porta_control_counter;
     int loop;
 
@@ -786,7 +787,7 @@ static sample_t *porta_resample_voice(int v, int32 *countptr, int mode)
     return resample_buffer;
 }
 
-static sample_t *vib_resample_voice(int v, int32 *countptr, int mode)
+static sample_t *vib_resample_voice(int v, uint32 *countptr, int mode)
 {
     Voice *vp = &voice[v];
 
@@ -798,7 +799,7 @@ static sample_t *vib_resample_voice(int v, int32 *countptr, int mode)
     return rs_vib_bidir(vp, *countptr);
 }
 
-static sample_t *normal_resample_voice(int v, int32 *countptr, int mode)
+static sample_t *normal_resample_voice(int v, uint32 *countptr, int mode)
 {
     Voice *vp = &voice[v];
     if(mode == 0)
@@ -808,7 +809,7 @@ static sample_t *normal_resample_voice(int v, int32 *countptr, int mode)
     return rs_bidir(vp, *countptr);
 }
 
-sample_t *resample_voice(int v, int32 *countptr)
+sample_t *resample_voice(int v, uint32 *countptr)
 {
     Voice *vp=&voice[v];
     int mode;

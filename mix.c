@@ -194,7 +194,7 @@ static int update_signal(int v)
 #  define MIXATION(a)	*lp++ += (a)*s;
 #endif
 
-static void mix_mystery_signal(sample_t *sp, int32 *lp, int v, int count)
+static void mix_mystery_signal(sample_t *sp, int32 *lp, int v, uint32 count)
 {
   Voice *vp = voice + v;
   final_volume_t 
@@ -241,7 +241,7 @@ static void mix_mystery_signal(sample_t *sp, int32 *lp, int v, int count)
       }
 }
 
-static void mix_center_signal(sample_t *sp, int32 *lp, int v, int count)
+static void mix_center_signal(sample_t *sp, int32 *lp, int v, uint32 count)
 {
   Voice *vp = voice + v;
   final_volume_t 
@@ -285,7 +285,7 @@ static void mix_center_signal(sample_t *sp, int32 *lp, int v, int count)
       }
 }
 
-static void mix_single_signal(sample_t *sp, int32 *lp, int v, int count)
+static void mix_single_signal(sample_t *sp, int32 *lp, int v, uint32 count)
 {
   Voice *vp = voice + v;
   final_volume_t 
@@ -329,7 +329,7 @@ static void mix_single_signal(sample_t *sp, int32 *lp, int v, int count)
       }
 }
 
-static void mix_mono_signal(sample_t *sp, int32 *lp, int v, int count)
+static void mix_mono_signal(sample_t *sp, int32 *lp, int v, uint32 count)
 {
   Voice *vp = voice + v;
   final_volume_t 
@@ -371,7 +371,7 @@ static void mix_mono_signal(sample_t *sp, int32 *lp, int v, int count)
       }
 }
 
-static void mix_mystery(sample_t *sp, int32 *lp, int v, int count)
+static void mix_mystery(sample_t *sp, int32 *lp, int v, uint32 count)
 {
   final_volume_t 
     left=voice[v].left_mix, 
@@ -386,7 +386,7 @@ static void mix_mystery(sample_t *sp, int32 *lp, int v, int count)
     }
 }
 
-static void mix_center(sample_t *sp, int32 *lp, int v, int count)
+static void mix_center(sample_t *sp, int32 *lp, int v, uint32 count)
 {
   final_volume_t 
     left=voice[v].left_mix;
@@ -400,7 +400,7 @@ static void mix_center(sample_t *sp, int32 *lp, int v, int count)
     }
 }
 
-static void mix_single(sample_t *sp, int32 *lp, int v, int count)
+static void mix_single(sample_t *sp, int32 *lp, int v, uint32 count)
 {
   final_volume_t 
     left=voice[v].left_mix;
@@ -414,7 +414,7 @@ static void mix_single(sample_t *sp, int32 *lp, int v, int count)
     }
 }
 
-static void mix_mono(sample_t *sp, int32 *lp, int v, int count)
+static void mix_mono(sample_t *sp, int32 *lp, int v, uint32 count)
 {
   final_volume_t 
     left=voice[v].left_mix;
@@ -428,7 +428,7 @@ static void mix_mono(sample_t *sp, int32 *lp, int v, int count)
 }
 
 /* Ramp a note out in c samples */
-static void ramp_out(sample_t *sp, int32 *lp, int v, int32 c)
+static void ramp_out(sample_t *sp, int32 *lp, int v, uint32 c)
 {
 
   /* should be final_volume_t, but uint8 gives trouble. */
@@ -516,7 +516,7 @@ static void ramp_out(sample_t *sp, int32 *lp, int v, int32 c)
 
 /**************** interface function ******************/
 
-void mix_voice(int32 *buf, int v, int32 c)
+void mix_voice(int32 *buf, int v, uint32 c)
 {
   Voice *vp=voice+v;
   sample_t *sp;

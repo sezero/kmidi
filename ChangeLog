@@ -1,3 +1,10 @@
+1999-09-20  Greg Lee  <lee@hawaii.edu>
+
+	* sf2 volume envelopes
+	* sf2 peak envelope
+	* "count" variables to unsigned
+	* sf2 vel ranges of stereo patches
+
 1999-09-17  Greg Lee  <lee@hawaii.edu>
 
 	* sf2 volume envelopes (not quite right yet)
