@@ -34,7 +34,6 @@
 #endif
 /*#define SF_SUPPRESS_CUTOFF*/
 
-#define DO_LINKED_WAVES
 
 /*----------------------------------------------------------------
  * local parameters
@@ -369,11 +368,7 @@ InstrumentLayer *load_sbk_patch(char *name, int gm_num, int bank, int percussion
 		ip->already_loaded = 0;
 		sfrec.fname = ip->fname;
     		ctl->cmsg(CMSG_INFO, VERB_NOISY, "Loading %s%s %s[%d,%d] from %s (vel %d to %d).",
-#ifdef DO_LINKED_WAVES
 			(ip->rsamples)? "compound " : "",
-#else
-			"",
-#endif
 			(percussion)? "drum":"instrument", name,
 			(percussion)? keynote : preset, (percussion)? preset : bank, sfrec.fname,
 				LO_VAL(ip->velrange),
@@ -469,6 +464,7 @@ static int load_one_side(SFInsts *rec, SampleList *sp, int sample_count, Sample 
 	int brightness, int harmoniccontent)
 {
 	int i;
+	uint32 samplerate_save;
 
 	for (i = 0; i < sample_count && sp; i++, sp = sp->next) {
 		Sample *sample = base_sample + i;
@@ -538,6 +534,7 @@ printf(" to %f\n", sp->resonance);
 
 		/* do some filtering if necessary */
 #ifndef SF_SUPPRESS_CUTOFF
+#if 0
 		if (sp->cutoff_freq > 0 && cutoff_allowed) {
 			/* restore the normal value */
 			sample->data_length >>= FRACTION_BITS;
@@ -547,6 +544,7 @@ printf(" to %f\n", sp->resonance);
 			/* convert again to the fractional value */
 			sample->data_length <<= FRACTION_BITS;
 		}
+#endif
 #endif
 
 #ifdef PSEUDO_STEREO
@@ -599,6 +597,8 @@ printf(" to %f\n", sp->resonance);
 		}
 
 		/* resample it if possible */
+		samplerate_save = sample->sample_rate;
+
 		if (sample->note_to_use && !(sample->modes & MODES_LOOPING))
 			pre_resample(sample);
 
@@ -618,6 +618,17 @@ printf(" to %f\n", sp->resonance);
 		}
 #endif
 
+		if (sp->cutoff_freq > 0 && !sample->sample_rate) {
+			/* restore the normal value */
+			sample->data_length >>= FRACTION_BITS;
+    		        if (!i) ctl->cmsg(CMSG_INFO, VERB_DEBUG, "cutoff = %ld ; resonance = %g",
+				sp->cutoff_freq, sp->resonance);
+			sample->sample_rate = samplerate_save;
+			do_lowpass(sample, sp->cutoff_freq, sp->resonance);
+			sample->sample_rate = 0;
+			/* convert again to the fractional value */
+			sample->data_length <<= FRACTION_BITS;
+		}
 /*
 printf("loop start %ld, loop end %ld, len %d\n", sample->loop_start>>FRACTION_BITS, sample->loop_end>>FRACTION_BITS,
 sample->data_length >> FRACTION_BITS);
@@ -922,9 +933,6 @@ static int intersect_rvec(int lr, int kr)
 /* convert layer info to timidity instrument strucutre */
 static void make_inst(SFInsts *rec, Layer *lay, SFInfo *sf, int pr_idx, int in_idx, int inum,
 	uint16 pk_range, uint16 pv_range, int num_i)
-/*
-static void make_inst(SFInsts *rec, Layer *lay, SFInfo *sf, int pr_idx, int in_idx, int inum, uint16 range, int num_i)
-*/
 {
 	int banknum = sf->presethdr[pr_idx].bank;
 	int preset = sf->presethdr[pr_idx].preset;
@@ -939,10 +947,8 @@ static void make_inst(SFInsts *rec, Layer *lay, SFInfo *sf, int pr_idx, int in_i
 	InstList *ip;
 	tsampleinfo *sample;
 	SampleList *sp;
-#if 0
 #ifdef DO_LINKED_WAVES
 	int linked_wave;
-#endif
 #endif
 	int sampleFlags, stereo_chan = 0, keyrange, x_chan = 0;
 	static int lastpreset = -1;
@@ -967,13 +973,11 @@ LO_VAL(velrange), HI_VAL(velrange));
 
 	sample = &sf->sampleinfo[lay->val[SF_sampleId]];
 #ifdef DO_LINKED_WAVES
-#if 0
 	linked_wave = sample->samplelink;
 	if (linked_wave && linked_wave < sfinfo.nrinfos) {
 		if (inum == -1) sample = &sf->sampleinfo[linked_wave - 1];
 		else make_inst(rec, lay, sf, pr_idx, in_idx, -1, pk_range, velrange, num_i);
 	}
-#endif
 #endif
 	if (sample->sampletype & 0x8000) /* is ROM sample? */
 		return;
@@ -1025,12 +1029,19 @@ else printf("NO CFG NAME!\n");
 	/* search current instrument list */
 	for (ip = rec->instlist; ip; ip = ip->next) {
 		if (ip->bank == sub_banknum && ip->preset == sub_preset &&
-		    ip->velrange == velrange &&
 		    (keynote < 0 || keynote == ip->keynote))
 			break;
 	}
 	/* don't append sample when instrument completely specified */
 	if (ip && ip->already_loaded) return;
+
+	/* search current instrument list */
+	for (ip = rec->instlist; ip; ip = ip->next) {
+		if (ip->bank == sub_banknum && ip->preset == sub_preset &&
+		    ip->velrange == velrange &&
+		    (keynote < 0 || keynote == ip->keynote))
+			break;
+	}
 
 /* This doesn't work for Industry Standard G. Piano, which is mono but
    pans to the right for higher notes.
@@ -1099,8 +1110,23 @@ else printf("NO CFG NAME!\n");
 	/* duplicated key ranges at preset level would require more than two patches per note */
 	if (x_chan != 0) return;
 
-	/* melodic preset with 2 instruments: put 2nd one at right */
+	if (banknum == 128 && num_i > 1 && pk_range) {
+		/*
+		 * keyranges at the preset level are to fill in for missing
+		 * patches, so if we have a patch, skip the fill in
+		 */
+		if (ip) return;
+		/*
+		 * the preset keyrange says which fill ins are to be taken from the
+		 * current instrument
+		 */
+		if (LO_VAL(keyrange) < LO_VAL(pk_range) || HI_VAL(keyrange) > HI_VAL(pk_range))
+			return;
+	}
+
+	/* melodic preset with multiple instruments */
 	if (banknum < 128 && num_i > 1 && (!pv_range || pk_range)) {
+		/* if no preset keyrange to tell us, put just first instrument at left */
 		if (!pk_range) {
 		    if (inum == 0) stereo_chan = 0;
 		    else stereo_chan = 1;
@@ -1133,12 +1159,16 @@ else printf("NO CFG NAME!\n");
 	else if (!intersect_rvec(1, keyrange)) stereo_chan = 1;
 	else if (!subset_rvec(0, keyrange)) stereo_chan = 0;
 	else if (!subset_rvec(1, keyrange)) stereo_chan = 1;
+#if 0
 	else {
 		ctl->cmsg(CMSG_INFO, VERB_NOISY,
 		  "sndfont: invalid key range in bank %d preset %d: low %d, high %d",
 			banknum, preset, LO_VAL(keyrange), HI_VAL(keyrange));
 		return;
 	}
+#else
+	else stereo_chan = 0;
+#endif
 
 	union_rvec(stereo_chan, keyrange);
 
@@ -1185,7 +1215,10 @@ if (pk_range)
 	}
 
 	if (lay->set[SF_sampleFlags]) sampleFlags = lay->val[SF_sampleFlags];
-	/* else if (lay->set[SF_startloopAddrs]) sampleFlags = 1; */
+/**
+	else if (banknum == 128) sampleFlags = 3;
+	else if (lay->set[SF_startloopAddrs]) sampleFlags = 1;
+**/
 	else sampleFlags = 0;
 
 	if (sampleFlags == 2) sampleFlags = 0;
@@ -1325,18 +1358,23 @@ fprintf(stderr, "preset %d, root_freq %ld\n", preset, sp->v.root_freq);
 	sp->v.volume = 1.0; /* was calc_volume(lay,sf) */
 
 	if (sampleFlags == 1 || sampleFlags == 3) {
-		/* sp->v.modes |= MODES_LOOPING|MODES_SUSTAIN; */
+	    #if 1
+		sp->v.modes |= MODES_LOOPING|MODES_SUSTAIN;
+	    #else
 		sp->v.modes |= MODES_LOOPING;
 		if (sampleFlags == 1) sp->v.modes |= MODES_SUSTAIN;
-#if 0
+	    #endif
+
+	    #if 1
 		if (sampleFlags == 3)
 			/* strip the tail */
 			sp->v.data_length = sp->v.loop_end + 1;
-#endif
+	    #endif
 	}
-#ifndef SF_SUPPRESS_ENVELOPE
+
+
 	convert_volume_envelope(lay, sf, sp, banknum, program);
-#endif
+
 	if (strip_tail == 1) sp->v.data_length = sp->v.loop_end + 1;
 
       /* Strip any loops and envelopes we're permitted to */
@@ -1348,7 +1386,7 @@ fprintf(stderr, "preset %d, root_freq %ld\n", preset, sp->v.root_freq);
 	  sp->v.modes &=~(MODES_SUSTAIN | MODES_LOOPING | 
 			MODES_PINGPONG | MODES_REVERSE);
 	}
-/*if (banknum==128) strip_envelope=1;*/
+
       if (strip_envelope==1)
 	{
 	  if (sp->v.modes & MODES_ENVELOPE)
@@ -1628,7 +1666,7 @@ static int32 calc_rate(int diff, double msec)
     diff <<= (7+15);
     /* rate = ((double)diff / play_mode->rate) * control_ratio * 1000.0 / msec; */
     rate = ( (double)diff * 1000.0 ) / (msec * CONTROLS_PER_SECOND);
-    rate *= 2; /* ad hoc adjustment */
+    /* rate *= 2;  ad hoc adjustment ?? */
     if (rate < 10.0) return 10;
     return (int32)rate;
 

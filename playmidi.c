@@ -615,9 +615,12 @@ static void kill_others(MidiEvent *e, int i)
     	/* if (voice[j].sample->note_to_use != voice[i].sample->note_to_use) continue; */
 	if (!voice[i].sample->exclusiveClass) continue;
     	if (voice[j].sample->exclusiveClass != voice[i].sample->exclusiveClass) continue;
+        kill_note(j);
       }
+     /*
       else if (voice[j].note != (e->a &0x07f)) continue;
       kill_note(j);
+      */
     }
 }
 

@@ -1,7 +1,12 @@
+1999-09-29  Greg Lee  <lee@hawaii.edu>
+
+	* sndfont.c: don't load velocity ranges from
+	  different fonts
+
 1999-09-28  Greg Lee  <lee@hawaii.edu>
 
-	* sndfont.c: speed up envelopes by 2; fix compound
-	  instruments with keyranges in presets
+	* sndfont.c: fix compound instruments with
+	  keyranges in presets
 
 1999-09-27  Greg Lee  <lee@hawaii.edu>
 
