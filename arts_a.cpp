@@ -152,7 +152,7 @@ static int open_output(void) /* 0=success, 1=warning, -1=fatal error */
   
   rate=dpm.rate;
 
-  stream = arts_play_stream(rate, channels, sample_width, "artsctest");
+  stream = arts_play_stream(rate, sample_width, channels, "artsctest");
 
   arts_stream_set (stream, ARTS_P_BLOCKING, 0);
 
