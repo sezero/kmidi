@@ -141,7 +141,8 @@ typedef float FLOAT_T;
 #ifdef __WIN32__
 #define AUDIO_BUFFER_BITS 12
 #else
-#define AUDIO_BUFFER_BITS 11
+/** #define AUDIO_BUFFER_BITS 11 **/
+#define AUDIO_BUFFER_BITS 10
 #endif
 
 /* 1000 here will give a control ratio of 22:1 with 22 kHz output.

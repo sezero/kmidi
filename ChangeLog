@@ -3,6 +3,7 @@
 	* sndfont.c: adjust sample volumes
 	* timidity shouldn't read entire soundfont
 	  files if it has fewer than 3 files to play.
+	* ctl.c: didn't initialize first patchset
 
 1999-11-18  Greg Lee  <lee@hawaii.edu>
 
