@@ -70,7 +70,6 @@
 
 #include <kapp.h>
 #include <ktmainwindow.h>
-#include <kuniqueapp.h>
 #include <kled.h>
 #include <kmenubar.h>
 
@@ -81,19 +80,8 @@
 
 #include "configdlg.h"
 #include "log.h"
-#include "docking.h"
-
-class MidiApplication : public KUniqueApplication
-{
-  Q_OBJECT 
-
-public:
-  
-  MidiApplication(int &argc, char *argv[], const QCString &appName);
-
-  virtual int newInstance(QValueList<QCString> params);
-
-};
+//#include "docking.h"
+//#include "kmidiframe.h"
 
 class PlaylistEdit;
 class ConfigDlg;
@@ -115,58 +103,6 @@ public slots:
 protected:
     void	paintEvent( QPaintEvent * );
 private:
-
-};
-
-
-class KMidiFrame : public KTMainWindow {
-
-	Q_OBJECT
-public:
-
-	KMidiFrame( const char *name = 0 );
-
-	~KMidiFrame();
-
-	bool		docking;
-	KMenuBar	*menuBar;
-
-protected:
-	bool		queryClose();  
-
-protected slots:
-	void		file_Open();
-	void		quitClick();
-	void		doViewMenuItem(int);
-	void		fixViewItems();
-	void		doViewInfoLevel(int);
-	void		fixInfoLevelItems();
-	void		doStereoMenuItem(int);
-	void		doChorusMenuItem(int);
-	void		doReverbMenuItem(int);
-	void		fixStereoItems();
-	void		fixChorusItems();
-	void		fixReverbItems();
-	void		doEchoLevel(int);
-	void		doReverbLevel(int);
-	void		doChorusLevel(int);
-	void		doDetuneLevel(int);
-	void		fixReverbLevelItems();
-	void		fixChorusLevelItems();
-	void		fixEchoLevelItems();
-	void		fixDetuneLevelItems();
-
-private:
-	int		m_on_id, m_off_id, i_on_id, i_off_id;
-	QPopupMenu	*view_options;
-	QPopupMenu	*view_level;
-	QPopupMenu	*stereo_options;
-	QPopupMenu	*chorus_options;
-	QPopupMenu	*chorus_level;
-	QPopupMenu	*detune_level;
-	QPopupMenu	*reverb_options;
-	QPopupMenu	*echo_level;
-	QPopupMenu	*reverb_level;
 
 };
 

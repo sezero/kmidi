@@ -9,9 +9,9 @@
 #include <math.h>
 #include "config.h"
 #ifdef LITTLE_ENDIAN
-#define READ_WHOLE_SF_FILE
 #define USE_POSIX_MAPPED_FILES
 #endif
+#define READ_WHOLE_SF_FILE
 #ifdef READ_WHOLE_SF_FILE
 #include <sys/stat.h>
 #endif
@@ -197,8 +197,10 @@ static unsigned char *read_whole_sf(FILE *fd) {
     return 0;
 #else
 
+#ifndef USE_POSIX_MAPPED_FILES
 #ifndef KMIDI
     if (have_commandline_midis < 3) return 0;
+#endif
 #endif
     if (stat(current_filename, &info)) {
 	/* fprintf(stderr,"can't stat\n"); */

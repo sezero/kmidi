@@ -22,6 +22,7 @@
  */
 
 #include "kmidi.h"
+#include "kmidiframe.h"
 
 #include <qtooltip.h>
 #include <kapp.h>
