@@ -71,7 +71,7 @@
 #include <kapp.h>
 #include <ktmainwindow.h>
 #include <kled.h>
-//#include <kmenubar.h>
+#include <kmenubar.h>
 
 #define PLAYLIST_WIDTH  550
 #define PLAYLIST_HEIGHT 440
@@ -116,11 +116,20 @@ public:
 	~KMidiFrame();
 
 	bool		docking;
-	bool		autodock;
-//	KMenuBar	*menuBar;
+	KMenuBar	*menuBar;
 
 protected:
-	void		closeEvent( QCloseEvent *e );  
+	bool		queryClose();  
+
+protected slots:
+	void		file_Open();
+	void		quitClick();
+	void		doViewMenuItem(int);
+	void		fixViewItems();
+
+private:
+	int		m_on_id, m_off_id, i_on_id, i_off_id;
+	QPopupMenu	*view_options;
 
 };
 
@@ -169,6 +178,7 @@ public:
 	MeterWidget	*meter;
 	QSize		regularsize;
 	QSize		extendedsize;
+	QSize		topbarssize;
     
 	QPixmap folder_pixmap;
 	QPixmap file_pixmap;
@@ -253,10 +263,12 @@ private:
 	void		drawPanel();
 	void		cleanUp();
 	void		loadBitmaps();
-	void		initMixer( const char *mixer = "/dev/mixer" );
+	//void		initMixer( const char *mixer = "/dev/mixer" );
 	void 	        playthemod(QString );
-	void 		redoplaybox();
 	void 		redoplaylistbox();
+	void		myresize(int w, int h);
+	void		myresize(QSize newsize);
+	void		enableLowerPanel(bool on);
 
 protected:
         void		resizeEvent(QResizeEvent *e);
@@ -265,6 +277,8 @@ protected:
 public:
 	KMidi( QWidget *parent=0, const char *name=0 );
 
+	void 		redoplaybox();
+	void 		restartPlaybox();
 
 signals:	
 	void		play();

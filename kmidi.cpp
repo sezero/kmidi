@@ -34,8 +34,8 @@
 #include <klocale.h>
 #include <kmessagebox.h>
 
-//#include <kmenubar.h>
 #include <khelpmenu.h>
+#include <kfiledialog.h>
 
 #include "kmidi.h"
 
@@ -58,7 +58,7 @@
 #include "folderpic.h"
 
 
-static const char * whatsthis_image[] = {
+const char * whatsthis_image[] = {
 "16 16 3 1",
 " 	c None",
 "o	c #000000",
@@ -116,10 +116,12 @@ enum midistatus{ KNONE, KPLAYING, KSTOPPED, KLOOPING, KFORWARD,
 static midistatus status, last_status;
 static int nbvoice = 0;
 static int settletime = 0;
-#if 0
-static int menubarheight;
+
+static int menubarheight = 0;
 static bool menubarisvisible;
-#endif
+
+static QSize requestedframesize = QSize (0, 0);
+static int fixframesizecount = 0;
 
 //QFont default_font("Helvetica", 10, QFont::Bold);
 
@@ -130,39 +132,63 @@ KMidi *kmidi;
 int pipenumber;
 
 DockWidget*     dock_widget;
-bool dockinginprogress = 0;
-bool quitPending = 0;
 
 KMidiFrame::KMidiFrame( const char *name ) :
     KTMainWindow( name )
 {
 
-#if 0
     menuBar = new KMenuBar(this);
     QPopupMenu *fileMenu = new QPopupMenu;
     menuBar->insertItem("&File", fileMenu);
 
-    menuBar->enableFloating(true);
-    menuBar->enableMoving(true);
+    fileMenu->insertItem( i18n("&Open..."), this, 
+                        SLOT(file_Open()), CTRL+Key_O );
+    fileMenu->insertSeparator();
+    fileMenu->insertItem( i18n("&Quit"), this, SLOT(quitClick()), CTRL+Key_Q );
+
+    kmidi = new KMidi(this, "_kmidi" );
+
+    view_options = new QPopupMenu();
+    CHECK_PTR( view_options );
+    view_options->setCheckable( TRUE );
+    menuBar->insertItem( i18n("&View"), view_options );
+    connect( view_options, SIGNAL(activated(int)), this, SLOT(doViewMenuItem(int)) );
+    connect( view_options, SIGNAL(aboutToShow()), this, SLOT(fixViewItems()) );
+
+	m_on_id = view_options->insertItem( "Meter shown" );
+	m_off_id = view_options->insertItem( "Meter off" );
+	view_options->insertSeparator();
+	i_on_id = view_options->insertItem( "Info shown" );
+	i_off_id = view_options->insertItem( "Info off" );
+
+    QPopupMenu *editMenu = new QPopupMenu;
+    menuBar->insertItem( i18n("&Edit"), editMenu, CTRL+Key_E);
+    editMenu->insertItem( i18n("Edit Playlist"), kmidi, SLOT(ejectClicked()));
+
+    menuBar->insertSeparator();
+
+    QString aboutapp;
+    aboutapp.sprintf(i18n("KDE midi file player\n\n"
+                     "A software synthesizer for playing\n"
+                     "midi songs using Tuukka Toivonen's\n"
+                     "TiMidity"));
+
+    QPopupMenu *about = helpMenu(aboutapp);
+    menuBar->insertItem( i18n("About"), about);
+
+    menuBar->enableFloating(false);
+    menuBar->enableMoving(false);
 
     setMenu(menuBar);
 
-    //menuBar->hide();
-    menubarheight = heightForWidth(90+220+90);
-fprintf(stderr, "menubar %d tall\n", menubarheight);
-//Whoops -- height is 0
-    menubarisvisible = true;
-#endif
+    menuBar->hide();
+    menubarheight = menuBar->heightForWidth(90+220+90);
+    menubarisvisible = false;
 
-    kmidi = new KMidi(this, "_kmidi" );
+    //kmidi = new KMidi(this, "_kmidi" );
     setView(kmidi,TRUE);
 
-
-    quitPending = false;
     docking = true;
-    //autodock = false;
-    autodock = true;
-    dockinginprogress = false;
     dock_widget = new DockWidget(this, "dockw");
         if(docking){
         dock_widget->show();
@@ -173,14 +199,82 @@ fprintf(stderr, "menubar %d tall\n", menubarheight);
 KMidiFrame::~KMidiFrame(){
 }
 
+//void KMidiFrame::resizeEvent(QResizeEvent *e){
+//    int h = (e->size()).height();
+//    int w = (e->size()).width();
+//
+//printf("frame resize %d x %d\n", w, h);
+//    if (e->size() != requestedframesize)
+//	resize(requestedframesize);
+//}
 
-void KMidiFrame::closeEvent( QCloseEvent *e ){
+bool KMidiFrame::queryClose() {
 
-    quitPending = true;
     kmidi->quitClicked();
-    e->accept();
+    return true;
 }
 
+void KMidiFrame::quitClick(){
+
+    kmidi->quitClicked();
+}
+
+void KMidiFrame::file_Open() {
+#if 0
+    QStringList files;
+    int newones = 0;
+    char mbuff[5];
+
+    files = KFileDialog::getOpenFileNames(QString::null, QString::null, this);
+
+printf("file count %d\n", files.count());
+    for (QStringList::Iterator i=files.begin(); i!=files.end(); ++i) {
+printf("file %s\n", (*i).ascii());
+            QFile f(*i);
+            if (!f.open( IO_ReadOnly )) continue;
+            if (f.readBlock(mbuff, 4) != 4) {
+		f.close();
+		continue;
+            }
+            mbuff[4] = '\0';
+            if (strcmp(mbuff, "MThd")) {
+		f.close();
+		continue;
+            }
+            f.close();
+
+	    kmidi->playlist->insert(0, *i);
+	    newones++;
+    }
+ 
+    if (newones) {
+        kmidi->redoplaybox();
+	kmidi->setSong(0);
+    }
+#else
+
+    //QString filename=KFileDialog::getOpenFileURL(QString::null, QString::null,this);
+    QString filename = KFileDialog::getOpenFileName(QString::null, QString::null, this);
+    if (!filename.isNull())
+    {
+	kmidi->playlist->insert(0, filename);
+	kmidi->restartPlaybox();
+        //kmidi->redoplaybox();
+	//kmidi->resetSong();
+    }
+#endif
+}
+void KMidiFrame::doViewMenuItem(int id) {
+    if (id == m_off_id) kmidi->logoClicked();
+    else if (id == i_on_id || id == i_off_id) kmidi->infoslot();
+}
+
+void KMidiFrame::fixViewItems() {
+    view_options->setItemChecked( m_on_id, true);
+    view_options->setItemChecked( m_off_id, false);
+    view_options->setItemChecked( i_on_id, kmidi->logwindow->isVisible());
+    view_options->setItemChecked( i_off_id, !kmidi->logwindow->isVisible());
+}
 
 KMidi::KMidi( QWidget *parent, const char *name )
     : QWidget( parent, name )
@@ -273,7 +367,7 @@ KMidi::KMidi( QWidget *parent, const char *name )
     adjustSize();
     setMinimumSize( regularsize );
 
-    resize( regularsize );
+    myresize( regularsize );
 
     setAcceptDrops(TRUE);
 
@@ -866,6 +960,8 @@ void KMidi::drawPanel()
     meter->hide();
     extendedheight = iy + 3*HEIGHT;
     extendedsize = QSize (totalwidth, extendedheight);
+
+    topbarssize = QSize (totalwidth, menubarheight);
     
     ix = 0;
     logwindow = new LogWindow(this,"logwindow");
@@ -1114,8 +1210,14 @@ void KMidi::setPatch( int index )
 
 void KMidi::resetSong()
 {
+//if (status == KSTOPPED) printf("KSTOPPED\n");
+//else if (status == KPAUSED) printf("KPAUSED\n");
+//else if (status == KPLAYING) printf("KPLAYING\n");
+//else if (status == KNONE) printf("KNONE\n");
+
+    if (status == KNONE) stopClicked();
     flag_new_playlist = false;
-    song_number = 1;
+    song_number = 0;
     if (!playlist->count()) {
 	redoplaybox();
 	return;
@@ -1222,29 +1324,31 @@ void KMidi::setFilter( bool down )
 void KMidi::logoClicked(){
 
     if(meter->isVisible()){
-	meter->hide();
-	//kmidiframe->menuBar->hide();
-	patchbox->hide();
-	playbox->hide();
-	playlistbox->hide();
-        rcb1->hide();
-        rcb2->hide();
-        rcb3->hide();
-        rcb4->hide();
-	effectbutton->hide();
-	voicespin->hide();
-	meterspin->hide();
-	filterbutton->hide();
+        enableLowerPanel(false);
 	if (logwindow->isVisible()) {
 	    logwindow->move(0, regularsize.height());
-            resize( regularsize.width(), regularsize.height() + logwindow->height() );
+            myresize( regularsize.width(), regularsize.height() + logwindow->height() );
 	}
-	else resize( regularsize );
+	else myresize( regularsize );
 	return;
     }
 
-    //kmidiframe->menuBar->show();
+    enableLowerPanel(true);
 
+    if (logwindow->isVisible()) {
+	logwindow->move(0, extendedsize.height());
+        myresize( extendedsize.width(), extendedsize.height() + logwindow->height() );
+    }
+    else myresize( extendedsize );
+}
+
+void KMidi::enableLowerPanel(bool on) {
+
+  fixframesizecount = 25;
+
+  if (on) {
+    kmidiframe->menuBar->show();
+    menubarisvisible = true;
     meter->show();
     patchbox->show();
     playbox->show();
@@ -1257,11 +1361,24 @@ void KMidi::logoClicked(){
     voicespin->show();
     meterspin->show();
     filterbutton->show();
-    if (logwindow->isVisible()) {
-	logwindow->move(0, extendedsize.height());
-        resize( extendedsize.width(), extendedsize.height() + logwindow->height() );
-    }
-    else resize( extendedsize );
+
+  }
+  else {
+    kmidiframe->menuBar->hide();
+    menubarisvisible = false;
+    meter->hide();
+    patchbox->hide();
+    playbox->hide();
+    playlistbox->hide();
+    rcb1->hide();
+    rcb2->hide();
+    rcb3->hide();
+    rcb4->hide();
+    effectbutton->hide();
+    voicespin->hide();
+    meterspin->hide();
+    filterbutton->hide();
+  }
 }
 
 void KMidi::check_meter_visible(){
@@ -1478,20 +1595,20 @@ void KMidi::infoslot(){
 
     if(logwindow->isVisible()) {
 	logwindow->hide();
-	if (meter->isVisible()) resize( extendedsize );
-	else resize( regularsize );
+	if (meter->isVisible()) myresize( extendedsize );
+	else myresize( regularsize );
 	return;
     }
 
     if (logwindow->height() < 40) logwindow->resize(extendedsize.width(), 40);
     if (meter->isVisible()) {
-        resize( extendedsize.width(), extendedsize.height() + logwindow->height() );
+        myresize( extendedsize.width(), extendedsize.height() + logwindow->height() );
 	return;
     }
 
     logwindow->move(0, regularsize.height());
     logwindow->show();
-    resize( regularsize.width(), regularsize.height() + logwindow->height() );
+    myresize( regularsize.width(), regularsize.height() + logwindow->height() );
 }
 
 void KMidi::nextClicked(){
@@ -1563,7 +1680,6 @@ void KMidi::invokeWhatsThis(){
 
 void KMidi::quitClicked(){
 
-    quitPending = true;
     setLEDs("--:--");
     statusLA->setText("");
 
@@ -1578,13 +1694,6 @@ void KMidi::quitClicked(){
     }
 
 }
-
-//void KMidi::closeEvent( QCloseEvent *e ){
-//
-//    e->ignore();
-//    quitClicked();
-//}
-
 
 void KMidi::replayClicked(){
 
@@ -1616,14 +1725,18 @@ void KMidi::ejectClicked(){
 
 }
 
+void KMidi::restartPlaybox(){
+    redoplaybox();
+    if (status != KPLAYING) setSong(0);
+    else flag_new_playlist = true;
+    if (status != KPLAYING) timer->start( 200, TRUE );  // single shot
+}
+
 void KMidi::acceptPlaylist(){
-      updateUI();
-      redoplaylistbox();
-      playlistbox->setCurrentItem(current_playlist_num);
-      redoplaybox();
-      if (status != KPLAYING) setSong(0);
-      else flag_new_playlist = true;
-      if (status != KPLAYING) timer->start( 200, TRUE );  // single shot
+    updateUI();
+    redoplaylistbox();
+    playlistbox->setCurrentItem(current_playlist_num);
+    restartPlaybox();
 }
 
 void KMidi::PlayMOD(){
@@ -1725,6 +1838,10 @@ void KMidi::PlayCommandlineMods(){
   //  readtimer->start(10);
   if (showmeterrequest) logoClicked();
   if (showinforequest) infoslot();
+
+  if (!showmeterrequest && !showinforequest)
+	myresize(regularsize);
+
   if (lpfilterrequest) filterbutton->setOn(TRUE);
   if (effectsrequest) effectbutton->setOn(TRUE);
   if (interpolationrequest != 1) {
@@ -1844,6 +1961,17 @@ void KMidi::ReadPipe(){
     int rcheck_flags;
     static int last_nbvoice=0;
     int message;
+
+    if (fixframesizecount) {
+	fixframesizecount--;
+	if (!fixframesizecount) {
+	    if (kmidiframe->size() != requestedframesize) {
+//printf("resize frame to %d x %d\n", requestedframesize.width(), requestedframesize.height());
+	        if (requestedframesize != QSize(0,0)) kmidiframe->resize(requestedframesize);
+		fixframesizecount = 25;
+	    }
+	}
+    }
 
     if (status == KPLAYING) {
 	if (currplaytime) currplaytime++;
@@ -2510,40 +2638,45 @@ void KMidi::updateUI(){
 
 }
 
+static int bogusresize = 1;
+
 void KMidi::resizeEvent(QResizeEvent *e){
 
     int h = (e->size()).height();
     int lwheight;
 
-    if (kmidiframe->size() != e->size()) kmidiframe->resize( e->size() );
+
+    if (!bogusresize) {
+//printf("ignoring resize to h %d\n", h);
+        bogusresize--;
+	return;
+    }
+    bogusresize--;
 
     if (meter->isVisible()) lwheight = h - extendedsize.height();
     else lwheight = h - regularsize.height();
 
+//if (meter->isVisible())
+//printf("meter on; h=%d, lwh=%d\n", h, lwheight);
+//else
+//printf("meter off; h=%d, lwh=%d\n", h, lwheight);
+
     if (lwheight > 10 && !logwindow->isVisible()) {
+	int newy;
+	if (meter->isVisible()) newy = extendedsize.height();
+	else newy = regularsize.height();
+//printf("turning on lw since h is %d\n", lwheight);
         logwindow->resize(extendedsize.width(), lwheight);
-	if (meter->isVisible()) logwindow->move(0, extendedsize.height());
-	else  logwindow->move(0, regularsize.height());
+	logwindow->move(0, newy);
 	logwindow->show();
 	return;
     }
 
     if (h < regularsize.height() + 10) {
+//printf("turning off lw since h is %d\n", lwheight);
 	if (logwindow->isVisible()) logwindow->hide();
 	if (meter->isVisible()) {
-	    //kmidiframe->menuBar->hide();
-	    meter->hide();
-	    patchbox->hide();
-	    playbox->hide();
-	    playlistbox->hide();
-    	    rcb1->hide();
-    	    rcb2->hide();
-    	    rcb3->hide();
-    	    rcb4->hide();
-	    effectbutton->hide();
-	    voicespin->hide();
-	    meterspin->hide();
-	    filterbutton->hide();
+	    enableLowerPanel(false);
 	}
 	return;
     }
@@ -2557,6 +2690,48 @@ void KMidi::resizeEvent(QResizeEvent *e){
 }
 
 
+void KMidi::myresize(QSize newsize) {
+
+    static int warmingup = 1;
+
+    if (warmingup) bogusresize = 1;
+    else bogusresize = -1;
+
+//printf("my resize h %d\n", newsize.height());
+    resize(newsize);
+
+
+    if (warmingup) {
+	warmingup = 0;
+	return;
+    }
+
+    if (menubarisvisible) {
+	if (kmidiframe->size() != newsize + topbarssize) {
+	    bogusresize = 0;
+	    requestedframesize = QSize( newsize.width(), newsize.height() + menubarheight );
+//printf("size frame to h = %d + %d\n", newsize.height(), topbarssize.height());
+	    kmidiframe->resize(requestedframesize);
+	}
+    }
+    else {
+	if (kmidiframe->size() != newsize) {
+	    bogusresize = 0;
+	    requestedframesize = newsize;
+//printf("size frame to h = %d\n", newsize.height());
+//damn thing won't let me resize it
+	    kmidiframe->resize(newsize);
+	}
+    }
+
+
+}
+
+void KMidi::myresize(int w, int h) {
+    QSize newsize = QSize(w, h);
+
+    myresize(newsize);
+}
 
 #include "kmidi.moc"
 

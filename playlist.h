@@ -113,7 +113,8 @@ protected:
     void set_local_dir(const QString &dir);
     void redoplist();
     void redoDisplay();
-    void closeEvent( QCloseEvent *e );  
+    //void closeEvent( QCloseEvent *e );  
+    bool queryClose();  
 
 public:
     QString current_playlist;

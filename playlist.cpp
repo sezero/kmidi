@@ -130,8 +130,9 @@ PlaylistEdit::PlaylistEdit(const char *name, QStrList *playlist,
   menu->insertItem( i18n("&View"), view );
   menu->insertItem( i18n("&Edit"), edit );
   menu->insertSeparator();
-  menu->insertItem( i18n("&Help"),  this, SLOT(invokeWhatsThis()) );
+  menu->insertItem( i18n("What?"),  this, SLOT(invokeWhatsThis()) );
 
+#if 0
   QString aboutapp;
   aboutapp.sprintf(i18n("KDE midi file player\n\n"
                      "A software synthesizer for playing\n"
@@ -140,6 +141,7 @@ PlaylistEdit::PlaylistEdit(const char *name, QStrList *playlist,
 
   QPopupMenu *about = helpMenu(aboutapp);
   menu->insertItem( i18n("About"), about);
+#endif
 
   vpanner = new QSplitter(Vertical, this, "_panner");
   hpanner = new QSplitter(Horizontal, vpanner, "_panner");
@@ -202,9 +204,13 @@ PlaylistEdit::~PlaylistEdit(){
   
 };
 
-void PlaylistEdit::closeEvent( QCloseEvent *e ){
+//void PlaylistEdit::closeEvent( QCloseEvent *e ){
+//    hide();
+//    e->ignore();
+//}
+bool PlaylistEdit::queryClose(){
     hide();
-    e->ignore();
+    return false;
 }
 
 void PlaylistEdit::invokeWhatsThis(){

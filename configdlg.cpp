@@ -52,6 +52,8 @@
 extern KApplication *thisapp;
 extern KMidi *kmidi;
 
+extern const char * whatsthis_image[];
+
 ConfigDlg::ConfigDlg(QWidget *parent, struct configstruct *data, const char *name)
     : QDialog(parent, name, TRUE)
 {
@@ -91,6 +93,8 @@ ConfigDlg::ConfigDlg(QWidget *parent, struct configstruct *data, const char *nam
     bbox->addStretch(1);
     helpbutton = bbox->addButton("Help");
     connect(helpbutton, SIGNAL(clicked()), this, SLOT(help()));
+    QPixmap p( whatsthis_image );
+    helpbutton->setPixmap( p );
 
     //helpmenu = new KHelpMenu(this, "kmidi plays midi files");
     what = new QWhatsThis(this);

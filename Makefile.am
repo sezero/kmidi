@@ -12,7 +12,7 @@ INCLUDES = $(all_includes)
 AM_CFLAGS = -DDEFAULT_PATH=\"$(TIMID_DIR)\" -DKMIDI
 CFLAGS = -O -Wall -W -Wpointer-arith -Wmissing-prototypes -Wwrite-strings -Wconversion
 LDFLAGS = $(all_libraries) $(KDE_RPATH)
-LDADD =  $(LIB_KDEUI) $(LIBALIB) $(LIBAUDIO) $(LIBMME) 
+LDADD = $(LIB_KDEUI) $(LIBALIB) $(LIBAUDIO) $(LIBMME) $(LIB_KFILE)
 
 # Where to install the patches, config files, and MIDI files.
 # If you change this, it's a good idea to recompile the binary,
