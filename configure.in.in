@@ -446,8 +446,11 @@ dnl Each interface section
 dnl
 
 dnl ncurses
+AC_MSG_CHECKING(enable_ncurses)
+if test "x$enable_ncurses" = xyes; then
+
 CONFIG_INTERFACE(ncurses,NCURSES,n,
-  [  --enable-ncurses        Enable ncurses interface        (default is yes)],
+  [  --enable-ncurses        Enable ncurses interface        (default is no)],
   [ AC_CHECK_HEADERS(ncurses.h ncurses/curses.h curses.h)
 
 dnl #include <ncurses/curses.h> is failure on Plamo Linux 1.3/ncurses 1.9.9e
@@ -489,12 +492,19 @@ dnl   LIBS="$LIBS $lib_curses_opt"
         EXTRALIBS="$EXTRALIBS -lmytinfo"
         ;;
     esac
+	AC_MSG_RESULT(yes)
   ])
+else
+  AC_MSG_RESULT(no)
+fi
 
 
 dnl slang
+AC_MSG_CHECKING(enable_slang)
+if test "x$enable_slang" = xyes; then
+
 CONFIG_INTERFACE(slang,SLANG,s,
-  [  --enable-slang          Enable slang interface          (default is yes)],
+  [  --enable-slang          Enable slang interface          (default is no)],
   [ AC_CHECK_LIB(slang,SLang_init_tty,:,
 	[ enable_slang=no
 	  AC_MSG_WARN(slang interface is not enabled) ])
@@ -504,25 +514,45 @@ dnl    LIBS="$LIBS -lslang"
     EXTRALIBS="$EXTRALIBS -lslang"
     EXTRATLIBS="$EXTRATLIBS -lslang"
     EXTRADEFS="$EXTRADEFS -DIA_SLANG"
+    AC_MSG_RESULT(yes)
     fi
    ])
+else
+  AC_MSG_RESULT(no)
+fi
 
 
 dnl Motif
+AC_MSG_CHECKING(enable_motif)
+if test "x$enable_motif" = xyes; then
+
 CONFIG_INTERFACE(motif,MOTIF,m,
-  [  --enable-motif          Enable motif interface for TiMidity (default is yes)],
+  [  --enable-motif          Enable motif interface for TiMidity (default is no)],
   [ AC_FIND_MOTIF
     if test "x$with_motif" = xyes; then
     EXTRATDEFS="$EXTRATDEFS -DIA_MOTIF $MOTIF_CFLAGS"
 dnl    EXTRATLIBS="$EXTRATLIBS -L/usr/X11R6/lib -lXm -lXt -lX11"
     EXTRATLIBS="$EXTRATLIBS $MOTIF_LIBS"
+    else
+    enable_motif=no
     fi
   ])
+  if test "x$enable_motif" = xyes; then
+    AC_MSG_RESULT(yes)
+  else
+    AC_MSG_RESULT(no)
+  fi
+else
+  AC_MSG_RESULT(no)
+fi
 
 
 dnl Tcl/Tk
+AC_MSG_CHECKING(enable_tcltk)
+if test "x$enable_tcltk" = xyes; then
+
 CONFIG_INTERFACE(tcltk,TCLTK,k,
-  [  --enable-tcltk          Enable tcltk interface for TiMidity  (default is yes)],
+  [  --enable-tcltk          Enable tcltk interface for TiMidity  (default is no)],
   [
     KEEPCPPFLAGS=$CPPFLAGS
     KEEPLDFLAGS=$LDFLAGS
@@ -564,9 +594,20 @@ dnl    EXTRATLIBS="$EXTRATLIBS $lib_dl_opt"
      EXTRATDEFS="$EXTRATDEFS -DTCLTK"
     fi
   ])
+  if test "x$enable_tcltk" = xyes; then
+    AC_MSG_RESULT(yes)
+  else
+    AC_MSG_RESULT(no)
+  fi
+else
+  AC_MSG_RESULT(no)
+fi
 
 
 dnl X Athena Widget
+AC_MSG_CHECKING(enable_xaw)
+if test "x$enable_xaw" = xyes; then
+
 CONFIG_INTERFACE(xaw,XAW,a,
   [  --enable-xaw            Enable athena interface for TiMidity (default is yes)],
   [
@@ -607,22 +648,38 @@ dnl      a_so_libs="-lXaw3d -lXmu -lXt $a_so_libs"
 dnl    fi
 dnl    a_so_libs="$ldflags_x_opt $a_so_libs"
   ])
+  AC_MSG_RESULT(yes)
+else
+  AC_MSG_RESULT(no)
+fi
 
 
 dnl GTK+
+AC_MSG_CHECKING(enable_gtk)
+if test "x$enable_gtk" = xyes; then
+
 CONFIG_INTERFACE(gtk, GTK, g,
-  [  --enable-gtk            Enable GTK+ interface for TiMidity (default is yes)],
+  [  --enable-gtk            Enable GTK+ interface for TiMidity (default is no)],
   [
     AM_PATH_GLIB(1.1.3,
     [ AM_PATH_GTK(1.1.3,
       [
         EXTRATLIBS="$EXTRATLIBS $GTK_LIBS $GLIB_LIBS "
-        EXTRACT_CPPFLAGS(EXTRATCFLAGS,CFLAGS,$GLIB_CFLAGS)
-        EXTRACT_CPPFLAGS(EXTRATCFLAGS,CFLAGS,$GTK_CFLAGS)
+dnl        EXTRACT_CPPFLAGS(EXTRATCFLAGS,CFLAGS,$GLIB_CFLAGS)
+dnl        EXTRACT_CPPFLAGS(EXTRATCFLAGS,CFLAGS,$GTK_CFLAGS)
+        EXTRATCFLAGS="$EXTRATCFLAGS $GTK_CFLAGS $GLIB_CFLAGS "
         EXTRATDEFS="$EXTRATDEFS -DIA_GTK" ],
       enable_gtk=no) ],
     enable_gtk=no)
   ])
+  if test "x$enable_gtk" = xyes; then
+        AC_MSG_RESULT(yes)
+  else
+    AC_MSG_RESULT(no)
+  fi
+else
+  AC_MSG_RESULT(no)
+fi
 
 
 KMIDI_OPTIMIZE
