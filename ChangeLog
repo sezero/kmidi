@@ -1,3 +1,7 @@
+1999-11-30  Greg Lee  <lee@hawaii.edu>
+
+	* mmap soundfont files
+
 1999-11-29  Greg Lee  <lee@hawaii.edu>
 
 	* pass commandline from new instance

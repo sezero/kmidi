@@ -30,6 +30,12 @@
 #include <strings.h>
 #endif
 
+#ifndef OLD_FOPEN_METHOD
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+#endif
+
 #include <errno.h>
 #include "config.h"
 #include "common.h"
@@ -40,6 +46,7 @@
 #define OPEN_MODE "rb"
 
 char *program_name, current_filename[1024];
+int current_filedescriptor;
 
 #ifdef KMIDI
     static PathList *pathlist=0;
@@ -53,13 +60,24 @@ char *program_name, current_filename[1024];
 #endif
 #endif
 
+#ifdef __WIN32__
+#define R_OPEN_MODE O_RDONLY | O_BINARY
+#else
+#define R_OPEN_MODE O_RDONLY
+#endif
+
 /* Try to open a file for reading. If the filename ends in one of the 
    defined compressor extensions, pipe the file through the decompressor */
 static FILE *try_to_open(char *name, int decompress)
 {
   FILE *fp;
 
+#ifdef OLD_FOPEN_METHOD
   fp=fopen(name, OPEN_MODE); /* First just check that the file exists */
+#else
+  if ( (current_filedescriptor = open(name, R_OPEN_MODE)) == -1) return 0;
+  fp = fdopen(current_filedescriptor, OPEN_MODE);
+#endif
 
   if (!fp)
     return 0;

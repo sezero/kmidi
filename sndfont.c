@@ -2,16 +2,22 @@
  * SoundFont file extension
  *	written by Takashi Iwai <iwai@dragon.mm.t.u-tokyo.ac.jp>
  *================================================================*/
-#define READ_WHOLE_SF_FILE
 
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
 #include <math.h>
+#include "config.h"
+#ifdef LITTLE_ENDIAN
+#define READ_WHOLE_SF_FILE
+#define USE_POSIX_MAPPED_FILES
+#endif
 #ifdef READ_WHOLE_SF_FILE
 #include <sys/stat.h>
 #endif
-#include "config.h"
+#ifdef USE_POSIX_MAPPED_FILES
+#include <sys/mman.h>
+#endif
 #include "common.h"
 #include "tables.h"
 #include "instrum.h"
@@ -202,7 +208,18 @@ static unsigned char *read_whole_sf(FILE *fd) {
     if (info.st_size + current_patch_memory > max_patch_memory)
 	return 0;
 	/* fprintf(stderr,"room enough\n"); */
+
+#ifdef USE_POSIX_MAPPED_FILES
+    sf_contents = (unsigned char *)mmap(0, info.st_size,  PROT_READ,
+	 MAP_SHARED, current_filedescriptor, 0);
+
+    if (sf_contents == (unsigned char *)(-1)) {
+	/* fprintf(stderr,"couldn't mmap\n"); */
+    	return 0;
+    }
+#else
     sf_contents = (unsigned char *)malloc(info.st_size);
+
     if (!sf_contents) {
 	/* fprintf(stderr,"couldn't malloc\n"); */
     	return 0;
@@ -213,6 +230,7 @@ static unsigned char *read_whole_sf(FILE *fd) {
     	free(sf_contents);
     	return 0;
     }
+#endif
     sf_size_of_contents = info.st_size;
     current_patch_memory += info.st_size;
 	/* fprintf(stderr,"OK -- read %d\n", sf_size_of_contents); */
@@ -348,7 +366,11 @@ void end_soundfont(void)
 		if (still_not_free) free(still_not_free);
 		still_not_free = NULL;
 		if (contents_not_free) {
+#ifdef USE_POSIX_MAPPED_FILES
+		    munmap(contents_not_free, contents_size);
+#else
 		    free(contents_not_free);
+#endif
 		    current_patch_memory -= contents_size;
 		}
 		contents_not_free = NULL;

@@ -22,6 +22,7 @@
 */
 
 extern char *program_name, current_filename[];
+extern int current_filedescriptor;
 
 extern FILE *msgfp;
 
