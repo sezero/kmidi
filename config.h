@@ -25,14 +25,14 @@
 #endif /* ADAGIO */
 
 #ifdef KMIDI
-#include "../config.h"
+	#include "../config.h"
 #else
-#include "../../config.h"
-/* if above referenced file does not exist, use something like:
-#define HAVE_STRING_H
-#define HAVE_SLANG_H
-#define HAVE_USLEEP
-*/
+	#include "../../config.h"
+	/* if above referenced file does not exist, use something like:
+	#define HAVE_STRING_H
+	#define HAVE_SLANG_H
+	#define HAVE_USLEEP
+	*/
 #endif
 
 #ifndef HAVE_STRING_H
@@ -231,79 +231,14 @@ typedef double FLOAT_T;
 #define AUDIO_BUFFER_SIZE (1<<AUDIO_BUFFER_BITS)
 #define BB_SIZE (AUDIO_BUFFER_SIZE*512)
 
-/* Byte order, defined in <machine/endian.h> for FreeBSD and DEC OSF/1 */
-#ifdef __osf__
-#include <machine/endian.h>
-#endif
-
-#ifdef __linux__
-/*
- * Byte order is defined in <bytesex.h> as __BYTE_ORDER, that need to
- * be checked against __LITTLE_ENDIAN and __BIG_ENDIAN defined in <endian.h>
- * <endian.h> includes automagically <bytesex.h>
- * for Linux.
- */
-#include <endian.h>
-
-/*
- * We undef the two things to start with a clean situation
- * (oddly enough, <endian.h> defines under certain conditions
- * the two things below, as __LITTLE_ENDIAN and __BIG_ENDIAN, that
- * are useless for our plans)
- */
-#undef LITTLE_ENDIAN
-#undef BIG_ENDIAN
-
-# if __BYTE_ORDER == __LITTLE_ENDIAN
-#  define LITTLE_ENDIAN
-# elif __BYTE_ORDER == __BIG_ENDIAN
-#  define BIG_ENDIAN
-# else
-# error No byte sex defined
-# endif
-# include <features.h>
-# if (__GLIBC__ >= 2)
-#  include <errno.h> /* needed for glibc 2 */
-#  include <math.h>
-#  define PI M_PI
-#  include <stdio.h>
-# endif        
-#endif /* linux */
-
-#if defined(__FreeBSD__) || defined(__NetBSD__) || defined(__bsdi__)
-#include <sys/types.h>
-#include <errno.h>
-#include <machine/endian.h>
-#if BYTE_ORDER == LITTLE_ENDIAN
-#undef BIG_ENDIAN
-#undef PDP_ENDIAN
-#elif BYTE_ORDER == BIG_ENDIAN
-#undef LITTLE_ENDIAN
-#undef PDP_ENDIAN
+#if SIZEOF_LONG == 4
+	typedef unsigned long uint32;
+	typedef long int32; 
+#elif SIZEOF_LONG == 8
+	typedef unsigned int uint32;
+	typedef int int32; 
 #else
-# error No valid byte sex defined
-#endif
-#define USE_LDEXP
-#define PI M_PI
-#endif /* __FreeBSD__ */
-
-#ifdef _UNIXWARE
-#undef BIG_ENDIAN
-#define LITTLE_ENDIAN
-#endif
-
-/* Win32 on Intel machines */
-#ifdef __WIN32__
-#  define LITTLE_ENDIAN
-#endif
-
-/* DEC MMS has 64 bit long words */
-#ifdef __osf__
-typedef unsigned int uint32;
-typedef int int32; 
-#else
-typedef unsigned long uint32;
-typedef long int32; 
+	#error "We don't know where to find a 32 of our bits!!"
 #endif
 typedef unsigned short uint16;
 typedef short int16;
@@ -313,39 +248,50 @@ typedef char int8;
 /* Instrument files are little-endian, MIDI files big-endian, so we
    need to do some conversions. */
 
-#define XCHG_SHORT(x) ((((x)&0xFF)<<8) | (((x)>>8)&0xFF))
-#ifdef __i486__
-# define XCHG_LONG(x) \
-     ({ int32 __value; \
-        asm ("bswap %1; movl %1,%0" : "=g" (__value) : "r" (x)); \
-       __value; })
+#ifdef WORDS_BIGENDIAN
+	#define MIDI_BIG_ENDIAN
 #else
-# define XCHG_LONG(x) ((((x)&0xFF)<<24) | \
-		      (((x)&0xFF00)<<8) | \
-		      (((x)&0xFF0000)>>8) | \
-		      (((x)>>24)&0xFF))
+	#define MIDI_LITTLE_ENDIAN
 #endif
 
-#ifdef LITTLE_ENDIAN
-#define LE_SHORT(x) x
-#define LE_LONG(x) x
 #ifdef __FreeBSD__
-#define BE_SHORT(x) __byte_swap_word(x)
-#define BE_LONG(x) __byte_swap_long(x)
+	#include <osreldate.h>
+	#include <machine/endian.h>
+	/* The macros have changed recently */
+	/* And a better idea would be to attempt the various asm 
+	optimizations ourselves IMO, but hey, this is free */
+	#if __FreeBSD_version <= 500000
+		#define XCHG_SHORT(x) __byte_swap_word(x)
+		#define XCHG_LONG(x) __byte_swap_long(x)
+	#else
+		#define XCHG_SHORT(x) __uint8_swap_uint16(x)
+		#define XCHG_LONG(x) __uint8_swap_uint32(x)
+	#endif
 #else
-#define BE_SHORT(x) XCHG_SHORT(x)
-#define BE_LONG(x) XCHG_LONG(x)
+	#define XCHG_SHORT(x) ((((x)&0xFF)<<8) | (((x)>>8)&0xFF))
+	#ifdef __i486__
+		#define XCHG_LONG(x) \
+			({ int32 __value; \
+			asm ("bswap %1; movl %1,%0" : "=g" (__value) : "r" (x)); \
+			__value; })
+	#else
+		#define XCHG_LONG(x) ((((x)&0xFF)<<24) | \
+			(((x)&0xFF00)<<8) | \
+			(((x)&0xFF0000)>>8) | \
+			(((x)>>24)&0xFF))
+	#endif
 #endif
-#else
-#define BE_SHORT(x) x
-#define BE_LONG(x) x
-#ifdef __FreeBSD__
-#define LE_SHORT(x) __byte_swap_word(x)
-#define LE_LONG(x) __byte_swap_long(x)
-#else
-#define LE_SHORT(x) XCHG_SHORT(x)
-#define LE_LONG(x) XCHG_LONG(x)
-#endif
+
+#ifdef MIDI_LITTLE_ENDIAN
+	#define LE_SHORT(x) x
+	#define LE_LONG(x) x
+	#define BE_SHORT(x) XCHG_SHORT(x)
+	#define BE_LONG(x) XCHG_LONG(x)
+#else /* MIDI_BIG_ENDIAN */
+	#define LE_SHORT(x) XCHG_SHORT(x)
+	#define LE_LONG(x) XCHG_LONG(x)
+	#define BE_SHORT(x) x
+	#define BE_LONG(x) x
 #endif
 
 #define MAX_AMPLIFICATION 800
