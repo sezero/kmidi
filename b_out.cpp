@@ -9,21 +9,16 @@
 #include <string.h>
 
 #ifdef AU_OSS
+	#if defined(__linux__) || defined(__NetBSD__)
+		/* new with 1.2.0? Didn't need this under 1.1.64 */
+		#include <sys/ioctl.h>
+	#endif
 
-#ifdef __linux__
-	#include <sys/ioctl.h> /* new with 1.2.0? Didn't need this under 1.1.64 */
-	#include <linux/soundcard.h>
-#endif
-
-#if defined(__FreeBSD__) || defined(__bsdi__)
-	#include <sys/soundcard.h>
-#endif
-
-#ifdef __NetBSD__
-	#include <sys/ioctl.h>
-	#include <soundcard.h>
-#endif
-
+	#if !defined(__NetBSD__)
+		#include <sys/soundcard.h>
+	#else
+		#include <soundcard.h>
+	#endif
 #endif
 
 #include "config.h"
@@ -45,16 +40,6 @@ static int out_count = 0;
 static int total_bytes = 0;
 static int fragsize = 0;
 static int fragstotal = 0;
-
-/*
-#if defined(AU_OSS) || defined(AU_SUN) || defined(AU_BSDI) || defined(AU_ESD)
-#define WRITEDRIVER(fd,buf,cnt) write(fd,buf,cnt)
-#else
-*/
-#define WRITEDRIVER(fd,buf,cnt) play_mode->driver_output_data(buf,cnt)
-/*
-#endif
-*/
 
 int b_out_count()
 {

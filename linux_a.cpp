@@ -31,20 +31,14 @@
 #include <fcntl.h>
 #include <errno.h>
 
-#ifdef __linux__
+#if defined(__linux__) || defined(__NetBSD__)
 	/* new with 1.2.0? Didn't need this under 1.1.64 */
 	#include <sys/ioctl.h>
-	#include <linux/soundcard.h>
 #endif
 
-#if defined(__FreeBSD__) || defined(__bsdi__)
-	#include <stdio.h>
+#if !defined(__NetBSD__)
 	#include <sys/soundcard.h>
-#endif
-
-#ifdef __NetBSD__
-	#include <stdio.h>
-	#include <sys/ioctl.h>
+#else
 	#include <soundcard.h>
 #endif
 
