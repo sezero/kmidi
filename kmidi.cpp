@@ -125,7 +125,10 @@ static int fixframesizecount = 0;
 
 //QFont default_font("Helvetica", 10, QFont::Bold);
 
-KUniqueApplication * thisapp;
+class MidiApplication;
+
+//KUniqueApplication * thisapp;
+MidiApplication * thisapp;
 KMidiFrame *kmidiframe;
 KMidi *kmidi;
 
@@ -2101,6 +2104,10 @@ void KMidi::PlayCommandlineMods(){
 	updateRChecks(3);
   }
 
+  setDry(dry_state);
+  setReverb(reverb_state);
+  setChorus(chorus_state);
+
   Panel->max_patch_megs = max_patch_megs;
 
 #if 0
@@ -2975,12 +2982,86 @@ void KMidi::myresize(int w, int h) {
     myresize(newsize);
 }
 
+
+MidiApplication::MidiApplication(int &argc, char *argv[], const QCString &appName)
+  : KUniqueApplication(argc, argv, appName)
+{
+//fprintf(stderr,"2: argc=%d argv[1]={%s}\n", argc, (argc>0)? argv[1] : "none");
+#if 0
+  if (isRestored())
+    RESTORE(TopLevel)
+  else 
+    toplevel = new TopLevel();
+  
+  setMainWidget(toplevel);
+  toplevel->resize(640,400);
+#endif
+}
+
+
+int MidiApplication::newInstance(QValueList<QCString> params)
+{
+    char mbuff[5];
+    int newones = 0;
+    QValueList<QCString>::Iterator it = params.begin();
+
+//printf("count %d [%s]\n", (*it).count(), (*it).data());
+    it++; // skip program name
+
+
+    if (kmidi) {
+
+        for (; it != params.end(); it++) {
+//printf("[%s]\n", (*it).data());
+
+            QFile f(*it);
+            if (!f.open( IO_ReadOnly )) continue;
+            if (f.readBlock(mbuff, 4) != 4) {
+		f.close();
+		continue;
+            }
+            mbuff[4] = '\0';
+            if (strcmp(mbuff, "MThd")) {
+		f.close();
+		continue;
+            }
+            f.close();
+
+	    kmidi->playlist->insert(0, *it);
+	    newones++;
+        }
+ 
+        if (newones) {
+	    kmidi->restartPlaybox();
+        }
+    }
+
+    return 0;
+}
+
+
 #include "kmidi.moc"
 
 extern "C" {
 
-    void createKApplication(int *argc, char **argv){
-	thisapp = new KUniqueApplication(*argc, argv, "kmidi");
+//void createKApplication(int *argc, char **argv) {
+int createKApplication(int *argc, char **argv) {
+
+       int deref = *argc;
+
+       //if (!MidiApplication::start(*argc, &*argv, "kmidi")) {
+       //if (!MidiApplication::start(*argc, &*argv, "kmidi")) {
+       if (!MidiApplication::start(deref, &*argv, "kmidi")) {
+//fprintf(stderr,"n: argc=%d *argc=%d\n", argc, *argc);
+	    return 0;
+       }
+//fprintf(stderr,"1: argc=%d argv[1]={%s}\n", *argc, (*argc>0)? argv[1] : "none");
+	//thisapp = new MidiApplication(*argc, argv, "kmidi");
+	//thisapp = new MidiApplication(*argc, &*argv, "kmidi");
+	thisapp = new MidiApplication(*argc, argv, "kmidi");
+//fprintf(stderr,"3: argc=%d argv[1]={%s}\n", *argc, (*argc>0)? argv[1] : "none");
+
+
 	//thisapp->dcopClient()->attach();
 	//thisapp->dcopClient()->registerAs("kmidi");
 
@@ -2989,9 +3070,10 @@ extern "C" {
 	//QByteArray data, replyData;
 	//if (thisapp->process(fun, data, replyType, replyData))
 	//	printf("fun[%s] replyType[%s]\n", fun.data(), replyType.data());
-    }
+	return 1;
+   }
     
-    int Launch_KMidi_Process(int _pipenumber){
+   int Launch_KMidi_Process(int _pipenumber){
 
 	pipenumber = _pipenumber;
 
@@ -3006,7 +3088,8 @@ extern "C" {
 
 	kmidiframe = new KMidiFrame( "_kmidiframe" );
 	KWM::setWmCommand(kmidiframe->winId(),"_kmidiframe");
-	///kmidiframe->setCaption( i18n("Midi Player") );
+	kmidiframe->setCaption( i18n("Midi Player") );
+	//kmidiframe->setCaption( QString::null );
 	//kmidiframe->setFontPropagation( QWidget::AllChildren );
         //thisapp->setFont(default_font, TRUE);
         //kmidiframe->setFont(default_font, TRUE);

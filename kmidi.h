@@ -70,6 +70,7 @@
 
 #include <kapp.h>
 #include <ktmainwindow.h>
+#include <kuniqueapp.h>
 #include <kled.h>
 #include <kmenubar.h>
 
@@ -81,6 +82,18 @@
 #include "configdlg.h"
 #include "log.h"
 #include "docking.h"
+
+class MidiApplication : public KUniqueApplication
+{
+  Q_OBJECT 
+
+public:
+  
+  MidiApplication(int &argc, char *argv[], const QCString &appName);
+
+  virtual int newInstance(QValueList<QCString> params);
+
+};
 
 class PlaylistEdit;
 class ConfigDlg;

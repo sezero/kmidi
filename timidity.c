@@ -823,7 +823,7 @@ int global_echo = 0;
 int global_detune = 0;
 
 #ifdef KMIDI	
-extern void createKApplication(int *argc, char **argv);
+extern int createKApplication(int *argc, char **argv);
 #endif
 
 #ifdef __WIN32__
@@ -864,7 +864,7 @@ int main(int argc, char **argv)
   char *KDEdir;
   char *kmidi_config;                                                          
 
-  createKApplication(&argc, argv);
+  if (!createKApplication(&argc, argv)) return 0;
   if ( ! (KDEdir = getenv("KDEDIR")))                                          
    {
      /* kmidi_config = DEFAULT_PATH; */
@@ -902,6 +902,7 @@ int main(int argc, char **argv)
 #ifdef CHANNEL_EFFECT
   init_effect() ;
 #endif /*CHANNEL_EFFECT*/
+
 
   while ((c=getopt(argc, argv, "UI:P:L:c:A:C:ap:fo:O:s:Q:R:FD:hi:#:qEmk:r:"
 #if defined(AU_LINUX) || defined(AU_WIN32)
