@@ -6,7 +6,7 @@
 #  Copyright 1997 Bernd Johannes Wuebben, wuebben@math.cornell.edu
 #
 
-VERSION = 0.2i
+#VERSION = 0.2i
 KDE_OPTIONS = nofinal
 ARTSFLAGS = `$(ARTSCCONFIG) --libs`
 

@@ -6,7 +6,7 @@
 #  Copyright 1997 Bernd Johannes Wuebben, wuebben@math.cornell.edu
 #
 
-VERSION = 0.2i
+# VERSION = 0.2i
 
 INCLUDES = $(X_INCLUDES) `$(ARTSCCONFIG) --cflags`
 AM_CFLAGS = -DDEFAULT_PATH=\"$(TIMID_DIR)\" $(EXTRATDEFS) $(EXTRATCFLAGS)
