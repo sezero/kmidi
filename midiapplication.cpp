@@ -222,7 +222,7 @@ int Launch_KMidi_Process(int _pipenumber) {
 //fprintf(stderr,"make kmidiframe\n");
 	   kmidiframe = new KMidiFrame( "_kmidiframe" );
 	   //// KWM::setWmCommand(kmidiframe->winId(),"_kmidiframe");
-//	   kmidiframe->setCaption( i18n("Midi Player") );
+//	   kmidiframe->setCaption( i18n("MIDI Player") );
 	   //kmidiframe->setCaption( QString::null );
 	   //kmidiframe->setFontPropagation( QWidget::AllChildren );
            //thisapp->setFont(default_font, TRUE);

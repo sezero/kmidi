@@ -306,34 +306,34 @@ KMidi::~KMidi(){
 void KMidi::setToolTips()
 {
     if(tooltips){
-	QToolTip::add( aboutPB,		i18n("Bottom Panel") );
+	QToolTip::add( aboutPB,		i18n("Bottom panel") );
 	QToolTip::add( playPB, 		i18n("Play/Pause") );
 	QToolTip::add( stopPB, 		i18n("Stop") );
-	QToolTip::add( replayPB, 	i18n("Loop Song") );
-	QToolTip::add( fwdPB, 		i18n("Fast Forward") );
+	QToolTip::add( replayPB, 	i18n("Loop song") );
+	QToolTip::add( fwdPB, 		i18n("Fast forward") );
 	QToolTip::add( bwdPB, 		i18n("Rewind") );
-	QToolTip::add( nextPB, 		i18n("Next Midi") );
-	QToolTip::add( prevPB, 		i18n("Previous Midi") );
+	QToolTip::add( nextPB, 		i18n("Next midi") );
+	QToolTip::add( prevPB, 		i18n("Previous midi") );
 	QToolTip::add( quitPB, 		i18n("Exit KMidi") );
 	QToolTip::add( whatbutton,	i18n("What's This?") );
-	QToolTip::add( shufflebutton, 	i18n("Random Play") );
+	QToolTip::add( shufflebutton, 	i18n("Random play") );
         QToolTip::add( configurebutton, i18n("Configure KMidi") );
-	QToolTip::add( ejectPB, 	i18n("Open Playlist") );
-	QToolTip::add( infobutton, 	i18n("Show Info Window") );
-	QToolTip::add( shufflebutton, 	i18n("Random Play") );
-	QToolTip::add( volSB, 		i18n("Volume Control") );
-	QToolTip::add( timeSB, 		i18n("Time Control") );
+	QToolTip::add( ejectPB, 	i18n("Open playlist") );
+	QToolTip::add( infobutton, 	i18n("Show info window") );
+	QToolTip::add( shufflebutton, 	i18n("Random play") );
+	QToolTip::add( volSB, 		i18n("Volume control") );
+	QToolTip::add( timeSB, 		i18n("Time control") );
 
-	QToolTip::add( patchbox,	i18n("Select Patch Set") );
-	QToolTip::add( playbox,		i18n("Select Song") );
-	QToolTip::add( playlistbox,	i18n("Select Playlist") );
-	QToolTip::add( meterspin,	i18n("Sync Meter") );
+	QToolTip::add( patchbox,	i18n("Select patch set") );
+	QToolTip::add( playbox,		i18n("Select song") );
+	QToolTip::add( playlistbox,	i18n("Select playlist") );
+	QToolTip::add( meterspin,	i18n("Sync meter") );
 	QToolTip::add( rcb1,		i18n("Stereo Voice: norm/xtra/off") );
 	QToolTip::add( rcb2,		i18n("Echo: norm/xtra/off") );
 	QToolTip::add( rcb3,		i18n("Detune: norm/xtra/off") );
 	QToolTip::add( rcb4,		i18n("Verbosity: norm/xtra/off") );
 	QToolTip::add( effectbutton,	i18n("Effects") );
-	QToolTip::add( voicespin,	i18n("Set Polyphony") );
+	QToolTip::add( voicespin,	i18n("Set polyphony") );
 	QToolTip::add( filterbutton,	i18n("Filter") );
 	QToolTip::add( led[STATUS_LED],		i18n("status") );
 	QToolTip::add( led[LOADING_LED],	i18n("loading") );
@@ -342,7 +342,7 @@ void KMidi::setToolTips()
 	QToolTip::add( led[CSPLINE_LED],	i18n("interpolation") );
 	QToolTip::add( led[REVERB_LED],		i18n("reverb") );
 	QToolTip::add( led[CHORUS_LED],		i18n("chorus") );
-	QToolTip::add( ich[0],		i18n("linear interpolation") );
+	QToolTip::add( ich[0],		i18n("Linear interpolation") );
 	QToolTip::add( ich[1],		i18n("c-spline") );
 	QToolTip::add( ich[2],		i18n("LaGrange") );
 	QToolTip::add( ich[3],		i18n("c-spline + filter") );
