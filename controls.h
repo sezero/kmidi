@@ -53,7 +53,9 @@
 #define CMSG_TOTAL	6
 #define CMSG_FILE	7
 #define CMSG_TEXT	8
+#define CMSG_LYRIC	9
 
+#define VERB_ALWAYS	-1
 #define VERB_NORMAL	0
 #define VERB_VERBOSE	1
 #define VERB_NOISY	2

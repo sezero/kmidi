@@ -196,11 +196,10 @@ void KMidi::setToolTips()
 	QToolTip::add( lbuttonc,	i18n("unnassigned") );
 	QToolTip::add( lbuttond,	i18n("unnassigned") );
 	QToolTip::add( lbuttone,	i18n("unnassigned") );
-	//QToolTip::add( rbuttona,	i18n("unnassigned") );
-	QToolTip::add( rcb1,		i18n("Stereo Voice: normal/xtra/off") );
-	QToolTip::add( rcb2,		i18n("Reverb: normal/xtra/off") );
-	QToolTip::add( rcb3,		i18n("Chorus: normal/xtra/off") );
-	QToolTip::add( rcb4,		i18n("unassigned") );
+	QToolTip::add( rcb1,		i18n("Stereo Voice: norm/xtra/off") );
+	QToolTip::add( rcb2,		i18n("Reverb: norm/xtra/off") );
+	QToolTip::add( rcb3,		i18n("Chorus: norm/xtra/off") );
+	QToolTip::add( rcb4,		i18n("Verbosity: norm/xtra/off") );
 	QToolTip::add( effectbutton,	i18n("Effects") );
 	QToolTip::add( voicespin,	i18n("Set Polyphony") );
 	QToolTip::add( rbuttond,	i18n("unnassigned") );
@@ -228,7 +227,6 @@ void KMidi::setToolTips()
 	QToolTip::remove( lbuttonc );
 	QToolTip::remove( lbuttond );
 	QToolTip::remove( lbuttone );
-	//QToolTip::remove( rbuttona );
 	QToolTip::remove( rcb1 );
 	QToolTip::remove( rcb2 );
 	QToolTip::remove( rcb3 );
@@ -678,24 +676,25 @@ void KMidi::updateRChecks( int which )
     int check_states = 0;
 
     check_states |= which << 4;
-    //fprintf(stderr,"check %d\n", which);
     switch (which) {
 	case 0:
-	    //fprintf(stderr, "state is %d\n", (int)rcb1->state() );
+		// stereo voice
 	    check_states |= (int)rcb1->state();
 	    break;
 	case 1:
-	    //fprintf(stderr, "state is %d\n", (int)rcb2->state() );
+		// reverb voice
 	    check_states |= (int)rcb2->state();
 	    break;
 	case 2:
-	    //fprintf(stderr, "state is %d\n", (int)rcb3->state() );
+		// chorus voice
 	    check_states |= (int)rcb3->state();
 	    break;
 	case 3:
-	    //fprintf(stderr, "state is %d\n", (int)rcb4->state() );
+		// info window verbosity
 	    check_states |= (int)rcb4->state();
 	    break;
+	default:
+	    return;
 
     }
     pipe_int_write(MOTIF_CHECK_STATE);

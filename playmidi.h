@@ -184,6 +184,13 @@ typedef struct {
 #define RELEASEC 5
 #define DELAY 6
 
+/* Voice effects options: */
+#define OPT_STEREO_VOICE 1
+#define OPT_REVERB_VOICE 2
+#define OPT_CHORUS_VOICE 4
+#define OPT_STEREO_EXTRA 16
+#define OPT_REVERB_EXTRA 32
+#define OPT_CHORUS_EXTRA 64
 
 #define MAXCHAN 16
 #define MAXNOTE 128

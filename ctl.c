@@ -548,23 +548,25 @@ static int ctl_blocking_read(int32 *valp)
 		  switch (arg>>4) {
 		     case 0:
 			/* stereo */
-			if (!argopt) reverb_options &= ~0x01;
-			else reverb_options |= 0x01;
+			if (!argopt) reverb_options &= ~(OPT_STEREO_VOICE | OPT_STEREO_EXTRA);
+			else reverb_options |= OPT_STEREO_VOICE;
+			if (argopt == 2) reverb_options |= OPT_STEREO_EXTRA;
 			break;
 		     case 1:
 			/* reverb */
-			if (!argopt) reverb_options &= ~0x02;
-			else reverb_options |= 0x02;
+			if (!argopt) reverb_options &= ~(OPT_REVERB_VOICE | OPT_REVERB_EXTRA);
+			else reverb_options |= OPT_REVERB_VOICE;
+			if (argopt == 2) reverb_options |= OPT_REVERB_EXTRA;
 			break;
 		     case 2:
 			/* chorus */
-			if (!argopt) reverb_options &= ~0x04;
-			else reverb_options |= 0x04;
+			if (!argopt) reverb_options &= ~(OPT_CHORUS_VOICE | OPT_CHORUS_EXTRA);
+			else reverb_options |= OPT_CHORUS_VOICE;
+			if (argopt == 2) reverb_options |= OPT_CHORUS_EXTRA;
 			break;
 		     case 3:
-			/* ?? */
-			if (!argopt) reverb_options &= ~0x08;
-			else reverb_options |= 0x08;
+			/* verbosity */
+			ctl.verbosity = argopt;
 			break;
 		  }
 		  return RC_NONE;

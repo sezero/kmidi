@@ -595,8 +595,16 @@ static void clone_voice(Instrument *ip, int v, MidiEvent *e, uint8 clone_type)
   if (clone_type == REVERB_CLONE) chorus = 0;
   else if (clone_type == CHORUS_CLONE) reverb = 0;
 
-  if (clone_type == REVERB_CLONE && reverb < 8) return;
-  if (clone_type == CHORUS_CLONE && chorus < 8) return;
+  if (clone_type == REVERB_CLONE) {
+	 if ( (reverb_options & OPT_REVERB_EXTRA) && reverb < 90)
+		reverb = 90;
+	 if (reverb < 8) return;
+  }
+  if (clone_type == CHORUS_CLONE) {
+	 if ( (reverb_options & OPT_CHORUS_EXTRA) && chorus < 40)
+		chorus = 40;
+	 if (chorus < 4) return;
+  }
 
   if (!voice[v].right_sample) {
 	if (voices - current_polyphony < 8) return;
@@ -1001,9 +1009,9 @@ printf("(new rel time = %ld)\n",
       voice[i].envelope_increment=0;
       apply_envelope_to_amp(i);
     }
-  if (reverb_options & 0x01) clone_voice(ip, i, e, STEREO_CLONE);
-  if (reverb_options & 0x02) clone_voice(ip, i, e, REVERB_CLONE);
-  if (reverb_options & 0x04) clone_voice(ip, i, e, CHORUS_CLONE);
+  if (reverb_options & OPT_STEREO_VOICE) clone_voice(ip, i, e, STEREO_CLONE);
+  if (reverb_options & OPT_REVERB_VOICE) clone_voice(ip, i, e, REVERB_CLONE);
+  if (reverb_options & OPT_CHORUS_VOICE) clone_voice(ip, i, e, CHORUS_CLONE);
   rt = voice[i].status;
   voice[i].status=VOICE_ON;
   ctl->note(i);
