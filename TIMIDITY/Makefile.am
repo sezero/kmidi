@@ -8,12 +8,12 @@
 
 VERSION = 0.2i
 
-INCLUDES = $(X_INCLUDES) `artsc-config --cflags`
+INCLUDES = $(X_INCLUDES) `$(bindir)/artsc-config --cflags`
 AM_CFLAGS = -DDEFAULT_PATH=\"$(TIMID_DIR)\" $(EXTRATDEFS) $(EXTRATCFLAGS)
 if GXXOPTIMIZE
 CFLAGS = -O3 -fomit-frame-pointer -ffast-math -malign-double
 endif
-LDFLAGS = `artsc-config --libs`
+LDFLAGS = `$(bindir)/artsc-config --libs`
 LDADD = $(LIBALIB) $(LIBAUDIO) $(LIBMME) $(EXTRATLIBS) $(X_LIBS) -lm
 
 # Where to install the patches, config files, and MIDI files.
