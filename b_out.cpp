@@ -41,6 +41,8 @@ static int total_bytes = 0;
 static int fragsize = 0;
 static int fragstotal = 0;
 
+#define WRITEDRIVER(fd,buf,cnt) play_mode->driver_output_data(buf,cnt)
+
 int b_out_count()
 {
   return out_count;
