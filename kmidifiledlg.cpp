@@ -23,6 +23,7 @@
 #include <qdir.h>
 #include <klocale.h>
 #include <kurl.h>
+#include <kurlcombobox.h>
 #include <kdiroperator.h>
 #include "kmidifiledlg.h"
 #include "kmidi.h"
