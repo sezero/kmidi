@@ -1,4 +1,5 @@
 /*
+	$Id$
 
     TiMidity -- Experimental MIDI to WAVE converter
     Copyright (C) 1995 Tuukka Toivonen <toivonen@clinet.fi>
@@ -22,16 +23,16 @@
    */
 
 typedef struct {
-  int32
+  uint32
     loop_start, loop_end, data_length,
     sample_rate, low_freq, high_freq, root_freq;
 
-  int8
+  uint8
     root_tune, fine_tune;
 
   int32
-    envelope_rate[6], envelope_offset[6];
-  float
+    envelope_rate[7], envelope_offset[7];
+  FLOAT_T
     volume, resonance;
   sample_t *data;
   int32 
@@ -42,7 +43,7 @@ typedef struct {
     reverberation, chorusdepth,
     tremolo_depth, vibrato_depth,
     modes;
-  int8
+  uint8
     panning, note_to_use;
   int16
     scale_tuning;
@@ -127,7 +128,4 @@ extern void free_instruments(void);
 extern void end_soundfont(void);
 extern int set_default_instrument(char *name);
 
-extern void init_soundfont(char *fname, int order, int oldbank, int newbank);
-Instrument *load_soundfont(int order, int bank, int preset, int keynote);
-void exclude_soundfont(int bank, int preset, int keynote);
-void order_soundfont(int bank, int preset, int keynote, int order);
+extern void init_soundfont(char *fname, int oldbank, int newbank);
