@@ -111,6 +111,7 @@ protected:
     void parse_fileinfo(QFileInfo*, MyListBoxItem*);
     void set_local_dir(const QString &dir);
     void redoplist();
+    void redoDisplay();
 
 public:
     QString current_playlist;

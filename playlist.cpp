@@ -198,21 +198,31 @@ int MyListBoxItem::width(const QListBox *lb ) const{
 
 }	  
 
-void PlaylistDialog::redoLists() {
+void PlaylistDialog::redoDisplay() {
 
-  plistbox->setCurrentItem(*playlist_ptr);
-  listbox->clear();
-  listbox->insertStrList(songlist,-1);
   redoplist();
 
   if (plistbox->count() >= *playlist_ptr) {
+    plistbox->setCurrentItem(*playlist_ptr);
     current_playlist = plistbox->text((uint) *playlist_ptr);
     current_playlist += ".plist";
+//fprintf(stderr,"redoLists: ptr=%d, current_playlist=%s\n", *playlist_ptr, current_playlist.data());
   }
-  else current_playlist = "default.plist";
-
-  if (listbox->count() == 0)
+  else {
+    current_playlist = "default.plist";
+    *playlist_ptr = 0;
+  }
+  if (!listbox->count())
+//fprintf(stderr, "No listbox count!\n");
+  if (!listbox->count())
     loadPlaylist(current_playlist);
+}
+
+void PlaylistDialog::redoLists() {
+
+  listbox->clear();
+  listbox->insertStrList(songlist,-1);
+  redoDisplay();
 }
 
 void  PlaylistDialog::parse_fileinfo(QFileInfo* fi, MyListBoxItem* lbitem){
@@ -304,7 +314,7 @@ void PlaylistDialog::removeIt()
   QFile f(path);
   if (f.remove()) {
     listsonglist->remove(i);
-    redoLists();
+    redoDisplay();
   }
 }
 
@@ -502,7 +512,6 @@ void PlaylistDialog::resizeEvent(QResizeEvent *e){
 void PlaylistDialog::editNewPlaylist(){
     snpopup->move( mapToGlobal( savenew->geometry().bottomLeft() ) );
     snpopup->show();
-    //newEdit->setFocus();
 }
 
 void PlaylistDialog::newPlaylist(){
@@ -512,10 +521,11 @@ void PlaylistDialog::newPlaylist(){
 	plf += ".plist";
         QString path = locateLocal("appdata", plf);
 	listsonglist->inSort(path);
-	*playlist_ptr = listsonglist->find(path);
+	*playlist_ptr = listsonglist->at();
+//fprintf(stderr,"ptr set to %d\n", *playlist_ptr);
 	//*playlist_ptr = listsonglist->count();
 	savePlaylistbyName(plf);
-	redoLists();
+	redoDisplay();
 //fprintf(stderr, "new [%s]\n", plf.data());
 }
 

@@ -307,6 +307,7 @@ void KMidi::volChanged( int vol )
 
     pipe_int_write(  MOTIF_CHANGE_VOLUME);
     pipe_int_write(vol*255/100);
+    volume = vol;
     //  mp_volume = vol*255/100;
 
 }
@@ -1316,6 +1317,9 @@ void KMidi::loadplaylist( int which ) {
         }
 	f.close();
 	listplaylists->inSort(defaultlist);
+	redoplaylistbox();
+	current_playlist_num = 0;
+	playlistbox->setCurrentItem(current_playlist_num);
     }
     else {
 	QFile f(defaultlist);
