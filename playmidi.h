@@ -82,7 +82,7 @@ typedef struct {
 typedef struct {
   int
     bank, kit, sfx, program, volume, sustain, panning, pitchbend, expression, 
-    mono, /* one note only on this channel -- not implemented yet */
+    variationbank, mono, /* one note only on this channel -- not implemented yet */
 #ifdef tplus
     portamento, modulation_wheel,
 #endif

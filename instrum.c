@@ -233,7 +233,7 @@ static InstrumentLayer *load_instrument(char *name, int font_type, int percussio
 				   int panning, int amp, int note_to_use,
 				   int strip_loop, int strip_envelope,
 #ifndef ADAGIO
-				   int strip_tail, int brightness, int harmoniccontent, int bank, int gm_num)
+				   int strip_tail, int bank, int gm_num)
 #else /* ADAGIO */
 				   int strip_tail,
 				   int gm_num, int tpgm, int reverb, int main_volume)
@@ -256,11 +256,11 @@ static InstrumentLayer *load_instrument(char *name, int font_type, int percussio
 
   if (gm_num >= 0) {
   if ((lp = load_fff_patch(gm_num, tpgm, reverb, main_volume))) return(lp);
-  if ((lp = load_sbk_patch(0, gm_num, tpgm, reverb, main_volume, brightness, harmoniccontent))) return(lp);
+  if ((lp = load_sbk_patch(0, gm_num, tpgm, reverb, main_volume))) return(lp);
   }
 #else
   extern InstrumentLayer *load_fff_patch(char *, int, int, int, int, int, int, int, int, int);
-  extern InstrumentLayer *load_sbk_patch(char *, int, int, int, int, int, int, int, int, int, int, int);
+  extern InstrumentLayer *load_sbk_patch(char *, int, int, int, int, int, int, int, int, int);
 
   if (gm_num >= 0) {
       if (font_type == FONT_FFF && (lp = load_fff_patch(name, gm_num, bank, percussion,
@@ -270,7 +270,7 @@ static InstrumentLayer *load_instrument(char *name, int font_type, int percussio
       if (font_type == FONT_SBK && (lp = load_sbk_patch(name, gm_num, bank, percussion,
 			   panning, amp, note_to_use,
 			   strip_loop, strip_envelope,
-			   strip_tail, brightness, harmoniccontent))) return(lp);
+			   strip_tail))) return(lp);
   }
 #endif
 
@@ -876,8 +876,6 @@ static int fill_bank(int b)
 				     ((dr) ? 1 : -1),
 				#ifndef ADAGIO
 				     bank->tone[i].strip_tail,
-				     bank->tone[i].brightness,
-				     bank->tone[i].harmoniccontent,
 				     b,
 				     ((dr) ? i + 128 : i) )))
 				#else /* ADAGIO */
@@ -937,7 +935,7 @@ int set_default_instrument(char *name)
 {
   InstrumentLayer *lp;
 #ifndef ADAGIO
-  if (!(lp=load_instrument(name, FONT_NORMAL, 0, -1, -1, -1, 0, 0, 0, -1, -1, 0, -1)))
+  if (!(lp=load_instrument(name, FONT_NORMAL, 0, -1, -1, -1, -1, -1, -1, 0, -1)))
 #else /* ADAGIO */
   if (!(lp=load_instrument(name, FONT_NORMAL, 0, -1, -1, -1, 0, 0, 0, 0, 0, 0, 0)))
 #endif /* ADAGIO */

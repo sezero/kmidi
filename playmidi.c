@@ -155,14 +155,14 @@ static void kill_note(int i);
 
 static void adjust_amplification(void)
 { 
-  /* master_volume = (double)(amplification) / 100.0L; */
-  master_volume = (double)(amplification) / 200.0L;
+  master_volume = (double)(amplification) / 100.0L;
+  master_volume /= 4;
 }
 
 static void adjust_master_volume(int32 vol)
 { 
-  /* master_volume = (double)(vol*amplification) / 1638400.0L; */
-  master_volume = (double)(vol*amplification) / 3276800.0L;
+  master_volume = (double)(vol*amplification) / 1638400.0L;
+  master_volume /= 4;
 }
 
 static void reset_voices(void)
@@ -588,7 +588,7 @@ static int current_polyphony = 0;
 
 
 /* just a variant of note_on() */
-static int vc_alloc(int j)
+static int vc_alloc(int j, int clone_type)
 {
   int i=voices; 
   int vc_count = 0, vc_ret = -1;
@@ -601,7 +601,7 @@ static int vc_alloc(int j)
 	vc_count++;
       }
     }
-  if (vc_count > voice_reserve) return vc_ret;
+  if (vc_count > voice_reserve || clone_type == STEREO_CLONE) return vc_ret;
   return -1;
 }
 
@@ -634,12 +634,13 @@ static void kill_others(MidiEvent *e, int i)
 
 extern int reverb_options;
 
-static void clone_voice(Instrument *ip, int v, MidiEvent *e, uint8 clone_type)
+static void clone_voice(Instrument *ip, int v, MidiEvent *e, uint8 clone_type, int variationbank)
 {
   int w, k, played_note, chorus, reverb;
   int chan = voice[v].channel;
 
-  if (clone_type == STEREO_CLONE && !voice[v].right_sample) return;
+
+  if (clone_type == STEREO_CLONE && !voice[v].right_sample && variationbank != 3) return;
 
   chorus = ip->sample->chorusdepth;
   reverb = ip->sample->reverberation;
@@ -672,19 +673,22 @@ static void clone_voice(Instrument *ip, int v, MidiEvent *e, uint8 clone_type)
   if (clone_type == CHORUS_CLONE) {
 	 if ( (reverb_options & OPT_CHORUS_EXTRA) && chorus < 40)
 		chorus = 40;
+	 if (variationbank == 32) chorus = 30;
+	 else if (variationbank == 33) chorus = 60;
+	 else if (variationbank == 34) chorus = 90;
 	 if (chorus < 4 || dont_cspline) return;
   }
 
   if (!voice[v].right_sample) {
-	if (voices - current_polyphony < 8) return;
+	/* if (voices - current_polyphony < 8) return; */
 	/*if ((reverb < 8 && chorus < 8) || !command_cutoff_allowed) return;*/
 	/*if (!voice[v].vibrato_control_ratio) return;*/
 	voice[v].right_sample = voice[v].sample;
   }
-  /** else reverb = chorus = 0; **/
+  else if (clone_type == STEREO_CLONE) variationbank = 0;
+	/* don't try to fake a second patch if we have a real one */
 
-  /** if (!voice[v].right_sample) return; **/
-  if ( (w = vc_alloc(v)) < 0 ) return;
+  if ( (w = vc_alloc(v, clone_type)) < 0 ) return;
 
   if (clone_type==STEREO_CLONE) voice[v].clone_voice = w;
   /* voice[w].clone_voice = -1; */
@@ -733,8 +737,15 @@ static void clone_voice(Instrument *ip, int v, MidiEvent *e, uint8 clone_type)
   voice[w].control_counter = voice[v].control_counter;
   /*voice[w].panned = voice[v].panned;*/
   voice[w].panned = PANNED_RIGHT;
-  voice[w].panning = 127;
-  /*voice[w].panning = voice[w].sample->panning;*/
+  if (voice[w].right_sample)
+  	voice[w].panning = voice[w].right_sample->panning;
+  else voice[w].panning = 127;
+
+  if (clone_type == STEREO_CLONE && variationbank == 3) {
+	voice[v].panning = 0;
+	voice[w].panning = 127;
+  }
+
 #ifdef tplus
   voice[w].porta_control_ratio = voice[v].porta_control_ratio;
   voice[w].porta_dpb = voice[v].porta_dpb;
@@ -877,17 +888,20 @@ static void start_note(MidiEvent *e, int i)
 {
   InstrumentLayer *lp;
   Instrument *ip;
-  int j, banknum;
+  int j, banknum, ch=e->channel;
   int played_note, drumpan=NO_PANNING;
   int32 rt;
+  int attacktime, releasetime, decaytime, variationbank;
+  int brightness = channel[ch].brightness;
+  int harmoniccontent = channel[ch].harmoniccontent;
 
-  if (channel[e->channel].sfx) banknum=channel[e->channel].sfx;
-  else banknum=channel[e->channel].bank;
+  if (channel[ch].sfx) banknum=channel[ch].sfx;
+  else banknum=channel[ch].bank;
 
   voice[i].velocity=e->b;
 
 #ifndef ADAGIO
-  if (channel[e->channel].kit)
+  if (channel[ch].kit)
     {
       if (!(lp=drumset[banknum]->tone[e->a].layer))
 	{
@@ -905,24 +919,20 @@ static void start_note(MidiEvent *e, int i)
       if (ip->sample->note_to_use) /* Do we have a fixed pitch? */
 	{
 	  voice[i].orig_frequency=freq_table[(int)(ip->sample->note_to_use)];
-	  drumpan=drumpanpot[e->channel][(int)ip->sample->note_to_use];
+	  drumpan=drumpanpot[ch][(int)ip->sample->note_to_use];
 	}
       else
 	voice[i].orig_frequency=freq_table[e->a & 0x7F];
-      
-      /* drums are supposed to have only one sample */
-      /* voice[i].sample=ip->sample; */
-      /* voice[i].right_sample = ip->right_sample; */
     }
   else
     {
 #endif
-      if (channel[e->channel].program==SPECIAL_PROGRAM)
+      if (channel[ch].program==SPECIAL_PROGRAM)
 	lp=default_instrument;
       else if (!(lp=tonebank[banknum]->
-		 tone[channel[e->channel].program].layer))
+		 tone[channel[ch].program].layer))
 	{
-	  if (!(lp=tonebank[0]->tone[channel[e->channel].program].layer))
+	  if (!(lp=tonebank[0]->tone[channel[ch].program].layer))
 	    return; /* No instrument? Then we can't play. */
 	}
       ip = lp->instrument;
@@ -931,7 +941,6 @@ static void start_note(MidiEvent *e, int i)
 	voice[i].orig_frequency=freq_table[(int)(ip->sample->note_to_use)];
       else
 	voice[i].orig_frequency=freq_table[e->a & 0x7F];
-      /* select_stereo_samples(i, lp); */
 #ifndef ADAGIO
     } /* not drum channel */
 #endif
@@ -952,10 +961,12 @@ static void start_note(MidiEvent *e, int i)
     voice[i].note = played_note;
     voice[i].orig_frequency = freq_table[played_note];
 
+/*
   if (voice[i].sample->modes & MODES_FAST_RELEASE) voice[i].status=VOICE_OFF;
   else
+*/
   voice[i].status=VOICE_ON;
-  voice[i].channel=e->channel;
+  voice[i].channel=ch;
   voice[i].note=e->a;
   voice[i].velocity= (e->b * (127 - voice[i].sample->attenuation)) / 127;
 #if 0
@@ -964,7 +975,7 @@ static void start_note(MidiEvent *e, int i)
   voice[i].sample_offset=0;
   voice[i].sample_increment=0; /* make sure it isn't negative */
 #ifdef tplus
-  voice[i].modulation_wheel=channel[e->channel].modulation_wheel;
+  voice[i].modulation_wheel=channel[ch].modulation_wheel;
 #endif
 
   voice[i].tremolo_phase=0;
@@ -977,11 +988,11 @@ static void start_note(MidiEvent *e, int i)
   voice[i].vibrato_sweep_position=0;
   voice[i].vibrato_control_ratio=voice[i].sample->vibrato_control_ratio;
 #ifdef tplus
-  if(channel[e->channel].vibrato_ratio && voice[i].vibrato_depth > 0)
+  if(channel[ch].vibrato_ratio && voice[i].vibrato_depth > 0)
   {
-      voice[i].vibrato_control_ratio = channel[e->channel].vibrato_ratio;
-      voice[i].vibrato_depth = channel[e->channel].vibrato_depth;
-      voice[i].vibrato_delay = channel[e->channel].vibrato_delay;
+      voice[i].vibrato_control_ratio = channel[ch].vibrato_ratio;
+      voice[i].vibrato_depth = channel[ch].vibrato_depth;
+      voice[i].vibrato_delay = channel[ch].vibrato_delay;
   }
   else voice[i].vibrato_delay = 0;
 #endif
@@ -989,15 +1000,48 @@ static void start_note(MidiEvent *e, int i)
   for (j=0; j<VIBRATO_SAMPLE_INCREMENTS; j++)
     voice[i].vibrato_sample_increment[j]=0;
 
+  attacktime = channel[ch].attacktime;
+  releasetime = channel[ch].releasetime;
+  decaytime = 64;
+  variationbank = channel[ch].variationbank;
+
+
+
+  switch (variationbank) {
+	case  8:
+		attacktime = 64+32;
+		break;
+	case 12:
+		decaytime = 64-32;
+		break;
+	case 16:
+		brightness = 64+32;
+		break;
+	case 17:
+		brightness = 64+48;
+		break;
+	case 18:
+		brightness = 64-32;
+		break;
+	case 19:
+		brightness = 64-48;
+		break;
+	case 20:
+		harmoniccontent = 64+32;
+		break;
+	default:
+		break;
+  }
+
 
 #ifdef RATE_ADJUST_DEBUG
 {
 int e_debug=0, f_debug=0;
 int32 r;
-if (channel[e->channel].releasetime!=64) e_debug=1;
-if (channel[e->channel].attacktime!=64) f_debug=1;
-if (e_debug) printf("ADJ release time by %d on %d\n", channel[e->channel].releasetime -64, e->channel);
-if (f_debug) printf("ADJ attack time by %d on %d\n", channel[e->channel].attacktime -64, e->channel);
+if (releasetime!=64) e_debug=1;
+if (attacktime!=64) f_debug=1;
+if (e_debug) printf("ADJ release time by %d on %d\n", releasetime -64, ch);
+if (f_debug) printf("ADJ attack time by %d on %d\n", attacktime -64, ch);
 #endif
 
   for (j=ATTACK; j<MAXPOINT; j++)
@@ -1018,7 +1062,7 @@ if (e_debug) {
 printf("(old rel time = %ld)\n",
 (voice[i].envelope_offset[2] - voice[i].envelope_offset[3]) / voice[i].envelope_rate[3]);
 r = voice[i].envelope_rate[3];
-r = r + ( (64-channel[e->channel].releasetime)*r ) / 100;
+r = r + ( (64-releasetime)*r ) / 100;
 voice[i].envelope_rate[3] = r;
 printf("(new rel time = %ld)\n",
 (voice[i].envelope_offset[2] - voice[i].envelope_offset[3]) / voice[i].envelope_rate[3]);
@@ -1026,21 +1070,27 @@ printf("(new rel time = %ld)\n",
 }
 #endif
 
-  if (channel[e->channel].attacktime!=64)
+  if (attacktime!=64)
     {
-	rt = voice[i].envelope_rate[1];
-	rt = rt + ( (64-channel[e->channel].attacktime)*rt ) / 100;
-	if (rt > 1000) voice[i].envelope_rate[1] = rt;
+	rt = voice[i].envelope_rate[ATTACK];
+	rt = rt + ( (64-attacktime)*rt ) / 100;
+	if (rt > 1000) voice[i].envelope_rate[ATTACK] = rt;
     }
-  if (channel[e->channel].releasetime!=64)
+  if (releasetime!=64)
     {
-	rt = voice[i].envelope_rate[3];
-	rt = rt + ( (64-channel[e->channel].releasetime)*rt ) / 100;
-	if (rt > 1000) voice[i].envelope_rate[3] = rt;
+	rt = voice[i].envelope_rate[RELEASE];
+	rt = rt + ( (64-releasetime)*rt ) / 100;
+	if (rt > 1000) voice[i].envelope_rate[RELEASE] = rt;
+    }
+  if (decaytime!=64)
+    {
+	rt = voice[i].envelope_rate[DECAY];
+	rt = rt + ( (64-decaytime)*rt ) / 100;
+	if (rt > 1000) voice[i].envelope_rate[DECAY] = rt;
     }
 
-  if (channel[e->channel].panning != NO_PANNING)
-    voice[i].panning=channel[e->channel].panning;
+  if (channel[ch].panning != NO_PANNING)
+    voice[i].panning=channel[ch].panning;
   else
     voice[i].panning=voice[i].sample->panning;
   if (drumpan != NO_PANNING)
@@ -1050,21 +1100,21 @@ printf("(new rel time = %ld)\n",
   /*if (voice[i].right_sample) voice[i].panning = 0; */
 
 #ifdef tplus
-  if(channel[e->channel].portamento && !channel[e->channel].porta_control_ratio)
-      update_portamento_controls(e->channel);
-  if(channel[e->channel].porta_control_ratio)
+  if(channel[ch].portamento && !channel[ch].porta_control_ratio)
+      update_portamento_controls(ch);
+  if(channel[ch].porta_control_ratio)
   {
-      if(channel[e->channel].last_note_fine == -1)
+      if(channel[ch].last_note_fine == -1)
       {
 	  /* first on */
-	  channel[e->channel].last_note_fine = voice[i].note * 256;
-	  channel[e->channel].porta_control_ratio = 0;
+	  channel[ch].last_note_fine = voice[i].note * 256;
+	  channel[ch].porta_control_ratio = 0;
       }
       else
       {
-	  voice[i].porta_control_ratio = channel[e->channel].porta_control_ratio;
-	  voice[i].porta_dpb = channel[e->channel].porta_dpb;
-	  voice[i].porta_pb = channel[e->channel].last_note_fine -
+	  voice[i].porta_control_ratio = channel[ch].porta_control_ratio;
+	  voice[i].porta_dpb = channel[ch].porta_dpb;
+	  voice[i].porta_pb = channel[ch].last_note_fine -
 	      voice[i].note * 256;
 	  if(voice[i].porta_pb == 0)
 	      voice[i].porta_control_ratio = 0;
@@ -1072,13 +1122,11 @@ printf("(new rel time = %ld)\n",
   }
 
   /* What "cnt"? if(cnt == 0) 
-      channel[e->channel].last_note_fine = voice[i].note * 256; */
+      channel[ch].last_note_fine = voice[i].note * 256; */
 #endif
 
   if (voice[i].sample->sample_rate)
   {
-     int brightness = channel[e->channel].brightness;
-     int harmoniccontent = channel[e->channel].harmoniccontent;
 
 		if (brightness >= 0 && brightness != 64) {
 			int32 fq = voice[i].sample->cutoff_freq;
@@ -1101,14 +1149,14 @@ printf("(new rel time = %ld)\n",
   }
 
 
-  if (reverb_options & OPT_STEREO_EXTRA) {
+  if (reverb_options & OPT_STEREO_EXTRA || variationbank == 1) {
     int pan = voice[i].panning;
     int disturb = 0;
     /* If they're close up (no reverb) and you are behind the pianist,
      * high notes come from the right, so we'll spread piano etc. notes
      * out horizontally according to their pitches.
      */
-    if (channel[e->channel].program < 21) {
+    if (channel[ch].program < 21) {
 	    int n = voice[i].velocity - 32;
 	    if (n < 0) n = 0;
 	    if (n > 64) n = 64;
@@ -1147,9 +1195,9 @@ printf("(new rel time = %ld)\n",
     }
   voice[i].clone_voice = -1;
   voice[i].clone_type = 0;
-  if (reverb_options & OPT_STEREO_VOICE) clone_voice(ip, i, e, STEREO_CLONE);
-  if (reverb_options & OPT_REVERB_VOICE) clone_voice(ip, i, e, REVERB_CLONE);
-  if (reverb_options & OPT_CHORUS_VOICE) clone_voice(ip, i, e, CHORUS_CLONE);
+  if (reverb_options & OPT_STEREO_VOICE) clone_voice(ip, i, e, STEREO_CLONE, variationbank);
+  if (reverb_options & OPT_REVERB_VOICE) clone_voice(ip, i, e, REVERB_CLONE, variationbank);
+  if (reverb_options & OPT_CHORUS_VOICE) clone_voice(ip, i, e, CHORUS_CLONE, variationbank);
   rt = voice[i].status;
   voice[i].status=VOICE_ON;
   ctl->note(i);

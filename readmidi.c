@@ -893,12 +893,6 @@ static MidiEvent *groom_list(int32 divisions, uint32 *eventsp, uint32 *samplesp)
 	      if (!(drumset[dset]->tone[meep->event.a].layer))
 		drumset[dset]->tone[meep->event.a].layer=
 		    MAGIC_LOAD_INSTRUMENT;
-	      if (drumset[dset]->tone[meep->event.a].brightness==-1)
-	        drumset[dset]->tone[meep->event.a].brightness=
-		    channel[meep->event.channel].brightness;
-	      if (drumset[dset]->tone[meep->event.a].harmoniccontent==-1)
-	        drumset[dset]->tone[meep->event.a].harmoniccontent=
-		    channel[meep->event.channel].harmoniccontent;
 	    }
 	  else
 	    {
@@ -916,16 +910,6 @@ static MidiEvent *groom_list(int32 divisions, uint32 *eventsp, uint32 *samplesp)
 		tonebank[banknum]
 		  ->tone[current_program[chan]].layer=
 		    MAGIC_LOAD_INSTRUMENT;
-	      if (tonebank[banknum]
-		  ->tone[current_program[chan]].brightness==-1)
-	        tonebank[banknum]
-		  ->tone[current_program[chan]].brightness=
-		    channel[meep->event.channel].brightness;
-	      if (tonebank[banknum]
-		  ->tone[current_program[chan]].harmoniccontent==-1)
-	        tonebank[banknum]
-		  ->tone[current_program[chan]].harmoniccontent=
-		    channel[meep->event.channel].harmoniccontent;
 	    }
 	  break;
 
@@ -989,7 +973,15 @@ static MidiEvent *groom_list(int32 divisions, uint32 *eventsp, uint32 *samplesp)
 	      skip_this_event=1;
 	      break;
 	    }
-	  if (tonebank[meep->event.a]) /* Is this a defined tone bank? */
+	/* This is not what I want to do, which is to use
+	   bank 0 for a variation bank only if there is no
+	   real patch available -- but that's not easy.
+	 */
+	  if (XG_System_On && meep->event.a > 0 && meep->event.a < 48) {
+	      channel[meep->event.channel].variationbank=meep->event.a;
+	      new_value=meep->event.a=0;
+	  }
+	  else if (tonebank[meep->event.a]) /* Is this a defined tone bank? */
 	    new_value=meep->event.a;
 	  else 
 	    {
@@ -997,6 +989,7 @@ static MidiEvent *groom_list(int32 divisions, uint32 *eventsp, uint32 *samplesp)
 		   "Tone bank %d is undefined", meep->event.a);
 	      new_value=meep->event.a=0;
 	    }
+
 	  if (current_bank[meep->event.channel]!=new_value)
 	    current_bank[meep->event.channel]=new_value;
 	  else
@@ -1073,6 +1066,7 @@ MidiEvent *read_midi_file(FILE *mfp, uint32 *count, uint32 *sp)
 	else channel[i].kit = 0;
 	channel[i].brightness = 64;
 	channel[i].harmoniccontent = 64;
+	channel[i].variationbank = 0;
      }
 
   if ((fread(tmp,1,4,fp) != 4) || (fread(&len,4,1,fp) != 1))

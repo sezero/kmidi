@@ -307,7 +307,7 @@ void PlaylistDialog::redoplist()
 	if(filenamestr.right(6) == QString(".plist"))
 	    filenamestr = filenamestr.left(filenamestr.length()-6);
 	}
-	plistbox->insertItem(filenamestr);
+	plistbox->insertItem(filenamestr,-1);
 
     }
 }

@@ -91,7 +91,7 @@ typedef struct {
   InstrumentLayer *layer;
   int font_type;
 #ifndef ADAGIO
-  int note, amp, pan, strip_loop, strip_envelope, strip_tail, brightness, harmoniccontent;
+  int note, amp, pan, strip_loop, strip_envelope, strip_tail;
 #else /* ADAGIO */
   int note, amp, pan, strip_loop, strip_envelope, strip_tail,
 	 gm_num, tpgm, reverb, main_volume;

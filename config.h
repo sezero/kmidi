@@ -390,6 +390,11 @@ typedef char int8;
 #  define MAX_AMP_VALUE ((1<<(AMP_BITS+1))-1)
 #endif
 
+#ifdef tplus
+/* #define MIN_AMP_VALUE (MAX_AMP_VALUE >> 9) */
+#define MIN_AMP_VALUE (MAX_AMP_VALUE >> 10)
+#endif
+
 #ifdef USE_LDEXP
 #  define FRSCALE(a,b) ldexp((a),(b))
 #  define FRSCALENEG(a,b) ldexp((a),-(b))

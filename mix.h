@@ -24,4 +24,8 @@
 
 extern void mix_voice(int32 *buf, int v, uint32 c);
 extern int recompute_envelope(int v);
+#ifdef tplus
+extern int apply_envelope_to_amp(int v);
+#else
 extern void apply_envelope_to_amp(int v);
+#endif

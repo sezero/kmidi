@@ -134,7 +134,7 @@ void b_out(int fd, int *buf, int ocount)
     }
   }
 
-  if (!ocount) { flushing = 0; starting_up = 1; bbcount = bboffset = 0; return; }
+  if (!ocount) { flushing = 0; starting_up = 1; out_count = bbcount = bboffset = 0; return; }
 
   memcpy(bbuf + bboffset + bbcount, buf, ocount);
   bbcount += ocount;

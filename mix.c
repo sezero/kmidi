@@ -79,7 +79,11 @@ int recompute_envelope(int v)
   return 0;
 }
 
+#ifdef tplus
+int apply_envelope_to_amp(int v)
+#else
 void apply_envelope_to_amp(int v)
+#endif
 {
   float lamp=voice[v].left_amp, ramp;
   int32 la,ra;
@@ -106,7 +110,16 @@ void apply_envelope_to_amp(int v)
       if (ra>MAX_AMP_VALUE)
 	ra=MAX_AMP_VALUE;
 
-      
+#ifdef tplus
+      if ((voice[v].status == VOICE_OFF || voice[v].status == VOICE_SUSTAINED)
+	 && (la | ra) <= MIN_AMP_VALUE)
+      {
+	  voice[v].status = VOICE_FREE;
+	  ctl->note(v);
+	  return 1;
+      }
+#endif
+ 
       voice[v].left_mix=FINAL_VOLUME(la);
       voice[v].right_mix=FINAL_VOLUME(ra);
     }
@@ -122,8 +135,21 @@ void apply_envelope_to_amp(int v)
       if (la>MAX_AMP_VALUE)
 	la=MAX_AMP_VALUE;
 
+#ifdef tplus
+      if ((voice[v].status == VOICE_OFF || voice[v].status == VOICE_SUSTAINED) &&
+	 la <= MIN_AMP_VALUE)
+      {
+	  voice[v].status = VOICE_FREE;
+	  ctl->note(v);
+	  return 1;
+      }
+#endif
+
       voice[v].left_mix=FINAL_VOLUME(la);
     }
+#ifdef tplus
+    return 0;
+#endif
 }
 
 static int update_envelope(int v)
@@ -184,8 +210,12 @@ static int update_signal(int v)
   if (voice[v].tremolo_phase_increment)
     update_tremolo(v);
 
+#ifdef tplus
+  return apply_envelope_to_amp(v);
+#else
   apply_envelope_to_amp(v);
   return 0;
+#endif
 }
 
 #ifdef LOOKUP_HACK

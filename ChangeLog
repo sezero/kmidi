@@ -1,3 +1,13 @@
+1999-10-03  Greg Lee  <lee@hawaii.edu>
+
+	* b_out.c: forgot to reset out_bytes after purge
+	* playmidi.c,readmidi.c: some interpretation of XG variation banks
+	* playmidi.c: fix volume envelope changes, allocation of
+	  stereo voices
+	* mix.c: fix from TiMidity++ for notes with very low volumes
+	* playlist.cpp: fix "QGArray" out of bounds message
+	* sndfont.c: set modes according to SF2 spec
+
 1999-10-02  Greg Lee  <lee@hawaii.edu>
 
 	* kmidi.cpp: filter on/off button

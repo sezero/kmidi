@@ -74,8 +74,8 @@ typedef struct SFInsts {
 
 /*----------------------------------------------------------------*/
 
-static int load_one_side(SFInsts *rec, SampleList *sp, int sample_count, Sample *base_sample, int amp, int brightness, int harmoniccontent);
-static Instrument *load_from_file(SFInsts *rec, InstList *ip, int amp, int brightness, int harmoniccontent);
+static int load_one_side(SFInsts *rec, SampleList *sp, int sample_count, Sample *base_sample, int amp);
+static Instrument *load_from_file(SFInsts *rec, InstList *ip, int amp);
 static void parse_preset(SFInsts *rec, SFInfo *sf, int preset);
 static void parse_gen(Layer *lay, tgenrec *gen);
 static void parse_preset_layer(Layer *lay, SFInfo *sf, int idx);
@@ -312,7 +312,7 @@ InstrumentLayer *load_sbk_patch(int gm_num, int tpgm, int reverb, int main_volum
 InstrumentLayer *load_sbk_patch(char *name, int gm_num, int bank, int percussion,
 			   int panning, int amp, int keynote,
 			   int strip_loop, int strip_envelope,
-			   int strip_tail, int brightness, int harmoniccontent) {
+			   int strip_tail) {
 #endif
 	int preset;
 	int not_done;
@@ -371,7 +371,7 @@ InstrumentLayer *load_sbk_patch(char *name, int gm_num, int bank, int percussion
 				LO_VAL(ip->velrange),
 				HI_VAL(ip->velrange)? HI_VAL(ip->velrange) : 127 );
 		sfrec.fd = ip->fd;
-		inst = load_from_file(&sfrec, ip, amp, brightness, harmoniccontent);
+		inst = load_from_file(&sfrec, ip, amp);
 	}
 	else {
 		ip = 0;
@@ -406,11 +406,9 @@ InstrumentLayer *load_sbk_patch(char *name, int gm_num, int bank, int percussion
 }
 
 
-static Instrument *load_from_file(SFInsts *rec, InstList *ip, int amp, int brightness, int harmoniccontent)
+static Instrument *load_from_file(SFInsts *rec, InstList *ip, int amp)
 {
 	Instrument *inst;
-	int r_brightness = brightness;
-	int r_harmoniccontent = harmoniccontent;
 	int r_amp = amp;
 /*
 	ctl->cmsg(CMSG_INFO, VERB_NOISY, "Loading SF bank %d prg %d note %d from %s",
@@ -437,8 +435,6 @@ static Instrument *load_from_file(SFInsts *rec, InstList *ip, int amp, int brigh
 	if (!ip->rsamples && ip->keynote >= 0) {
 		ip->rsamples = ip->samples;
 		ip->rslist = ip->slist;
-		r_brightness = 40;
-		r_harmoniccontent = 0;
 		if (ip->keynote % 2) r_amp = -2;
 		else r_amp = -3;
 	}
@@ -446,8 +442,8 @@ static Instrument *load_from_file(SFInsts *rec, InstList *ip, int amp, int brigh
 	if (ip->rsamples) inst->right_sample = safe_malloc(sizeof(Sample)*ip->rsamples);
 	else inst->right_sample = 0;
 
-	if (load_one_side(rec, ip->slist, ip->samples, inst->sample, amp, brightness, harmoniccontent) &&
-	    load_one_side(rec, ip->rslist, ip->rsamples, inst->right_sample, r_amp, r_brightness, r_harmoniccontent))
+	if (load_one_side(rec, ip->slist, ip->samples, inst->sample, amp) &&
+	    load_one_side(rec, ip->rslist, ip->rsamples, inst->right_sample, r_amp))
 		return inst;
 
 	if (inst->right_sample) free(inst->right_sample);
@@ -457,8 +453,7 @@ static Instrument *load_from_file(SFInsts *rec, InstList *ip, int amp, int brigh
 }
 
 
-static int load_one_side(SFInsts *rec, SampleList *sp, int sample_count, Sample *base_sample, int amp,
-	int brightness, int harmoniccontent)
+static int load_one_side(SFInsts *rec, SampleList *sp, int sample_count, Sample *base_sample, int amp)
 {
 	int i;
 	uint32 samplerate_save;
@@ -1155,16 +1150,6 @@ if (pk_range)
 		ip->rsamples++;
 	}
 
-	if (lay->set[SF_sampleFlags]) sampleFlags = lay->val[SF_sampleFlags];
-/**
-	else if (banknum == 128) sampleFlags = 3;
-	else if (lay->set[SF_startloopAddrs]) sampleFlags = 1;
-**/
-	else sampleFlags = 0;
-
-	if (sampleFlags == 2) sampleFlags = 0;
-	if (!sampleFlags) strip_loop = 1;
-
 
 	/* set sample position */
 	sp->startsample = ((short)lay->val[SF_startAddrsHi] * 32768)
@@ -1293,25 +1278,20 @@ if (strip_loop == 1) {
 if (banknum < 128 && (preset == 16 || preset == 17))
 fprintf(stderr, "preset %d, root_freq %ld\n", preset, sp->v.root_freq);
 */
-	sp->v.modes = MODES_16BIT | MODES_ENVELOPE;
-
 	/* volume envelope & total volume */
 	sp->v.volume = 1.0; /* was calc_volume(lay,sf) */
 
-	if (sampleFlags == 1 || sampleFlags == 3) {
-	    #if 1
-		sp->v.modes |= MODES_LOOPING|MODES_SUSTAIN;
-	    #else
-		sp->v.modes |= MODES_LOOPING;
-		if (sampleFlags == 1) sp->v.modes |= MODES_SUSTAIN;
-	    #endif
+	if (lay->set[SF_sampleFlags]) sampleFlags = lay->val[SF_sampleFlags];
+	else sampleFlags = 0;
 
-	    #if 1
-		if (sampleFlags == 3)
-			/* strip the tail */
-			sp->v.data_length = sp->v.loop_end + 1;
-	    #endif
-	}
+	if (sampleFlags == 2) sampleFlags = 0;
+
+	sp->v.modes = MODES_16BIT | MODES_ENVELOPE;
+
+	if (sampleFlags == 1 || sampleFlags == 3)
+		sp->v.modes |= MODES_LOOPING;
+	if (sampleFlags == 3)
+		sp->v.modes |= MODES_SUSTAIN;
 
 
 	convert_volume_envelope(lay, sf, sp, banknum, program);
@@ -1594,6 +1574,7 @@ if (no_shown) {
 /* convert from 8bit value to fractional offset (15.15) */
 static int32 to_offset(int offset)
 {
+	if (offset >255) return 255 << (7+15);
 	return (int32)offset << (7+15);
 }
 
@@ -1636,11 +1617,17 @@ static double to_msec(Layer *lay, SFInfo *sf, int index)
 {
 	int16 value;
 	double msec;
-	if (! lay->set[index])
-		return 1.0;  /* 6msec minimum */
-	value = lay->val[index];
-	if (sf->version == 1)
+
+	if (sf->version == 1) {
+		if (! lay->set[index])
+			return 1.0;  /* 6msec minimum */
+		value = lay->val[index];
 		return (double)value;
+	}
+
+	if (lay->set[index]) value = lay->val[index];
+	else value = -12000;
+
 	msec = (double)(1000 * pow(2.0, (double)( value ) / 1200.0));
 	return msec;
 }

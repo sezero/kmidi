@@ -920,9 +920,14 @@ void do_lowpass(uint32 srate, sample_t *buf, uint32 count, int32 freq, FLOAT_T r
 	C *= 0.30;
 */
 /* no clips */
+#if 0
 	A *= 0.25;
 	B *= 0.25;
 	C *= 0.25;
+#endif
+	A *= 0.28;
+	B *= 0.28;
+	C *= 0.28;
 
 	pv1 = 0;
 	pv2 = 0;
