@@ -40,12 +40,12 @@ SUBDIRS = config bitmaps patch midis
 appsdir = $(kde_appsdir)/Multimedia
 apps_DATA = kmidi.desktop
 
-kde_icon_DATA = kmidi.xpm
+KDE_ICON = kmidi
 
 picsdir = $(kde_datadir)/kmidi/pics
 pics_DATA = kmidilogo.png
 
-EXTRA_DIST = $(apps_DATA) $(kde_icon_DATA) $(pics_DATA) kmidi-mini.xpm
+EXTRA_DIST = $(apps_DATA) $(pics_DATA) 
 
 
 install-data-local:
@@ -57,9 +57,6 @@ install-data-local:
 	if [ ! -f $(TIMID_DIR)/patch/hihatcl.pat ]; then $(INSTALL_DATA) $(srcdir)/patch/hihatcl.pat $(DESTDIR)$(TIMID_DIR)/patch ; fi
 	if [ ! -f $(TIMID_DIR)/patch/cymride1.pat ]; then $(INSTALL_DATA) $(srcdir)/patch/cymride1.pat $(DESTDIR)$(TIMID_DIR)/patch ; fi
 	if [ ! -f $(TIMID_DIR)/patch/acbass.pat ]; then $(INSTALL_DATA) $(srcdir)/patch/acbass.pat $(DESTDIR)$(TIMID_DIR)/patch ; fi
-
-	$(mkinstalldirs) $(DESTDIR)$(kde_minidir)
-	$(INSTALL_DATA) $(srcdir)/kmidi-mini.xpm $(DESTDIR)$(kde_minidir)/kmidi.xpm
 
 	@echo ""
 	@echo "Important:"
@@ -80,7 +77,7 @@ install-data-local:
 
 
 
-uninstall:
+uninstall-local:
 	rm -f $(TIMID_DIR)/patch/acbass.pat
 	rm -f $(TIMID_DIR)/patch/cymride1.pat
 	rm -f $(TIMID_DIR)/patch/hihatcl.pat
@@ -88,7 +85,6 @@ uninstall:
 	rm -f $(TIMID_DIR)/patch/kick2.pat
 	rm -f $(TIMID_DIR)/patch/nylongt2.pat
 	rm -f $(TIMID_DIR)/patch/sologrnd.pat
-
 
 messages:
 	$(XGETTEXT) -C -ki18n -x $(includedir)/kde.pot $(kmidi_SOURCES) && mv messages.po ../po/kmidi.pot
