@@ -1215,7 +1215,7 @@ void KMidi::redoplaybox()
 	if(filenamestr.right(4) == QString(".mid") ||filenamestr.right(4) == QString(".MID"))
 	    filenamestr = filenamestr.left(filenamestr.length()-4);
 	}
-	if (errindex == 0) filenamestr.insert('#',0);
+	if (errindex == 0) filenamestr.prepend('#');
 	playbox->insertItem(filenamestr);
     }
 }
