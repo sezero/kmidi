@@ -1,6 +1,8 @@
 1999-11-13  Greg Lee  <lee@hawaii.edu>
 
 	* fix bug in envelope calculation
+	* resample.c: bidir patch with loop end
+	  at sample end caused core dump
 
 1999-11-10  Greg Lee  <lee@hawaii.edu>
 

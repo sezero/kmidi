@@ -340,8 +340,7 @@ static sample_t *rs_bidir(int v, Voice *vp, uint32 count)
       for(j = 0; j < i; j++)
 	{
 	  RESAMPLATION;
-	  /*ofs += incr;*/
-	  ofs = (uint32)(ofs + incr);
+	  ofs += incr;
 	}
     }
 
@@ -357,11 +356,10 @@ static sample_t *rs_bidir(int v, Voice *vp, uint32 count)
 	  count = 0;
 	}
       else count -= i;
-      for(j = 0; j < i; j++)
+      for(j = 0; j < i && ofs < se; j++)
 	{
 	  RESAMPLATION;
-	  /*ofs += incr;*/
-	  ofs = (uint32)(ofs + incr);
+	  ofs += incr;
 	}
 #ifdef USE_BIDIR_OVERSHOOT
       if (ofs>=le)
@@ -739,7 +737,7 @@ static sample_t *rs_vib_bidir(int v, Voice *vp, uint32 count)
 	}
       else cc -= i;
       count -= i;
-      while (i--)
+      while (i-- && ofs < se)
 	{
 	  RESAMPLATION;
 	  ofs += incr;
