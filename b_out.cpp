@@ -10,6 +10,7 @@
 #include <errno.h>
 #include <string.h>
 
+#ifdef AU_OSS
 #ifdef __linux
 #include <sys/ioctl.h> /* new with 1.2.0? Didn't need this under 1.1.64 */
 #include <linux/soundcard.h>
@@ -17,6 +18,7 @@
 
 #ifdef __FreeBSD__
 #include <machine/soundcard.h>
+#endif
 #endif
 
 #include <malloc.h>
@@ -37,6 +39,8 @@ static int outchunk = 0;
 static int starting_up = 1, flushing = 0;
 static int out_count = 0;
 static int total_bytes = 0;
+static int fragsize = 0;
+static int fragstotal = 0;
 
 /*
 #if defined(AU_OSS) || defined(AU_SUN) || defined(AU_BSDI) || defined(AU_ESD)
@@ -83,15 +87,28 @@ void b_out(char id, int fd, int *buf, int ocount)
   }
 
   if (!total_bytes) {
+#ifdef AU_OSS
 #ifdef SNDCTL_DSP_GETOSPACE
     audio_buf_info info;
     if ( (id == 'd' || id == 'D') &&
          (ioctl(fd, SNDCTL_DSP_GETOSPACE, &info) != -1)) {
-	total_bytes = info.fragstotal * info.fragsize;
-	outchunk = info.fragsize;
+	fragstotal = info.fragstotal;
+	fragsize = info.fragsize;
+	total_bytes = fragstotal * fragsize;
+	outchunk = fragsize;
     }
     else
 #endif /* SNDCTL_DSP_GETOSPACE */
+#endif
+#ifdef AU_ALSA
+    extern void alsa_tell(int *, int *);
+    if (id == 's') {
+	alsa_tell(&fragsize, &fragstotal);
+	outchunk = fragsize;
+	total_bytes = fragstotal * fragsize;
+    }
+    else
+#endif
 	total_bytes = AUDIO_BUFFER_SIZE*2;
   }
 
@@ -103,9 +120,11 @@ void b_out(char id, int fd, int *buf, int ocount)
   if (starting_up || flushing) output_buffer_full = PRESUMED_FULLNESS;
   else {
 	int samples_queued;
+#ifdef AU_OSS
 #ifdef SNDCTL_DSP_GETODELAY
         if ( (id == 'd' || id == 'D') &&
 	     (ioctl(fd, SNDCTL_DSP_GETODELAY, &samples_queued) == -1))
+#endif
 #endif
 	    samples_queued = 0;
 
@@ -121,8 +140,10 @@ void b_out(char id, int fd, int *buf, int ocount)
     if (check_for_rc()) return;
     if (outchunk && bbcount >= outchunk)
         ret = WRITEDRIVER(fd, bbuf + bboffset, outchunk);
-    else if (flushing)
-        ret = WRITEDRIVER(fd, bbuf + bboffset, bbcount);
+    else if (flushing) {
+	if (fragsize) ret = bbcount;
+	else ret = WRITEDRIVER(fd, bbuf + bboffset, bbcount);
+    }
     if (ret < 0) {
 	if (errno == EINTR) continue;
 	else if (errno == EWOULDBLOCK) {
@@ -180,6 +201,7 @@ void b_out(char id, int fd, int *buf, int ocount)
   if (ret >= 0) while (bbcount) {
     if (outchunk && bbcount >= outchunk)
         ret = WRITEDRIVER(fd, bbuf + bboffset, outchunk);
+    else if (fragsize)  ret = bbcount;
     else
         ret = WRITEDRIVER(fd, bbuf + bboffset, bbcount);
     ctl->refresh();
