@@ -52,4 +52,4 @@ Type=Application
 Terminal=0
 X-KDE-StartupNotify=true
 X-DCOP-ServiceType=Unique
-Categories=QT;KDE;AudioVideo
+Categories=Qt;KDE;AudioVideo
