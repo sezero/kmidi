@@ -291,7 +291,6 @@ public slots:
 	void		dragEnterEvent( QDragEnterEvent *e );
 	void		plActivated( int );
 	void		acceptPlaylist();
-	void		invokeWhatsThis();
 };
 
 extern KMidi *kmidi;

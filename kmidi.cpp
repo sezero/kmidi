@@ -1638,13 +1638,6 @@ void KMidi::bwdReleased(){
     pipe_int_write( currplaytime );
 }
 
-
-void KMidi::invokeWhatsThis(){
-
-    QWhatsThis::enterWhatsThisMode();
-
-}
-
 void KMidi::quitClicked(){
 
     setLEDs("--:--");
