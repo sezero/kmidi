@@ -485,17 +485,18 @@ int fff_test(int prog, int bank)
 #endif
 
 #ifdef ADAGIO
-Instrument *load_fff_patch(int prog, int tpgm, int reverb, int main_volume) {
+InstrumentLayer *load_fff_patch(int prog, int tpgm, int reverb, int main_volume) {
     extern int next_wave_prog;
     int amp=-1, note_to_use, strip_loop, strip_envelope, strip_tail, bank, newmode;
     int percussion;
     char *name;
 #else
-Instrument *load_fff_patch(char *name, int prog, int bank, int percussion,
+InstrumentLayer *load_fff_patch(char *name, int prog, int bank, int percussion,
 			   int panning, int amp, int note_to_use,
 			   int strip_loop, int strip_envelope,
 			   int strip_tail) {
 #endif
+    InstrumentLayer *lp;
     Instrument *ip;
     Sample *sp;
     int cnt, i;
@@ -555,7 +556,13 @@ printf("patch for prog %d, note %d:\n", prog, note);
     l = p->layr;
     if (!l->nwaves) return(0);
 
-    ip = (Instrument *)malloc(sizeof(Instrument));
+    ip = (Instrument *)safe_malloc(sizeof(Instrument));
+  
+  lp=(InstrumentLayer *)safe_malloc(sizeof(InstrumentLayer));
+  lp->lo = 0;
+  lp->hi = 127;
+  lp->instrument = ip;
+  lp->next = 0;
 
 #ifdef ADAGIO
     gus_voice[tpgm].loaded |= DSP_MASK;
@@ -1074,7 +1081,7 @@ printf("read %d byte sample\n", cnt);
     ip->sample = ip->left_sample;
   /**}**/
 
-  return(ip);
+  return(lp);
 }
 
 

@@ -76,13 +76,19 @@ typedef struct {
   Sample *right_sample;
 } Instrument;
 
+typedef struct _InstrumentLayer {
+  uint8 lo, hi;
+  Instrument *instrument;
+  struct _InstrumentLayer *next;
+} InstrumentLayer;
+
 #define FONT_NORMAL 0
 #define FONT_FFF    1
 #define FONT_SBK    2
 
 typedef struct {
   char *name;
-  Instrument *instrument;
+  InstrumentLayer *layer;
   int font_type;
 #ifndef ADAGIO
   int note, amp, pan, strip_loop, strip_envelope, strip_tail, brightness, harmoniccontent;
@@ -94,7 +100,7 @@ typedef struct {
 
 /* A hack to delay instrument loading until after reading the
    entire MIDI file. */
-#define MAGIC_LOAD_INSTRUMENT ((Instrument *)(-1))
+#define MAGIC_LOAD_INSTRUMENT ((InstrumentLayer *)(-1))
 #define MAXPROG 128
 #define MAXBANK 130
 #define SFXBANK (MAXBANK-1)
@@ -116,7 +122,7 @@ extern ToneBank *tonebank[], *drumset[];
 extern ToneBank *tonebank[];
 #endif /* ADAGIO */
 
-extern Instrument *default_instrument;
+extern InstrumentLayer *default_instrument;
 extern int default_program;
 extern int antialiasing_allowed;
 extern int fast_decay;

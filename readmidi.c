@@ -890,8 +890,8 @@ static MidiEvent *groom_list(int32 divisions,int32 *eventsp,int32 *samplesp)
 		meep->event.a=sfxdrum1[dnote];
 #endif
 	      /* Mark this instrument to be loaded */
-	      if (!(drumset[dset]->tone[meep->event.a].instrument))
-		drumset[dset]->tone[meep->event.a].instrument=
+	      if (!(drumset[dset]->tone[meep->event.a].layer))
+		drumset[dset]->tone[meep->event.a].layer=
 		    MAGIC_LOAD_INSTRUMENT;
 	      if (drumset[dset]->tone[meep->event.a].brightness==-1)
 	        drumset[dset]->tone[meep->event.a].brightness=
@@ -912,9 +912,9 @@ static MidiEvent *groom_list(int32 divisions,int32 *eventsp,int32 *samplesp)
 		break;
 	      /* Mark this instrument to be loaded */
 	      if (!(tonebank[banknum]
-		    ->tone[current_program[chan]].instrument))
+		    ->tone[current_program[chan]].layer))
 		tonebank[banknum]
-		  ->tone[current_program[chan]].instrument=
+		  ->tone[current_program[chan]].layer=
 		    MAGIC_LOAD_INSTRUMENT;
 	      if (tonebank[banknum]
 		  ->tone[current_program[chan]].brightness==-1)

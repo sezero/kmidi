@@ -64,7 +64,7 @@ ToneBank
 #endif /* ADAGIO */
 
 /* This is a special instrument, used for all melodic programs */
-Instrument *default_instrument=0;
+InstrumentLayer *default_instrument=0;
 
 /* This is only used for tracks that don't specify a program */
 int default_program=DEFAULT_PROGRAM;
@@ -98,6 +98,12 @@ static void free_instrument(Instrument *ip)
   free(ip);
 }
 
+static void free_layer(InstrumentLayer *lp)
+{
+  free_instrument(lp->instrument);
+  free(lp);
+}
+
 #ifndef ADAGIO
 static void free_bank(int dr, int b)
 #else /* ADAGIO */
@@ -112,12 +118,12 @@ static void free_bank(int b)
   ToneBank *bank= tonebank[b];
   for (i=0; i<MAX_TONE_VOICES; i++)
 #endif /* ADAGIO */
-    if (bank->tone[i].instrument)
+    if (bank->tone[i].layer)
       {
 	/* Not that this could ever happen, of course */
-	if (bank->tone[i].instrument != MAGIC_LOAD_INSTRUMENT)
-	  free_instrument(bank->tone[i].instrument);
-	bank->tone[i].instrument=0;
+	if (bank->tone[i].layer != MAGIC_LOAD_INSTRUMENT)
+	  free_layer(bank->tone[i].layer);
+	bank->tone[i].layer=0;
       }
 }
 
@@ -223,7 +229,7 @@ static void reverse_data(int16 *sp, int32 ls, int32 le)
    undefined.
 
    TODO: do reverse loops right */
-static Instrument *load_instrument(char *name, int font_type, int percussion,
+static InstrumentLayer *load_instrument(char *name, int font_type, int percussion,
 				   int panning, int amp, int note_to_use,
 				   int strip_loop, int strip_envelope,
 #ifndef ADAGIO
@@ -233,6 +239,7 @@ static Instrument *load_instrument(char *name, int font_type, int percussion,
 				   int gm_num, int tpgm, int reverb, int main_volume)
 #endif /* ADAGIO */
 {
+  InstrumentLayer *lp;
   Instrument *ip;
   Sample *sp;
   FILE *fp;
@@ -243,27 +250,27 @@ static Instrument *load_instrument(char *name, int font_type, int percussion,
 #endif
 #ifdef ADAGIO
   int newmode;
-  extern Instrument *load_fff_patch(int, int, int, int);
-  extern Instrument *load_sbk_patch(int, int, int, int, int, int);
+  extern InstrumentLayer *load_fff_patch(int, int, int, int);
+  extern InstrumentLayer *load_sbk_patch(int, int, int, int, int, int);
   extern int next_wave_prog;
 
   if (gm_num >= 0) {
-  if ((ip = load_fff_patch(gm_num, tpgm, reverb, main_volume))) return(ip);
-  if ((ip = load_sbk_patch(0, gm_num, tpgm, reverb, main_volume, brightness, harmoniccontent))) return(ip);
+  if ((lp = load_fff_patch(gm_num, tpgm, reverb, main_volume))) return(lp);
+  if ((lp = load_sbk_patch(0, gm_num, tpgm, reverb, main_volume, brightness, harmoniccontent))) return(lp);
   }
 #else
-  extern Instrument *load_fff_patch(char *, int, int, int, int, int, int, int, int, int);
-  extern Instrument *load_sbk_patch(char *, int, int, int, int, int, int, int, int, int, int, int);
+  extern InstrumentLayer *load_fff_patch(char *, int, int, int, int, int, int, int, int, int);
+  extern InstrumentLayer *load_sbk_patch(char *, int, int, int, int, int, int, int, int, int, int, int);
 
   if (gm_num >= 0) {
-      if (font_type == FONT_FFF && (ip = load_fff_patch(name, gm_num, bank, percussion,
+      if (font_type == FONT_FFF && (lp = load_fff_patch(name, gm_num, bank, percussion,
 			   panning, amp, note_to_use,
 			   strip_loop, strip_envelope,
-			   strip_tail))) return(ip);
-      if (font_type == FONT_SBK && (ip = load_sbk_patch(name, gm_num, bank, percussion,
+			   strip_tail))) return(lp);
+      if (font_type == FONT_SBK && (lp = load_sbk_patch(name, gm_num, bank, percussion,
 			   panning, amp, note_to_use,
 			   strip_loop, strip_envelope,
-			   strip_tail, brightness, harmoniccontent))) return(ip);
+			   strip_tail, brightness, harmoniccontent))) return(lp);
   }
 #endif
 
@@ -337,7 +344,13 @@ static Instrument *load_instrument(char *name, int font_type, int percussion,
   newmode = gus_voice[tpgm].modes;
 #endif
   
+  lp=safe_malloc(sizeof(InstrumentLayer));
+  lp->lo = 0;
+  lp->hi = 127;
   ip=safe_malloc(sizeof(Instrument));
+  lp->instrument = ip;
+  lp->next = 0;
+
   ip->type = INST_GUS;
   ip->samples = tmp[198];
   ip->sample = safe_malloc(sizeof(Sample) * ip->samples);
@@ -745,7 +758,7 @@ static Instrument *load_instrument(char *name, int font_type, int percussion,
     }
 
   close_file(fp);
-  return ip;
+  return lp;
 }
 
 #ifndef ADAGIO
@@ -782,7 +795,7 @@ static int fill_bank(int b)
       dr = (bank->tone[i].gm_num - 128);
       if (dr < 0) dr = 0;
       #endif /* ADAGIO */
-      if (bank->tone[i].instrument==MAGIC_LOAD_INSTRUMENT)
+      if (bank->tone[i].layer==MAGIC_LOAD_INSTRUMENT)
 	{
 	  if (!(bank->tone[i].name))
 	    {
@@ -798,23 +811,23 @@ static int fill_bank(int b)
 		  if (!dr)
 		    {
 		#endif /* not ADAGIO */
-		      if (!(standard_tonebank.tone[i].instrument))
-			standard_tonebank.tone[i].instrument=
+		      if (!(standard_tonebank.tone[i].layer))
+			standard_tonebank.tone[i].layer=
 			  MAGIC_LOAD_INSTRUMENT;
 		#ifndef ADAGIO
 		    }
 		  else
 		    {
-		      if (!(standard_drumset.tone[i].instrument))
-			standard_drumset.tone[i].instrument=
+		      if (!(standard_drumset.tone[i].layer))
+			standard_drumset.tone[i].layer=
 			  MAGIC_LOAD_INSTRUMENT;
 		    }
 		#endif /* not ADAGIO */
 		}
-	      bank->tone[i].instrument=0;
+	      bank->tone[i].layer=0;
 	      errors++;
 	    }
-	  else if (!(bank->tone[i].instrument=
+	  else if (!(bank->tone[i].layer=
 		     load_instrument(bank->tone[i].name, 
 				     bank->tone[i].font_type,
 				     (dr) ? 1 : 0,
@@ -894,16 +907,16 @@ void free_instruments(void)
 
 int set_default_instrument(char *name)
 {
-  Instrument *ip;
+  InstrumentLayer *lp;
 #ifndef ADAGIO
-  if (!(ip=load_instrument(name, FONT_NORMAL, 0, -1, -1, -1, 0, 0, 0, -1, -1, 0, -1)))
+  if (!(lp=load_instrument(name, FONT_NORMAL, 0, -1, -1, -1, 0, 0, 0, -1, -1, 0, -1)))
 #else /* ADAGIO */
-  if (!(ip=load_instrument(name, FONT_NORMAL, 0, -1, -1, -1, 0, 0, 0, 0, 0, 0, 0)))
+  if (!(lp=load_instrument(name, FONT_NORMAL, 0, -1, -1, -1, 0, 0, 0, 0, 0, 0, 0)))
 #endif /* ADAGIO */
     return -1;
   if (default_instrument)
-    free_instrument(default_instrument);
-  default_instrument=ip;
+    free_layer(default_instrument);
+  default_instrument=lp;
   default_program=SPECIAL_PROGRAM;
   return 0;
 }

@@ -284,8 +284,29 @@ static void select_sample(int v, Instrument *ip)
   return;
 }
 
-static void select_stereo_samples(int v, Instrument *ip)
+static void select_stereo_samples(int v, InstrumentLayer *lp)
 {
+  Instrument *ip;
+  InstrumentLayer *nlp, *bestvel;
+  int diffvel, midvel, mindiff;
+
+/* select closest velocity */
+  bestvel = lp;
+  mindiff = 500;
+  for (nlp = lp; nlp; nlp = nlp->next) {
+	midvel = (nlp->hi + nlp->lo)/2;
+	if (!midvel) diffvel = 127;
+	else if (voice[v].velocity < nlp->lo || voice[v].velocity > nlp->hi)
+		diffvel = 200;
+	else diffvel = voice[v].velocity - midvel;
+	if (diffvel < 0) diffvel = -diffvel;
+	if (diffvel < mindiff) {
+		mindiff = diffvel;
+		bestvel = nlp;
+	}
+  }
+  ip = bestvel->instrument;
+
   if (ip->right_sample) {
     ip->sample = ip->right_sample;
     ip->samples = ip->right_samples;
@@ -833,6 +854,7 @@ static void clone_voice(Instrument *ip, int v, MidiEvent *e, uint8 clone_type)
 
 static void start_note(MidiEvent *e, int i)
 {
+  InstrumentLayer *lp;
   Instrument *ip;
   int j, banknum;
   int played_note, drumpan=NO_PANNING;
@@ -841,14 +863,17 @@ static void start_note(MidiEvent *e, int i)
   if (channel[e->channel].sfx) banknum=channel[e->channel].sfx;
   else banknum=channel[e->channel].bank;
 
+  voice[i].velocity=e->b;
+
 #ifndef ADAGIO
   if (channel[e->channel].kit)
     {
-      if (!(ip=drumset[banknum]->tone[e->a].instrument))
+      if (!(lp=drumset[banknum]->tone[e->a].layer))
 	{
-	  if (!(ip=drumset[0]->tone[e->a].instrument))
+	  if (!(lp=drumset[0]->tone[e->a].layer))
 	    return; /* No instrument? Then we can't play. */
 	}
+      ip = lp->instrument;
       if (ip->type == INST_GUS && ip->samples != 1)
 	{
 	  ctl->cmsg(CMSG_WARNING, VERB_VERBOSE, 
@@ -865,30 +890,32 @@ static void start_note(MidiEvent *e, int i)
 	voice[i].orig_frequency=freq_table[e->a & 0x7F];
       
       /* drums are supposed to have only one sample */
-      voice[i].sample=ip->sample;
-      voice[i].right_sample = ip->right_sample;
+      /* voice[i].sample=ip->sample; */
+      /* voice[i].right_sample = ip->right_sample; */
     }
   else
     {
 #endif
       if (channel[e->channel].program==SPECIAL_PROGRAM)
-	ip=default_instrument;
-      else if (!(ip=tonebank[banknum]->
-		 tone[channel[e->channel].program].instrument))
+	lp=default_instrument;
+      else if (!(lp=tonebank[banknum]->
+		 tone[channel[e->channel].program].layer))
 	{
-	  if (!(ip=tonebank[0]->tone[channel[e->channel].program].instrument))
+	  if (!(lp=tonebank[0]->tone[channel[e->channel].program].layer))
 	    return; /* No instrument? Then we can't play. */
 	}
+      ip = lp->instrument;
 
       if (ip->sample->note_to_use) /* Fixed-pitch instrument? */
 	voice[i].orig_frequency=freq_table[(int)(ip->sample->note_to_use)];
       else
 	voice[i].orig_frequency=freq_table[e->a & 0x7F];
-      select_stereo_samples(i, ip);
+      /* select_stereo_samples(i, lp); */
 #ifndef ADAGIO
     } /* not drum channel */
 #endif
 
+    select_stereo_samples(i, lp);
     kill_others(e, i);
 
     voice[i].starttime = e->time;
@@ -2223,7 +2250,7 @@ int load_gm(char *name, int gm_num, int prog, int tpgm, int reverb, int main_vol
   bank->tone[prog].tpgm = tpgm;
   bank->tone[prog].reverb = reverb;
   bank->tone[prog].main_volume = main_volume;
-  bank->tone[prog].instrument=MAGIC_LOAD_INSTRUMENT;
+  bank->tone[prog].layer=MAGIC_LOAD_INSTRUMENT;
   load_missing_instruments();
   return 0;
 }

@@ -26,9 +26,7 @@
 /* use some modifications from TiMidity++ */
 #define tplussbkuse
 
-/*#define GREGSTEST*/
-
-/*#define SF_CLOSE_EACH_FILE*/
+/* #define GREGSTEST */
 
 /*#define SF_SUPPRESS_TREMOLO*/
 #ifdef ADAGIO
@@ -70,6 +68,7 @@ typedef struct _SampleList {
 
 typedef struct _InstList {
 	int bank, preset, keynote;
+	int inum, velrange;
 	int samples, rsamples;
 	int already_loaded;
 	char *fname;
@@ -89,7 +88,6 @@ typedef struct SFInsts {
 
 /*----------------------------------------------------------------*/
 
-/*static void free_sample(InstList *ip);*/
 static int load_one_side(SFInsts *rec, SampleList *sp, int sample_count, Sample *base_sample, int amp, int brightness, int harmoniccontent);
 static Instrument *load_from_file(SFInsts *rec, InstList *ip, int amp, int brightness, int harmoniccontent);
 static void parse_preset(SFInsts *rec, SFInfo *sf, int preset);
@@ -97,11 +95,11 @@ static void parse_gen(Layer *lay, tgenrec *gen);
 static void parse_preset_layer(Layer *lay, SFInfo *sf, int idx);
 /*static void merge_layer(Layer *dst, Layer *src);*/
 static int search_inst(Layer *lay);
-static void parse_inst(SFInsts *rec, Layer *pr_lay, SFInfo *sf, int preset, int inst, int which);
+static void parse_inst(SFInsts *rec, Layer *pr_lay, SFInfo *sf, int preset, int inst, int inum);
 static void parse_inst_layer(Layer *lay, SFInfo *sf, int idx);
 static int search_sample(Layer *lay);
 static void append_layer(Layer *dst, Layer *src, SFInfo *sf);
-static void make_inst(SFInsts *rec, Layer *lay, SFInfo *sf, int pr_idx, int in_idx, int which);
+static void make_inst(SFInsts *rec, Layer *lay, SFInfo *sf, int pr_idx, int in_idx, int inum, int range);
 static int32 calc_root_pitch(Layer *lay, SFInfo *sf, SampleList *sp);
 #ifndef SF_SUPPRESS_ENVELOPE
 static void convert_volume_envelope(Layer *lay, SFInfo *sf, SampleList *sp);
@@ -241,29 +239,8 @@ void init_soundfont(char *fname, int oldbank, int newbank)
 	/* mark instruments as loaded so they won't be loaded again if we're re-called */
 	for (ip = sfrec.instlist; ip; ip = ip->next) ip->already_loaded = 1;
 
-#ifdef SF_CLOSE_EACH_FILE
-/* mustn't do this: inst's now remember the open fd's --gl
-	fclose(sfrec.fd);
-	sfrec.fd = NULL;
-*/
-#endif
 }
 
-#if 0
-static void free_sample(InstList *ip)
-{
-	SampleList *sp, *snext;
-	for (sp = ip->slist; sp; sp = snext) {
-		snext = sp->next;
-		free(sp);
-	}
-	for (sp = ip->rslist; sp; sp = snext) {
-		snext = sp->next;
-		free(sp);
-	}
-	free(ip);
-}
-#endif
 
 void end_soundfont(void)
 {
@@ -293,9 +270,6 @@ void end_soundfont(void)
 
 	for (ip = sfrec.instlist; ip; ip = next) {
 		next = ip->next;
-/** freeing samples done by free_instrument in instrum.c
-		free_sample(ip);
-**/
 		free(ip);
 	}
 
@@ -311,19 +285,27 @@ void end_soundfont(void)
  * get converted instrument info and load the wave data from file
  *----------------------------------------------------------------*/
 
+/* two (high/low) 8 bit values in 16 bit parameter */
+#define LO_VAL(val)	((val) & 0xff)
+#define HI_VAL(val)	(((val) >> 8) & 0xff)
+#define SET_LO(vp,val)	((vp) = ((vp) & 0xff00) | (val))
+#define SET_HI(vp,val)	((vp) = ((vp) & 0xff) | ((val) << 8))
+
 #ifdef ADAGIO
-Instrument *load_sbk_patch(int gm_num, int tpgm, int reverb, int main_volume) {
+InstrumentLayer *load_sbk_patch(int gm_num, int tpgm, int reverb, int main_volume) {
     extern int next_wave_prog;
     char *name;
     int percussion, amp=-1, keynote, strip_loop, strip_envelope, strip_tail, bank, newmode;
 #else
-Instrument *load_sbk_patch(char *name, int gm_num, int bank, int percussion,
+InstrumentLayer *load_sbk_patch(char *name, int gm_num, int bank, int percussion,
 			   int panning, int amp, int keynote,
 			   int strip_loop, int strip_envelope,
 			   int strip_tail, int brightness, int harmoniccontent) {
 #endif
 	int preset;
+	int not_done;
 	InstList *ip;
+	InstrumentLayer *lp, *nlp;
 	Instrument *inst = NULL;
 
     preset = gm_num;
@@ -342,19 +324,6 @@ Instrument *load_sbk_patch(char *name, int gm_num, int bank, int percussion,
 */
 #endif
 
-#ifndef ADAGIO
-#if 0
-/* this isn't working */
-    if (percussion && drumset[bank]) {
-	Instrument *ipx = drumset[bank]->tone[preset].instrument;
-	if (ipx && ipx != MAGIC_LOAD_INSTRUMENT) {
-printf("but bank %d voice %d is already loaded\n", bank, preset);
-		return ipx;
-	}
-    }
-#endif
-#endif
-
     if (percussion) {
 	keynote = preset;
 	preset = bank;
@@ -368,37 +337,44 @@ printf("but bank %d voice %d is already loaded\n", bank, preset);
     if (command_cutoff_allowed) cutoff_allowed = !percussion;
     else cutoff_allowed = 0;
 */
+    not_done = 1;
+    lp = 0;
+
+    while (not_done) {
 
 	for (ip = sfrec.instlist; ip; ip = ip->next) {
 		if (ip->bank == bank && ip->preset == preset &&
+			ip->already_loaded &&
 		    (keynote < 0 || keynote == ip->keynote))
 			break;
 	}
-	if (ip && ip->samples) {
+	inst = 0;
+	if (ip && (ip->samples || ip->rsamples)) {
+		ip->already_loaded = 0;
 		sfrec.fname = ip->fname;
-    		ctl->cmsg(CMSG_INFO, VERB_NOISY, "Loading %s%s %s[%d,%d] from %s.",
+    		ctl->cmsg(CMSG_INFO, VERB_NOISY, "Loading %s%s %s[%d,%d] from %s (vol %d to %d).",
 #ifdef DO_LINKED_WAVES
 			(ip->rsamples)? "stereo " : "",
 #else
 			"",
 #endif
 			(percussion)? "drum":"instrument", name,
-			(percussion)? keynote : preset, (percussion)? preset : bank, sfrec.fname);
+			(percussion)? keynote : preset, (percussion)? preset : bank, sfrec.fname,
+				LO_VAL(ip->velrange), HI_VAL(ip->velrange));
 		sfrec.fd = ip->fd;
-		sfrec.fname = ip->fname;
 		inst = load_from_file(&sfrec, ip, amp, brightness, harmoniccontent);
 	}
-	else ctl->cmsg(CMSG_INFO, VERB_NORMAL, "Can't find %s %s[%d,%d] in %s.",
+	else {
+		ip = 0;
+		not_done = 0;
+		if (!lp) {
+		    ctl->cmsg(CMSG_INFO, VERB_NORMAL, "Can't find %s %s[%d,%d] in %s.",
 			(percussion)? "drum":"instrument", name,
 			(percussion)? keynote : preset, (percussion)? preset : bank, sfrec.fname);
+		    return 0;
+		}
+	}
 
-
-#ifdef SF_CLOSE_EACH_FILE
-/* mustn't do this --gl
-	fclose(sfrec.fd);
-	sfrec.fd = NULL;
-*/
-#endif
 
 #ifdef ADAGIO
 	if (inst) {
@@ -406,8 +382,18 @@ printf("but bank %d voice %d is already loaded\n", bank, preset);
 	    gus_voice[tpgm].prog = next_wave_prog++;
 	}
 #endif
+	if (inst) {
+		nlp = lp;
+		lp=safe_malloc(sizeof(InstrumentLayer));
+		lp->lo = LO_VAL(ip->velrange);
+		lp->hi = HI_VAL(ip->velrange);
+		lp->instrument = inst;
+		lp->next = nlp;
+	}
 
-	return inst;
+    } /* while (not_done) */
+
+	return lp;
 }
 
 
@@ -424,6 +410,13 @@ static Instrument *load_from_file(SFInsts *rec, InstList *ip, int amp, int brigh
 
 	inst = safe_malloc(sizeof(Instrument));
 	inst->type = INST_SF2;
+	/* we could have set up right samples but no left ones */
+	if (!ip->samples && ip->rsamples && ip->rslist) {
+		ip->samples = ip->rsamples;
+		ip->slist = ip->rslist;
+		ip->rsamples = 0;
+		ip->rslist = 0;
+	}
 	inst->samples = ip->samples;
 	inst->sample = safe_malloc(sizeof(Sample)*ip->samples);
 
@@ -677,7 +670,7 @@ static void parse_preset(SFInsts *rec, SFInfo *sf, int preset)
 
 #ifdef GREGSTEST
 if (to_ndx - from_ndx > 1) {
-printf("Preset #%d (%s) has %d instruments.\n", preset,
+fprintf(stderr,"Preset #%d (%s) has %d instruments.\n", preset,
  getname(sf->presethdr[preset].name), to_ndx - from_ndx);
 }
 #endif
@@ -736,14 +729,17 @@ static int search_inst(Layer *lay)
 }
 
 /* parse an instrument */
-static void parse_inst(SFInsts *rec, Layer *pr_lay, SFInfo *sf, int preset, int inst, int which)
+static void parse_inst(SFInsts *rec, Layer *pr_lay, SFInfo *sf, int preset, int inst, int inum)
 {
 	int from_ndx, to_ndx;
-	int i, sample;
+	int i, sample, range=0;
 	Layer lay, glay;
 
 	from_ndx = sf->insthdr[inst].bagNdx;
 	to_ndx = sf->insthdr[inst+1].bagNdx;
+
+	if (pr_lay->set[SF_velRange])
+		range = pr_lay->val[SF_velRange];
 
 	memcpy(&glay, pr_lay, sizeof(Layer));
 	for (i = from_ndx; i < to_ndx; i++) {
@@ -754,7 +750,7 @@ static void parse_inst(SFInsts *rec, Layer *pr_lay, SFInfo *sf, int preset, int 
 			append_layer(&glay, &lay, sf);
 		else {
 			append_layer(&lay, &glay, sf);
-			make_inst(rec, &lay, sf, preset, inst, which);
+			make_inst(rec, &lay, sf, preset, inst, inum, range);
 		}
 	}
 }
@@ -776,12 +772,6 @@ static int search_sample(Layer *lay)
 		return -1;
 }
 
-
-/* two (high/low) 8 bit values in 16 bit parameter */
-#define LO_VAL(val)	((val) & 0xff)
-#define HI_VAL(val)	(((val) >> 8) & 0xff)
-#define SET_LO(vp,val)	((vp) = ((vp) & 0xff00) | (val))
-#define SET_HI(vp,val)	((vp) = ((vp) & 0xff) | ((val) << 8))
 
 /* append two layers; parameters are added to the original value */
 static void append_layer(Layer *dst, Layer *src, SFInfo *sf)
@@ -806,13 +796,13 @@ static void append_layer(Layer *dst, Layer *src, SFInfo *sf)
 }
 
 /* convert layer info to timidity instrument strucutre */
-static void make_inst(SFInsts *rec, Layer *lay, SFInfo *sf, int pr_idx, int in_idx, int which)
+static void make_inst(SFInsts *rec, Layer *lay, SFInfo *sf, int pr_idx, int in_idx, int inum, int range)
 {
 	int banknum = sf->presethdr[pr_idx].bank;
 	int preset = sf->presethdr[pr_idx].preset;
 	int sub_banknum = sf->presethdr[pr_idx].sub_bank;
 	int sub_preset = sf->presethdr[pr_idx].sub_preset;
-	int keynote, program, truebank, note_to_use;
+	int keynote, program, truebank, note_to_use, velrange;
 	int strip_loop = 0, strip_envelope = 0, strip_tail = 0, panning = 0;
 #ifndef ADAGIO
 	ToneBank *bank=0;
@@ -824,18 +814,29 @@ static void make_inst(SFInsts *rec, Layer *lay, SFInfo *sf, int pr_idx, int in_i
 #ifdef DO_LINKED_WAVES
 	int linked_wave;
 #endif
-	int sampleFlags;
+	int sampleFlags, put_me_at_left;
 
-	if (banknum == 128) which = 0;
+
+	if (range) velrange = range;
+	else if (lay->set[SF_velRange]) velrange = lay->val[SF_velRange];
+	else velrange = 0;
+
+#ifdef GREGSTEST
+if (velrange)
+fprintf(stderr,"bank %d, preset %d, inum %d, lo %d, hi %d\n", banknum, preset, inum,
+LO_VAL(velrange), HI_VAL(velrange));
+#endif
+
+	/* if (banknum == 128) inum = 0; */
 	/* more than 2 notes in chord?  sorry -- no can do */
-	if (which > 1) return;
+	/* if (inum > 1) return; */
 
 	sample = &sf->sampleinfo[lay->val[SF_sampleId]];
 #ifdef DO_LINKED_WAVES
 	linked_wave = sample->samplelink;
 	if (linked_wave && linked_wave < sfinfo.nrinfos) {
-		if (which == -1) sample = &sf->sampleinfo[linked_wave - 1];
-		else make_inst(rec, lay, sf, pr_idx, in_idx, -1);
+		if (inum == -1) sample = &sf->sampleinfo[linked_wave - 1];
+		else make_inst(rec, lay, sf, pr_idx, in_idx, -1, velrange);
 	}
 #endif
 	if (sample->sampletype & 0x8000) /* is ROM sample? */
@@ -862,7 +863,7 @@ static void make_inst(SFInsts *rec, Layer *lay, SFInfo *sf, int pr_idx, int in_i
 	}
 
 #ifdef GREGSTEST
-printf("Adding keynote #%d preset %d to %s (%d), bank %d (=? %d).\n", keynote, preset,
+fprintf(stderr,"Adding keynote #%d preset %d to %s (%d), bank %d (=? %d).\n", keynote, preset,
  getname(sf->insthdr[in_idx].name), in_idx, banknum, truebank);
 #endif
 
@@ -871,7 +872,7 @@ printf("Adding keynote #%d preset %d to %s (%d), bank %d (=? %d).\n", keynote, p
 	if (!bank) return;
 	namep = &bank->tone[program].name;
 #ifdef GREGSTEST
-if (*namep) printf("cfg name is %s\n", *namep);
+if (*namep) fprintf(stderr,"cfg name is %s\n", *namep);
 else printf("NO CFG NAME!\n");
 #endif
 	if (*namep == 0) return;
@@ -888,16 +889,24 @@ else printf("NO CFG NAME!\n");
 	/* search current instrument list */
 	for (ip = rec->instlist; ip; ip = ip->next) {
 		if (ip->bank == sub_banknum && ip->preset == sub_preset &&
+		    ip->velrange == velrange &&
 		    (keynote < 0 || keynote == ip->keynote))
 			break;
 	}
 	/* don't append sample when instrument completely specified */
 	if (ip && ip->already_loaded) return;
+	if (!lay->set[SF_panEffectsSend] || lay->val[SF_panEffectsSend] <= 0)
+		put_me_at_left = 1;
+	else	put_me_at_left = 0;
+
 	if (ip == NULL) {
+		put_me_at_left = 1;
 		ip = (InstList*)safe_malloc(sizeof(InstList));
 		ip->bank = sub_banknum;
 		ip->preset = sub_preset;
 		ip->keynote = keynote;
+		ip->inum = inum;
+		ip->velrange = velrange;
 		ip->already_loaded = 0;
 		ip->samples = 0;
 		ip->rsamples = 0;
@@ -911,7 +920,9 @@ else printf("NO CFG NAME!\n");
 
 	/* add a sample */
 	sp = (SampleList*)safe_malloc(sizeof(SampleList));
-	if (!which) {
+/* fix to check sample type for left vs. right? */
+	if (put_me_at_left) {
+	/* if (inum == ip->inum) { */
 		sp->next = ip->slist;
 		ip->slist = sp;
 		ip->samples++;
@@ -923,7 +934,12 @@ else printf("NO CFG NAME!\n");
 	}
 
 	if (lay->set[SF_sampleFlags]) sampleFlags = lay->val[SF_sampleFlags];
+	else if (lay->set[SF_startloopAddrs] && banknum < 128) sampleFlags = 1;
 	else sampleFlags = 0;
+
+	if (sampleFlags == 2) sampleFlags = 0;
+	if (!sampleFlags) strip_loop = 1;
+
 
 	/* set sample position */
 	sp->startsample = ((short)lay->val[SF_startAddrsHi] * 32768)
@@ -936,9 +952,6 @@ else printf("NO CFG NAME!\n");
 	if (sp->endsample > (1 << (32-FRACTION_BITS)))
 		ctl->cmsg(CMSG_ERROR, VERB_NORMAL,
 			  "sndfont: patch size %ld greater than max (%ld)", sp->endsample, 1<<(32-FRACTION_BITS));
-
-	if (lay->set[SF_startloopAddrs] && !lay->set[SF_sampleFlags] && banknum < 128) sampleFlags = 1;
-	if (!sampleFlags || sampleFlags == 2) strip_loop = 1;
 
 	/* set loop position */
 	sp->v.loop_start = ((short)lay->val[SF_startloopAddrsHi] * 32768)
@@ -1101,9 +1114,9 @@ fprintf(stderr, "preset %d, root_freq %ld\n", preset, sp->v.root_freq);
 		    int val;
 		    /* panning position: 0 to 127 */
 		    val = (int)tbl->val[SF_panEffectsSend];
-		    if(val < -500)
+		    if(val <= -500)
 			sp->v.panning = 0;
-		    else if(val > 500)
+		    else if(val >= 500)
 			sp->v.panning = 127;
 		    else
 			sp->v.panning = (int8)((val + 500) * 127 / 1000);
