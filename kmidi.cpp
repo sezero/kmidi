@@ -2191,6 +2191,11 @@ void KMidi::ReadPipe(){
 		if (!settletime && !fastforward && !fastrewind)
 		    diff_currplaytime = cseconds - currplaytime;
 		if (!currplaytime) currplaytime++;
+		if (timestopped) {
+		    currplaytime = cseconds;
+		    diff_currplaytime = 0;
+		}
+
 	    }
 	    break;
 	    /*	
