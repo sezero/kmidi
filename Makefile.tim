@@ -205,7 +205,7 @@ BITMAPS = $(BITMAPF) \
 
 # All headers
 CHDRS = config.h common.h readmidi.h playmidi.h resample.h mix.h instrum.h \
-        tables.h controls.h output.h filter.h motif.h resamplation.h
+        tables.h controls.h output.h filter.h motif.h
 
 # Used in making the distribution archive
 ALLSRCS = $(CSRCS) $(OPTSRCS) $(CHDRS) $(TOOLSRCS) $(TCLSRCS) $(MAKEFILES) \

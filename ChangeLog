@@ -1,8 +1,17 @@
+1999-11-22  Greg Lee  <lee@hawaii.edu>
+
+	* fixed core dump during LaGrange interpolation
+	  by eliminating some preprocessor defines (!)
+	* sndfont.c: sustain points for tremolo strings,
+	  fiddle, helicopter
+	* note off's are more gradual
+
 1999-11-21  Greg Lee  <lee@hawaii.edu>
 
 	* got a core dump (mix.c) using -O3, so
 	  it's back to -O2
 	* added the utility sf2cfg
+	* sun_a.c: untested revisions
 
 1999-11-20  Greg Lee  <lee@hawaii.edu>
 

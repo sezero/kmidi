@@ -1,5 +1,5 @@
 /*
-	$Id$
+	$Id:$
 
     TiMidity++ -- MIDI to WAVE converter and player
     Copyright (C) 1999 Masanao Izumo <mo@goice.co.jp>
@@ -19,7 +19,6 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    resample.c
 */
 
 #include <math.h>
@@ -39,47 +38,28 @@
 #include "tables.h"
 #include "resample.h"
 
-#ifndef tplus
-static int dont_cspline = 0;
-#endif
-
 
 #define LINEAR_INTERPOLATION
 #define CSPLINE_INTERPOLATION
 #define ENVELOPE_PITCH_MODULATION
 
-#include "resamplation.h"
+
+#ifdef LOOKUP_HACK
+#define MAX_DATAVAL 127
+#define MIN_DATAVAL -128
+#else
+#define MAX_DATAVAL 32767
+#define MIN_DATAVAL -32768
+#endif
+
+#define OVERSHOOT_STEP 50
+
 
 sample_t resample_buffer[AUDIO_BUFFER_SIZE+100];
 uint32 resample_buffer_offset = 0;
+
 static sample_t *vib_resample_voice(int, uint32 *, int);
 static sample_t *normal_resample_voice(int, uint32 *, int);
-
-
-#ifdef FILTER_INTERPOLATION
-static void update_lfo(int v)
-{
-  FLOAT_T depth=voice[v].modLfoToFilterFc;
-
-  if (voice[v].lfo_sweep)
-    {
-      /* Update sweep position */
-
-      voice[v].lfo_sweep_position += voice[v].lfo_sweep;
-      if (voice[v].lfo_sweep_position>=(1<<SWEEP_SHIFT))
-	voice[v].lfo_sweep=0; /* Swept to max amplitude */
-      else
-	{
-	  /* Need to adjust depth */
-	  depth *= (FLOAT_T)voice[v].lfo_sweep_position / (FLOAT_T)(1<<SWEEP_SHIFT);
-	}
-    }
-
-  voice[v].lfo_phase += voice[v].lfo_phase_increment;
-
-  voice[v].lfo_volume = depth;
-}
-#endif
 
 /* Returns 1 if envelope runs out */
 int recompute_modulation(int v)
@@ -159,45 +139,8 @@ int update_modulation_signal(int v)
   return 0;
 }
 
-#ifdef FILTER_INTERPOLATION
-static int calc_bw_index(int v)
-{
-  FLOAT_T mod_amount=voice[v].modEnvToFilterFc;
-  int32 freq = voice[v].sample->cutoff_freq;
-  int ix;
 
-  if (voice[v].lfo_phase_increment) update_lfo(v);
 
-  if (!voice[v].lfo_phase_increment && update_modulation_signal(v)) return 0;
-
-/* printf("mod_amount %f ", mod_amount); */
-  if (voice[v].lfo_volume>0.001) {
-	if (mod_amount) mod_amount *= voice[v].lfo_volume;
-	else mod_amount = voice[v].lfo_volume;
-/* printf("lfo %f -> mod %f ", voice[v].lfo_volume, mod_amount); */
-  }
-
-  if (mod_amount > 0.001) {
-    if (voice[v].modulation_volume)
-       freq =
-	(int32)( (double)freq*(1.0 + (mod_amount - 1.0) * (voice[v].modulation_volume>>22) / 255.0) );
-    else freq = (int32)( (double)freq*mod_amount );
-/*
-printf("v%d freq %d (was %d), modvol %d, mod_amount %f\n", v, (int)freq, (int)voice[v].sample->cutoff_freq,
-(int)voice[v].modulation_volume>>22,
-mod_amount);
-*/
-	ix = 1 + (freq+50) / 100;
-	if (ix > 100) ix = 100;
-	voice[v].bw_index = ix;
-	return 1;
-  }
-  voice[v].bw_index = 1 + (freq+50) / 100;
-  return 0;
-}
-#endif
-
-#if defined(FILTER_INTERPOLATION) || defined(ENVELOPE_PITCH_MODULATION)
 /* modulation_volume has been set by above routine */
 int32 calc_mod_freq(int v, int32 incr)
 {
@@ -216,7 +159,7 @@ int32 calc_mod_freq(int v, int32 incr)
 		  (double)(play_mode->rate)),
 		 FRACTION_BITS);
 }
-#endif
+
 /*************** resampling with fixed increment *****************/
 
 static sample_t *rs_plain(int v, uint32 *countptr)
@@ -224,16 +167,13 @@ static sample_t *rs_plain(int v, uint32 *countptr)
   /* Play sample until end, then free the voice. */
   Voice
     *vp=&voice[v];
-  INTERPVARS
-  #ifdef CCVARS
-  CCVARS
-  #endif
+  int32   ofsd, v0, v1, v2, v3, temp, overshoot;
+  uint32 cc_count=vp->modulation_counter;
   sample_t
     *dest=resample_buffer+resample_buffer_offset,
     *src=vp->sample->data;
   int32
     incr=vp->sample_increment;
-/*WHY int32??*/
   uint32
     ofs=vp->sample_offset;
 #if defined(LAGRANGE_INTERPOLATION) || defined(CSPLINE_INTERPOLATION)
@@ -248,16 +188,44 @@ static sample_t *rs_plain(int v, uint32 *countptr)
 
   if (!incr) return resample_buffer+resample_buffer_offset; /* --gl */
 
-#ifdef BUTTERWORTH_COEFFICIENTS
-  BUTTERWORTH_COEFFICIENTS
-#endif
+  overshoot = src[(se>>FRACTION_BITS)-1] / OVERSHOOT_STEP;
+  if (overshoot < 0) overshoot = -overshoot;
 
     while (count--)
     {
-      RESAMPLATION;
-      #ifdef MODULATE_NONVIB_PITCH
-      MODULATE_NONVIB_PITCH
-      #endif
+	if (ofs >= se) {
+		int32 delta = (int32)((ofs - se)>>FRACTION_BITS) ;
+        	v1 = (int32)src[(int)(se>>FRACTION_BITS)-1];
+		v1 -=  (delta+1) * v1 / overshoot;
+        }else  v1 = (int32)src[(int)(ofs>>FRACTION_BITS)];
+	if (ofs + (1L<<FRACTION_BITS) >= se) {
+		v2 = v1;
+        }else  v2 = (int32)src[(int)(ofs>>FRACTION_BITS)+1];
+	if(dont_cspline ||
+	   ((ofs-(1L<<FRACTION_BITS))<ls)||((ofs+(2L<<FRACTION_BITS))>le)){
+                *dest++ = (sample_t)(v1 + ((int32)((v2-v1) * (int32)(ofs & FRACTION_MASK)) >> FRACTION_BITS));
+	}else{
+		ofsd=ofs;
+                v0 = (int32)src[(int)(ofs>>FRACTION_BITS)-1];
+                v3 = (int32)src[(int)(ofs>>FRACTION_BITS)+2];
+                ofs &= FRACTION_MASK;
+                temp=v2;
+		v2 = (6*v2 +
+		      (((( ( (5*v3 - 11*v2 + 7*v1 - v0)*
+		       (int32)ofs) >>FRACTION_BITS)*(int32)ofs)>>(FRACTION_BITS+2))-1))*(int32)ofs;
+                ofs = (1L << FRACTION_BITS) - ofs;
+		v1 = (6*v1 +
+		      ((((((5*v0 - 11*v1 + 7*temp - v3)*
+		       (int32)ofs)>>FRACTION_BITS)*(int32)ofs)>>(FRACTION_BITS+2))-1))*(int32)ofs;
+		v1 = (v1 + v2)/(6L<<FRACTION_BITS);
+		*dest++ = (v1 > MAX_DATAVAL)? MAX_DATAVAL: ((v1 < MIN_DATAVAL)? MIN_DATAVAL: v1);
+		ofs=ofsd;
+	}
+		if (!cc_count--) {
+		    cc_count = control_ratio - 1;
+		    if (!update_modulation_signal(v))
+		        incr = calc_mod_freq(v, incr);
+		}
       ofs += incr;
       if (ofs >= se + (overshoot << FRACTION_BITS))
 	{
@@ -272,25 +240,17 @@ static sample_t *rs_plain(int v, uint32 *countptr)
     }
 
   vp->sample_offset=ofs; /* Update offset */
-#ifdef REMEMBER_FILTER_STATE
-REMEMBER_FILTER_STATE
-#endif
-#ifdef REMEMBER_CC_STATE
-REMEMBER_CC_STATE
-#endif
+  vp->modulation_counter=cc_count;
   return resample_buffer+resample_buffer_offset;
 }
 
 static sample_t *rs_loop(int v, Voice *vp, uint32 *countptr)
 {
   /* Play sample until end-of-loop, skip back and continue. */
-  INTERPVARS
-  #ifdef CCVARS
-  CCVARS
-  #endif
+  int32   ofsd, v0, v1, v2, v3, temp, overshoot;
+  uint32 cc_count=vp->modulation_counter;
   int32
     incr=vp->sample_increment;
-/*WHY int32??*/
   uint32
     ofs=vp->sample_offset;
   uint32
@@ -306,20 +266,50 @@ static sample_t *rs_loop(int v, Voice *vp, uint32 *countptr)
     se=vp->sample->data_length,
     count = *countptr;
 
-#ifdef BUTTERWORTH_COEFFICIENTS
-  BUTTERWORTH_COEFFICIENTS
-#endif
+  overshoot = src[(se>>FRACTION_BITS)-1] / OVERSHOOT_STEP;
+  if (overshoot < 0) overshoot = -overshoot;
 
   while (count--)
     {
-      RESAMPLATION;
-      #ifdef MODULATE_NONVIB_PITCH
-      MODULATE_NONVIB_PITCH
-      #endif
+	if (ofs >= se) {
+		int32 delta = (int32)((ofs - se)>>FRACTION_BITS) ;
+        	v1 = (int32)src[(int)(se>>FRACTION_BITS)-1];
+		v1 -=  (delta+1) * v1 / overshoot;
+        }else  v1 = (int32)src[(int)(ofs>>FRACTION_BITS)];
+	if (ofs + (1L<<FRACTION_BITS) >= se) {
+		v2 = v1;
+        }else  v2 = (int32)src[(int)(ofs>>FRACTION_BITS)+1];
+	if(dont_cspline ||
+	   ((ofs-(1L<<FRACTION_BITS))<ls)||((ofs+(2L<<FRACTION_BITS))>le)){
+                *dest++ = (sample_t)(v1 + ((int32)((v2-v1) * (int32)(ofs & FRACTION_MASK)) >> FRACTION_BITS));
+	}else{
+		ofsd=ofs;
+                v0 = (int32)src[(int)(ofs>>FRACTION_BITS)-1];
+                v3 = (int32)src[(int)(ofs>>FRACTION_BITS)+2];
+                ofs &= FRACTION_MASK;
+                temp=v2;
+		v2 = (6*v2 +
+		      (((( ( (5*v3 - 11*v2 + 7*v1 - v0)*
+		       (int32)ofs) >>FRACTION_BITS)*(int32)ofs)>>(FRACTION_BITS+2))-1))*(int32)ofs;
+                ofs = (1L << FRACTION_BITS) - ofs;
+		v1 = (6*v1 +
+		      ((((((5*v0 - 11*v1 + 7*temp - v3)*
+		       (int32)ofs)>>FRACTION_BITS)*(int32)ofs)>>(FRACTION_BITS+2))-1))*(int32)ofs;
+		v1 = (v1 + v2)/(6L<<FRACTION_BITS);
+		*dest++ = (v1 > MAX_DATAVAL)? MAX_DATAVAL: ((v1 < MIN_DATAVAL)? MIN_DATAVAL: v1);
+		ofs=ofsd;
+	}
+		if (!cc_count--) {
+		    cc_count = control_ratio - 1;
+		    if (!update_modulation_signal(v))
+		        incr = calc_mod_freq(v, incr);
+		}
       ofs += incr;
       if (ofs>=le)
 	{
-	  if (vp->status & (VOICE_OFF | VOICE_FREE | VOICE_DIE))
+	  /** if (vp->status & (VOICE_OFF | VOICE_FREE | VOICE_DIE)) **/
+	  if ( (vp->status & (VOICE_FREE | VOICE_DIE)) ||
+		 ((vp->status & VOICE_OFF)&&(vp->sample->modes & MODES_FAST_RELEASE) ) )
 	    {
 	    	vp->echo_delay -= ll >> FRACTION_BITS;
 	  	if (vp->echo_delay >= 0) ofs -= ll;
@@ -339,21 +329,15 @@ static sample_t *rs_loop(int v, Voice *vp, uint32 *countptr)
     }
 
   vp->sample_offset=ofs; /* Update offset */
-#ifdef REMEMBER_FILTER_STATE
-REMEMBER_FILTER_STATE
-#endif
-#ifdef REMEMBER_CC_STATE
-REMEMBER_CC_STATE
-#endif
+  vp->modulation_counter=cc_count;
   return resample_buffer+resample_buffer_offset;
 }
 
 static sample_t *rs_bidir(int v, Voice *vp, uint32 count)
 {
-  INTERPVARS
+  int32   ofsd, v0, v1, v2, v3, temp, overshoot;
   int32
     incr=vp->sample_increment;
-/*WHY int32??*/
   uint32
     le=vp->loop_end,
     ls=vp->loop_start;
@@ -365,51 +349,6 @@ static sample_t *rs_bidir(int v, Voice *vp, uint32 count)
     *src=vp->sample->data;
 
 
-
-#if 0
-
-#ifdef BUTTERWORTH_COEFFICIENTS
-  BUTTERWORTH_COEFFICIENTS
-#endif
-
-/* following dumps core */
-
-  /* Play normally until inside the loop region */
-
-  if (ofs < ls)
-    {
-      while (count-- && ofs < ls)
-	{
-	  RESAMPLATION;
-	  ofs += incr;
-	  if (ofs>=ls)
-	    break;
-	}
-    }
-
-  /* Then do the bidirectional looping */
-
-  if (count>0)
-    while (count--)
-      {
-	RESAMPLATION;
-	ofs += incr;
-	/* if (ofs>=le && vp->status == VOICE_FREE) continue; */
-	if (ofs>=le)
-	  {
-	    /* fold the overshoot back in */
-	    ofs = le - (ofs - le);
-	    incr = -incr;
-	  }
-	else if (ofs <= ls)
-	  {
-	    ofs = ls + (ls - ofs);
-	    incr = -incr;
-	  }
-      }
-#else
-
-
 #ifdef USE_BIDIR_OVERSHOOT
   int32
     le2 = le<<1,
@@ -419,9 +358,8 @@ static sample_t *rs_bidir(int v, Voice *vp, uint32 count)
     i, j;
   /* Play normally until inside the loop region */
 
-#ifdef BUTTERWORTH_COEFFICIENTS
-  BUTTERWORTH_COEFFICIENTS
-#endif
+  overshoot = src[(se>>FRACTION_BITS)-1] / OVERSHOOT_STEP;
+  if (overshoot < 0) overshoot = -overshoot;
 
   if (ofs <= ls)
     {
@@ -439,7 +377,34 @@ static sample_t *rs_bidir(int v, Voice *vp, uint32 count)
       else count -= i;
       for(j = 0; j < i; j++)
 	{
-	  RESAMPLATION;
+	if (ofs >= se) {
+		int32 delta = (int32)((ofs - se)>>FRACTION_BITS) ;
+        	v1 = (int32)src[(int)(se>>FRACTION_BITS)-1];
+		v1 -=  (delta+1) * v1 / overshoot;
+        }else  v1 = (int32)src[(int)(ofs>>FRACTION_BITS)];
+	if (ofs + (1L<<FRACTION_BITS) >= se) {
+		v2 = v1;
+        }else  v2 = (int32)src[(int)(ofs>>FRACTION_BITS)+1];
+	if(dont_cspline ||
+	   ((ofs-(1L<<FRACTION_BITS))<ls)||((ofs+(2L<<FRACTION_BITS))>le)){
+                *dest++ = (sample_t)(v1 + ((int32)((v2-v1) * (int32)(ofs & FRACTION_MASK)) >> FRACTION_BITS));
+	}else{
+		ofsd=ofs;
+                v0 = (int32)src[(int)(ofs>>FRACTION_BITS)-1];
+                v3 = (int32)src[(int)(ofs>>FRACTION_BITS)+2];
+                ofs &= FRACTION_MASK;
+                temp=v2;
+		v2 = (6*v2 +
+		      (((( ( (5*v3 - 11*v2 + 7*v1 - v0)*
+		       (int32)ofs) >>FRACTION_BITS)*(int32)ofs)>>(FRACTION_BITS+2))-1))*(int32)ofs;
+                ofs = (1L << FRACTION_BITS) - ofs;
+		v1 = (6*v1 +
+		      ((((((5*v0 - 11*v1 + 7*temp - v3)*
+		       (int32)ofs)>>FRACTION_BITS)*(int32)ofs)>>(FRACTION_BITS+2))-1))*(int32)ofs;
+		v1 = (v1 + v2)/(6L<<FRACTION_BITS);
+		*dest++ = (v1 > MAX_DATAVAL)? MAX_DATAVAL: ((v1 < MIN_DATAVAL)? MIN_DATAVAL: v1);
+		ofs=ofsd;
+	}
 	  ofs += incr;
 	}
     }
@@ -463,7 +428,34 @@ static sample_t *rs_bidir(int v, Voice *vp, uint32 count)
       else count -= i;
       for(j = 0; j < i && ofs < se; j++)
 	{
-	  RESAMPLATION;
+	if (ofs >= se) {
+		int32 delta = (int32)((ofs - se)>>FRACTION_BITS) ;
+        	v1 = (int32)src[(int)(se>>FRACTION_BITS)-1];
+		v1 -=  (delta+1) * v1 / overshoot;
+        }else  v1 = (int32)src[(int)(ofs>>FRACTION_BITS)];
+	if (ofs + (1L<<FRACTION_BITS) >= se) {
+		v2 = v1;
+        }else  v2 = (int32)src[(int)(ofs>>FRACTION_BITS)+1];
+	if(dont_cspline ||
+	   ((ofs-(1L<<FRACTION_BITS))<ls)||((ofs+(2L<<FRACTION_BITS))>le)){
+                *dest++ = (sample_t)(v1 + ((int32)((v2-v1) * (int32)(ofs & FRACTION_MASK)) >> FRACTION_BITS));
+	}else{
+		ofsd=ofs;
+                v0 = (int32)src[(int)(ofs>>FRACTION_BITS)-1];
+                v3 = (int32)src[(int)(ofs>>FRACTION_BITS)+2];
+                ofs &= FRACTION_MASK;
+                temp=v2;
+		v2 = (6*v2 +
+		      (((( ( (5*v3 - 11*v2 + 7*v1 - v0)*
+		       (int32)ofs) >>FRACTION_BITS)*(int32)ofs)>>(FRACTION_BITS+2))-1))*(int32)ofs;
+                ofs = (1L << FRACTION_BITS) - ofs;
+		v1 = (6*v1 +
+		      ((((((5*v0 - 11*v1 + 7*temp - v3)*
+		       (int32)ofs)>>FRACTION_BITS)*(int32)ofs)>>(FRACTION_BITS+2))-1))*(int32)ofs;
+		v1 = (v1 + v2)/(6L<<FRACTION_BITS);
+		*dest++ = (v1 > MAX_DATAVAL)? MAX_DATAVAL: ((v1 < MIN_DATAVAL)? MIN_DATAVAL: v1);
+		ofs=ofsd;
+	}
 	  ofs += incr;
 	}
 #ifdef USE_BIDIR_OVERSHOOT
@@ -482,13 +474,9 @@ static sample_t *rs_bidir(int v, Voice *vp, uint32 count)
 	  incr *= -1;
 #endif
     }
-#endif
 
   vp->sample_increment=incr;
   vp->sample_offset=ofs; /* Update offset */
-#ifdef REMEMBER_FILTER_STATE
-REMEMBER_FILTER_STATE
-#endif
   return resample_buffer+resample_buffer_offset;
 }
 
@@ -598,7 +586,7 @@ static sample_t *rs_vib_plain(int v, uint32 *countptr)
   /* Play sample until end, then free the voice. */
 
   Voice *vp=&voice[v];
-  INTERPVARS
+  int32   ofsd, v0, v1, v2, v3, temp, overshoot;
   sample_t
     *dest=resample_buffer+resample_buffer_offset,
     *src=vp->sample->data;
@@ -621,10 +609,8 @@ static sample_t *rs_vib_plain(int v, uint32 *countptr)
 
   if (incr<0) incr = -incr; /* In case we're coming out of a bidir loop */
 
-#ifdef BUTTERWORTH_COEFFICIENTS
-  BUTTERWORTH_COEFFICIENTS
-#endif
-
+  overshoot = src[(se>>FRACTION_BITS)-1] / OVERSHOOT_STEP;
+  if (overshoot < 0) overshoot = -overshoot;
   while (count--)
     {
       if (!cc--)
@@ -632,7 +618,34 @@ static sample_t *rs_vib_plain(int v, uint32 *countptr)
 	  cc=vp->vibrato_control_ratio;
 	  incr=update_vibrato(vp, 0);
 	}
-      RESAMPLATION;
+	if (ofs >= se) {
+		int32 delta = (int32)((ofs - se)>>FRACTION_BITS) ;
+        	v1 = (int32)src[(int)(se>>FRACTION_BITS)-1];
+		v1 -=  (delta+1) * v1 / overshoot;
+        }else  v1 = (int32)src[(int)(ofs>>FRACTION_BITS)];
+	if (ofs + (1L<<FRACTION_BITS) >= se) {
+		v2 = v1;
+        }else  v2 = (int32)src[(int)(ofs>>FRACTION_BITS)+1];
+	if(dont_cspline ||
+	   ((ofs-(1L<<FRACTION_BITS))<ls)||((ofs+(2L<<FRACTION_BITS))>le)){
+                *dest++ = (sample_t)(v1 + ((int32)((v2-v1) * (int32)(ofs & FRACTION_MASK)) >> FRACTION_BITS));
+	}else{
+		ofsd=ofs;
+                v0 = (int32)src[(int)(ofs>>FRACTION_BITS)-1];
+                v3 = (int32)src[(int)(ofs>>FRACTION_BITS)+2];
+                ofs &= FRACTION_MASK;
+                temp=v2;
+		v2 = (6*v2 +
+		      (((( ( (5*v3 - 11*v2 + 7*v1 - v0)*
+		       (int32)ofs) >>FRACTION_BITS)*(int32)ofs)>>(FRACTION_BITS+2))-1))*(int32)ofs;
+                ofs = (1L << FRACTION_BITS) - ofs;
+		v1 = (6*v1 +
+		      ((((((5*v0 - 11*v1 + 7*temp - v3)*
+		       (int32)ofs)>>FRACTION_BITS)*(int32)ofs)>>(FRACTION_BITS+2))-1))*(int32)ofs;
+		v1 = (v1 + v2)/(6L<<FRACTION_BITS);
+		*dest++ = (v1 > MAX_DATAVAL)? MAX_DATAVAL: ((v1 < MIN_DATAVAL)? MIN_DATAVAL: v1);
+		ofs=ofsd;
+	}
       ofs += incr;
       if (ofs >= se + (overshoot << FRACTION_BITS))
 	{
@@ -649,16 +662,13 @@ static sample_t *rs_vib_plain(int v, uint32 *countptr)
   vp->vibrato_control_counter=cc;
   vp->sample_increment=incr;
   vp->sample_offset=ofs; /* Update offset */
-#ifdef REMEMBER_FILTER_STATE
-REMEMBER_FILTER_STATE
-#endif
   return resample_buffer+resample_buffer_offset;
 }
 
 static sample_t *rs_vib_loop(int v, Voice *vp, uint32 *countptr)
 {
   /* Play sample until end-of-loop, skip back and continue. */
-  INTERPVARS
+  int32   ofsd, v0, v1, v2, v3, temp, overshoot;
   int32
     incr=vp->sample_increment;
 /*WHY int32??*/
@@ -679,9 +689,8 @@ static sample_t *rs_vib_loop(int v, Voice *vp, uint32 *countptr)
     cc=vp->vibrato_control_counter;
 
 
-#ifdef BUTTERWORTH_COEFFICIENTS
-  BUTTERWORTH_COEFFICIENTS
-#endif
+  overshoot = src[(se>>FRACTION_BITS)-1] / OVERSHOOT_STEP;
+  if (overshoot < 0) overshoot = -overshoot;
   while (count--)
     {
       if (!cc--)
@@ -689,11 +698,40 @@ static sample_t *rs_vib_loop(int v, Voice *vp, uint32 *countptr)
 	  cc=vp->vibrato_control_ratio;
 	  incr=update_vibrato(vp, 0);
 	}
-      RESAMPLATION;
+	if (ofs >= se) {
+		int32 delta = (int32)((ofs - se)>>FRACTION_BITS) ;
+        	v1 = (int32)src[(int)(se>>FRACTION_BITS)-1];
+		v1 -=  (delta+1) * v1 / overshoot;
+        }else  v1 = (int32)src[(int)(ofs>>FRACTION_BITS)];
+	if (ofs + (1L<<FRACTION_BITS) >= se) {
+		v2 = v1;
+        }else  v2 = (int32)src[(int)(ofs>>FRACTION_BITS)+1];
+	if(dont_cspline ||
+	   ((ofs-(1L<<FRACTION_BITS))<ls)||((ofs+(2L<<FRACTION_BITS))>le)){
+                *dest++ = (sample_t)(v1 + ((int32)((v2-v1) * (int32)(ofs & FRACTION_MASK)) >> FRACTION_BITS));
+	}else{
+		ofsd=ofs;
+                v0 = (int32)src[(int)(ofs>>FRACTION_BITS)-1];
+                v3 = (int32)src[(int)(ofs>>FRACTION_BITS)+2];
+                ofs &= FRACTION_MASK;
+                temp=v2;
+		v2 = (6*v2 +
+		      (((( ( (5*v3 - 11*v2 + 7*v1 - v0)*
+		       (int32)ofs) >>FRACTION_BITS)*(int32)ofs)>>(FRACTION_BITS+2))-1))*(int32)ofs;
+                ofs = (1L << FRACTION_BITS) - ofs;
+		v1 = (6*v1 +
+		      ((((((5*v0 - 11*v1 + 7*temp - v3)*
+		       (int32)ofs)>>FRACTION_BITS)*(int32)ofs)>>(FRACTION_BITS+2))-1))*(int32)ofs;
+		v1 = (v1 + v2)/(6L<<FRACTION_BITS);
+		*dest++ = (v1 > MAX_DATAVAL)? MAX_DATAVAL: ((v1 < MIN_DATAVAL)? MIN_DATAVAL: v1);
+		ofs=ofsd;
+	}
       ofs += incr;
       if (ofs>=le)
 	{
-	  if (vp->status & (VOICE_OFF | VOICE_FREE | VOICE_DIE))
+	  /** if (vp->status & (VOICE_OFF | VOICE_FREE | VOICE_DIE)) **/
+	  if ( (vp->status & (VOICE_FREE | VOICE_DIE)) ||
+		 ((vp->status & VOICE_OFF)&&(vp->sample->modes & MODES_FAST_RELEASE) ) )
 	    {
 	    	vp->echo_delay -= ll >> FRACTION_BITS;
 	  	if (vp->echo_delay >= 0) ofs -= ll;
@@ -715,15 +753,12 @@ static sample_t *rs_vib_loop(int v, Voice *vp, uint32 *countptr)
   vp->vibrato_control_counter=cc;
   vp->sample_increment=incr;
   vp->sample_offset=ofs; /* Update offset */
-#ifdef REMEMBER_FILTER_STATE
-REMEMBER_FILTER_STATE
-#endif
   return resample_buffer+resample_buffer_offset;
 }
 
 static sample_t *rs_vib_bidir(int v, Voice *vp, uint32 count)
 {
-  INTERPVARS
+  int32   ofsd, v0, v1, v2, v3, temp, overshoot;
   int32
     incr=vp->sample_increment;
 /*WHY int32??*/
@@ -739,54 +774,6 @@ static sample_t *rs_vib_bidir(int v, Voice *vp, uint32 count)
   uint32
     cc=vp->vibrato_control_counter;
 
-#if 0
-#ifdef BUTTERWORTH_COEFFICIENTS
-  BUTTERWORTH_COEFFICIENTS
-#endif
-  /* Play normally until inside the loop region */
-
-  if (ofs < ls)
-    {
-      while (count--)
-	{
-	  if (!cc--)
-	    {
-	      cc=vp->vibrato_control_ratio;
-	      incr=update_vibrato(vp, 0);
-	    }
-	  RESAMPLATION;
-	  ofs += incr;
-	  if (ofs>=ls)
-	    break;
-	}
-    }
-
-  /* Then do the bidirectional looping */
-
-  if (count>0)
-    while (count--)
-      {
-	if (!cc--)
-	  {
-	    cc=vp->vibrato_control_ratio;
-	    incr=update_vibrato(vp, (incr < 0));
-	  }
-	RESAMPLATION;
-	ofs += incr;
-	/* if (ofs>=le && vp->status == VOICE_FREE) continue; */
-	if (ofs>=le)
-	  {
-	    /* fold the overshoot back in */
-	    ofs = le - (ofs - le);
-	    incr = -incr;
-	  }
-	else if (ofs <= ls)
-	  {
-	    ofs = ls + (ls - ofs);
-	    incr = -incr;
-	  }
-      }
-#endif
 
 #ifdef USE_BIDIR_OVERSHOOT
   uint32
@@ -798,10 +785,9 @@ static sample_t *rs_vib_bidir(int v, Voice *vp, uint32 count)
   int
     vibflag = 0;
 
-#ifdef BUTTERWORTH_COEFFICIENTS
-  BUTTERWORTH_COEFFICIENTS
-#endif
 
+  overshoot = src[(se>>FRACTION_BITS)-1] / OVERSHOOT_STEP;
+  if (overshoot < 0) overshoot = -overshoot;
   /* Play normally until inside the loop region */
   while (count && (ofs <= ls))
     {
@@ -816,7 +802,34 @@ static sample_t *rs_vib_bidir(int v, Voice *vp, uint32 count)
       count -= i;
       for(j = 0; j < i; j++)
 	{
-	  RESAMPLATION;
+	if (ofs >= se) {
+		int32 delta = (int32)((ofs - se)>>FRACTION_BITS) ;
+        	v1 = (int32)src[(int)(se>>FRACTION_BITS)-1];
+		v1 -=  (delta+1) * v1 / overshoot;
+        }else  v1 = (int32)src[(int)(ofs>>FRACTION_BITS)];
+	if (ofs + (1L<<FRACTION_BITS) >= se) {
+		v2 = v1;
+        }else  v2 = (int32)src[(int)(ofs>>FRACTION_BITS)+1];
+	if(dont_cspline ||
+	   ((ofs-(1L<<FRACTION_BITS))<ls)||((ofs+(2L<<FRACTION_BITS))>le)){
+                *dest++ = (sample_t)(v1 + ((int32)((v2-v1) * (int32)(ofs & FRACTION_MASK)) >> FRACTION_BITS));
+	}else{
+		ofsd=ofs;
+                v0 = (int32)src[(int)(ofs>>FRACTION_BITS)-1];
+                v3 = (int32)src[(int)(ofs>>FRACTION_BITS)+2];
+                ofs &= FRACTION_MASK;
+                temp=v2;
+		v2 = (6*v2 +
+		      (((( ( (5*v3 - 11*v2 + 7*v1 - v0)*
+		       (int32)ofs) >>FRACTION_BITS)*(int32)ofs)>>(FRACTION_BITS+2))-1))*(int32)ofs;
+                ofs = (1L << FRACTION_BITS) - ofs;
+		v1 = (6*v1 +
+		      ((((((5*v0 - 11*v1 + 7*temp - v3)*
+		       (int32)ofs)>>FRACTION_BITS)*(int32)ofs)>>(FRACTION_BITS+2))-1))*(int32)ofs;
+		v1 = (v1 + v2)/(6L<<FRACTION_BITS);
+		*dest++ = (v1 > MAX_DATAVAL)? MAX_DATAVAL: ((v1 < MIN_DATAVAL)? MIN_DATAVAL: v1);
+		ofs=ofsd;
+	}
 	  ofs += incr;
 	}
       if (vibflag)
@@ -848,7 +861,34 @@ static sample_t *rs_vib_bidir(int v, Voice *vp, uint32 count)
       count -= i;
       while (i-- && ofs < se)
 	{
-	  RESAMPLATION;
+	if (ofs >= se) {
+		int32 delta = (int32)((ofs - se)>>FRACTION_BITS) ;
+        	v1 = (int32)src[(int)(se>>FRACTION_BITS)-1];
+		v1 -=  (delta+1) * v1 / overshoot;
+        }else  v1 = (int32)src[(int)(ofs>>FRACTION_BITS)];
+	if (ofs + (1L<<FRACTION_BITS) >= se) {
+		v2 = v1;
+        }else  v2 = (int32)src[(int)(ofs>>FRACTION_BITS)+1];
+	if(dont_cspline ||
+	   ((ofs-(1L<<FRACTION_BITS))<ls)||((ofs+(2L<<FRACTION_BITS))>le)){
+                *dest++ = (sample_t)(v1 + ((int32)((v2-v1) * (int32)(ofs & FRACTION_MASK)) >> FRACTION_BITS));
+	}else{
+		ofsd=ofs;
+                v0 = (int32)src[(int)(ofs>>FRACTION_BITS)-1];
+                v3 = (int32)src[(int)(ofs>>FRACTION_BITS)+2];
+                ofs &= FRACTION_MASK;
+                temp=v2;
+		v2 = (6*v2 +
+		      (((( ( (5*v3 - 11*v2 + 7*v1 - v0)*
+		       (int32)ofs) >>FRACTION_BITS)*(int32)ofs)>>(FRACTION_BITS+2))-1))*(int32)ofs;
+                ofs = (1L << FRACTION_BITS) - ofs;
+		v1 = (6*v1 +
+		      ((((((5*v0 - 11*v1 + 7*temp - v3)*
+		       (int32)ofs)>>FRACTION_BITS)*(int32)ofs)>>(FRACTION_BITS+2))-1))*(int32)ofs;
+		v1 = (v1 + v2)/(6L<<FRACTION_BITS);
+		*dest++ = (v1 > MAX_DATAVAL)? MAX_DATAVAL: ((v1 < MIN_DATAVAL)? MIN_DATAVAL: v1);
+		ofs=ofsd;
+	}
 	  ofs += incr;
 	}
       if (vibflag)
@@ -878,9 +918,6 @@ static sample_t *rs_vib_bidir(int v, Voice *vp, uint32 count)
   vp->vibrato_control_counter=cc;
   vp->sample_increment=incr;
   vp->sample_offset=ofs; /* Update offset */
-#ifdef REMEMBER_FILTER_STATE
-REMEMBER_FILTER_STATE
-#endif
   return resample_buffer+resample_buffer_offset;
 }
 

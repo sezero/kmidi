@@ -1390,9 +1390,9 @@ fprintf(stderr,"NOT_CLONE v%d vol%f pan%d\n", i, voice[i].volume, voice[i].panni
 */
 static void kill_note(int i)
 {
-  voice[i].status=VOICE_OFF;
+  voice[i].status=VOICE_DIE;
   if (voice[i].clone_voice >= 0)
-	voice[ voice[i].clone_voice ].status=VOICE_OFF;
+	voice[ voice[i].clone_voice ].status=VOICE_DIE;
   ctl->note(i);
 }
 

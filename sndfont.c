@@ -1421,23 +1421,35 @@ fprintf(stderr, "preset %d, root_freq %ld\n", preset, sp->v.root_freq);
 	if (lay->set[SF_sampleFlags]) sampleFlags = lay->val[SF_sampleFlags];
 	else sampleFlags = 0;
 
+	sp->v.modes = MODES_16BIT | MODES_ENVELOPE;
+
+
+	if (sampleFlags == 3) sp->v.modes |= MODES_FAST_RELEASE;
+
 	/* arbitrary adjustments (look at sustain of vol envelope? ) */
 	if (sampleFlags && lay->val[SF_sustainEnv2] == 0) sampleFlags = 3;
 	else if (sampleFlags && lay->val[SF_sustainEnv2] >= 1000) sampleFlags = 1;
 	else if (banknum != 128) {
+		/* organs, accordians */
 		if (program >= 16 && program <= 23) sampleFlags = 3;
-		else if (program >= 40 && program <= 43) sampleFlags = 3;
+		/* strings */
+		else if (program >= 40 && program <= 44) sampleFlags = 3;
+		/* strings, voice */
 		else if (program >= 48 && program <= 54) sampleFlags = 3;
+		/* horns, woodwinds */
 		else if (program >= 56 && program <= 79) sampleFlags = 3;
+		/* lead, pad, fx */
 		else if (program >= 80 && program <=103) sampleFlags = 3;
-		else if (program >=121 && program <=124) sampleFlags = 3;
+		/* bagpipe, fiddle, shanai */
+		else if (program >=109 && program <=111) sampleFlags = 3;
+		/* breath noise, ... telephone, helicopter */
+		else if (program >=121 && program <=125) sampleFlags = 3;
+		/* applause */
 		else if (program ==126) sampleFlags = 3;
 	}
 
 
 	if (sampleFlags == 2) sampleFlags = 0;
-
-	sp->v.modes = MODES_16BIT | MODES_ENVELOPE;
 
 	if (sampleFlags == 1 || sampleFlags == 3)
 		sp->v.modes |= MODES_LOOPING;
