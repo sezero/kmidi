@@ -21,11 +21,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#if (defined(SUN) && defined(SYSV)) || defined(__WIN32__)
 #include <string.h>
-#else
-#include <strings.h>
-#endif
 
 #if defined(linux) || defined(__FreeBSD__)
 #ifndef AU_LINUX
