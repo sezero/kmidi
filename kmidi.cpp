@@ -399,6 +399,8 @@ void MeterWidget::remeter()
 		    }
 		    if (!chnotes && amplitude > 0) {
 			amplitude -= DELTA_VEL;
+			if (Panel->c_flags[ch] & FLAG_PERCUSSION)
+				amplitude -= 3*DELTA_VEL;
 			if (amplitude < 0) amplitude = 0;
 		    }
 		    Panel->ctime[slot][ch] = -1;
@@ -410,6 +412,8 @@ void MeterWidget::remeter()
 		if (amplitude < 0 && lastvol[ch]) {
 			if (!chnotes) amplitude = lastvol[ch];
 			//else amplitude = lastamp[ch] - (3 - chnotes)*DELTA_VEL;
+			else if (Panel->c_flags[ch] & FLAG_PERCUSSION)
+				amplitude = lastamp[ch] - 4*DELTA_VEL;
 			else amplitude = lastamp[ch] - DELTA_VEL;
 			if (amplitude < 0) amplitude = 0;
 			else if (amplitude > 127) amplitude = 127;

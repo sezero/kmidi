@@ -557,7 +557,7 @@ printf(" to %f\n", sp->resonance);
 	}
 #endif
 
-#ifdef ADJUST_SAMPLE_VOLUMES
+#ifdef SF_ADJUST_SAMPLE_VOLUMES
       if (amp!=-1)
 	sample->volume=(double)(amp) / 100.0;
       else
@@ -626,6 +626,15 @@ printf(" to %f\n", sp->resonance);
 			sample->sample_rate = samplerate_save;
 			do_lowpass(sample, sp->cutoff_freq, sp->resonance);
 			sample->sample_rate = 0;
+			/* convert again to the fractional value */
+			sample->data_length <<= FRACTION_BITS;
+		}
+		else if (sp->cutoff_freq > 0 && cutoff_allowed) {
+			/* restore the normal value */
+			sample->data_length >>= FRACTION_BITS;
+    		        if (!i) ctl->cmsg(CMSG_INFO, VERB_DEBUG, "cutoff = %ld ; resonance = %g",
+				sp->cutoff_freq, sp->resonance);
+			do_lowpass(sample, sp->cutoff_freq, sp->resonance);
 			/* convert again to the fractional value */
 			sample->data_length <<= FRACTION_BITS;
 		}

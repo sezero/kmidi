@@ -26,6 +26,7 @@
 
 extern int opt_effect;
 int XG_effect_chorus_is_celeste_flag = 0;
+
 /**************************************************************************/
 /**	null terminated list of effects types
  */

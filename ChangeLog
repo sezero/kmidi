@@ -1,3 +1,12 @@
+1999-09-30  Greg Lee  <lee@hawaii.edu>
+
+	* kmidi.cpp: percussion decays faster on meter
+	* output.c,playmidi.c: count clipped samples;
+	  lower volume
+	* b_out.c: non-blocking output works now
+	* b_out.c,playmidi.c: try prevent dropouts
+	* sndfont.c: filter percussion patches
+
 1999-09-29  Greg Lee  <lee@hawaii.edu>
 
 	* sndfont.c: don't load velocity ranges from

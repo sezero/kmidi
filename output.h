@@ -47,9 +47,12 @@ typedef struct {
 
 extern PlayMode *play_mode_list[], *play_mode;
 extern int init_buffers(int kbytes);
+extern int output_buffer_full;
 
 /* Conversion functions -- These overwrite the int32 data in *lp with
    data in another format */
+
+extern int output_clips;
 
 /* 8-bit signed and unsigned*/
 extern void s32tos8(int32 *lp, int32 c);

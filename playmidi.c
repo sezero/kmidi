@@ -153,12 +153,14 @@ static void kill_note(int i);
 
 static void adjust_amplification(void)
 { 
-  master_volume = (double)(amplification) / 100.0L;
+  /* master_volume = (double)(amplification) / 100.0L; */
+  master_volume = (double)(amplification) / 200.0L;
 }
 
 static void adjust_master_volume(int32 vol)
 { 
-  master_volume = (double)(vol*amplification) / 1638400.0L;
+  /* master_volume = (double)(vol*amplification) / 1638400.0L; */
+  master_volume = (double)(vol*amplification) / 3276800.0L;
 }
 
 static void reset_voices(void)
@@ -659,12 +661,12 @@ static void clone_voice(Instrument *ip, int v, MidiEvent *e, uint8 clone_type)
   if (clone_type == REVERB_CLONE) {
 	 if ( (reverb_options & OPT_REVERB_EXTRA) && reverb < 90)
 		reverb = 90;
-	 if (reverb < 8) return;
+	 if (reverb < 8 || reduce_quality_flag) return;
   }
   if (clone_type == CHORUS_CLONE) {
 	 if ( (reverb_options & OPT_CHORUS_EXTRA) && chorus < 40)
 		chorus = 40;
-	 if (chorus < 4) return;
+	 if (chorus < 4 || reduce_quality_flag) return;
   }
 
   if (!voice[v].right_sample) {
@@ -1139,6 +1141,9 @@ static void note_on(MidiEvent *e)
 
   current_polyphony = 0;
 
+  reduce_quality_flag = (output_buffer_full < 1);
+
+  if (!reduce_quality_flag)
   while (i--)
     {
       if (voice[i].status == VOICE_FREE)
@@ -1147,7 +1152,7 @@ static void note_on(MidiEvent *e)
     }
 
 #ifdef tplus
-  reduce_quality_flag = (current_polyphony > voices / 2);
+  /* reduce_quality_flag = (current_polyphony > voices / 2); */
 #endif
 
 #ifdef ADAGIO
@@ -1165,6 +1170,7 @@ static void note_on(MidiEvent *e)
   while (i--)
     {
       if ((voice[i].status!=VOICE_ON) &&
+	  (voice[i].status!=VOICE_FREE) &&
 	  (voice[i].status!=VOICE_DIE))
 	{
 	  v=voice[i].left_mix;
@@ -1707,6 +1713,7 @@ static int apply_controls(void)
       case RC_PATCHCHANGE:
       case RC_CHANGE_VOICES:
 #endif
+        play_mode->flush_output();
 	play_mode->purge_output();
 	return rc;
 	
@@ -1940,7 +1947,7 @@ int play_midi(MidiEvent *eventlist, uint32 events, uint32 samples)
 
   sample_count=samples;
   event_list=eventlist;
-  lost_notes=cut_notes=played_notes=0;
+  lost_notes=cut_notes=played_notes=output_clips=0;
 
   skip_to(0);
 #ifdef KMIDI
@@ -2206,6 +2213,8 @@ current_event->channel);
 	      ctl->cmsg(CMSG_INFO, VERB_VERBOSE,
 		   "Notes played: %d", played_notes);
 	      ctl->cmsg(CMSG_INFO, VERB_VERBOSE,
+		   "Samples clipped: %d", output_clips);
+	      ctl->cmsg(CMSG_INFO, VERB_VERBOSE,
 		   "Notes cut: %d", cut_notes);
 	      ctl->cmsg(CMSG_INFO, VERB_VERBOSE,
 		   "Notes lost totally: %d", lost_notes);
@@ -2318,7 +2327,7 @@ int play_midi(unsigned char *from, unsigned char *to, int vrbose)
 	if (interactive) {
 	    if (from > to) {
 		sample_count=0; /* unknown */
-		lost_notes=cut_notes=0;
+		lost_notes=cut_notes=output_clips=0;
 		skip_to(0); /* sets current_sample to 0 */
 		channel[0].program = 0;
 		current_event->channel = 0;
@@ -2349,7 +2358,7 @@ int play_midi(unsigned char *from, unsigned char *to, int vrbose)
         /** if (!i_have_done_it) load_gm("acpiano", 0, 0, 0, 0, 0); **/
 	event_list = safe_malloc(sizeof(MidiEvent));
 	sample_count=0; /* unknown */
-	lost_notes=cut_notes=0;
+	lost_notes=cut_notes=output_clips=0;
 	skip_to(0); /* sets current_sample to 0 */
 	channel[0].program = 0;
 	current_event->channel = 0;

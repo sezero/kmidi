@@ -78,6 +78,8 @@ PlayMode *play_mode_list[] = {
 /*****************************************************************/
 /* Some functions to convert signed 32-bit data to other formats */
 
+int output_clips = 0;
+
 void s32tos8(int32 *lp, int32 c)
 {
   int8 *cp=(int8 *)(lp);
@@ -85,8 +87,8 @@ void s32tos8(int32 *lp, int32 c)
   while (c--)
     {
       l=(*lp++)>>(32-8-GUARD_BITS);
-      if (l>127) l=127;
-      else if (l<-128) l=-128;
+      if (l>127) { l=127; output_clips++; }
+      else if (l<-128) { l=-128; output_clips++; }
       *cp++ = (int8) (l);
     }
 }
@@ -98,8 +100,8 @@ void s32tou8(int32 *lp, int32 c)
   while (c--)
     {
       l=(*lp++)>>(32-8-GUARD_BITS);
-      if (l>127) l=127;
-      else if (l<-128) l=-128;
+      if (l>127) { l=127; output_clips++; }
+      else if (l<-128) { l=-128; output_clips++; }
       *cp++ = 0x80 ^ ((uint8) l);
     }
 }
@@ -111,8 +113,8 @@ void s32tos16(int32 *lp, int32 c)
   while (c--)
     {
       l=(*lp++)>>(32-16-GUARD_BITS);
-      if (l > 32767) l=32767;
-      else if (l<-32768) l=-32768;
+      if (l > 32767) { l=32767; output_clips++; }
+      else if (l<-32768) { l=-32768; output_clips++; }
       *sp++ = (int16)(l);
     }
 }
@@ -124,8 +126,8 @@ void s32tou16(int32 *lp, int32 c)
   while (c--)
     {
       l=(*lp++)>>(32-16-GUARD_BITS);
-      if (l > 32767) l=32767;
-      else if (l<-32768) l=-32768;
+      if (l > 32767) { l=32767; output_clips++; }
+      else if (l<-32768) { l=-32768; output_clips++; }
       *sp++ = 0x8000 ^ (uint16)(l);
     }
 }
@@ -137,8 +139,8 @@ void s32tos16x(int32 *lp, int32 c)
   while (c--)
     {
       l=(*lp++)>>(32-16-GUARD_BITS);
-      if (l > 32767) l=32767;
-      else if (l<-32768) l=-32768;
+      if (l > 32767) { l=32767; output_clips++; }
+      else if (l<-32768) { l=-32768; output_clips++; }
       *sp++ = XCHG_SHORT((int16)(l));
     }
 }
@@ -150,8 +152,8 @@ void s32tou16x(int32 *lp, int32 c)
   while (c--)
     {
       l=(*lp++)>>(32-16-GUARD_BITS);
-      if (l > 32767) l=32767;
-      else if (l<-32768) l=-32768;
+      if (l > 32767) { l=32767; output_clips++; }
+      else if (l<-32768) { l=-32768; output_clips++; }
       *sp++ = XCHG_SHORT(0x8000 ^ (uint16)(l));
     }
 }
@@ -163,8 +165,8 @@ void s32toulaw(int32 *lp, int32 c)
   while (c--)
     {
       l=(*lp++)>>(32-13-GUARD_BITS);
-      if (l > 4095) l=4095;
-      else if (l<-4096) l=-4096;
+      if (l > 4095) { l=4095; output_clips++; }
+      else if (l<-4096) { l=-4096; output_clips++; }
       *up++ = _l2u[l];
     }
 }
