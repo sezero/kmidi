@@ -143,6 +143,7 @@ static void help(void)
 	 "  -D n    Play drums on channel n\n"
 	 "  -Q n    Ignore channel n\n"
 	 "  -R n    Reverb options (1)(+2)(+4)\n"
+	 "  -k n    Resampling interpolation option (0-3)\n"
 	 "  -F      Enable fast panning\n"
 	 "  -U      Unload instruments from memory between MIDI files\n"
 	 "\n"

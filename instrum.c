@@ -78,7 +78,11 @@ int fast_decay=0;
 #endif
 
 int current_tune_number = 0;
-int keep_patches_tunes = 4;
+int last_tune_purged = 0;
+int current_patch_memory = 0;
+int max_patch_memory = 60000000;
+
+static void purge_as_required(void);
 
 static void free_instrument(Instrument *ip)
 {
@@ -104,6 +108,12 @@ static void free_instrument(Instrument *ip)
 static void free_layer(InstrumentLayer *lp)
 {
   InstrumentLayer *next;
+
+  current_patch_memory -= lp->size;
+#ifdef DEBUG_MEM_PATCH
+ctl->cmsg(CMSG_ERROR, VERB_NORMAL, 
+"-mem %d (freed %d)", current_patch_memory, lp->size);
+#endif
 
   for (; lp; lp = next)
    {
@@ -407,15 +417,18 @@ static InstrumentLayer *load_instrument(char *name, int font_type, int percussio
 #endif
   
   lp=safe_malloc(sizeof(InstrumentLayer));
+  lp->size = sizeof(InstrumentLayer);
   lp->lo = 0;
   lp->hi = 127;
   ip=safe_malloc(sizeof(Instrument));
+  lp->size += sizeof(Instrument);
   lp->instrument = ip;
   lp->next = 0;
 
   ip->type = INST_GUS;
   ip->samples = tmp[198];
   ip->sample = safe_malloc(sizeof(Sample) * ip->samples);
+  lp->size += sizeof(Sample) * ip->samples;
   ip->left_samples = ip->samples;
   ip->left_sample = ip->sample;
   ip->right_samples = 0;
@@ -729,6 +742,7 @@ if (percussion /* && (gm_num >= 42 && gm_num <= 51) */) {
 
       /* Then read the sample data */
       sp->data = safe_malloc(sp->data_length);
+      lp->size += sp->data_length;
       if (1 != fread(sp->data, sp->data_length, 1, fp))
 	goto fail;
 
@@ -879,6 +893,7 @@ if (percussion /* && (gm_num >= 42 && gm_num <= 51) */) {
   return lp;
 }
 
+
 #ifndef ADAGIO
 static int fill_bank(int dr, int b)
 #else /* ADAGIO */
@@ -984,6 +999,12 @@ static int fill_bank(int b)
 	  else
 	    { /* it's loaded now */
 		bank->tone[i].last_used = current_tune_number;
+		current_patch_memory += bank->tone[i].layer->size;
+#ifdef DEBUG_MEM_PATCH
+ctl->cmsg(CMSG_ERROR, VERB_NORMAL, 
+"+mem %d (added %d)", current_patch_memory, bank->tone[i].layer->size);
+#endif
+		purge_as_required();
 	    }
 
 	} /* if MAGIC ... */
@@ -1003,6 +1024,22 @@ static void free_old_instruments(int how_old)
     }
 }
 
+static void purge_as_required(void)
+{
+  if (!max_patch_memory) return;
+
+  while (last_tune_purged < current_tune_number
+	&& current_patch_memory > max_patch_memory)
+    {
+	last_tune_purged++;
+#ifdef DEBUG_MEM_PATCH
+ctl->cmsg(CMSG_ERROR, VERB_NORMAL, 
+"purging patches older than %d", last_tune_purged);
+#endif
+	free_old_instruments(last_tune_purged);
+    }
+}
+
 int load_missing_instruments(void)
 {
 #ifdef ADAGIO
@@ -1011,9 +1048,10 @@ int load_missing_instruments(void)
 #else
   int i=MAXBANK,errors=0;
 
-  if (current_tune_number > keep_patches_tunes)
-    free_old_instruments(current_tune_number - keep_patches_tunes);
-
+#ifdef DEBUG_MEM_PATCH
+ctl->cmsg(CMSG_ERROR, VERB_NORMAL, 
+"load missing for song %d (last purged %d)", current_tune_number, last_tune_purged);
+#endif
   while (i--)
     {
       if (tonebank[i])

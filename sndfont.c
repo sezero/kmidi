@@ -302,6 +302,8 @@ void end_soundfont(void)
 #define SET_LO(vp,val)	((vp) = ((vp) & 0xff00) | (val))
 #define SET_HI(vp,val)	((vp) = ((vp) & 0xff) | ((val) << 8))
 
+static int patch_memory;
+
 #ifdef ADAGIO
 InstrumentLayer *load_sbk_patch(int gm_num, int tpgm, int reverb, int main_volume) {
     extern int next_wave_prog;
@@ -344,10 +346,8 @@ InstrumentLayer *load_sbk_patch(char *name, int gm_num, int bank, int percussion
 
     cutoff_allowed = command_cutoff_allowed;
 
-/*
-    if (command_cutoff_allowed) cutoff_allowed = !percussion;
-    else cutoff_allowed = 0;
-*/
+    patch_memory = 0;
+
     not_done = 1;
     lp = 0;
 
@@ -396,6 +396,7 @@ InstrumentLayer *load_sbk_patch(char *name, int gm_num, int bank, int percussion
 	if (inst) {
 		nlp = lp;
 		lp=safe_malloc(sizeof(InstrumentLayer));
+		patch_memory += sizeof(InstrumentLayer);
 		lp->lo = LO_VAL(ip->velrange);
 		lp->hi = HI_VAL(ip->velrange);
 		lp->instrument = inst;
@@ -404,7 +405,8 @@ InstrumentLayer *load_sbk_patch(char *name, int gm_num, int bank, int percussion
 
     } /* while (not_done) */
 
-	return lp;
+    lp->size = patch_memory;
+    return lp;
 }
 
 
@@ -418,6 +420,7 @@ static Instrument *load_from_file(SFInsts *rec, InstList *ip, int amp)
 */
 
 	inst = safe_malloc(sizeof(Instrument));
+	patch_memory += sizeof(Instrument);
 	inst->type = INST_SF2;
 	/* we could have set up right samples but no left ones */
 	if (!ip->samples && ip->rsamples && ip->rslist) {
@@ -428,6 +431,7 @@ static Instrument *load_from_file(SFInsts *rec, InstList *ip, int amp)
 	}
 	inst->samples = ip->samples;
 	inst->sample = safe_malloc(sizeof(Sample)*ip->samples);
+	patch_memory += sizeof(Sample)*ip->samples;
 
 	inst->left_samples = inst->samples;
 	inst->left_sample = inst->sample;
@@ -468,6 +472,7 @@ static int load_one_side(SFInsts *rec, SampleList *sp, int sample_count, Sample 
 #endif
 		memcpy(sample, &sp->v, sizeof(Sample));
 		sample->data = safe_malloc(sp->endsample);
+		patch_memory += sp->endsample;
 		if (fseek(rec->fd, sp->startsample, SEEK_SET)) {
 			ctl->cmsg(CMSG_INFO, VERB_NORMAL, "Can't find sample in file!\n");
 			return 0;

@@ -94,7 +94,9 @@ void b_out(int fd, int *buf, int ocount)
 
   ret = 0;
 
-  /* if (!starting_up) */
+#ifndef KMIDI
+  if (!starting_up)
+#endif
   while (bbcount) {
     if (outchunk && bbcount >= outchunk)
         ret = write(fd, bbuf + bboffset, outchunk);
@@ -145,7 +147,9 @@ void b_out(int fd, int *buf, int ocount)
   memcpy(bbuf + bboffset + bbcount, buf, ocount);
   bbcount += ocount;
 
-  /* if (starting_up) return; */
+#ifndef KMIDI
+  if (starting_up) return;
+#endif
 
   if (ret >= 0) while (bbcount) {
     if (outchunk && bbcount >= outchunk)

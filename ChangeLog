@@ -1,3 +1,8 @@
+1999-11-06  Greg Lee  <lee@hawaii.edu>
+
+	* better memory management
+	* made se in resample.. uint32
+
 1999-11-05  Greg Lee  <lee@hawaii.edu>
 
 	* kmidi.cpp: checkboxes select interpolation;

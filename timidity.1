@@ -106,8 +106,15 @@ there's no point to using this.)
 .TP
 .B \-q
 Turns on lowpass filter. Samples are run through a lowpass filter before
-playing to modify their timber (implementing the midi brightness and
-harmonic content controls).  This takes lots of computation time.
+playing to modify their timber (implementing the midi brightness
+control).  This takes lots of computation time.
+Only percussion instruments are affected unless you also use "-k 3"
+(see below).
+.TP
+.B \-k " number"
+Select interpolation algorithm for resampling: 0 for linear interpolation,
+1 for cspline interpolation, 2 for LaGrange interpolation, 3 for
+cspline interpolation with low-pass filtering.
 .TP
 .B \-f
 Toggles fast envelopes. Some MIDI files sound better when notes decay

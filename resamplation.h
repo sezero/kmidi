@@ -197,7 +197,7 @@
 	if (ofs >= se) { \
 		int32 delta = (ofs - se)>>FRACTION_BITS ; \
         	v1 = (int32)src[(se>>FRACTION_BITS)-1]; \
-		if (v1) v1 = (v1 - delta) / v1; \
+		v1 -=  (delta+1) * v1 / overshoot; \
         }else  v1 = (int32)src[(ofs>>FRACTION_BITS)]; \
 	if (ofs + (1L<<FRACTION_BITS) >= se) { \
 		v2 = v1; \
@@ -213,7 +213,7 @@
 	if (ofs >= se) { \
 		int32 delta = (ofs - se)>>FRACTION_BITS ; \
         	v1 = (int32)src[(se>>FRACTION_BITS)-1]; \
-		if (v1) v1 = (v1 - delta) / v1; \
+		v1 -=  (delta+1) * v1 / overshoot; \
         }else  v1 = (int32)src[(ofs>>FRACTION_BITS)]; \
 	if (ofs + (1L<<FRACTION_BITS) >= se) { \
 		v2 = v1; \

@@ -2337,7 +2337,7 @@ static void update_channel_freq(int ch)
 int play_midi(MidiEvent *eventlist, uint32 events, uint32 samples)
 {
   int rc;
-
+  extern int current_patch_memory;
 
   adjust_amplification();
 
@@ -2604,6 +2604,8 @@ current_event->channel);
 		   "Notes cut: %d", cut_notes);
 	      ctl->cmsg(CMSG_INFO, VERB_VERBOSE,
 		   "Notes lost totally: %d", lost_notes);
+	      ctl->cmsg(CMSG_INFO, VERB_VERBOSE,
+		   "Current memory used: %d", current_patch_memory);
 	      return RC_TUNE_END;
 	    }
 	  current_event++;
