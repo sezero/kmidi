@@ -34,9 +34,10 @@
 #include <qpushbutton.h>
 #include <qradiobutton.h>
 #include <qlabel.h>
-#include <qdialog.h>
-#include <qapplication.h>
-#include <qpopupmenu.h>
+//#include <qdialog.h>
+//#include <qapplication.h>
+//#include <qpopupmenu.h>
+#include <qlistbox.h>
 #include <qtimer.h>
 #include <qbitmap.h>
 #include <qslider.h>
@@ -80,6 +81,7 @@
 
 #include "configdlg.h"
 #include "log.h"
+#include "table.h"
 //#include "docking.h"
 //#include "kmidiframe.h"
 
@@ -137,6 +139,7 @@ public:
 	QComboBox	*patchbox;
 	QComboBox	*playbox;
 	QComboBox	*playlistbox;
+	Table		*channelwindow;
 	QButtonGroup	*ichecks;
 	QCheckBox	*ich[4];
 	QButtonGroup	*rchecks;

@@ -29,7 +29,7 @@ dcopplay_SOURCES = dcopplay.cpp
 dcopplay_LDADD = $(LIB_KDECORE)
 
 kmidi_SOURCES = kmidi.cpp  playlist.cpp bwlednum.cpp configdlg.cpp log.cpp \
-	docking.cpp \
+	docking.cpp table.cpp \
 	timidity.cpp common.cpp readmidi.cpp playmidi.cpp resample.cpp mix.cpp instrum.cpp \
 	tables.cpp controls.cpp output.cpp filter.cpp wave_a.cpp raw_a.cpp dumb_c.cpp \
 	sndfont.cpp readsbk.cpp ctl.cpp \
@@ -43,14 +43,14 @@ sf2cfg_SOURCES = sf2cfg.cpp readsbk.cpp
 sf2cfg_LDADD =
 
 noinst_HEADERS = kmidi.h  playlist.h bwlednum.h configdlg.h \
-	docking.h \
+	docking.h table.h \
 	config.h common.h readmidi.h playmidi.h resample.h mix.h instrum.h \
 	tables.h controls.h output.h filter.h log.h version.h filepic.h \
 	cduppic.h constants.h folderpic.h sbk.h sflayer.h ctl.h effects.h \
 	midiapplication.h kmidiframe.h
 
 METASOURCES = kmidi.moc  playlist.moc bwlednum.moc configdlg.moc log.moc \
-	docking.moc midiapplication.moc kmidiframe.moc
+	docking.moc midiapplication.moc kmidiframe.moc table.moc
 
 SUBDIRS = config bitmaps patch midis
 

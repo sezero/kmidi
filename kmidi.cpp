@@ -800,12 +800,24 @@ void KMidi::drawPanel()
     meter->setGeometry(ix,iy,SBARWIDTH - WIDTH/2, 3* HEIGHT - 1);
     what->add(meter, i18n("The display shows notes<br> being played on the<br>16 or 32 midi channels."));
     meter->hide();
-    extendedheight = iy + 3*HEIGHT;
+
+    ix = 0;
+    iy += 3*HEIGHT;
+
+    int CHHEIGHT = 16 * (HEIGHT/2);
+    channelwindow = new Table( totalwidth, CHHEIGHT, this, "channels" );
+    channelwindow->setFont( QFont( "helvetica", 10, QFont::Normal) );
+
+    channelwindow->move(ix, iy);
+    channelwindow->hide();
+
+    iy += CHHEIGHT;
+    extendedheight = iy;
+
     extendedsize = QSize (totalwidth, extendedheight);
 
     topbarssize = QSize (totalwidth, menubarheight);
     
-    ix = 0;
     logwindow = new LogWindow(this,"logwindow");
     logwindow->setGeometry(ix,extendedheight, totalwidth, infowindowheight);
     what->add(logwindow, i18n("Here is information<br>" \
@@ -813,9 +825,6 @@ void KMidi::drawPanel()
     logwindow->resize(totalwidth, infowindowheight);
     logwindow->hide();
 
-#if 0
-    if (menubarisvisible) regularheight += menubarheight;
-#endif
 
     regularsize = QSize (totalwidth, regularheight);
     setFixedWidth(totalwidth);
@@ -1234,6 +1243,7 @@ void KMidi::enableLowerPanel(bool on) {
     voicespin->show();
     meterspin->show();
     filterbutton->show();
+    channelwindow->show();
 
   }
   else {
@@ -1251,6 +1261,7 @@ void KMidi::enableLowerPanel(bool on) {
     voicespin->hide();
     meterspin->hide();
     filterbutton->hide();
+    channelwindow->hide();
   }
 }
 
@@ -1919,6 +1930,7 @@ void KMidi::ReadPipe(){
 		/*		printf("GUI: TOTALTIME %s\n",local_string);*/
 		max_sec=cseconds;
 		settletime = fastforward = fastrewind = nbvoice = currplaytime = 0;
+		channelwindow->clearChannels();
      		timeSB->setValue(0);
 		for (int l=0; l<LYRBUFL; l++) lyric_time[l] = -1;
 		lyric_head = 0; lyric_tail = 0;
@@ -2131,17 +2143,20 @@ void KMidi::ReadPipe(){
 		printf("NOTE chn%i %i\n",channel,note);
 	    }
 	    break;
-	
+	    */
 	    case    PROGRAM_MESSAGE :{
 		int channel;
 		int pgm;
-	
+		char progname[100];
+
 		pipe_int_read(&channel);
 		pipe_int_read(&pgm);
-		printf("NOTE chn%i %i\n",channel,pgm);
+		pipe_string_read(progname);
+		channelwindow->setProgram(channel, pgm, progname);
+		//printf("NOTE chn%i %i %s\n",channel,pgm, progname);
 	    }
 	    break;
-	
+	    /*
 	    case VOLUME_MESSAGE : {
 		int channel;
 		int volume;
@@ -2473,6 +2488,7 @@ void KMidi::setColors(){
     logwindow->setPalette( np );
     statusLA->setPalette( np );
     looplabel->setPalette( np );
+    channelwindow->setPalette( np );
 
     //    titleLA->setPalette( np );
     propertiesLA->setPalette( np );

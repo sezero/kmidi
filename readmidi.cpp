@@ -924,11 +924,11 @@ static MidiEvent *groom_list(int32 divisions, uint32 *eventsp, uint32 *samplesp)
 	       {
 		drumset[dset]->tone[meep->event.a].layer=
 		    MAGIC_LOAD_INSTRUMENT;
-		if (!channel[meep->event.channel].name) channel[meep->event.channel].name=
-		    drumset[dset]->name;
 	       }
 	      else drumset[dset]->tone[meep->event.a].last_used
 		 = current_tune_number;
+	      if (!channel[meep->event.channel].name) channel[meep->event.channel].name=
+		    drumset[dset]->name;
 	    }
 	  else
 	    {
@@ -945,11 +945,11 @@ static MidiEvent *groom_list(int32 divisions, uint32 *eventsp, uint32 *samplesp)
 		{
 		  tonebank[banknum]->tone[current_program[chan]].layer=
 		    MAGIC_LOAD_INSTRUMENT;
-		  if (!channel[meep->event.channel].name) channel[meep->event.channel].name=
-		    tonebank[banknum]->tone[current_program[chan]].name;
 		}
 	      else tonebank[banknum]->tone[current_program[chan]].last_used
 		 = current_tune_number;
+	      if (!channel[meep->event.channel].name) channel[meep->event.channel].name=
+		    tonebank[banknum]->tone[current_program[chan]].name;
 	    }
 	  break;
 

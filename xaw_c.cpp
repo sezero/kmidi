@@ -70,18 +70,19 @@ static int ctl_read(int32 *valp);
 static int cmsg(int type, int verbosity_level, char *fmt, ...);
 static void ctl_event(CtlEvent *e);
 #else
-static int cmsg(int type, int verbosity_level, char *fmt, ...);
+static int cmsg(int type, int verbosity_level, const char *fmt, ...);
 #endif
 static void ctl_pass_playing_list(int number_of_files, char *list_of_files[]);
 
 static void a_pipe_open(void);
 static int a_pipe_ready(void);
 static void ctl_master_volume(int);
-void a_pipe_write(char *);
 int a_pipe_read(char *,int);
 #ifdef ORIG_XAW
+void a_pipe_write(char *);
 static void a_pipe_write_msg(char *msg);
 #else
+void a_pipe_write(const char *);
 static void a_pipe_write_msg(char *msg, int lyric);
 #endif
 
@@ -169,7 +170,7 @@ static int cmsg(int type, int verbosity_level, char *fmt, ...) {
   char *buff;
   MBlockList pool;
 #else
-static int cmsg(int type, int verbosity_level, char *fmt, ...) {
+static int cmsg(int type, int verbosity_level, const char *fmt, ...) {
   char buff[2048];
   int flagnl = 1;
 #endif
@@ -793,7 +794,7 @@ static void a_pipe_open(void) {
   pipe_out_fd=cont_inter[1];
 }
 
-void a_pipe_write(char *buf) {
+void a_pipe_write(const char *buf) {
   write(pipe_out_fd,buf,strlen(buf));
   write(pipe_out_fd,"\n",1);
 }

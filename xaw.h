@@ -75,12 +75,6 @@
 #define OVERLAPV_BIT (1<<OVERLAPV_N)
 #define TXTMETA_BIT (1<<TXTMETA_N)
 
-#ifdef ORIG_XAW
-#include "timidity.h"
-#else
-#include "config.h"
-#endif
-
 
 #ifdef ORIG_XAW
 
@@ -151,6 +145,7 @@
 
 #define XAW_UPDATE_TIME 0.1
 
+#if 0
 #ifndef ORIG_XAW
 
 typedef struct _CtlEvent {
@@ -159,6 +154,7 @@ typedef struct _CtlEvent {
 } CtlEvent;
 
 
+#endif
 #endif
 
 #endif /* _XAW_H_ */

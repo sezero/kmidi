@@ -308,7 +308,7 @@ static void speedAction(Widget w,XEvent *e,String *v,Cardinal *n);
 static void voiceAction(Widget w,XEvent *e,String *v,Cardinal *n);
 static Boolean IsTracePlaying(void);
 static Boolean IsEffectiveFile(char *file);
-extern void a_pipe_write(char *);
+extern void a_pipe_write(const char *);
 extern int a_pipe_read(char *,int);
 extern int a_pipe_nread(char *buf, int n);
 static void initStatus(void);
@@ -619,30 +619,30 @@ enum {
 
 
 static ButtonRec file_menu[] = {
-  {ID_LOAD, "load", True, False},
-  {ID_SAVECONFIG, "saveconfig", True, False},
-  {ID_HIDETXT, "hidetext", True, False},
-  {ID_HIDETRACE, "hidetrace", True, False},
-  {ID_SHUFFLE, "shuffle", True, False},
-  {ID_REPEAT, "repeat", True, False},
-  {ID_AUTOSTART, "autostart", True, False},
-  {ID_AUTOQUIT, "autoquit", True, False},
-  {ID_LINE, "line", False, False},
-  {ID_FILELIST, "filelist", True, False},
-  {ID_OPTIONS, "modes", True, False},
-  {ID_LINE2, "line2", False, False},
-  {ID_ABOUT, "about", True, False},
-  {ID_QUIT, "quit", True, False},
+  {ID_LOAD, "load", True, False, NULL},
+  {ID_SAVECONFIG, "saveconfig", True, False, NULL},
+  {ID_HIDETXT, "hidetext", True, False, NULL},
+  {ID_HIDETRACE, "hidetrace", True, False, NULL},
+  {ID_SHUFFLE, "shuffle", True, False, NULL},
+  {ID_REPEAT, "repeat", True, False, NULL},
+  {ID_AUTOSTART, "autostart", True, False, NULL},
+  {ID_AUTOQUIT, "autoquit", True, False, NULL},
+  {ID_LINE, "line", False, False, NULL},
+  {ID_FILELIST, "filelist", True, False, NULL},
+  {ID_OPTIONS, "modes", True, False, NULL},
+  {ID_LINE2, "line2", False, False, NULL},
+  {ID_ABOUT, "about", True, False, NULL},
+  {ID_QUIT, "quit", True, False, NULL}
 };
 
 static OptionRec option_num[] = {
-  {MODUL_N, MODUL_BIT},
-  {PORTA_N, PORTA_BIT},
-  {NRPNV_N, NRPNV_BIT},
-  {REVERB_N, REVERB_BIT},
-  {CHPRESSURE_N, CHPRESSURE_BIT},
-  {OVERLAPV_N, OVERLAPV_BIT},
-  {TXTMETA_N, TXTMETA_BIT},
+  {MODUL_N, MODUL_BIT, NULL},
+  {PORTA_N, PORTA_BIT, NULL},
+  {NRPNV_N, NRPNV_BIT, NULL},
+  {REVERB_N, REVERB_BIT, NULL},
+  {CHPRESSURE_N, CHPRESSURE_BIT, NULL},
+  {OVERLAPV_N, OVERLAPV_BIT, NULL},
+  {TXTMETA_N, TXTMETA_BIT, NULL}
 };
 
 static void offPauseButton(void) {
@@ -1834,15 +1834,16 @@ static void setDirList(Widget list, Widget label, XawListReturnStruct *lrs) {
       strcpy(filename, dent->d_name);
       sprintf(fullpath, "%s/%s", currdir, filename);
       if(stat(fullpath, &st) == -1) continue;
-      if(dent->d_name[0] == '.' && dent->d_name[1] == '\0') continue;
-      if (currdir[0] == '/' && currdir[1] == '\0' && filename[0] == '.'
+      if(strlen(filename) > 1 && filename[0] == '.' && filename[1] == '\0') continue;
+      if (strlen(currdir) > 1 && strlen(filename) > 2) {
+        if (currdir[0] == '/' && currdir[1] == '\0' && filename[0] == '.'
           && filename[1] == '.' && filename[2] == '\0') continue;
+      }
       if(S_ISDIR(st.st_mode)) {
         strcat(filename, "/"); d_num++;
       } else {
         f_num++;
       }
-      if (dirlist[i]) free(dirlist[i]);
       dirlist[i] = (char *)malloc(strlen(filename)+1);
       strcpy(dirlist[i], filename);
       i++;
@@ -1901,7 +1902,7 @@ static void setDirList(Widget list, Widget label, XawListReturnStruct *lrs) {
   XtVaSetValues(load_info,XtNlabel,local_buf,NULL);
   XtVaSetValues(label,XtNlabel,currdir,NULL);
   strcpy(basepath, currdir);
-  if(currdir[strlen(currdir) - 1] != '/')
+  if(strlen(currdir) > 0 && currdir[strlen(currdir) - 1] != '/')
       strcat(currdir, "/");
   XtVaSetValues(load_d,XtNvalue,currdir,NULL);
 }
@@ -3554,14 +3555,16 @@ void a_start_interface(int pipe_in) {
   lyric_t=XtVaCreateManagedWidget("lyric_text",asciiTextWidgetClass,base_f,
             XtNwrap,XawtextWrapWord, XtNeditType,XawtextAppend,
             XtNwidth, rotatewidth[currwidth]-10,
+            XtNfontDEF,textfont, XtNheight,text_height,
+            XtNfromVert,t_box, NULL);
 #else
   lyric_t=XtVaCreateManagedWidget("lyric_text",labelWidgetClass,base_f,
             XtNresize,False,
             XtNforeground,textcolor, XtNbackground,menubcolor,
             XtNwidth,rotatewidth[currwidth]-10,
-#endif
             XtNfontDEF,textfont, XtNheight,text_height,
             XtNfromVert,t_box, NULL);
+#endif
   if(ctl->trace_playing) {
     trace_vport = XtVaCreateManagedWidget("trace_vport",viewportWidgetClass, base_f,
             XtNallowHoriz,True, XtNallowVert,True,

@@ -398,16 +398,24 @@ static void ctl_note(int v)
 
 static void ctl_program( int ch, int val, char *name)
 {
-#ifdef MISC_PANEL_UPDATE
+	char noname[2];
+
 	if (!ctl.trace_playing) 
 		return;
+
+	noname[0] = '*';
+	noname[1] = '\0';
+
+       	pipe_int_write(PROGRAM_MESSAGE);
+       	pipe_int_write(ch);
+       	pipe_int_write(val);
+	if (name && strlen(name) > 0 && strlen(name) < 80) pipe_string_write(name);
+	else pipe_string_write(noname);
+/*
 	ch &= 0x1f;
-	if (ch < 0 || ch >= MAXCHAN) return;
-	/*Panel->channel[ch].program = val;*/
+	Panel->channel[ch].program = val;
 	Panel->c_flags[ch] |= FLAG_PROG;
-#else
-	ch=val=name=0;
-#endif
+*/
 }
 
 static void ctl_volume( int ch, int val )
