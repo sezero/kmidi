@@ -3,8 +3,6 @@
 #
 #  Copyright 1997 Bernd Johannes Wuebben, wuebben@math.cornell.edu
 #
-#  $Id$
-#
 
 VERSION = 0.2i
 
