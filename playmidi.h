@@ -1,4 +1,5 @@
 /*
+	$Id$
 
     TiMidity -- Experimental MIDI to WAVE converter
     Copyright (C) 1995 Tuukka Toivonen <toivonen@clinet.fi>
@@ -56,7 +57,24 @@ typedef struct {
 
 #define ME_REVERBERATION	91
 #define ME_CHORUSDEPTH		93
+#ifdef CHANNEL_EFFECT
+#define ME_CELESTE		94
+#define ME_PHASER		95
+#endif
 #define ME_EOT		99
+
+#ifdef tplus
+#define ME_PORTAMENTO_TIME_MSB	100
+#define ME_PORTAMENTO_TIME_LSB	101
+#define ME_PORTAMENTO		102
+#define ME_MODULATION_WHEEL	103
+
+#define ME_VIBRATO_RATE		104
+#define ME_VIBRATO_DEPTH	105
+#define ME_VIBRATO_DELAY	106
+#define ME_FINE_TUNING		107
+#define ME_COARSE_TUNING	108
+#endif
 
 #define SFX_BANKTYPE	64
 
@@ -64,12 +82,27 @@ typedef struct {
   int
     bank, kit, sfx, program, volume, sustain, panning, pitchbend, expression, 
     mono, /* one note only on this channel -- not implemented yet */
+#ifdef tplus
+    portamento, modulation_wheel,
+#endif
     reverberation, chorusdepth, harmoniccontent, releasetime, attacktime, brightness,
     pitchsens;
   /* chorus, reverb... Coming soon to a 300-MHz, eight-way superscalar
      processor near you */
-  float
+  FLOAT_T
     pitchfactor; /* precomputed pitch bend factor to save some fdiv's */
+#ifdef tplus
+  /* For portamento */
+  uint8 portamento_time_msb, portamento_time_lsb;
+  uint8 tuning_msb, tuning_lsb;
+  int porta_control_ratio, porta_dpb;
+  int32 last_note_fine;
+
+  /* For vibrato */
+  int32 vibrato_ratio, vibrato_delay;
+  int vibrato_depth;
+#endif
+
   char
     transpose;
 } Channel;
@@ -77,35 +110,52 @@ typedef struct {
 /* Causes the instrument's default panning to be used. */
 #define NO_PANNING -1
 
+#define MAXPOINT 7
+
 typedef struct {
   uint8
-    status, channel, note, velocity;
+    status, channel, note, velocity, clone_type;
   Sample *sample;
-/** #ifdef ADAGIO **/
   Sample *left_sample;
   Sample *right_sample;
   int32 clone_voice;
-/** #endif **/
-  int32
+  uint32
     orig_frequency, frequency,
-    sample_offset, sample_increment,
-    envelope_volume, envelope_target, envelope_increment,
+    sample_offset;
+  int32
+    envelope_volume;
+  int32
+    envelope_target;
+  uint32
     tremolo_sweep, tremolo_sweep_position,
-    tremolo_phase, tremolo_phase_increment,
+    tremolo_phase,
     vibrato_sweep, vibrato_sweep_position, vibrato_depth,
-    echo_delay;
+    echo_delay, starttime;
+  int32
+    sample_increment,
+    envelope_increment,
+    tremolo_phase_increment;
   
   final_volume_t left_mix, right_mix;
 
-  float
+  FLOAT_T
     left_amp, right_amp, tremolo_volume;
   int32
     vibrato_sample_increment[VIBRATO_SAMPLE_INCREMENTS];
   int32
-    envelope_rate[6], envelope_offset[6];
+    envelope_rate[MAXPOINT], envelope_offset[MAXPOINT];
   int
     vibrato_phase, vibrato_control_ratio, vibrato_control_counter,
+#ifdef tplus
+    vibrato_delay, orig_vibrato_control_ratio, modulation_wheel,
+#endif
     envelope_stage, control_counter, panning, panned;
+
+#ifdef tplus
+  /* for portamento */
+  int porta_control_ratio, porta_control_counter, porta_dpb;
+  int32 porta_pb;
+#endif
 
 } Voice;
 
@@ -122,6 +172,17 @@ typedef struct {
 #define PANNED_RIGHT 2
 #define PANNED_CENTER 3
 /* Anything but PANNED_MYSTERY only uses the left volume */
+
+
+/* Envelope stages: */
+#define ATTACK 0
+#define HOLD 1
+#define DECAY 2
+#define RELEASE 3
+#define RELEASEB 4
+#define RELEASEC 5
+#define DELAY 6
+
 
 #define MAXCHAN 16
 #define MAXNOTE 128
@@ -141,6 +202,19 @@ extern int32 control_ratio, amp_with_poly, amplification;
 extern int32 drumchannels;
 extern int adjust_panning_immediately;
 extern int voices;
+
+#ifdef tplus
+extern int note_key_offset;
+extern FLOAT_T midi_time_ratio;
+extern int opt_modulation_wheel;
+extern int opt_portamento;
+extern int opt_nrpn_vibrato;
+extern int opt_reverb_control;
+extern int opt_chorus_control;
+extern int opt_channel_pressure;
+extern int opt_overlap_voice_allow;
+extern void recompute_freq(int v);
+#endif
 
 extern int GM_System_On;
 extern int XG_System_On;
