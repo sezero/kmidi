@@ -208,7 +208,7 @@ static int open_output(void)
 int current_sample_count(uint32 ct)
 {
   count_info auinfo;
-  int samples = -1;
+  int samples = (int)ct;
   if (ioctl(dpm.fd, SNDCTL_DSP_GETOPTR, &auinfo)<0) return samples;
   samples = auinfo.bytes;
   if (!(dpm.encoding & PE_MONO)) samples >>= 1;

@@ -1,4 +1,4 @@
-Implementation
+KMidi Design
 Greg Lee, Nov. 1999
 
 
@@ -33,7 +33,7 @@ phaser effects.  Echo (done by generating extra echo notes) and reverbration
 extra pitch bent notes) and chorusing (done with a filter) implement midi
 chorusing.  (The effects filters are active only when KMidi's "eff" button is
 pressed on.  Echo and detuning can be controlled with the middle two checkboxes
-on the right of the lower panel.)
+on the right of the lower panel and from the Chorus and Reverb menus.)
 
 Instruments may have either one or two tone elements, and for each of these,
 a patch set may provide separate patches for different note-velocity ranges
@@ -60,16 +60,18 @@ the synths have to be selected using port commands (in either Roland-GS or
 Yamaha-XG sysex dumps).  Some midi files intended for multiple synths don't have
 port commands.  (The info window shows port commands when present.)
 
-The KMidi display of channel activity is limited to two sets of 16 channels.
+The KMidi vertical-bar display of channel activity is limited to two sets of 16
+channels.  The channel chart of patches with horizontal bars for controller values
+is limited to just one set of 16 channels.
 
 
 			Volume
 
 I've reduced the volumes levels TiMidity generates quite a lot, as compared with
 the original implementation.  This minimizes clipping and gives an increased
-dynamic range.  (There are some artifacts now at low volumes, unfortunately.)
+dynamic range.  (There may be some artifacts now at low volumes, unfortunately.)
 If you need more volume, I suggest you turn up the volume somewhere else, either
-use KMix to turn up the mixer volume for /dev/dsp, or turn up earphones,
+use KMix to turn up the line volume, the mixer volume for /dev/dsp, or turn up earphones,
 amplified speakers, or whatever.
 
 
@@ -100,9 +102,10 @@ You can lighten TiMidity's computational burden by various maneuvers: (1) reduce
 the permitted polyphony (spin box on lower panel), (2) press off the "eff" button,
 (3) choose cheaper resampling interpolation (one of the checkboxes on the upper
 panel further to the left), (4) turn off echo, detuning, or stereo using the left
-three checkboxes on the lower panel.   Of course, there is attendant loss in
-quality.  Having the "filt" button on doesn't cost anything unless you've also
-chosen the "cspline+filter" interpolation option.
+three checkboxes on the lower panel, (5) choose the "dry" setting on the Reverb
+menu.   Of course, there is generally some attendant loss in quality.  Having the
+"filt" button on doesn't cost anything unless you've also chosen the "cspline+filter"
+interpolation option.
 
 
 			Memory Issues
@@ -110,7 +113,7 @@ chosen the "cspline+filter" interpolation option.
 It's possible for TiMidity to use an excessive amount of memory for patches.  Symptoms
 are your window system becoming very sluggish, or crashing.  This is probably only
 a problem when using big sf2 soundfonts of 30+ megabytes.  For instance, the
-piano patches in Personal Choice's PC400 soundfont are 25 megs each.  After playing
+piano patches in Personal Choice's PC400 soundfont can occupy 25 megs each.  After playing
 a list of midi files which use three of these pianos, well, that's 75 megs of
 ram right there.  In its configuration dialog, KMidi lets you set a maximum number
 of megs to be used to keep patches used in playing previous midi files;  when this

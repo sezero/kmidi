@@ -1062,10 +1062,11 @@ LO_VAL(velrange), HI_VAL(velrange));
 	if (program >= 0) keyrange = (program << 8) | program;
 	else if (banknum == 128 && LO_VAL(keyrange) < HI_VAL(keyrange)) {
 		int drumkey = LO_VAL(keyrange);
+		int lastdkey = HI_VAL(keyrange);
 		keyrange = (drumkey << 8) | drumkey;
 		drumkey++;
 		/* Do later notes of percussion key range. */
-		for ( ; drumkey <= HI_VAL(keyrange); drumkey++)
+		for ( ; drumkey <= lastdkey; drumkey++)
 		  make_inst(rec, lay, sf, pr_idx, in_idx, inum, pk_range, pv_range, num_i, drumkey);
 	}
 	/* set bank/preset name */

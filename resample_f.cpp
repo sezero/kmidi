@@ -129,7 +129,7 @@ static sample_t *rs_plain(int v, uint32 *countptr)
     *vp=&voice[v];
   int32   v0, v1, v2, v3, temp, overshoot;
   int offset;
-  float insamp, outsamp, a0, a1, a2, b0, b1,
+  FLOAT_T insamp, outsamp, a0, a1, a2, b0, b1,
     x0=vp->current_x0, x1=vp->current_x1, y0=vp->current_y0, y1=vp->current_y1;
   uint32 cc_count=vp->modulation_counter, bw_index=vp->bw_index, ofsdu;
   sample_t newsample;
@@ -191,7 +191,7 @@ static sample_t *rs_plain(int v, uint32 *countptr)
 		if (dont_filter_melodic) bw_index = 0;
                 newsample = (sample_t)(v1 + ((int32)((v2-v1) * (ofs & FRACTION_MASK)) >> FRACTION_BITS));
 	        if (bw_index) {
-                    insamp = (float)newsample;
+                    insamp = (FLOAT_T)newsample;
 		    outsamp = a0 * insamp + a1 * x0 + a2 * x1 - b0 * y0 - b1 * y1;
 		    x1 = x0;
 		    x0 = insamp;
@@ -229,7 +229,7 @@ static sample_t *rs_plain(int v, uint32 *countptr)
 		if (dont_filter_melodic) bw_index = 0;
 		newsample = (v1 > MAX_DATAVAL)? MAX_DATAVAL: ((v1 < MIN_DATAVAL)? MIN_DATAVAL: (sample_t)v1);
 		if (bw_index) {
-                    insamp = (float)newsample;
+                    insamp = (FLOAT_T)newsample;
 		    outsamp = a0 * insamp + a1 * x0 + a2 * x1 - b0 * y0 - b1 * y1;
 		    x1 = x0;
 		    x0 = insamp;
@@ -269,7 +269,7 @@ static sample_t *rs_loop(int v, Voice *vp, uint32 *countptr)
   /* Play sample until end-of-loop, skip back and continue. */
   int32   v0, v1, v2, v3, temp, overshoot;
   int offset;
-  float insamp, outsamp, a0, a1, a2, b0, b1,
+  FLOAT_T insamp, outsamp, a0, a1, a2, b0, b1,
     x0=vp->current_x0, x1=vp->current_x1, y0=vp->current_y0, y1=vp->current_y1;
   uint32 cc_count=vp->modulation_counter, bw_index=vp->bw_index, ofsdu;
   sample_t newsample;
@@ -337,7 +337,7 @@ static sample_t *rs_loop(int v, Voice *vp, uint32 *countptr)
 		if (dont_filter_melodic) bw_index = 0;
                 newsample = (sample_t)(v1 + ((int32)((v2-v1) * (ofs & FRACTION_MASK)) >> FRACTION_BITS));
 	        if (bw_index) {
-                    insamp = (float)newsample;
+                    insamp = (FLOAT_T)newsample;
 		    outsamp = a0 * insamp + a1 * x0 + a2 * x1 - b0 * y0 - b1 * y1;
 		    x1 = x0;
 		    x0 = insamp;
@@ -375,7 +375,7 @@ static sample_t *rs_loop(int v, Voice *vp, uint32 *countptr)
 		if (dont_filter_melodic) bw_index = 0;
 		newsample = (v1 > MAX_DATAVAL)? MAX_DATAVAL: ((v1 < MIN_DATAVAL)? MIN_DATAVAL: (sample_t)v1);
 		if (bw_index) {
-                    insamp = (float)newsample;
+                    insamp = (FLOAT_T)newsample;
 		    outsamp = a0 * insamp + a1 * x0 + a2 * x1 - b0 * y0 - b1 * y1;
 		    x1 = x0;
 		    x0 = insamp;
@@ -423,7 +423,7 @@ static sample_t *rs_bidir(int v, Voice *vp, uint32 count)
 {
   int32   v0, v1, v2, v3, temp, overshoot;
   int offset;
-  float insamp, outsamp, a0, a1, a2, b0, b1,
+  FLOAT_T insamp, outsamp, a0, a1, a2, b0, b1,
     x0=vp->current_x0, x1=vp->current_x1, y0=vp->current_y0, y1=vp->current_y1;
   uint32 cc_count=vp->modulation_counter, bw_index=vp->bw_index, ofsdu;
   sample_t newsample;
@@ -502,7 +502,7 @@ static sample_t *rs_bidir(int v, Voice *vp, uint32 count)
 		if (dont_filter_melodic) bw_index = 0;
                 newsample = (sample_t)(v1 + ((int32)((v2-v1) * (ofs & FRACTION_MASK)) >> FRACTION_BITS));
 	        if (bw_index) {
-                    insamp = (float)newsample;
+                    insamp = (FLOAT_T)newsample;
 		    outsamp = a0 * insamp + a1 * x0 + a2 * x1 - b0 * y0 - b1 * y1;
 		    x1 = x0;
 		    x0 = insamp;
@@ -540,7 +540,7 @@ static sample_t *rs_bidir(int v, Voice *vp, uint32 count)
 		if (dont_filter_melodic) bw_index = 0;
 		newsample = (v1 > MAX_DATAVAL)? MAX_DATAVAL: ((v1 < MIN_DATAVAL)? MIN_DATAVAL: (sample_t)v1);
 		if (bw_index) {
-                    insamp = (float)newsample;
+                    insamp = (FLOAT_T)newsample;
 		    outsamp = a0 * insamp + a1 * x0 + a2 * x1 - b0 * y0 - b1 * y1;
 		    x1 = x0;
 		    x0 = insamp;
@@ -604,7 +604,7 @@ static sample_t *rs_bidir(int v, Voice *vp, uint32 count)
 		if (dont_filter_melodic) bw_index = 0;
                 newsample = (sample_t)(v1 + ((int32)((v2-v1) * (ofs & FRACTION_MASK)) >> FRACTION_BITS));
 	        if (bw_index) {
-                    insamp = (float)newsample;
+                    insamp = (FLOAT_T)newsample;
 		    outsamp = a0 * insamp + a1 * x0 + a2 * x1 - b0 * y0 - b1 * y1;
 		    x1 = x0;
 		    x0 = insamp;
@@ -642,7 +642,7 @@ static sample_t *rs_bidir(int v, Voice *vp, uint32 count)
 		if (dont_filter_melodic) bw_index = 0;
 		newsample = (v1 > MAX_DATAVAL)? MAX_DATAVAL: ((v1 < MIN_DATAVAL)? MIN_DATAVAL: (sample_t)v1);
 		if (bw_index) {
-                    insamp = (float)newsample;
+                    insamp = (FLOAT_T)newsample;
 		    outsamp = a0 * insamp + a1 * x0 + a2 * x1 - b0 * y0 - b1 * y1;
 		    x1 = x0;
 		    x0 = insamp;
@@ -792,7 +792,7 @@ static sample_t *rs_vib_plain(int v, uint32 *countptr)
   Voice *vp=&voice[v];
   int32   v0, v1, v2, v3, temp, overshoot;
   int offset;
-  float insamp, outsamp, a0, a1, a2, b0, b1,
+  FLOAT_T insamp, outsamp, a0, a1, a2, b0, b1,
     x0=vp->current_x0, x1=vp->current_x1, y0=vp->current_y0, y1=vp->current_y1;
   uint32 cc_count=vp->modulation_counter, bw_index=vp->bw_index, ofsdu;
   sample_t newsample;
@@ -861,7 +861,7 @@ static sample_t *rs_vib_plain(int v, uint32 *countptr)
 		if (dont_filter_melodic) bw_index = 0;
                 newsample = (sample_t)(v1 + ((int32)((v2-v1) * (ofs & FRACTION_MASK)) >> FRACTION_BITS));
 	        if (bw_index) {
-                    insamp = (float)newsample;
+                    insamp = (FLOAT_T)newsample;
 		    outsamp = a0 * insamp + a1 * x0 + a2 * x1 - b0 * y0 - b1 * y1;
 		    x1 = x0;
 		    x0 = insamp;
@@ -899,7 +899,7 @@ static sample_t *rs_vib_plain(int v, uint32 *countptr)
 		if (dont_filter_melodic) bw_index = 0;
 		newsample = (v1 > MAX_DATAVAL)? MAX_DATAVAL: ((v1 < MIN_DATAVAL)? MIN_DATAVAL: (sample_t)v1);
 		if (bw_index) {
-                    insamp = (float)newsample;
+                    insamp = (FLOAT_T)newsample;
 		    outsamp = a0 * insamp + a1 * x0 + a2 * x1 - b0 * y0 - b1 * y1;
 		    x1 = x0;
 		    x0 = insamp;
@@ -941,7 +941,7 @@ static sample_t *rs_vib_loop(int v, Voice *vp, uint32 *countptr)
   /* Play sample until end-of-loop, skip back and continue. */
   int32   v0, v1, v2, v3, temp, overshoot;
   int offset;
-  float insamp, outsamp, a0, a1, a2, b0, b1,
+  FLOAT_T insamp, outsamp, a0, a1, a2, b0, b1,
     x0=vp->current_x0, x1=vp->current_x1, y0=vp->current_y0, y1=vp->current_y1;
   uint32 cc_count=vp->modulation_counter, bw_index=vp->bw_index, ofsdu;
   sample_t newsample;
@@ -1015,7 +1015,7 @@ static sample_t *rs_vib_loop(int v, Voice *vp, uint32 *countptr)
 		if (dont_filter_melodic) bw_index = 0;
                 newsample = (sample_t)(v1 + ((int32)((v2-v1) * (ofs & FRACTION_MASK)) >> FRACTION_BITS));
 	        if (bw_index) {
-                    insamp = (float)newsample;
+                    insamp = (FLOAT_T)newsample;
 		    outsamp = a0 * insamp + a1 * x0 + a2 * x1 - b0 * y0 - b1 * y1;
 		    x1 = x0;
 		    x0 = insamp;
@@ -1053,7 +1053,7 @@ static sample_t *rs_vib_loop(int v, Voice *vp, uint32 *countptr)
 		if (dont_filter_melodic) bw_index = 0;
 		newsample = (v1 > MAX_DATAVAL)? MAX_DATAVAL: ((v1 < MIN_DATAVAL)? MIN_DATAVAL: (sample_t)v1);
 		if (bw_index) {
-                    insamp = (float)newsample;
+                    insamp = (FLOAT_T)newsample;
 		    outsamp = a0 * insamp + a1 * x0 + a2 * x1 - b0 * y0 - b1 * y1;
 		    x1 = x0;
 		    x0 = insamp;
@@ -1103,7 +1103,7 @@ static sample_t *rs_vib_bidir(int v, Voice *vp, uint32 count)
 {
   int32   v0, v1, v2, v3, temp, overshoot;
   int offset;
-  float insamp, outsamp, a0, a1, a2, b0, b1,
+  FLOAT_T insamp, outsamp, a0, a1, a2, b0, b1,
     x0=vp->current_x0, x1=vp->current_x1, y0=vp->current_y0, y1=vp->current_y1;
   uint32 cc_count=vp->modulation_counter, bw_index=vp->bw_index, ofsdu;
   sample_t newsample;
@@ -1184,7 +1184,7 @@ static sample_t *rs_vib_bidir(int v, Voice *vp, uint32 count)
 		if (dont_filter_melodic) bw_index = 0;
                 newsample = (sample_t)(v1 + ((int32)((v2-v1) * (ofs & FRACTION_MASK)) >> FRACTION_BITS));
 	        if (bw_index) {
-                    insamp = (float)newsample;
+                    insamp = (FLOAT_T)newsample;
 		    outsamp = a0 * insamp + a1 * x0 + a2 * x1 - b0 * y0 - b1 * y1;
 		    x1 = x0;
 		    x0 = insamp;
@@ -1222,7 +1222,7 @@ static sample_t *rs_vib_bidir(int v, Voice *vp, uint32 count)
 		if (dont_filter_melodic) bw_index = 0;
 		newsample = (v1 > MAX_DATAVAL)? MAX_DATAVAL: ((v1 < MIN_DATAVAL)? MIN_DATAVAL: (sample_t)v1);
 		if (bw_index) {
-                    insamp = (float)newsample;
+                    insamp = (FLOAT_T)newsample;
 		    outsamp = a0 * insamp + a1 * x0 + a2 * x1 - b0 * y0 - b1 * y1;
 		    x1 = x0;
 		    x0 = insamp;
@@ -1294,7 +1294,7 @@ static sample_t *rs_vib_bidir(int v, Voice *vp, uint32 count)
 		if (dont_filter_melodic) bw_index = 0;
                 newsample = (sample_t)(v1 + ((int32)((v2-v1) * (ofs & FRACTION_MASK)) >> FRACTION_BITS));
 	        if (bw_index) {
-                    insamp = (float)newsample;
+                    insamp = (FLOAT_T)newsample;
 		    outsamp = a0 * insamp + a1 * x0 + a2 * x1 - b0 * y0 - b1 * y1;
 		    x1 = x0;
 		    x0 = insamp;
@@ -1332,7 +1332,7 @@ static sample_t *rs_vib_bidir(int v, Voice *vp, uint32 count)
 		if (dont_filter_melodic) bw_index = 0;
 		newsample = (v1 > MAX_DATAVAL)? MAX_DATAVAL: ((v1 < MIN_DATAVAL)? MIN_DATAVAL: (sample_t)v1);
 		if (bw_index) {
-                    insamp = (float)newsample;
+                    insamp = (FLOAT_T)newsample;
 		    outsamp = a0 * insamp + a1 * x0 + a2 * x1 - b0 * y0 - b1 * y1;
 		    x1 = x0;
 		    x0 = insamp;

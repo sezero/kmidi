@@ -120,7 +120,7 @@ int apply_envelope_to_amp(int v)
 void apply_envelope_to_amp(int v)
 #endif
 {
-  float lamp=voice[v].left_amp, ramp;
+  FLOAT_T lamp=voice[v].left_amp, ramp;
   int32 la,ra;
   if (voice[v].panned == PANNED_MYSTERY)
     {

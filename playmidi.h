@@ -148,8 +148,7 @@ typedef struct {
 
   FLOAT_T
     volume, left_amp, right_amp, tremolo_volume, lfo_volume,
-    modEnvToFilterFc, modLfoToFilterFc;
-  float
+    modEnvToFilterFc, modLfoToFilterFc,
     current_x0, current_x1, current_y0, current_y1;
   int32
     vibrato_sample_increment[VIBRATO_SAMPLE_INCREMENTS];

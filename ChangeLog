@@ -1,3 +1,7 @@
+1999-12-26  Greg Lee  <lee@hawaii.edu>
+
+	* changed more float to double
+
 1999-12-25  Greg Lee  <lee@hawaii.edu>
 
 	* playmidi.cpp: increase stereo separation
@@ -5,7 +9,7 @@
 	* tables.cpp: expression table
 	* sndfont.cpp,sf2cfg.cpp: allow for percussion
 	  key ranges
-	* linux_a.c: use OSS GETOPOINTER
+	* linux_a.c: use OSS GETOPTR
 	* b_out.c: fill buffer at start up
 
 1999-12-24  Greg Lee  <lee@hawaii.edu>
