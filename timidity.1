@@ -129,6 +129,10 @@ Selects patchset when the configuration file has been set up
 appropriately.  See the FILES section below under \fBif\fP and
 \fBelse\fP for how to do this.
 .TP
+.B \-E
+Turns on Witczak's effect filters for chorus, reverb, phaser,
+and celeste.
+.TP
 .BI \-L " directory"
 Adds \fIdirectory\fP to the library path.  Patch, configuration, and
 MIDI files are searched along this path.  Directories added last will
@@ -152,6 +156,8 @@ Marks \fIchannel\fP as a drum channel.
 If \fIchannel\fP is negative, channel \-\fIchannel\fP is marked as an
 instrumental channel.
 If \fIchannel\fP is 0, all channels are marked as instrumental.
+(Sysex dumps in GS or XG midi files may mark channels as drums
+and will override this flag.)
 .TP 
 .BI \-Q " channel"
 Causes \fIchannel\fP to be quiet. 
