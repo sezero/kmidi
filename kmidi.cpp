@@ -769,7 +769,7 @@ void KMidi::drawPanel()
 
     for (int i = 0; i < 17; i++) if (i < 7 || i > 10) {
         led[i] = new KLed(led_color, this);
-        led[i]->setLook(KLed::sunken);
+        led[i]->setLook(KLed::Sunken);
         led[i]->setShape(KLed::Rectangular);
         //led[i]->setGeometry(WIDTH/8 + i * WIDTH/4,3*HEIGHT+HEIGHT/6, WIDTH/6, HEIGHT/5);
         //led[i]->setGeometry(WIDTH/8 + i * WIDTH/4,3*HEIGHT+HEIGHT/8, WIDTH/6, HEIGHT/4);
