@@ -19,7 +19,7 @@ LDADD = $(LIB_KFILE) $(LIBALIB) $(LIBAUDIO) $(LIBMME) $(EXTRALIBS) -lsoundserver
 # Where to install the patches, config files, and MIDI files.
 # If you change this, it's a good idea to recompile the binary,
 # or you'll need to invoke timidity with the -L option.
-TIMID_DIR = ""
+TIMID_DIR = $(kde_datadir)/kmidi
 
 
 bin_PROGRAMS = kmidi sf2cfg
