@@ -79,7 +79,7 @@ PlaylistEdit::PlaylistEdit(const char *name, QStringList *playlist,
 				"playlist file.") );
   file->insertItem( i18n("Delete"), this, SLOT(removeIt()), 0, 44);
 	file->setWhatsThis(44, i18n("Delete the currently selected<br>\n"
-				"playlist file (it's contents<br>\n"
+				"playlist file (its contents<br>\n"
 				"will be lost).") );
   file->insertSeparator();
   file->insertItem( i18n("&Quit"), this, SLOT(hide()), 0, 45);
