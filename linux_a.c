@@ -25,6 +25,7 @@
 */
 
 #if defined(linux) || defined(__FreeBSD__)
+#define _GNU_SOURCE
 #include <unistd.h>
 #include <fcntl.h>
 #include <errno.h>
@@ -81,6 +82,7 @@ static int open_output(void)
   
   /* Open the audio device */
   fd=open(dpm.name, O_RDWR | O_NDELAY);
+  /* fd=open(dpm.name, O_WRONLY | O_NONBLOCK); */
   if (fd<0)
     {
       ctl->cmsg(CMSG_ERROR, VERB_NORMAL, "%s: %s",
@@ -88,10 +90,10 @@ static int open_output(void)
       return -1;
     }
 
-  /*fcntl(fd, F_SETFL, O_NONBLOCK);*/
+  /* fcntl(fd, F_SETFL, O_NONBLOCK); */
   /*fcntl(fd, F_SETFL, fcntl(fd, F_GETFL, 0) & ~O_NDELAY);*/
 /* Shouldn't this be: ?? */
-  fcntl(fd, F_SETFL, fcntl(fd, F_GETFL, 0) | O_NDELAY);
+  fcntl(fd, F_SETFL, fcntl(fd, F_GETFL, 0) | O_NONBLOCK);
 
   /* They can't mean these */
   dpm.encoding &= ~(PE_ULAW|PE_BYTESWAP);

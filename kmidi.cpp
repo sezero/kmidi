@@ -359,12 +359,12 @@ void MeterWidget::remeter()
 	QPen greenpen(led_color, 3);
 	QPen yellowpen(yellow, 3);
 	QPen erasepen(background_color, 3);
-	static int lastvol[MAXCHAN], lastamp[MAXCHAN], meterpainttime = 0;
+	static int lastvol[MAXDISPCHAN], lastamp[MAXDISPCHAN], meterpainttime = 0;
 	int ch, x1, y1, slot, amplitude, notetime, chnotes;
 
 	if (currplaytime + meterfudge < meterpainttime || Panel->reset_panel) {
 		erase();
-		for (ch = 0; ch < MAXCHAN; ch++) {
+		for (ch = 0; ch < MAXDISPCHAN; ch++) {
 			lastvol[ch] = lastamp[ch] = 0;
 			//Panel->mindex[ch] = Panel->cindex[ch];
 		}
@@ -372,9 +372,9 @@ void MeterWidget::remeter()
 	}
 	meterpainttime = currplaytime + meterfudge;
 
-	for (ch = 0; ch < MAXCHAN; ch++) {
+	for (ch = 0; ch < MAXDISPCHAN; ch++) {
 		x1 = BAR_LM + (ch & 0x0f) * BAR_WID;
-		if (ch > 15) x1 += BAR_WID / 2;
+		if (ch >= MAXDISPCHAN/2) x1 += BAR_WID / 2;
 		amplitude = -1;
 		slot = Panel->mindex[ch];
 		chnotes = Panel->notecount[slot][ch];
@@ -394,6 +394,7 @@ void MeterWidget::remeter()
 			/*if (amplitude < Panel->ctotal[slot][ch])*/
 				amplitude = Panel->ctotal[slot][ch];
 		    }
+		    if (!chnotes && amplitude > 0) amplitude--;
 		    if (!chnotes && amplitude > 0) amplitude--;
 		    Panel->ctime[slot][ch] = -1;
 		    slot++;

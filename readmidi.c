@@ -459,9 +459,10 @@ static MidiEventList *read_midi_event(void)
 			    return 0;
 		    }
 		    midi_port_number &= 0x0f;
-		    ctl->cmsg(CMSG_INFO, VERB_VERBOSE,
+		    if (midi_port_number)
+			ctl->cmsg(CMSG_INFO, VERB_VERBOSE,
 			  "(MIDI port number %d)", midi_port_number);
-		    midi_port_number &= 0x01;
+		    midi_port_number &= 0x03;
 		}
 		else skip(fp, len);
 		break;

@@ -1,3 +1,9 @@
+1999-09-06  Greg Lee  <lee@hawaii.edu>
+
+	* up 16 channels to 64 (32 on meter display)
+	* effects.c: obey echo_delay
+	* timidity.c: scan over TiMidity++ "map" statements
+
 1999-08-27  Greg Lee  <lee@hawaii.edu>
 
 	* kmidi.cpp: check dropped file is readable midi file

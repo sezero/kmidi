@@ -1,23 +1,24 @@
 
 #define INT_CODE 214
 #define NQUEUE 30
+#define MAXDISPCHAN 32
 typedef struct {
 	int reset_panel;
 	int multi_part;
 
 	int32 last_time, cur_time;
 
-	char v_flags[NQUEUE][MAXCHAN];
-	int16 cnote[MAXCHAN];
-	int16 cvel[MAXCHAN];
-	int16 ctotal[NQUEUE][MAXCHAN];
-	int16 ctime[NQUEUE][MAXCHAN];
-	int16 notecount[NQUEUE][MAXCHAN];
-	int cindex[MAXCHAN], mindex[MAXCHAN];
+	char v_flags[NQUEUE][MAXDISPCHAN];
+	int16 cnote[MAXDISPCHAN];
+	int16 cvel[MAXDISPCHAN];
+	int16 ctotal[NQUEUE][MAXDISPCHAN];
+	int16 ctime[NQUEUE][MAXDISPCHAN];
+	int16 notecount[NQUEUE][MAXDISPCHAN];
+	int cindex[MAXDISPCHAN], mindex[MAXDISPCHAN];
 
-	char c_flags[MAXCHAN];
+	char c_flags[MAXDISPCHAN];
 	char currentpatchset;
-	Channel channel[MAXCHAN];
+	/* Channel channel[MAXDISPCHAN]; */
 } PanelInfo;
 
 

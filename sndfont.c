@@ -153,7 +153,6 @@ void init_soundfont(char *fname, int oldbank, int newbank)
 	sfrec.fname = strcpy((char*)safe_malloc(strlen(fname)+1), fname);
 	load_sbk(sfrec.fd, &sfinfo);
 
-	/*for (i = 0; i < sfinfo.nrpresets; i++) { one too many?? --gl*/
 	for (i = 0; i < sfinfo.nrpresets-1; i++) {
 		int bank = sfinfo.presethdr[i].bank;
 		int preset = sfinfo.presethdr[i].preset;
@@ -278,6 +277,7 @@ Instrument *load_sbk_patch(char *name, int gm_num, int bank, int percussion,
 #endif
 
 #ifndef ADAGIO
+#if 0
 /* this isn't working */
     if (percussion && drumset[bank]) {
 	Instrument *ipx = drumset[bank]->tone[preset].instrument;
@@ -286,6 +286,7 @@ printf("but bank %d voice %d is already loaded\n", bank, preset);
 		return ipx;
 	}
     }
+#endif
 #endif
 
     if (percussion) {

@@ -277,7 +277,7 @@ static void ctl_current_time(int ct)
 static void ctl_channel_note(int ch, int note, int vel, int start)
 {
 	int slot;
-	/* ch &= 0x0f; */
+	ch &= 0x1f;
 	slot = Panel->cindex[ch];
 	if (start != -1 && start > Panel->ctime[slot][ch]) {
 		int i = slot;
@@ -300,8 +300,8 @@ static void ctl_channel_note(int ch, int note, int vel, int start)
 	} else if (vel > Panel->cvel[ch]) {
 		Panel->cvel[ch] = vel;
 		Panel->cnote[ch] = note;
-		Panel->ctotal[slot][ch] = vel * Panel->channel[ch].volume *
-			Panel->channel[ch].expression / (127*127);
+		Panel->ctotal[slot][ch] = vel * channel[ch].volume *
+			channel[ch].expression / (127*127);
 		Panel->v_flags[slot][ch] = FLAG_NOTE_ON;
 	}
 	if (channel[ch].kit) Panel->c_flags[ch] |= FLAG_PERCUSSION;
@@ -317,19 +317,18 @@ static void ctl_note(int v)
 
 	start = voice[v].starttime/(play_mode->rate/100);
 	ch = voice[v].channel;
-	slot = Panel->cindex[ch];
+	ch &= 0x1f;
 	if (ch < 0 || ch >= MAXCHAN) return;
+	slot = Panel->cindex[ch];
 
 	note = voice[v].note;
 	vel = voice[v].velocity;
 	switch(voice[v].status)
 	{
 	    case VOICE_DIE:
-	      /*vel = voice[v].velocity / 2;*/
-	      /*vel = 0;*/
 	      vel /= 2;
 	      start = -1;
-	      if (Panel->notecount[slot][ch]) Panel->notecount[slot][ch]--;
+	      /* if (Panel->notecount[slot][ch]) Panel->notecount[slot][ch]--; */
 	      break;
 	    case VOICE_FREE: 
 	      vel = 0;
@@ -341,7 +340,7 @@ static void ctl_note(int v)
 	      break;
 	    case VOICE_OFF:
 	      vel = 0;
-	      if (Panel->notecount[slot][ch]) Panel->notecount[slot][ch]--;
+	      /* if (Panel->notecount[slot][ch]) Panel->notecount[slot][ch]--; */
 	    case VOICE_SUSTAINED:
 	      start = -1;
 	      break;
@@ -353,8 +352,9 @@ static void ctl_program(int ch, int val)
 {
 	if (!ctl.trace_playing) 
 		return;
+	ch &= 0x1f;
 	if (ch < 0 || ch >= MAXCHAN) return;
-	Panel->channel[ch].program = val;
+	/*Panel->channel[ch].program = val;*/
 	Panel->c_flags[ch] |= FLAG_PROG;
 }
 
@@ -362,7 +362,8 @@ static void ctl_volume(int ch, int val)
 {
 	if (!ctl.trace_playing)
 		return;
-	Panel->channel[ch].volume = val;
+	ch &= 0x1f;
+	/* Panel->channel[ch].volume = val; */
 	ctl_channel_note(ch, Panel->cnote[ch], Panel->cvel[ch], -1);
 }
 
@@ -370,7 +371,8 @@ static void ctl_expression(int ch, int val)
 {
 	if (!ctl.trace_playing)
 		return;
-	Panel->channel[ch].expression = val;
+	ch &= 0x1f;
+	/* Panel->channel[ch].expression = val; */
 	ctl_channel_note(ch, Panel->cnote[ch], Panel->cvel[ch], -1);
 }
 
@@ -378,7 +380,8 @@ static void ctl_panning(int ch, int val)
 {
 	if (!ctl.trace_playing) 
 		return;
-	Panel->channel[ch].panning = val;
+	ch &= 0x1f;
+	/* Panel->channel[ch].panning = val; */
 	Panel->c_flags[ch] |= FLAG_PAN;
 }
 
@@ -386,7 +389,8 @@ static void ctl_sustain(int ch, int val)
 {
 	if (!ctl.trace_playing)
 		return;
-	Panel->channel[ch].sustain = val;
+	ch &= 0x1f;
+	/* Panel->channel[ch].sustain = val; */
 	Panel->c_flags[ch] |= FLAG_SUST;
 }
 
@@ -403,7 +407,7 @@ static void ctl_reset(void)
 
 	if (!ctl.trace_playing)
 		return;
-	for (i = 0; i < MAXCHAN; i++) {
+	for (i = 0; i < MAXDISPCHAN; i++) {
 		ctl_program(i, channel[i].program);
 		ctl_volume(i, channel[i].volume);
 		ctl_expression(i, channel[i].expression);

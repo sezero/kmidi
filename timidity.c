@@ -567,6 +567,11 @@ int read_config_file(char *name)
 	{
 	  /* not implemented: this is just for Adagio --gl */ ;
 	}
+      /******* map ********/
+		else if (!strcmp(w[0], "map"))
+	{
+	  /* not implemented: this is just for TiMidity++ --gl */ ;
+	}
       /******* sf/soundfont ********/
 		else if (!strcmp(w[0], "soundfont") || !strcmp(w[0], "sbk") || !strcmp(w[0], "sf"))
 	{

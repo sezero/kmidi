@@ -43,7 +43,7 @@ void b_out(int fd, int *buf, int ocount)
 		memcpy(bbuf, bbuf + bboffset, bbcount);
 		bboffset = 0;
 	    }
-/*fprintf(stderr, "BLOCK %d ", bbcount);*/
+	/* fprintf(stderr, "BLOCK %d ", bbcount); */
 	    if (ocount && bboffset + bbcount + ocount <= BB_SIZE) break;
 	    sleep(1);
 	}
@@ -78,7 +78,7 @@ void b_out(int fd, int *buf, int ocount)
 	if (errno == EINTR) continue;
 	else if (errno == EWOULDBLOCK) {
 /* I can't get the driver to block anymore. Is this all useless? */
-	    /*fprintf(stderr, "block %d ", bbcount);*/
+	    /* fprintf(stderr, "block %d ", bbcount); */
 	    break;
 	}
 	else {

@@ -212,9 +212,20 @@ void do_compute_data_effect(int32 count)
 	{
 		if( voice[ idVoice ].status != VOICE_FREE )
 		{
-			idChannel = voice[ idVoice ].channel ;
-			mix_voice( channel_buffer[ idChannel ] , idVoice , count );
-			channel_buffer_state[ idChannel ] = 1 ;
+		  idChannel = voice[ idVoice ].channel ;
+		  if (!voice[ idVoice ].sample_offset && voice[ idVoice ].echo_delay)
+		    {
+			if (voice[ idVoice ].echo_delay >= count) voice[ idVoice ].echo_delay -= count;
+			else
+			  {
+		            mix_voice( channel_buffer[ idChannel ] + voice[ idVoice ].echo_delay, idVoice,
+						count - voice[ idVoice ].echo_delay);
+			    voice[ idVoice ].echo_delay = 0;
+			  }
+		    }
+		  else mix_voice( channel_buffer[ idChannel ] , idVoice , count );
+		  channel_buffer_state[ idChannel ] = 1 ;
+
 		}
 	}
 
@@ -277,20 +288,6 @@ void do_compute_data_effect(int32 count)
 }
 
 /** cut and paste from playmidi*/
-#if 0
-static void do_compute_data_default(int32 count)
-{
-  int i;
-  memset(buffer_pointer, 0, 
-	 (play_mode->encoding & PE_MONO) ? (count * 4) : (count * 8));
-  for (i=0; i<voices; i++)
-    {
-      if(voice[i].status != VOICE_FREE)
-	mix_voice(buffer_pointer, i, count);
-    }
-  current_sample += count;
-}
-#endif
 
 static void do_compute_data_default(int32 count)
 {

@@ -32,7 +32,7 @@ static SFInfo sfinfo;
 static char *getname(char *p);
 static void print_sbk(SFInfo *sf, FILE *fout);
 
-void main(int argc, char **argv)
+int main(int argc, char **argv)
 {
 	FILE *fp;
 
@@ -58,7 +58,7 @@ void main(int argc, char **argv)
 
 	fprintf(fp, "\nsbk %s\n", argv[1]);
 
-	exit(0);
+	return 0;
 }
 
 
