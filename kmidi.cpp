@@ -150,7 +150,6 @@ KMidi::KMidi( QWidget *parent, const char *name )
     what = new QWhatsThis(this);
     drawPanel();
     loadBitmaps();
-    setPalettePropagation( QWidget::AllChildren );
     setColors();
     setToolTips();
 
@@ -193,8 +192,8 @@ KMidi::KMidi( QWidget *parent, const char *name )
     connect( fwdPB, SIGNAL(released()), SLOT(fwdReleased()) );
     connect( bwdPB, SIGNAL(pressed()), SLOT(bwdPressed()) );
     connect( bwdPB, SIGNAL(released()), SLOT(bwdReleased()) );
-    connect( quitPB, SIGNAL(clicked()), SLOT(quitClicked()) );	
-    connect( whatbutton, SIGNAL(clicked()), SLOT(invokeWhatsThis()) );	
+    connect( quitPB, SIGNAL(clicked()), SLOT(quitClicked()) );
+    connect( whatbutton, SIGNAL(clicked()), SLOT(invokeWhatsThis()) );
     connect( replayPB, SIGNAL(clicked()), SLOT(replayClicked()) );
     connect( ejectPB, SIGNAL(clicked()), SLOT(ejectClicked()) );
     connect( volSB, SIGNAL(valueChanged(int)), SLOT(volChanged(int)));
@@ -391,8 +390,8 @@ void KMidi::setToolTips()
 
 
 void KMidi::volChanged( int vol )
-{       	
-	
+{
+
     QString volumetext;
     if (vol == 100){
 	volumetext = QString::fromUtf8(QCString().sprintf(i18n("Vol:%03d%%").utf8().data(),vol) );
@@ -425,7 +424,7 @@ void KMidi::timeStart()
     pipe_int_write( max_sec * time / 100);
 
 }
-	
+
 
 
 #define BAR_WID 10
@@ -635,10 +634,10 @@ void KMidi::drawPanel()
     ix = WIDTH + 4;
 
     for (int u = 0; u<=4;u++){
-	trackTimeLED[u] = new BW_LED_Number(this );	
+	trackTimeLED[u] = new BW_LED_Number(this );
 	trackTimeLED[u]->setGeometry( ix  + u*18, iy + D, 23 ,  30 );
     }
-	
+
     QString zeros("--:--");
     setLEDs(zeros);
     iy += 2 * HEIGHT;
@@ -729,7 +728,7 @@ void KMidi::drawPanel()
 
 
     iy += HEIGHT / 2 ;
-	
+
     volSB = new QSlider( 0, 100, 5,  volume, QSlider::Horizontal,
 			 this, "Slider" );
     volSB->setGeometry( WIDTH , 3*HEIGHT + HEIGHT/2, 2*SBARWIDTH/3, HEIGHT /2 );
@@ -1959,7 +1958,7 @@ void KMidi::loadplaylist( int which ) {
 	    file.setFile(tempstring);
 	    if (file.isReadable())
 	      playlist->append(tempstring);
-	  }	
+	  }
 	}
 
 	f.close();
@@ -2042,7 +2041,7 @@ void KMidi::ReadPipe(){
 		char local_string[20];
 
 		pipe_int_read(&cseconds);
-	
+
 		seconds=cseconds/100;
 		minutes=seconds/60;
 		seconds-=minutes*60;
@@ -2058,16 +2057,16 @@ void KMidi::ReadPipe(){
                 led[LYRICS_LED]->setColor(Qt::black);
 	    }
 	    break;
-	
+
 	    case MASTERVOL_MESSAGE: {
 		int vol;
-	
+
 		pipe_int_read(&vol);
 		//volume = vol*100/255;
 
 	    }
 	    break;
-	
+
 	    case FILENAME_MESSAGE : {
 		char filename[255];
 		char *pc;
@@ -2081,7 +2080,7 @@ void KMidi::ReadPipe(){
 		    pc=filename;
 		else
 		    pc++;
-	
+
 		fileName = pc;
 		updateUI();
 	    }
@@ -2096,7 +2095,7 @@ void KMidi::ReadPipe(){
 	    case TUNE_END_MESSAGE :{
 
 	      	/*	printf("RECEIVED: NEXT/PREV/TUNE_MESSAGE\n"); */
-	
+
 		/* When a file ends, launch next if auto_next toggle */
 		settletime = fastforward = fastrewind = nbvoice = currplaytime = 0;
 		for (int l=0; l<LYRBUFL; l++) lyric_time[l] = -1;
@@ -2161,7 +2160,7 @@ void KMidi::ReadPipe(){
 		    singleplay = false;
 		    stopClicked();
 		}
-	
+
 
 	    }
 	    break;
@@ -2209,7 +2208,7 @@ void KMidi::ReadPipe(){
 		thisapp->quit();
 	    }
 	    break;
-	
+
 	    case CMSG_MESSAGE : {
 		char strmessage[2024];
 		int type = 0, message_time = 0;
@@ -2247,7 +2246,7 @@ void KMidi::ReadPipe(){
 	    break;
 	    default:
 		fprintf(stderr,"Kmidi: unknown message %i\n",message);
-	
+
 	    }
     }
 
@@ -2258,16 +2257,16 @@ void KMidi::ReadPipe(){
 
 		cseconds = currplaytime - 1;
 		sec=seconds=cseconds/100;
-	
+
 		/* To avoid blinking */
 		if (sec!=last_sec)
 		    {
 			minutes=seconds/60;
 			seconds-=minutes*60;
-		
+
 			sprintf(local_string,"%02d:%02d",
 				minutes, seconds);
-			//		    printf("GUI CURTIME %s\n",local_string);	
+			//		    printf("GUI CURTIME %s\n",local_string);
 			setLEDs(local_string);
 			if (timestopped) timestopped--;
 			else timeSB->setValue(100*cseconds/max_sec);
@@ -2275,7 +2274,7 @@ void KMidi::ReadPipe(){
 			last_sec=sec;
 
 			if (settletime) settletime--;
-	
+
 		    }
 
 		if (fastforward == 1)
@@ -2420,7 +2419,7 @@ void KMidi::readconfig(){
     QColor defaultback = black;
     QColor defaultled = QColor(107,227,88);
 
-    background_color = config->readColorEntry("BackColor",&defaultback);	
+    background_color = config->readColorEntry("BackColor",&defaultback);
     led_color = config->readColorEntry("LEDColor",&defaultled);
 
 }
@@ -2430,7 +2429,7 @@ void KMidi::writeconfig(){
 
 
     config=KApplication::kApplication()->config();
-	
+
     ///////////////////////////////////////////////////
 
     config->setGroup("KMidi");
