@@ -1078,7 +1078,7 @@ static void shm_free(int sig)
 	void *dmy;
 #endif
 #endif
-
+	play_mode->close_output();
 	kill(child_pid, SIGTERM);
 	while(wait(&status) != child_pid)
 	    ;

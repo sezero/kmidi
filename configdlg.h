@@ -75,6 +75,7 @@ protected:
     void resizeEvent(QResizeEvent *);
     KTabCtl *test;
     KAboutWidget *about;
+    KAboutWidget *patches;
     QWidget *pages[3];
     KIntNumInput *meg;
     QWhatsThis *what;
@@ -83,6 +84,8 @@ public slots:
     void tabChanged(int);
 
 protected slots:
+  void sendEmailSlot(const QString& , const QString& );
+  void openURLSlot(const QString& );
   void cancelbutton();
   void okbutton();
   void set_led_color( const QColor & );
@@ -92,7 +95,7 @@ protected slots:
   void megChanged( int );
 
 public:
-  QSize configsize, aboutsize;
+  QSize configsize, aboutsize, patchessize;
 
 private:
 

@@ -28,20 +28,8 @@
 #include <kapp.h>
 #include <qpushbutton.h>
 #include <qlabel.h>
-#include <qobject.h>
-#include <qlistbox.h>
 #include <qgroupbox.h>
-#include <qevent.h>
-#include <qcombobox.h>
-#include <qlineedit.h>
-#include <qradiobutton.h>
 #include <qcheckbox.h>
-#include <qtabdialog.h>
-#include <qtooltip.h>
-#include <qmessagebox.h>
-#include <qtabbar.h>
-#include <qpalette.h>
-#include <qmultilinedit.h>
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -164,17 +152,17 @@ ConfigDlg::ConfigDlg(QWidget *parent, struct configstruct *data, const char *nam
     about->setCaption(i18n("About KMidi"));
     about->setVersion(i18n(KMIDIVERSION));
     about->setAuthor
-    ("Bernd Johannes Wuebben", "wuebben@kde.org", "", i18n("Initial developer."));
+    ("Bernd Johannes Wuebben", "wuebben@kde.org", QString::null, i18n("Initial developer."));
     // ----- set the application maintainer:
     about->setMaintainer("Greg Lee", // name
 		      "lee@hawaii.edu", // email address 
-		      "", // URL
+		      QString::null, // URL
 		      i18n("lyrics, IW patches, current maintainer.")); // description
     // ----- add some contributors:
     about->addContributor("Tuukka Toivonen", 
 		       "toivonen@clinet.fi", 
 		       "http://www.cgs.fi/~tt/discontinued.html", 
-		       i18n("TiMidity sound, patch loader, interface design"));
+		       i18n("TiMidity sound, patch loader, interface design, ..."));
     about->addContributor("Takashi Iwai", "iwai@dragon.mm.t.u-tokyo.ac.jp",
 			"http://bahamut.mm.t.u-tokyo.ac.jp/~iwai/midi.html", 
 		       i18n("soundfonts, window communication"));
@@ -182,13 +170,13 @@ ConfigDlg::ConfigDlg(QWidget *parent, struct configstruct *data, const char *nam
 			"http://www.geocities.com/SiliconValley/Lab/6307/", 
 		       i18n("effects: reverb, chorus, phaser, celeste"));
     about->addContributor("Masanao Izumo", "mo@goice.co.jp",
-			"http://www.goice.co.jp/member/mo/hack-progs/timidity.html", 
-		       i18n("mod wheel, portamento"));
+			"http://www.goice.co.jp/member/mo/timidity.html", 
+		       i18n("mod wheel, portamento ..."));
 
-//    connect(about, SIGNAL( sendEmail(const QString& , const QString& ) ),
-//	this, SLOT ( sendEmailSlot(const QString& , const QString& ) ) );
-//    connect(about, SIGNAL( openURL(const QString& ) ),
-//	this, SLOT ( openURLSlot(const QString& ) ) );
+    connect(about, SIGNAL( sendEmail(const QString& , const QString& ) ),
+	this, SLOT ( sendEmailSlot(const QString& , const QString& ) ) );
+    connect(about, SIGNAL( openURL(const QString& ) ),
+	this, SLOT ( openURLSlot(const QString& ) ) );
 
     // ----- contents of the dialog have changed, adapt sizes:
     about->adjust(); 
@@ -198,10 +186,42 @@ ConfigDlg::ConfigDlg(QWidget *parent, struct configstruct *data, const char *nam
     pages[1] = w;
 
 
-    //w = new QWidget(test, "_page3");
-    //test->addTab(w, "Seite 3");
-    //pages[2] = w;
+// Page 3
+    w = new QWidget(test, "_page3");
+    patches = new KAboutWidget(w, "_patches");
+    QPixmap km = BarIcon("mini-kmidi");
+    patches->setLogo(km);
+    //patches->setCaption(i18n("Patchsets"));
+    patches->setVersion(i18n("Where to get sets of patches."));
+    patches->setAuthor("Thomas Hammer", QString::null,
+	"http://metalab.unc.edu/thammer/HammerSound/",
+	i18n("links to many sf2 soundfonts"));
+    patches->setMaintainer("Eric A. Welsh",
+	"mailto:ewelsh@gpc.ibc.wustl.edu",
+	"http://www.stardate.bc.ca/gus_patches.htm",
+	i18n("GUS patches -- unrar needed to decompress."));
+    patches->addContributor("Chaos", "mailto:chaos@soback.kornet.nm.kr",
+		"http://taeback.kornet.nm.kr/~chaos/soundfont/",
+		"A very moderately sized soundfont (12 megs).");
+    patches->addContributor("Personal Copy v4.0.0", QString::null,
+		"http://www.personalcopy.com/sfarkfonts.htm",
+		"A very good large soundfont (38 megs).");
+    patches->addContributor("Msdos sfark decompressor.", QString::null,
+		"http://www.melodymachine.com/",
+		i18n("You may need this msdos-only tool."));
 
+    connect(patches, SIGNAL( sendEmail(const QString& , const QString& ) ),
+	this, SLOT ( sendEmailSlot(const QString& , const QString& ) ) );
+    connect(patches, SIGNAL( openURL(const QString& ) ),
+	this, SLOT ( openURLSlot(const QString& ) ) );
+
+    patches->adjust(); 
+    patchessize = QSize( patches->width() + 30, patches->height() + 80 );
+    w->resize(width(), height());
+    test->addTab(w, "Patchsets");
+    pages[2] = w;
+
+//------------------------
     test->resize(configsize);
     test->move(0, 0);
     tl->addWidget(test,1);
@@ -212,6 +232,16 @@ ConfigDlg::ConfigDlg(QWidget *parent, struct configstruct *data, const char *nam
     move(20, 20);
     resize(400, 500);
     adjustSize();
+}
+
+void ConfigDlg::sendEmailSlot(const QString& , const QString& email)
+{
+  thisapp->invokeMailer( email, QString::null );
+}
+
+void ConfigDlg::openURLSlot(const QString& url)
+{
+  thisapp->invokeBrowser( url );
 }
 
 void ConfigDlg::resizeEvent( QResizeEvent * )
@@ -226,6 +256,7 @@ void ConfigDlg::tabChanged(int newpage)
     //if(newpage == 1)
     //    e->setFocus();
     if (newpage == 1) resize(aboutsize);
+    else if (newpage == 2) resize(patchessize);
     else resize(configsize);
 }
 
