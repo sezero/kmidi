@@ -1,3 +1,6 @@
+/*
+	$Id$
+*/
 #define RC_ERROR -1
 #define RC_NONE 0
 #define RC_QUIT 1
@@ -17,6 +20,7 @@
 #define RC_LOAD_FILE 13		/* Load a new midifile */
 #define RC_TUNE_END 14		/* The tune is over, play it again sam? */
 #define RC_TRY_OPEN_DEVICE 15
+#define RC_PATCHCHANGE 16
 
 #define CMSG_INFO	0
 #define CMSG_WARNING	1
@@ -59,6 +63,7 @@
 #define TUNE_END_MESSAGE 20
 #define DEVICE_OPEN 21
 #define DEVICE_NOT_OPEN 22
+#define PATCH_CHANGED_MESSAGE 23
 /* 
  * MESSAGE ON THE PIPE FROM MOTIF TOWARD KERNEL
  */
@@ -73,4 +78,6 @@
 #define MOTIF_RWD 9
 #define MOTIF_PAUSE 10
 #define TRY_OPEN_DEVICE 11
+#define MOTIF_PATCHSET 12
+#define MOTIF_EFFECTS 13
 
