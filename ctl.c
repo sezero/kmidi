@@ -496,9 +496,15 @@ static int ctl_blocking_read(int32 *valp)
 	      {
 	      case MOTIF_CHANGE_VOLUME:
 		  pipe_int_read(&new_volume);
-		  change_in_volume =
-		    *valp= new_volume - amplification ;
-		  return RC_CHANGE_VOLUME;
+		  if (!pausing) {
+		      change_in_volume = *valp= new_volume - amplification ;
+		      return RC_CHANGE_VOLUME;
+		  }
+		  else {
+		      amplification=new_volume;
+		      pipe_int_read(&command);
+		  }
+		  break;
 		  
 	      case MOTIF_CHANGE_LOCATOR:
 		  pipe_int_read(&new_centiseconds);
@@ -544,19 +550,25 @@ static int ctl_blocking_read(int32 *valp)
 		  pipe_int_read(&arg);
 		  cfg_select = arg;
 	/* fprintf(stderr,"ctl_blocking_read set #%d\n", cfg_select); */
-		  return RC_PATCHCHANGE;
+		  if (!pausing) return RC_PATCHCHANGE;
+		  pipe_int_read(&command);
+		  break;
 
 	      case MOTIF_EFFECTS:
 		  pipe_int_read(&arg);
 		  *valp= arg;
 		  effect_activate(arg);
-		  return RC_NONE;
+		  if (!pausing) return RC_NONE;
+		  pipe_int_read(&command);
+		  break;
 
 	      case MOTIF_FILTER:
 		  pipe_int_read(&arg);
 		  *valp= arg;
 		  command_cutoff_allowed = arg;
-		  return RC_NONE;
+		  if (!pausing) return RC_NONE;
+		  pipe_int_read(&command);
+		  break;
 
 	      case MOTIF_CHANGE_VOICES:
 		  pipe_int_read(&arg);
@@ -594,7 +606,7 @@ static int ctl_blocking_read(int32 *valp)
 			break;
 		  }
 		  if (!pausing) return RC_NONE;
-		  pipe_int_read(&command); /* Blocking reading => Sleep ! */
+		  pipe_int_read(&command);
 		  break;
 
 	      case TRY_OPEN_DEVICE:
@@ -619,7 +631,7 @@ static int ctl_blocking_read(int32 *valp)
 	  else 
 	      {
 		  fprintf(stderr,"UNKNOWN RC_MESSAGE %i\n",command);
-		  return RC_NONE;
+		  /* return RC_NONE; */
 	      }
       }
 }

@@ -1,3 +1,13 @@
+1999-10-08  Greg Lee  <lee@hawaii.edu>
+
+	* resample.c: change cutoff filter - ignore resonance
+
+1999-10-07  Greg Lee  <lee@hawaii.edu>
+
+	* sndfont.c: ad hoc envelope mode per program
+	* ctl.c: kill child on exit
+	* working on lyrics
+
 1999-10-06  Greg Lee  <lee@hawaii.edu>
 
 	* log.cpp/.h: clean up code

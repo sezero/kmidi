@@ -93,7 +93,7 @@ int opt_overlap_voice_allow = 1;
 int dont_cspline=0;
 #endif
 int dont_filter_melodic=1;
-int dont_filter_drums=1;
+int dont_filter_drums=0;
 static int voice_reserve=0;
 
 #ifndef ADAGIO
@@ -727,7 +727,7 @@ static void clone_voice(Instrument *ip, int v, MidiEvent *e, uint8 clone_type, i
   for (k = 0; k < VIBRATO_SAMPLE_INCREMENTS; k++)
     voice[w].vibrato_sample_increment[k] =
       voice[v].vibrato_sample_increment[k];
-  for (k=0; k<6; k++)
+  for (k=ATTACK; k<MAXPOINT; k++)
     {
 	voice[w].envelope_rate[k]=voice[v].envelope_rate[k];
 	voice[w].envelope_offset[k]=voice[v].envelope_offset[k];
@@ -1283,10 +1283,10 @@ debug_count--;
   if (obf < 5 && current_polyphony > voices / 5) reduce_polyphony();
   if (obf < 4 && current_polyphony > voices / 6) reduce_polyphony();
 
-  if (command_cutoff_allowed) dont_filter_drums = 0;
-  else dont_filter_drums = 1;
+  if (command_cutoff_allowed) dont_filter_melodic = 0;
+  else dont_filter_melodic = 1;
 
-  dont_filter_melodic = 1;
+  dont_filter_drums = 0;
 
 }
 

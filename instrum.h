@@ -31,7 +31,8 @@ typedef struct {
     root_tune, fine_tune;
 
   int32
-    envelope_rate[7], envelope_offset[7];
+    envelope_rate[7], envelope_offset[7],
+    modulation_rate[7], modulation_offset[7];
   FLOAT_T
     volume, resonance;
   sample_t *data;

@@ -1000,7 +1000,7 @@ static MidiEvent *groom_list(int32 divisions, uint32 *eventsp, uint32 *samplesp)
 	  if (XG_System_On && meep->event.a > 0 && meep->event.a < 48) {
 	      channel[meep->event.channel].variationbank=meep->event.a;
 	      ctl->cmsg(CMSG_WARNING, VERB_VERBOSE,
-		   "XG variation bank %d on channel", meep->event.a, meep->event.channel);
+		   "XG variation bank %d", meep->event.a);
 	      new_value=meep->event.a=0;
 	  }
 	  else if (tonebank[meep->event.a]) /* Is this a defined tone bank? */

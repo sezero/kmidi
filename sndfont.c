@@ -87,11 +87,13 @@ static void make_inst(SFInsts *rec, Layer *lay, SFInfo *sf, int pr_idx, int in_i
 	uint16 pk_range, uint16 pv_range, int num_i);
 static int32 calc_root_pitch(Layer *lay, SFInfo *sf, SampleList *sp);
 static void convert_volume_envelope(Layer *lay, SFInfo *sf, SampleList *sp, int banknum, int preset);
+static void convert_modulation_envelope(Layer *lay, SFInfo *sf, SampleList *sp, int banknum, int preset);
 static int32 to_offset(int offset);
 static int32 calc_rate(int diff, double msec);
 static double to_msec(Layer *lay, SFInfo *sf, int index);
 static FLOAT_T calc_volume(Layer *lay, SFInfo *sf);
 static int32 calc_sustain(Layer *lay, SFInfo *sf, int banknum, int preset);
+static int32 calc_modulation_sustain(Layer *lay, SFInfo *sf, int banknum, int preset);
 #ifndef SF_SUPPRESS_TREMOLO
 static void convert_tremolo(Layer *lay, SFInfo *sf, SampleList *sp);
 #endif
@@ -1285,9 +1287,11 @@ fprintf(stderr, "preset %d, root_freq %ld\n", preset, sp->v.root_freq);
 	if (banknum != 128) {
 		if (program >= 16 && program <= 23) sampleFlags = 3;
 		else if (program >= 40 && program <= 43) sampleFlags = 3;
-		else if (program >= 52 && program <= 54) sampleFlags = 3;
+		else if (program >= 48 && program <= 54) sampleFlags = 3;
 		else if (program >= 56 && program <= 79) sampleFlags = 3;
-		else if (program >= 80 && program <= 103) sampleFlags = 3;
+		else if (program >= 80 && program <=103) sampleFlags = 3;
+		else if (program >=121 && program <=124) sampleFlags = 3;
+		else if (program ==126) sampleFlags = 3;
 	}
 
 	if (sampleFlags == 2) sampleFlags = 0;
@@ -1301,6 +1305,7 @@ fprintf(stderr, "preset %d, root_freq %ld\n", preset, sp->v.root_freq);
 
 
 	convert_volume_envelope(lay, sf, sp, banknum, program);
+	convert_modulation_envelope(lay, sf, sp, banknum, program);
 
 	if (strip_tail == 1) sp->v.data_length = sp->v.loop_end + 1;
 
@@ -1503,7 +1508,7 @@ static void convert_volume_envelope(Layer *lay, SFInfo *sf, SampleList *sp, int 
 	/* int milli = play_mode->rate/1000; */
 #ifdef EXAMINE_SOME_ENVELOPES
 	static int no_shown = 0;
-no_shown = banknum==0 && (preset >= 56 && preset <= 56);
+no_shown = banknum==0 && (preset >= 50 && preset <= 56);
 if (no_shown) {
 printf("PRESET %d\n",preset);
 	printf("sustainEnv2 %d delayEnv2 %d attackEnv2 %d holdEnv2 %d decayEnv2 %d releaseEnv2 %d\n",
@@ -1550,8 +1555,7 @@ printf("PRESET %d\n",preset);
 	sp->v.envelope_offset[RELEASEC] = to_offset(ENV_BOTTOM);
 	sp->v.envelope_rate[RELEASEC] = to_offset(200);
 
-	sp->v.envelope_offset[DELAY] = 0;
-	sp->v.envelope_rate[DELAY] = (int32)delay / 1000 /* * milli */;
+	sp->v.envelope_rate[DELAY] = (int32)( (delay*play_mode->rate) / 1000 );
 
 	sp->v.modes |= MODES_ENVELOPE;
 #ifdef EXAMINE_SOME_ENVELOPES
@@ -1571,6 +1575,83 @@ if (no_shown) {
 		sp->v.envelope_offset[5] >>(7+15), sp->v.envelope_rate[5] >>(7+15));
 	printf("  delay(6): off %ld  rate %ld\n",
 		sp->v.envelope_offset[6], sp->v.envelope_rate[6]);
+}
+#endif
+}
+
+static void convert_modulation_envelope(Layer *lay, SFInfo *sf, SampleList *sp, int banknum, int preset)
+{
+	int32 sustain = calc_modulation_sustain(lay, sf, banknum, preset);
+	double delay = to_msec(lay, sf, SF_delayEnv1);
+	double attack = to_msec(lay, sf, SF_attackEnv1);
+	double hold = to_msec(lay, sf, SF_holdEnv1);
+	double decay = to_msec(lay, sf, SF_decayEnv1);
+	double release = to_msec(lay, sf, SF_releaseEnv1);
+	int32 volume = 255;
+#ifdef EXAMINE_SOME_ENVELOPES
+	static int no_shown = 0;
+no_shown = banknum==0 && (preset >= 50 && preset <= 56);
+if (no_shown) {
+printf("PRESET %d\n",preset);
+	printf("sustainEnv1 %d delayEnv1 %d attackEnv1 %d holdEnv1 %d decayEnv1 %d releaseEnv1 %d\n",
+	lay->val[SF_sustainEnv1],
+	lay->val[SF_delayEnv1],
+	lay->val[SF_attackEnv1],
+	lay->val[SF_holdEnv1],
+	lay->val[SF_decayEnv1],
+	lay->val[SF_releaseEnv1] );
+	printf("attack %f hold %f sustain %ld decay %f release %f delay %f\n", attack, hold, sustain,
+		decay, release, delay);
+}
+#endif
+
+
+
+/* ramp from 0 to <volume> in <attack> msecs */
+	sp->v.modulation_offset[ATTACK] = to_offset(volume);
+	sp->v.modulation_rate[ATTACK] = calc_rate(volume, attack);
+
+/* ramp down HOLD_EXCURSION in <hold> msecs */
+	sp->v.modulation_offset[HOLD] = to_offset(volume-HOLD_EXCURSION);
+	sp->v.modulation_rate[HOLD] = calc_rate(HOLD_EXCURSION, hold);
+
+/* ramp down by <sustain> in <decay> msecs */
+	if(sustain < ENV_BOTTOM) sustain = ENV_BOTTOM;
+	if(sustain > volume - HOLD_EXCURSION) sustain = volume - HOLD_EXCURSION;
+
+	sp->v.modulation_offset[DECAY] = to_offset(sustain);
+	sp->v.modulation_rate[DECAY] = calc_rate(volume - HOLD_EXCURSION - sustain, decay);
+	if (fast_decay) sp->v.modulation_rate[DECAY] *= 2;
+
+/* ramp to ENV_BOTTOM in ?? msec */
+	sp->v.modulation_offset[RELEASE] = to_offset(ENV_BOTTOM);
+	sp->v.modulation_rate[RELEASE] = calc_rate(255, release);
+	if (fast_decay) sp->v.modulation_rate[RELEASE] *= 2;
+
+	sp->v.modulation_offset[RELEASEB] = to_offset(ENV_BOTTOM);
+	sp->v.modulation_rate[RELEASEB] = to_offset(200);
+	sp->v.modulation_offset[RELEASEC] = to_offset(ENV_BOTTOM);
+	sp->v.modulation_rate[RELEASEC] = to_offset(200);
+
+	sp->v.modulation_rate[DELAY] = (int32)( (delay*play_mode->rate) / 1000 );
+
+#ifdef EXAMINE_SOME_ENVELOPES
+if (no_shown) {
+	/*no_shown++;*/
+	printf(" attack(0): off %ld  rate %ld\n",
+		sp->v.modulation_offset[0] >>(7+15), sp->v.modulation_rate[0] >>(7+15));
+	printf("   hold(1): off %ld  rate %ld\n",
+		sp->v.modulation_offset[1] >>(7+15), sp->v.modulation_rate[1] >>(7+15));
+	printf("sustain(2): off %ld  rate %ld\n",
+		sp->v.modulation_offset[2] >>(7+15), sp->v.modulation_rate[2] >>(7+15));
+	printf("release(3): off %ld  rate %ld\n",
+		sp->v.modulation_offset[3] >>(7+15), sp->v.modulation_rate[3] >>(7+15));
+	printf("  decay(4): off %ld  rate %ld\n",
+		sp->v.modulation_offset[4] >>(7+15), sp->v.modulation_rate[4] >>(7+15));
+	printf("    die(5): off %ld  rate %ld\n",
+		sp->v.modulation_offset[5] >>(7+15), sp->v.modulation_rate[5] >>(7+15));
+	printf("  delay(6): off %ld  rate %ld\n",
+		sp->v.modulation_offset[6], sp->v.modulation_rate[6]);
 }
 #endif
 }
@@ -1653,6 +1734,21 @@ static int32 calc_sustain(Layer *lay, SFInfo *sf, int banknum, int preset)
 	if (!lay->set[SF_sustainEnv2])
 		return 250;
 	level = lay->val[SF_sustainEnv2];
+	if (sf->version == 1) {
+		if (level < 96)
+			level = 1000 * (96 - level) / 96;
+		else
+			return 0;
+	}
+	return TO_VOLUME(level);
+}
+/* convert sustain volume to linear volume */
+static int32 calc_modulation_sustain(Layer *lay, SFInfo *sf, int banknum, int preset)
+{
+	int32 level;
+	if (!lay->set[SF_sustainEnv1])
+		return 250;
+	level = lay->val[SF_sustainEnv1];
 	if (sf->version == 1) {
 		if (level < 96)
 			level = 1000 * (96 - level) / 96;
@@ -1802,159 +1898,4 @@ static void calc_filterQ(Layer *lay, SFInfo *sf, SampleList *sp)
 	if (sp->resonance < 0)
 		sp->resonance = 0;
 }
-
-#if 0
-/* moved to resample.c */
-
-/*----------------------------------------------------------------
- * low-pass filter:
- * 	y(n) = A * x(n) + B * y(n-1)
- * 	A = 2.0 * pi * center
- * 	B = exp(-A / frequency)
- *----------------------------------------------------------------
- * resonance filter:
- *	y(n) = a * x(n) - b * y(n-1) - c * y(n-2)
- *	c = exp(-2 * pi * width / rate)
- *	b = -4 * c / (1+c) * cos(2 * pi * center / rate)
- *	a = sqt(1-b*b/(4 * c)) * (1-c)
- *----------------------------------------------------------------*/
-
-#ifdef LOOKUP_HACK
-#define MAX_DATAVAL 127
-#define MIN_DATAVAL -128
-#else
-#define MAX_DATAVAL 32767
-#define MIN_DATAVAL -32768
-#endif
-
-#ifdef USE_BUTTERWORTH
-static void do_lowpass_w_res(Sample *sp, int32 freq, FLOAT_T resonance)
-#else
-static void do_lowpass(Sample *sp, int32 freq, FLOAT_T resonance)
-#endif
-{
-	double A, B, C;
-	sample_t *buf, pv1, pv2;
-	int32 i;
-
-	if (freq > sp->sample_rate * 2) {
-		ctl->cmsg(CMSG_ERROR, VERB_NORMAL,
-			  "Lowpass: center must be < data rate*2");
-		return;
-	}
-	A = 2.0 * M_PI * freq * 2.5 / sp->sample_rate;
-	B = exp(-A / sp->sample_rate);
-/*
-	A *= 0.8;
-	B *= 0.8;
-*/
-	C = 0;
-
-	/* */
-	if (resonance) {
-		double a, b, c;
-		int32 width;
-		width = freq / 5;
-		c = exp(-2.0 * M_PI * width / sp->sample_rate);
-		b = -4.0 * c / (1+c) * cos(2.0 * M_PI * freq / sp->sample_rate);
-		a = sqrt(1 - b * b / (4 * c)) * (1 - c);
-		b = -b; c = -c;
-
-		A += a * resonance;
-		B += b;
-		C = c;
-	}
-	/* */
-
-/* some clipping w. 0.30, 0.25, 0.20, 0.15 */
-	A *= 0.10;
-	B *= 0.10;
-	C *= 0.10;
-
-	pv1 = 0;
-	pv2 = 0;
-	buf = sp->data;
-	for (i = 0; i < sp->data_length; i++) {
-		sample_t l = *buf;
-		double d = A * l + B * pv1 + C * pv2;
-		if (d > MAX_DATAVAL)
-			d = MAX_DATAVAL;
-		else if (d < MIN_DATAVAL)
-			d = MIN_DATAVAL;
-		pv2 = pv1;
-		pv1 = *buf++ = (sample_t)d;
-	}
-}
-
-#ifdef USE_BUTTERWORTH
-static void do_lowpass(Sample *sp, int32 freq, FLOAT_T resonance)
-{
-	double C, a0, a1, a2, b0, b1;
-	sample_t *buf = sp->data;
-	double oldin=0, lastin=0, oldout=0, lastout=0;
-	int i, clips = 0;
-	double maxin=0, minin=0, inputgain=0.95;
-
-	if (resonance) do_lowpass_w_res(sp, freq, resonance);
-
-	if (freq > 12000) freq = 12000;
-
-	if (freq > sp->sample_rate * 2) {
-		ctl->cmsg(CMSG_ERROR, VERB_NORMAL,
-			  "Lowpass: center must be < data rate*2");
-		return;
-	}
-
-	C = 1.0 / tan(M_PI * freq / sp->sample_rate);
-
-	a0 = 1.0 / (1.0 + sqrt(2.0) * C + C * C);
-	a1 = 2.0 * a0;
-	a2 = a0;
-
-	b0 = 2 * (1.0 - C * C) * a0;
-	b1 = (1.0 - sqrt(2.0) * C + C * C) * a0;
-
-	if (a1 > 2.0) {
-		inputgain = 1 / a1;
-	}
-	for (i = 0; i < sp->data_length; i++) {
-		sample_t samp = *buf;
-		double outsamp, insamp;
-		insamp = samp * inputgain;
-		outsamp = a0 * insamp + a1 * lastin + a2 * oldin - b0 * lastout - b1 * oldout;
-		if (outsamp >maxin) maxin = outsamp;
-		if (outsamp <minin) minin = outsamp;
-		/*lastout = outsamp;*/
-		if (outsamp > MAX_DATAVAL) {
-			outsamp = MAX_DATAVAL;
-			clips++;
-		}
-		else if (outsamp < MIN_DATAVAL) {
-			outsamp = MIN_DATAVAL;
-			clips++;
-		}
-		*buf++ = (sample_t)outsamp;
-		oldin = lastin;
-		lastin = insamp;
-		oldout = lastout;
-		lastout = outsamp;
-	}
-#ifdef BUTTERWORTH_DEBUG
-if (resonance)
-printf("\tbandwith %f centerfreq %f f=%ld : a0=%f a1=%f a2=%f b0=%f b1=%f\n", bandwidth, centerfreq, freq,
-	 a0,a1,a2,b0,b1);
-/*
-else
-printf("\tgain %f , f=%ld : a0=%f a1=%f a2=%f b0=%f b1=%f\n", inputgain, freq, a0,a1,a2,b0,b1);
-*/
-	if (clips) {
-    		ctl->cmsg(CMSG_ERROR, VERB_NORMAL, "%d clips: maxout %f, minout %f : a0=%f a1=%f a2=%f b0=%f b1=%f",
- clips, maxin, minin, a0,a1,a2,b0,b1);
-		/*if (clips>60) exit(1);*/
-	}
-#endif
-}
-#endif
-
-#endif
 

@@ -869,88 +869,116 @@ sample_t *real_resample_voice(int v, uint32 *countptr)
 #define MIN_DATAVAL -32768
 #endif
 
+
 void do_lowpass(uint32 srate, sample_t *buf, uint32 count, int32 freq, FLOAT_T resonance)
 {
-	double A, B, C;
-	sample_t pv1, pv2;
-	int32 i;
-
-	if (resonance && !freq) freq = 6400;
-	if (!freq) return;
-
-	if (freq > srate * 2) {
-		ctl->cmsg(CMSG_ERROR, VERB_NORMAL,
-			  "Lowpass: center must be < data rate*2");
-		return;
-	}
-	A = 2.0 * M_PI * freq * 2.5 / srate;
-	B = exp(-A / srate);
-/* 900-1500 clips
-	A *= 0.8;
-	B *= 0.8;
-*/
-	C = 0;
-
-	/* */
-	if (resonance) {
-		double a, b, c;
-		int32 width;
-		width = freq / 5;
-		c = exp(-2.0 * M_PI * width / srate);
-		b = -4.0 * c / (1+c) * cos(2.0 * M_PI * freq / srate);
-		a = sqrt(1 - b * b / (4 * c)) * (1 - c);
-		b = -b; c = -c;
-
-		A += a * resonance;
-		B += b;
-		C = c;
-	}
-	/* */
-
-/* some clipping w. 0.30, 0.25, 0.20, 0.15 */
-#if 0
-/* no reduction: 150-1500 clips  */
-	A *= 0.10;
-	B *= 0.10;
-	C *= 0.10;
+    double C, D, a0, a1, a2, b0, b1;
+#ifdef DO_RESONANCE
+    double bandwidth;
 #endif
-/* 0-66 clips
-	A *= 0.30;
-	B *= 0.30;
-	C *= 0.30;
-*/
-/* no clips */
-#if 0
-	A *= 0.25;
-	B *= 0.25;
-	C *= 0.25;
-#endif
-	A *= 0.28;
-	B *= 0.28;
-	C *= 0.28;
+    double x0=0, x1=0, y0=0, y1=0;
+    int i, clips = 0;
+    double maxin=0, minin=0;
 
-	pv1 = 0;
-	pv2 = 0;
+    /* if (resonance) do_lowpass_w_res(sp, freq, resonance); */
+    if (freq < 349) return;
+
+    if (freq > 12000) freq = 12000;
+
+    if (freq > srate * 2) {
+    	ctl->cmsg(CMSG_ERROR, VERB_NORMAL,
+    		  "Lowpass: center must be < data rate*2");
+    	return;
+    }
+
+
+#ifdef DEB_CALL_LP
+for (i = 100; i <= 20000; i += 200) {
+freq = i;
+#endif
+
+#ifdef DO_RESONANCE
+    if (freq < 1000) resonance = 0;
+    if (resonance) {
+	bandwidth = resonance * (freq / 6);
+	C = 1.0 / tan(M_PI * bandwidth / srate);
+	D = 2 * cos(2 * M_PI * freq / srate);
+
+	a0 = 1.0 / (1.0 + C);
+	a1 = 0.0;
+	a2 = -a0;
+
+	b0 = -C * D * a0;
+	b1 = (C - 1.0) * a0;
+    }
+    else {
+#endif
+
+/*
+	C = 1.0 / tan(M_PI * freq / srate);
+
+	a0 = 1.0 / (1.0 + sqrt(2.0) * C + C * C);
+	a1 = 2.0 * a0;
+	a2 = a0;
+
+	b0 = 2 * (1.0 - C * C) * a0;
+	b1 = (1.0 - sqrt(2.0) * C + C * C) * a0;
+*/
+	i = (freq+50) / 100;
+	a0 = butterworth[i][0];
+	a1 = butterworth[i][1];
+	a2 = butterworth[i][2];
+	b0 = butterworth[i][3];
+	b1 = butterworth[i][4];
+
+#ifdef DO_RESONANCE
+    }
+#endif
+#ifdef DEB_CALL_LP
+printf("f=%d: a0=%f a1=%f a2=%f b0=%f b1=%f\n", (int)freq, a0, a1, a2, b0, b1);
+}
+#endif
+
+#ifndef DEB_CALL_LP
 	for (i = 0; i < count; i++) {
-		sample_t l = *buf;
-		double d = A * l + B * pv1 + C * pv2;
-		if (d > MAX_DATAVAL) {
-			output_clips++;
-			d = MAX_DATAVAL;
+		sample_t samp = *buf;
+		double outsamp, insamp;
+		insamp = (double)samp;
+		outsamp = a0 * insamp + a1 * x0 + a2 * x1 - b0 * y0 - b1 * y1;
+		if (outsamp >maxin) maxin = outsamp;
+		if (outsamp <minin) minin = outsamp;
+		/*y0 = outsamp;*/
+		if (outsamp > MAX_DATAVAL) {
+			outsamp = MAX_DATAVAL;
+			clips++;
 		}
-		else if (d < MIN_DATAVAL) {
-			output_clips++;
-			d = MIN_DATAVAL;
+		else if (outsamp < MIN_DATAVAL) {
+			outsamp = MIN_DATAVAL;
+			clips++;
 		}
-		pv2 = pv1;
-		pv1 = *buf++ = (sample_t)d;
+		*buf++ = (sample_t)outsamp;
+		x1 = x0;
+		x0 = insamp;
+		y1 = y0;
+		y0 = outsamp;
+
 	}
+#endif
 }
 
 sample_t *resample_voice(int v, uint32 *countptr)
 {
     Voice *vp=&voice[v];
     sample_t *rs;
+#ifdef DEB_CALL_LP
+    static int already_called = 0;
+if (!already_called) {
+printf("parms\n");
+    do_lowpass(vp->sample->sample_rate, 0, *countptr,
+	vp->sample->cutoff_freq, vp->sample->resonance);
+already_called = 1;
+}
+#endif
 
     rs = real_resample_voice(v, countptr);
 
