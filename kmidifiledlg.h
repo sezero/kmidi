@@ -38,11 +38,14 @@ public:
 			    QWidget *parent= 0, const char *name= 0);
 
 protected:
-
+  QString hlfile;
 
 protected slots:
-    void slotOk(void);
+//    void slotOk(void);
+    void accept(void);
+    void closeFbox(void);
     void playFile(const QString& fname);
+    void noteFile(const QString& fname);
 
 };
 

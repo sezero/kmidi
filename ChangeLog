@@ -1,3 +1,7 @@
+2000-07-09  Greg Lee  <lee@hawaii.edu>
+
+	* kmidifiledialog: fix open file dialog
+
 2000-07-07  Greg Lee  <lee@hawaii.edu>
 
 	* Makefile.am, config.h: path for config file was wrong

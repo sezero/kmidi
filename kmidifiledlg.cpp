@@ -23,6 +23,7 @@
 #include <qdir.h>
 #include <klocale.h>
 #include <kurl.h>
+#include <kdiroperator.h>
 #include "kmidifiledlg.h"
 #include "kmidi.h"
 
@@ -33,26 +34,22 @@ KMidiFileDlg::KMidiFileDlg(const QString& dirName, const QString& filter,
 				 bool modal )
     : KFileDialog(dirName, filter, parent, name, modal)
 {
-    connect(this,SIGNAL(fileSelected(const QString&)),
+/*    connect(this,SIGNAL(fileSelected(const QString&)),
 	    SLOT(playFile(const QString&)));
+*/
+    connect(this,SIGNAL(fileHighlighted(const QString&)),
+	    SLOT(noteFile(const QString&)));
+    connect(this,SIGNAL(cancelClicked()),
+	    SLOT(closeFbox()));
     setButtonOKText(i18n("Play"));
     setButtonCancelText(i18n("Close"));
 }
 
 void KMidiFileDlg::playFile(const QString& fname)
 {
-    fprintf(stderr, "You clicked on %s\n", fname.ascii());
-}
+/*    fprintf(stderr, "You clicked on %s\n", fname.ascii()); */
 
-void KMidiFileDlg::slotOk()
-{
-
-    if ( locationEdit->currentText().stripWhiteSpace().isEmpty() )
-        return;
-
-    QString filename = locationEdit->currentText();
-
-    KURL u( filename );
+    KURL u( fname );
     QString thePath = u.path();
 
     if ( u.isLocalFile() ) {
@@ -66,7 +63,33 @@ void KMidiFileDlg::slotOk()
 	kmidi->restartPlaybox();
       }
     }
+}
 
+void KMidiFileDlg::noteFile(const QString& fname)
+{
+    fprintf(stderr, "You selected %s\n", fname.ascii());
+
+    hlfile = fname;
+}
+
+void KMidiFileDlg::accept()
+{
+    if ( locationEdit->currentText().stripWhiteSpace().isEmpty() )
+        return;
+
+    playFile(hlfile);
+}
+#define ConfigGroup QString::fromLatin1("KFileDialog Settings")
+
+void KMidiFileDlg::closeFbox()
+{
+/* this doesn't appear to work */
+    *lastDirectory = ops->url();
+    KSimpleConfig *c = new KSimpleConfig(QString::fromLatin1("kdeglobals"),
+                                         false);
+    saveConfig( c, ConfigGroup );
+    saveRecentFiles( KGlobal::config() );
+    delete c;
 }
 
 void KMidiFileDlg::getOpenDialog(const QString& dir, const QString& filter,
