@@ -34,7 +34,7 @@ extern PlayMode dec_play_mode;
 #define DEFAULT_PLAY_MODE &dec_play_mode
 #endif
 
-/* #if defined(__linux) || defined(__FreeBSD__) */
+/* #if defined(__linux__) || defined(__FreeBSD__) */
 #ifdef AU_OSS
 extern PlayMode linux_play_mode;
 extern PlayMode linux_play_mode_two;

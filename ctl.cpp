@@ -1209,7 +1209,7 @@ static void shm_free(int sig)
 {
 	int status;
 #ifdef NOW_USING_SEMAPHORES
-#if defined(__linux) || defined(__FreeBSD__)
+#if defined(__linux__) || defined(__FreeBSD__)
 	union semun dmy;
 #else /* Solaris 2.x, BSDI, OSF/1, HPUX */
 	void *dmy;

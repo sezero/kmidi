@@ -24,14 +24,14 @@
 
 */
 
-/* #if defined(__linux) || defined(__FreeBSD__) */
+/* #if defined(__linux__) || defined(__FreeBSD__) */
 #ifdef AU_OSS
 #define _GNU_SOURCE
 #include <unistd.h>
 #include <fcntl.h>
 #include <errno.h>
 
-#ifdef __linux
+#ifdef __linux__
 #include <sys/ioctl.h> /* new with 1.2.0? Didn't need this under 1.1.64 */
 #include <linux/soundcard.h>
 #endif
@@ -324,4 +324,4 @@ static void purge_output(void)
   ioctl(dpm.fd, SNDCTL_DSP_RESET);
 }
 
-#endif /* defined(linux) || defined(__FreeBSD__) */
+#endif /* defined(__linux__) || defined(__FreeBSD__) */

@@ -2,7 +2,7 @@
 	$Id$
 */
 
-/* #if defined(__linux) || defined(__FreeBSD__) || defined(sun) */
+/* #if defined(__linux__) || defined(__FreeBSD__) || defined(sun) */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -11,7 +11,7 @@
 #include <string.h>
 
 #ifdef AU_OSS
-#ifdef __linux
+#ifdef __linux__
 #include <sys/ioctl.h> /* new with 1.2.0? Didn't need this under 1.1.64 */
 #include <linux/soundcard.h>
 #endif
