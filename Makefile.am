@@ -43,7 +43,7 @@ kmidi_SOURCES = kmidi.cpp  playlist.cpp bwlednum.cpp configdlg.cpp log.cpp \
 	b_out.cpp fffload.cpp \
 	effects.cpp reverb_e.cpp chorus_e.cpp phaser_e.cpp celeste_e.cpp \
 	resample_l.cpp resample_f.cpp midiapplication.cpp kmidiframe.cpp \
-	kmidifiledlg.cpp
+	kmidifiledlg.cpp qttableview.cpp
 
 sf2cfg_SOURCES = sf2cfg.cpp readsbk.cpp
 sf2cfg_LDADD =
