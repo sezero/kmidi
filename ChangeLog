@@ -1,3 +1,8 @@
+2000-08-25  Greg Lee  <lee@hawaii.edu>
+
+	* alsa_a.cpp: various refinements
+	* configdlg.cpp: change outdated Izumo web address
+
 2000-08-23  Greg Lee  <lee@hawaii.edu>
 
 	* TIMIDITY/makelinks must be run at compile time
@@ -9,6 +14,7 @@
 	  no longer be deleted, since it's later used by the
 	  crashhandler
 	* fix the alsa_a.cpp driver
+	* b_out.cpp: support for alsa driver
 
 2000-07-15  Greg Lee  <lee@hawaii.edu>
 

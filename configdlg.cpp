@@ -177,7 +177,7 @@ ConfigDlg::ConfigDlg(QWidget *parent, struct configstruct *data, const char *nam
 			"http://www.geocities.com/SiliconValley/Lab/6307/",
 		       i18n("effects: reverb, chorus, phaser, celeste"));
     about->addContributor("Masanao Izumo", "mo@goice.co.jp",
-			"http://www.goice.co.jp/member/mo/timidity.html",
+			"http://www.goice.co.jp/member/mo/timidity/",
 		       i18n("mod wheel, portamento ..."));
     about->addContributor("see the timidity.1 man page", "for authors of",
 			"", 
