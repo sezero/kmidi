@@ -494,10 +494,12 @@ CONFIG_INTERFACE(slang,SLANG,s,
 	[ enable_slang=no
 	  AC_MSG_WARN(slang interface is not enabled) ])
     AC_CHECK_HEADERS(slang/slang.h slang.h)
+    if ! test "x$enable_slang" = xno; then
 dnl    LIBS="$LIBS -lslang"
     EXTRALIBS="$EXTRALIBS -lslang"
     EXTRATLIBS="$EXTRATLIBS -lslang"
     EXTRADEFS="$EXTRADEFS -DIA_SLANG"
+    fi
    ])
 
 
