@@ -28,6 +28,7 @@
 #include <qtextstream.h>
 
 #include <kconfig.h>
+#include <klineeditdlg.h>
 #include <klocale.h>
 #include <kstandarddirs.h>
 #include <kmessagebox.h>
@@ -62,26 +63,13 @@ PlaylistEdit::PlaylistEdit(const char *name, QStringList *playlist,
   QPopupMenu *file = new QPopupMenu;
   Q_CHECK_PTR( file );
 
-  snpopup = new QFrame( this ,0, WType_Popup);
-  snpopup->setFrameStyle( QFrame::PopupPanel|QFrame::Raised );
-  snpopup->resize(170,75);
-
-  newEdit = new QLineEdit( snpopup, "_editnew" );
-
-  QLabel *labsavename = new QLabel(snpopup);
-  labsavename->setText(i18n("Enter new name"));
-  newEdit->setGeometry(10,10, 150, 30);
-  labsavename->setGeometry(20,10+30, 150, 30);
-  connect( newEdit, SIGNAL( returnPressed() ), this, SLOT( newPlaylist() ) );
-  newEdit->setFocus();
-
   file->insertItem( i18n("OK"), this, SLOT(checkList()), 0, 40);
 	file->setWhatsThis(40, i18n("Accept and use the new play list.") );
   file->insertItem( i18n("Save"), this, SLOT(saveIt()), 0, 41);
 	file->setWhatsThis(41, i18n("Replace the contents of the<br>\n"
 				"currently selected playlist<br>\n"
 				"file with the new play list.") );
-  file->insertItem( i18n("Save As..."), this, SLOT( editNewPlaylist() ), 0, 42);
+  file->insertItem( i18n("Save As..."), this, SLOT( newPlaylist() ), 0, 42);
 	file->setWhatsThis(42, i18n("Make up a name for a<br>\n"
 				"new playlist file and<br>\n"
 				"save the current play list there.") );
@@ -571,22 +559,19 @@ void PlaylistEdit::checkList(){
 }
 
 
-void PlaylistEdit::editNewPlaylist(){
-    snpopup->move( QCursor::pos() );
-    snpopup->show();
-}
-
 void PlaylistEdit::newPlaylist(){
-	QString plf = newEdit->text();
-	snpopup->hide();
-	newEdit->clear();
-	plf += ".plist";
-        QString path = locateLocal("appdata", plf);
-	listsonglist->append(path);
-        listsonglist->sort();
-	*playlist_ptr = listsonglist->findIndex(path);
-	savePlaylistbyName(plf, true);
-	redoDisplay();
+	KLineEditDlg dlg(i18n("Enter name:"), QString::null, this);
+	dlg.setCaption(i18n("New Playlist"));
+	if (dlg.exec()) {
+	  QString plf = dlg.text();
+	  plf += ".plist";
+          QString path = locateLocal("appdata", plf);
+	  listsonglist->append(path);
+          listsonglist->sort();
+	  *playlist_ptr = listsonglist->findIndex(path);
+	  savePlaylistbyName(plf, true);
+	  redoDisplay();
+	}
 }
 
 

@@ -89,7 +89,6 @@ public:
 
 private slots:
 
-  void editNewPlaylist();
   void newPlaylist();
 //  void help();
   void savePlaylistbyName(const QString &name, bool truncate);
@@ -141,9 +140,7 @@ private:
     QWhatsThis *what;
     QStringList*  songlist;
     QStringList*  listsonglist;
-    QLineEdit* newEdit;
     int *playlist_ptr;
-    QFrame* snpopup;
     //QPopupMenu *savenew;
     QPopupMenu *view;
 
