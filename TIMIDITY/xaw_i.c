@@ -1631,8 +1631,7 @@ static void handle_input(XtPointer data,int *source,XtInputId *id) {
         if (NULL != (fp=fopen(dotfile, "a+"))) {
           for(i=0; i<n; i++) {
             a_pipe_read(local_buf,sizeof(local_buf));
-            current_flist[i]=(char *)safe_malloc(sizeof(char)*(strlen(local_buf)+1));
-            strcpy(current_flist[i], local_buf);
+            current_flist[i]= strdup(local_buf);
             fprintf(fp,"set %s %s\n",cfg_items[S_MidiFile],current_flist[i]);
           }
           fclose(fp);
@@ -1747,15 +1746,15 @@ static char *expandDir(char *path, DirPath *full) {
     strcpy(newfull, tmp); return newfull;
   } else if (*p != '~' && NULL == (tail = strrchr(path, '/'))) {
     p = tmp;
-    strcpy(p, basepath);
+    strlcpy(p, basepath, sizeof(tmp));
     full->dirname = p;
     while (*p++ != '\0') ;
-    strcpy(p, path);
+    strlcpy(p, path, sizeof(tmp) - strlen(tmp));
     snprintf(newfull,sizeof(newfull),"%s/%s", basepath, path);
     full->basename = p; return newfull;
   }
   if (*p  == '/') {
-    strcpy(tmp, path);
+    strlcpy(tmp, path, sizeof(tmp));
   } else {
     if (*p == '~') {
       struct passwd *pw;
@@ -1800,7 +1799,7 @@ static void setDirAction(Widget w,XEvent *e,String *v,Cardinal *n) {
     p = p2;
   if(stat(p, &st) == -1) return;
   if(S_ISDIR(st.st_mode)) {
-    strcpy(basepath,p);
+    strlcpy(basepath, p, sizeof(basepath));
     p = strrchr(basepath, '/');
     if (*(p+1) == '\0') *p = '\0';
     lrs.string = "";
@@ -1880,7 +1879,7 @@ static void setDirList(Widget list, Widget label, XawListReturnStruct *lrs) {
     }
     i = 0; d_num = 0; f_num = 0;
     while ((dent = readdir(dirp)) != NULL) {
-      strcpy(filename, dent->d_name);
+      strlcpy(filename, dent->d_name, sizeof(filename));
       sprintf(fullpath, "%s/%s", currdir, filename);
       if(stat(fullpath, &st) == -1) continue;
       if(strlen(filename) > 1 && filename[0] == '.' && filename[1] == '\0') continue;
@@ -1889,12 +1888,12 @@ static void setDirList(Widget list, Widget label, XawListReturnStruct *lrs) {
           && filename[1] == '.' && filename[2] == '\0') continue;
       }
       if(S_ISDIR(st.st_mode)) {
-        strcat(filename, "/"); d_num++;
+        strlcat(filename, "/", sizeof(filename)); 
+        d_num++;
       } else {
         f_num++;
       }
-      dirlist[i] = (char *)malloc(strlen(filename)+1);
-      strcpy(dirlist[i], filename);
+      dirlist[i] = strdup(filename);
       i++;
       if (i > 998) break;
     }
@@ -1929,7 +1928,8 @@ static void setDirList(Widget list, Widget label, XawListReturnStruct *lrs) {
       if (currdir[0] == '/' && currdir[1] == '\0' && filename[0] == '.'
           && filename[1] == '.' && filename[2] == '\0') continue;
       if(S_ISDIR(st.st_mode)) {
-        strcat(filename, "/"); d_num++;
+        strlcat(filename, "/", sizeof(filename)); 
+        d_num++;
       } else {
         f_num++;
       }
@@ -1948,9 +1948,9 @@ static void setDirList(Widget list, Widget label, XawListReturnStruct *lrs) {
 
   XtVaSetValues(load_info,XtNlabel,local_buf,NULL);
   XtVaSetValues(label,XtNlabel,currdir,NULL);
-  strcpy(basepath, currdir);
+  strlcpy(basepath, currdir, sizeof(basepath));
   if(strlen(currdir) > 0 && currdir[strlen(currdir) - 1] != '/')
-      strcat(currdir, "/");
+      strlcat(currdir, "/", sizeof(currdir));
   XtVaSetValues(load_d,XtNvalue,currdir,NULL);
 }
 
@@ -2329,7 +2329,7 @@ static void completeDir(Widget w,XEvent *e, XtPointer data)
   if (NULL != (dirp=opendir(path))) {
 
     while ((dent = readdir(dirp)) != NULL) {
-      strcpy(filename, dent->d_name);
+      strlcpy(filename, dent->d_name, sizeof(filename));
         if (!strncmp(full.basename, filename, len)) {
           struct stat st;
           sprintf(fullpath, "%s/%s", full.dirname, filename);
@@ -2337,13 +2337,14 @@ static void completeDir(Widget w,XEvent *e, XtPointer data)
           if (stat(fullpath, &st) == -1)
             continue;
           if (!match)
-            strcpy(matchstr, filename);
+            strlcpy(matchstr, filename, sizeof(matchstr));
           else
             strmatch(matchstr, filename);
           match++;
           if(S_ISDIR(st.st_mode) && (!strcmp(filename,full.basename))) {
-            strcpy(matchstr, filename);
-            strcat(matchstr, "/"); match = 1; break;
+            strlcpy(matchstr, filename, sizeof(matchstr));
+            strlcat(matchstr, "/", sizeof(matchstr)); 
+            match = 1; break;
           }
         }
     }
@@ -2371,13 +2372,14 @@ static void completeDir(Widget w,XEvent *e, XtPointer data)
           if (stat(fullpath, &st) == -1)
             continue;
           if (!match)
-            strcpy(matchstr, filename);
+            strlcpy(matchstr, filename, sizeof(matchstr));
           else
             strmatch(matchstr, filename);
           match++;
           if(S_ISDIR(st.st_mode) && (!strcmp(filename,full.basename))) {
-            strcpy(matchstr, filename);
-            strcat(matchstr, "/"); match = 1; break;
+            strlcpy(matchstr, filename, sizeof(matchstr));
+            strlcat(matchstr, "/", sizeof(matchstr)); 
+            match = 1; break;
           }
         }
       }
@@ -2443,9 +2445,7 @@ static void a_readconfig (Config *Cfg) {
             p = s+k+4;
             if(dot_nfile < INIT_FLISTNUM)
               if(IsEffectiveFile(p)) {
-                dotfile_flist[dot_nfile]
-                  = (char *)safe_malloc(sizeof(char)*(strlen(p) +1));
-                strcpy(dotfile_flist[dot_nfile],p);
+                dotfile_flist[dot_nfile] = strdup(p);
                 dotfile_flist[++dot_nfile] = NULL;
               }
           }
@@ -2619,8 +2619,6 @@ static void flistMove(Widget w, XEvent *e, String *v, Cardinal *n) {
 static int max_num = INIT_FLISTNUM;
 
 static void addFlist(char *fname, int current_n) {
-  char *p;
-
   if(max_num < current_n+1) {
     max_num += 64;
 #ifdef ORIG_XAW
@@ -2629,8 +2627,7 @@ static void addFlist(char *fname, int current_n) {
     flist = (String *)realloc(flist,(max_num+1)*sizeof(String));
 #endif
   }
-  p = (char *)safe_malloc(sizeof(char) * (strlen(fname) +1));
-  flist[current_n]= strcpy(p, fname);
+  flist[current_n]= strdup(fname);
   flist[current_n+1]= NULL;
 }
 
