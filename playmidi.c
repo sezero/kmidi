@@ -261,6 +261,10 @@ static void select_sample(int v, Instrument *ip)
     }
 
   f=voice[v].orig_frequency;
+#if 0
+/*
+    Even if in range, a later patch may be closer. */
+
   for (i=0; i<s; i++)
     {
       if (sp->low_freq <= f && sp->high_freq >= f)
@@ -270,7 +274,7 @@ static void select_sample(int v, Instrument *ip)
 	}
       sp++;
     }
-
+#endif
   /* 
      No suitable sample found! We'll select the sample whose root
      frequency is closest to the one we want. (Actually we should
@@ -1872,11 +1876,11 @@ static void show_markers(int32 until_time)
     for (i = 0, j = 0; j < META_BUF_LEN && j < len; j++)
 	if (buf[j] == '\n') {
 	    buf[j] = '\0';
-	    if (j - i > 0) ctl->cmsg(CMSG_INFO, VERB_ALWAYS, buf + i);
-	    else ctl->cmsg(CMSG_INFO, VERB_ALWAYS, " ");
+	    if (j - i > 0) ctl->cmsg(CMSG_LYRIC, VERB_ALWAYS, buf + i);
+	    else ctl->cmsg(CMSG_LYRIC, VERB_ALWAYS, " ");
 	    i = j + 1;
 	}
-    if (i < j) ctl->cmsg(CMSG_INFO, VERB_ALWAYS, "~%s", buf + i);
+    if (i < j) ctl->cmsg(CMSG_LYRIC, VERB_ALWAYS, "~%s", buf + i);
 }
 #endif
 
@@ -2331,9 +2335,6 @@ static void update_channel_freq(int ch)
 int play_midi(MidiEvent *eventlist, uint32 events, uint32 samples)
 {
   int rc;
-#ifdef KMIDI
-  int32 whensaytime;
-#endif
 
 
   adjust_amplification();
@@ -2343,9 +2344,6 @@ int play_midi(MidiEvent *eventlist, uint32 events, uint32 samples)
   lost_notes=cut_notes=played_notes=output_clips=0;
 
   skip_to(0);
-#ifdef KMIDI
-  whensaytime = current_event->time;
-#endif
 
   for (;;)
     {
@@ -2357,13 +2355,6 @@ int play_midi(MidiEvent *eventlist, uint32 events, uint32 samples)
       /* Handle all events that should happen at this time */
       while (current_event->time <= current_sample)
 	{
-#ifdef KMIDI
-	  if (whensaytime + 400 > current_event->time && current_event->time + 400 < current_sample)
-	  {
-		ctl->current_time(current_event->time);
-		whensaytime = current_event->time;
-	  }
-#endif
 	  switch(current_event->type)
 	    {
 

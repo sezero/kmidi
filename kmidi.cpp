@@ -1491,6 +1491,10 @@ void KMidi::loadplaylist( int which ) {
 
 }
 
+static int lyric_head = 0, lyric_tail = 0;
+static char lyric_buffer[20][2024];
+static int lyric_time[20];
+
 void KMidi::ReadPipe(){
 
     static int last_buffer_state = 100;
@@ -1555,6 +1559,8 @@ void KMidi::ReadPipe(){
 		/*		printf("GUI: TOTALTIME %s\n",local_string);*/
 		max_sec=cseconds;
 		nbvoice = currplaytime = 0;
+		for (int l=0; l<20; l++) lyric_time[l] = -1;
+		lyric_head = 0; lyric_tail = 0;
 	    }
 	    break;
 	
@@ -1660,6 +1666,8 @@ void KMidi::ReadPipe(){
 			    return;
 			    */
 		nbvoice = currplaytime = 0;
+		for (int l=0; l<20; l++) lyric_time[l] = -1;
+		lyric_head = 0; lyric_tail = 0;
 
 		if(starting_up){
 		    starting_up = false;
@@ -1726,32 +1734,14 @@ void KMidi::ReadPipe(){
 
 	    case CURTIME_MESSAGE : {
 		int cseconds;
-		int  sec,seconds, minutes;
-		char local_string[20];
 
 		/*		printf("RECEIVED: CURTIME_MESSAGE\n");*/
 		pipe_int_read(&cseconds);
 		pipe_int_read(&nbvoice);
-	
-		sec=seconds=cseconds/100;
+
 
 		currplaytime = cseconds + 1;
 	
-		/* To avoid blinking */
-		if (sec!=last_sec)
-		    {
-			minutes=seconds/60;
-			seconds-=minutes*60;
-		
-			sprintf(local_string,"%02d:%02d",
-				minutes, seconds);
-			//		    printf("GUI CURTIME %s\n",local_string);	
-			setLEDs(local_string);
-	
-		    }
-
-		last_sec=sec;
-
 	    }
 	    break;
 	    /*	
@@ -1841,10 +1831,21 @@ void KMidi::ReadPipe(){
 	
 	    case CMSG_MESSAGE : {
 		char strmessage[2024];
-		int type = 0;
+		int type = 0, message_time = 0;
 
 		pipe_int_read(&type);
 		/*		printf("got a CMSG_MESSAGE of type %d\n", type);*/
+
+		if (type == CMSG_LYRIC) {
+			pipe_int_read(&message_time);
+			pipe_string_read(strmessage);
+			strcpy(lyric_buffer[lyric_head], strmessage);
+			lyric_time[lyric_head] = message_time;
+			lyric_head++;
+			if (lyric_head == 20) lyric_head = 0;
+			break;
+		}
+
 		pipe_string_read(strmessage);
 		/*		printf("RECEIVED %s %d\n",strmessage,strlen(strmessage));*/
 
@@ -1869,7 +1870,8 @@ void KMidi::ReadPipe(){
 	
 	    }
     }
-    else if (status == KPLAYING && currplaytime) {
+
+    if (status == KPLAYING && currplaytime) {
 		int cseconds;
 		int  sec,seconds, minutes;
 		char local_string[20];
@@ -1891,6 +1893,13 @@ void KMidi::ReadPipe(){
 		    }
 
 		last_sec=sec;
+
+		while (lyric_head != lyric_tail && lyric_time[lyric_tail] >= currplaytime) {
+			logwindow->insertStr(QString(lyric_buffer[lyric_tail]));
+			lyric_time[lyric_tail] = -1;
+			lyric_tail++;
+			if (lyric_tail == 20) lyric_tail = 0;
+		}
     }
 
     if (status != last_status) {

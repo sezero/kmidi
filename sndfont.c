@@ -1583,7 +1583,7 @@ printf("PRESET %d\n",preset);
 	sp->v.envelope_rate[RELEASEC] = to_offset(200);
 
 	/* pc400.sf2 has bad delay times for soprano sax */
-	if (delay > 5) delay = 0;
+	if (delay > 5) delay = 5;
 
 	sp->v.envelope_rate[DELAY] = (int32)( (delay*play_mode->rate) / 1000 );
 
@@ -1662,6 +1662,8 @@ printf("PRESET %d\n",preset);
 	sp->v.modulation_rate[RELEASEB] = to_offset(200);
 	sp->v.modulation_offset[RELEASEC] = to_offset(ENV_BOTTOM);
 	sp->v.modulation_rate[RELEASEC] = to_offset(200);
+
+	if (delay > 5) delay = 5;
 
 	sp->v.modulation_rate[DELAY] = (int32)( (delay*play_mode->rate) / 1000 );
 

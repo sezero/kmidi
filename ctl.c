@@ -97,11 +97,13 @@ void 	pipe_puts(char *str);
 int 	pipe_gets(char *str, int maxlen);
 */
 
+/*
 extern int output_device_open;
 extern int cfg_select;
 extern int read_config_file(char *name);
 extern void clear_config(void);
 extern void effect_activate( int iSwitch );
+*/
 void pipe_int_write(int c);
 void pipe_int_read(int *c);
 void pipe_string_write(char *str);
@@ -217,6 +219,9 @@ static int cmsg(int type, int verbosity_level, char *fmt, ...)
        		pipe_int_write(CMSG_MESSAGE);
        		pipe_int_write(type);
 
+		if (type == CMSG_LYRIC) {
+		     pipe_int_write( current_event->time / (play_mode->rate/100) );
+		}
 		/*printf("writing CMSG of length %d and type %d \n",strlen(local),type);*/
 
 		if (strlen(local) > TOO_LONG2){
@@ -226,7 +231,7 @@ static int cmsg(int type, int verbosity_level, char *fmt, ...)
 		}
 
 		/*		printf("WRITING=%s %d\n",local, strlen(local));*/
-
+/* here write current_event->time if type is CMSG_LYRIC */
 		pipe_string_write(local);
 
 	}
@@ -542,7 +547,7 @@ static void ctl_close(void)
 
 static int ctl_blocking_read(int32 *valp)
 {
-  extern int reverb_options;
+  /* extern int reverb_options; */
   int command;
   int new_volume;
   int new_centiseconds;
