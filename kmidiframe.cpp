@@ -171,7 +171,7 @@ KMidiFrame::KMidiFrame( const char *name ) :
 				"through the ends of their<br>\n"
 				"patches (which may cause some<br>\n"
 				"clicking). The wet setting makes<br>\n"
-				"notes continues to the ends of<br>\n"
+				"notes continue to the ends of<br>\n"
 				"their volume envelopes.") );
     reverb_level = new QPopupMenu();
     Q_CHECK_PTR( reverb_level );
