@@ -1,23 +1,17 @@
 /*
- * $Id$
- */
-
-#include "config.h"
-
-#ifdef __FreeBSD__
-#include <stdlib.h>
-#else
-#include <malloc.h>
-#endif
+	$Id$
+*/
 
 #include <stdio.h>
 #include <unistd.h>
 #include <errno.h>
-#include <string.h>
+#include <malloc.h>
+#include "config.h"
 
 #define BB_SIZE AUDIO_BUFFER_SIZE*8
 static unsigned char *bbuf = 0;
 static int bboffset = 0, bbcount = 0;
+
 
 void b_out(int fd, int *buf, int ocount)
 {
@@ -38,7 +32,10 @@ void b_out(int fd, int *buf, int ocount)
 
   ret = 0;
   while (bbcount) {
-    ret = write(fd, bbuf + bboffset, bbcount);
+    if (ocount && bbcount >= ocount)
+        ret = write(fd, bbuf + bboffset, ocount);
+    else
+        ret = write(fd, bbuf + bboffset, bbcount);
     if (ret < 0) {
 	if (errno == EINTR) continue;
 	else if (errno == EWOULDBLOCK) {
@@ -46,6 +43,7 @@ void b_out(int fd, int *buf, int ocount)
 		memcpy(bbuf, bbuf + bboffset, bbcount);
 		bboffset = 0;
 	    }
+/*fprintf(stderr, "BLOCK %d ", bbcount);*/
 	    if (ocount && bboffset + bbcount + ocount <= BB_SIZE) break;
 	    sleep(1);
 	}
@@ -72,10 +70,17 @@ void b_out(int fd, int *buf, int ocount)
   memcpy(bbuf + bboffset + bbcount, buf, ocount);
   bbcount += ocount;
   if (ret >= 0) while (bbcount) {
-    ret = write(fd, bbuf + bboffset, bbcount);
+    if (ocount && bbcount >= ocount)
+        ret = write(fd, bbuf + bboffset, ocount);
+    else
+        ret = write(fd, bbuf + bboffset, bbcount);
     if (ret < 0) {
 	if (errno == EINTR) continue;
-	else if (errno == EWOULDBLOCK) break;
+	else if (errno == EWOULDBLOCK) {
+/* I can't get the driver to block anymore. Is this all useless? */
+	    /*fprintf(stderr, "block %d ", bbcount);*/
+	    break;
+	}
 	else {
 	    perror("error writing to dsp device");
 	    #ifdef ADAGIO
