@@ -35,6 +35,7 @@
 
 #include <khelpmenu.h>
 #include <kfiledialog.h>
+#include <kurldrag.h>
 
 #include "kmidi.h"
 
@@ -247,7 +248,7 @@ int KMidi::smallPtSize()
 
 void KMidi::dragEnterEvent( QDragEnterEvent *e )
 {
-    if ( QUriDrag::canDecode( e ) )
+    if ( KURLDrag::canDecode( e ) )
     {
 	e->accept();
     }
@@ -256,14 +257,18 @@ void KMidi::dragEnterEvent( QDragEnterEvent *e )
 
 void KMidi::dropEvent( QDropEvent * e )
 {
-
-    QStringList files;
+    KURL::List files;
     int newones = 0;
     char mbuff[5];
-    if ( QUriDrag::decodeLocalFiles( e, files ) ) {
-	for (QStringList::Iterator i=files.begin(); i!=files.end(); ++i) {
+    if ( KURLDrag::decode( e, files ) ) {
+	for (KURL::List::Iterator i=files.begin(); i!=files.end(); ++i) 
+	{
+	    if (!(*i).isLocalFile())
+	        continue;
+	    
+	    QString file = (*i).path();
 
-            QFile f(*i);
+            QFile f(file);
             if (!f.open( IO_ReadOnly )) continue;
             if (f.readBlock(mbuff, 4) != 4) {
 		f.close();
@@ -276,8 +281,7 @@ void KMidi::dropEvent( QDropEvent * e )
             }
             f.close();
 
-	    //playlist->insert(0, *i);
-	    playlist->prepend(*i);
+	    playlist->prepend(file);
 	    newones++;
 	}
     }
