@@ -1,0 +1,52 @@
+# This file was prepared by Eric Welsh to go with his
+# set of patches for TiMidity++.
+
+drumsfx1
+
+36 sfx/cutnoiz					note=60	# cut noise
+37 sfx/cutnoiz					note=60	# cut noise 2
+38 sfx/cutnoiz					note=60	# dist cut noise
+39 fx-fret					note=60	# string slap
+40 fx-fret					note=60	# bass slide
+41 fx-fret					note=60	# pick slide
+52 sfx/flclick					note=60	# fl key click
+68 mazpat/fx/rainyday				note=60	# rain
+69 sfx/thunder1					note=60	# thunder
+79 sfx/newwind amp=75				note=60	# wind
+71 sfx/stream keep=loop keep=env amp=75		note=60	# stream
+72 sfx/bubbling keep=loop keep=env amp=200	note=60	#bubble
+#73 # feed
+84 sfx/dog1					note=60	# dog
+85 sfx/hoofs					note=60	# horse gallop
+86 sfx/birdtwee amp=25				note=60	# bird 2
+
+drumsfx2
+
+36 telephon		note=60		# telephone 2
+37 release/creak	note=60		# door creaking
+38 sfx/door		note=60		# door slam
+39 gus/scratch1		note=29		# scratch
+40 gus/scratch2		note=30		# scratch 2
+41 sfx/windchim		note=60		# wind chime
+42 telephon		note=60		# telephone ring
+52 mazpat/fx/carstart	note=60		# engine start
+53 sfx/carstop		note=60		# stop
+54 sfx/carpass		note=60		# car pass
+55 sfx/carcrash		note=60		# crash
+56 sfx/siren2		note=60		# siren
+57 mazpat/fx/train	note=60		# train
+58 mazpat/fx/jet amp=70	note=60		# jetplane
+59 sfx/starship		note=60		# starship
+60 pistol		note=60		# burst noise
+61 applause		note=60		# coaster
+68 release/laugh	note=60		# laughing
+69 sfx/scream		note=60		# screaming
+70 sfx/punch		note=60		# punch
+71 sfx/heartbt		note=60		# heart beat
+72 mazpat/fx/newstep	note=60		# footsteps
+73 applause		note=60		# applause
+84 sfx/machgun2		note=60		# machine gun
+85 gus/sqrwave		note=60		# laser gun
+86 pistol		note=60		# explosion
+87 mazpat/fx/watrbird	note=60		# fireworks
+

@@ -1,0 +1,58 @@
+# This file (starting 9 lines below) was prepared
+# by Eric Welsh for his patchset for TiMidity++.
+
+# The directory below is just where I happen to
+# keep Welsh's patches (gl).
+dir /c/TiMidity++/share/timidity
+
+sfx
+
+0  sfx/cutnoiz                  # cut noise
+1  sfx/cutnoiz                  # cut noise 2
+2  sfx/cutnoiz                  # dist cut noise
+3  fx-fret			# string slap
+4  fx-fret                      # bass slide
+5  fx-fret                      # pick strape
+16 sfx/flclick                  # fl key click
+32 mazpat/fx/rainyday           # rain
+33 sfx/thunder1			# thunder
+34 sfx/newwind amp=75		# wind
+35 sfx/stream amp=75		# stream
+36 sfx/bubbling amp=200		# bubbling
+#37 # feed
+48 sfx/dog1                     # dog
+49 sfx/hoofs			# horse gallop
+50 sfx/birdtwee amp=25		# bird 2
+51 sfx/cat1			# kitty
+#52 # growl
+#53 # haunted
+#54 # ghost
+55 sfx/badmaou.pat		# maou
+#64 # telephone dial
+65 release/creak                # door creaking
+66 sfx/door                     # door slam
+67 gus/scratch1 note=29         # scratch
+68 gus/scratch2 note=30         # scratch 2
+69 sfx/windchim                 # wind chime
+70 telephon                     # telephone 2
+80 mazpat/fx/carstart           # car engine
+81 sfx/carstop                  # car stop
+82 sfx/carpass                  # car pass
+83 sfx/carcrash                 # car crash
+84 sfx/siren2                   # siren
+85 mazpat/fx/train              # train
+86 mazpat/fx/jet amp=70         # jetplane
+87 sfx/starship                 # starship
+88 pistol                       # burst noise
+89 applause                     # coaster
+90 sfx/machgun2                 # sub machinegun
+96 release/laugh                # laughing
+97 sfx/scream                   # screaming
+98 sfx/punch                    # punch
+99 sfx/heartbt                  # heart beat
+100 mazpat/fx/newstep           # footsteps
+101 applause                    # applause 2
+112 sfx/machgun2                # machine gun
+113 gus/sqrwave                 # laser gun
+114 pistol			# explosion
+115 mazpat/fx/watrbird          # fireworks
