@@ -200,6 +200,7 @@ public:
 	int 		fastrewind;
 
 	bool		randomplay;
+	bool		singleplay;
 	QColor		background_color;
 	QColor		led_color;
 	bool 		playing;

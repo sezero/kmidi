@@ -72,7 +72,6 @@
 #include <ktmainwindow.h>
 #include <kuniqueapp.h>
 
-
 class MidiApplication : public KUniqueApplication
 {
   Q_OBJECT 
@@ -82,6 +81,9 @@ public:
   MidiApplication(int &argc, char *argv[], const QCString &appName);
 
   virtual int newInstance(QValueList<QCString> params);
+
+  bool process(const QCString &fun, const QByteArray &data,
+		        QCString &replyType, QByteArray &replyData);
 
 };
 

@@ -1,3 +1,7 @@
+1999-12-05  Greg Lee  <lee@hawaii.edu>
+
+	* receive orders via dcop
+
 1999-12-04  Greg Lee  <lee@hawaii.edu>
 
 	* instrum.c,playmidi.c: bug fixes

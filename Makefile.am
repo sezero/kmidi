@@ -22,6 +22,12 @@ TIMID_DIR = $(kde_datadir)/kmidi/config
 
 bin_PROGRAMS = kmidi sf2cfg
 
+
+check_PROGRAMS = dcopplay
+
+dcopplay_SOURCES = dcopplay.cpp
+dcopplay_LDADD = $(LIB_KDECORE)
+
 kmidi_SOURCES = kmidi.cpp  playlist.cpp bwlednum.cpp configdlg.cpp log.cpp \
 	docking.cpp \
 	timidity.c common.c readmidi.c playmidi.c resample.c mix.c instrum.c \
@@ -34,6 +40,7 @@ kmidi_SOURCES = kmidi.cpp  playlist.cpp bwlednum.cpp configdlg.cpp log.cpp \
 	resample_l.c resample_f.c midiapplication.cpp kmidiframe.cpp
 
 sf2cfg_SOURCES = sf2cfg.c readsbk.c
+sf2cfg_LDADD =
 
 noinst_HEADERS = kmidi.h  playlist.h bwlednum.h configdlg.h \
 	docking.h \

@@ -137,6 +137,7 @@ KMidi::KMidi( QWidget *parent, const char *name )
 
     playlistdlg = NULL;
     randomplay = false;
+    singleplay = false;
     looping = false;
     driver_error = false;
     last_status = status = KNONE;
@@ -2091,10 +2092,14 @@ void KMidi::ReadPipe(){
 			status = KSTOPPED;
 			return;
 		    }
-		else{
+		else if (!singleplay) {
 		    status = KPLAYING;
       		    playPB->setOn( TRUE );
 		    nextClicked();
+		}
+		else {
+		    singleplay = false;
+		    stopClicked();
 		}
 	
 
@@ -2635,4 +2640,3 @@ void KMidi::myresize(int w, int h) {
 
 
 #include "kmidi.moc"
-

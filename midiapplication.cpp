@@ -71,6 +71,46 @@ MidiApplication::MidiApplication(int &argc, char *argv[], const QCString &appNam
 #endif
 }
 
+bool MidiApplication::process(const QCString &fun, const QByteArray &data,
+		        QCString &replyType, QByteArray &replyData)
+{
+  QDataStream stream(data, IO_ReadOnly);
+  QDataStream stream2(replyData, IO_WriteOnly);
+  QString res;
+  int exitcode;
+
+  if (fun == "doIt(int)") {
+    int arg;
+    stream >> arg;
+    res = "self->doIt(arg)";
+    stream2 << res;
+    replyType = "QString";
+    return true;
+  } else if (fun == "newInstance(QValueList<QCString>)") {
+    QValueList<QCString> arg;
+    stream >> arg;
+    newInstance(arg);
+    replyType = "int";
+    exitcode = 0;
+    stream2 << exitcode;
+    return true;
+  } else if (fun == "play(QString)") {
+    QString arg;
+    stream >> arg;
+    replyType = "void";
+    fprintf(stderr,"playing %s\n", arg.ascii());
+    kmidi->stopClicked();
+    kmidi->playlist->clear();
+    kmidi->playlist->append(arg);
+    kmidi->redoplaybox();
+    kmidi->singleplay = true;
+    kmidi->setSong(0);
+    return true;
+  } else {
+    fprintf(stderr,"unknown function call %s to MidiApplication::process()\n", fun.data());
+    return false;
+  }
+}
 
 int MidiApplication::newInstance(QValueList<QCString> params)
 {
@@ -121,12 +161,10 @@ int MidiApplication::newInstance(QValueList<QCString> params)
 
 extern "C" {
 
-//void createKApplication(int *argc, char **argv) {
 int createKApplication(int *argc, char **argv) {
 
        int deref = *argc;
 
-       //if (!MidiApplication::start(*argc, &*argv, "kmidi")) {
        //if (!MidiApplication::start(*argc, &*argv, "kmidi")) {
        if (!MidiApplication::start(deref, &*argv, "kmidi")) {
 //fprintf(stderr,"n: argc=%d *argc=%d\n", argc, *argc);
@@ -139,14 +177,7 @@ int createKApplication(int *argc, char **argv) {
 //fprintf(stderr,"3: argc=%d argv[1]={%s}\n", *argc, (*argc>0)? argv[1] : "none");
 
 
-	//thisapp->dcopClient()->attach();
-	//thisapp->dcopClient()->registerAs("kmidi");
 
-//this doesn't seem to do anything
-	//QCString fun, replyType;
-	//QByteArray data, replyData;
-	//if (thisapp->process(fun, data, replyType, replyData))
-	//	printf("fun[%s] replyType[%s]\n", fun.data(), replyType.data());
 	return 1;
    }
     
