@@ -93,4 +93,4 @@ TerminalOptions=
 Path=
 Type=Application
 Terminal=0
-X-DCOP-ServiceType=Multi
+X-DCOP-ServiceType=None

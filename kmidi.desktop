@@ -95,4 +95,4 @@ Path=
 Type=Application
 Terminal=0
 X-KDE-StartupNotify=true
-X-DCOP-ServiceType=Multi
+X-DCOP-ServiceType=Unique
