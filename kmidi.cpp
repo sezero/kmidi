@@ -97,10 +97,10 @@ const char * whatsthis_image[] = {
 #include "controls.h"
 #include "ctl.h"
 #include "table.h"
+#include "configclass.h"
 
 
 static int currplaytime = 0;
-static int meterfudge = 0;
 
 enum midistatus{ KNONE, KPLAYING, KSTOPPED, KLOOPING, KFORWARD,
 		 KBACKWARD, KNEXT, KPREVIOUS,KPAUSED};
@@ -114,6 +114,8 @@ extern bool menubarisvisible;
 
 extern QSize requestedframesize;
 extern int fixframesizecount;
+
+KmidiConfig *confclass;
 
 KMidi *kmidi;
 Table		*channelwindow;
@@ -134,17 +136,19 @@ KMidi::KMidi( QWidget *parent, const char *name )
     timestopped = 0;
     fastrewind = 0;
     fastforward = 0;
-    current_voices = DEFAULT_VOICES;
-    stereo_state = echo_state = detune_state = verbosity_state = 1;
     starting_up = true;
 
-    readconfig();
+    confclass = new KmidiConfig();
+
+    readConfig();
+
+    Panel->currentpatchset = confclass->currentPatchSet;
 
     struct configstruct config;
-    config.background_color = background_color;
-    config.led_color = led_color;
-    config.tooltips = tooltips;
-    config.max_patch_megs = max_patch_megs;
+    config.background_color = confclass->backgroundColor;
+    config.led_color = confclass->ledColor;
+    config.tooltips = confclass->toolTips;
+    config.max_patch_megs = confclass->maxPatchMegs;
 
     what = new QWhatsThis(this);
     drawPanel();
@@ -203,7 +207,7 @@ KMidi::KMidi( QWidget *parent, const char *name )
     connect(this,SIGNAL(play()),this,SLOT(playClicked()));
 
     redoplaylistbox();
-    playlistbox->setCurrentItem(current_playlist_num);
+    playlistbox->setCurrentItem(confclass->playlistNum);
 
     adjustSize();
     setMinimumSize( regularsize );
@@ -300,7 +304,7 @@ KMidi::~KMidi(){
 
 void KMidi::setToolTips()
 {
-    if(tooltips){
+    if(confclass->toolTips){
 	QToolTip::add( aboutPB,		i18n("Bottom panel") );
 	QToolTip::add( playPB, 		i18n("Play/Pause") );
 	QToolTip::add( stopPB, 		i18n("Stop") );
@@ -394,7 +398,7 @@ void KMidi::volChanged( int vol )
 
     pipe_int_write(  MOTIF_CHANGE_VOLUME);
     pipe_int_write(vol*255/100);
-    volume = vol;
+    confclass->volume = vol;
     //  mp_volume = vol*255/100;
 
 }
@@ -453,7 +457,7 @@ void MeterWidget::remeter()
 	 meterpainttime = 0;
 	int ch, x1, y1, slot, amplitude, notetime, chnotes;
 
-	if (currplaytime + meterfudge < meterpainttime || Panel->reset_panel == 10) {
+	if (currplaytime + confclass->meterFudge < meterpainttime || Panel->reset_panel == 10) {
 		erase();
 		for (ch = 0; ch < MAXDISPCHAN; ch++) {
 			lastvol[ch] =
@@ -469,7 +473,7 @@ void MeterWidget::remeter()
 		}
 		Panel->reset_panel = 9;
 	}
-	meterpainttime = currplaytime + meterfudge;
+	meterpainttime = currplaytime + confclass->meterFudge;
 
 	if (Panel->reset_panel) {
 		Panel->reset_panel--;
@@ -687,7 +691,7 @@ void KMidi::drawPanel()
 
 
     QString volumetext;
-    volumetext = QString::fromUtf8( QCString().sprintf(i18n("Vol:%02d%%").utf8().data(),volume) );
+    volumetext = QString::fromUtf8( QCString().sprintf(i18n("Vol:%02d%%").utf8().data(),confclass->volume) );
     volLA->setText( volumetext );
 
     modlabel = new QLabel( this );
@@ -713,7 +717,7 @@ void KMidi::drawPanel()
 
     iy += HEIGHT / 2 ;
 
-    volSB = new QSlider( 0, 100, 5,  volume, QSlider::Horizontal,
+    volSB = new QSlider( 0, 100, 5,  confclass->volume, QSlider::Horizontal,
 			 this, "Slider" );
     volSB->setGeometry( WIDTH , 3*HEIGHT + HEIGHT/2, 2*SBARWIDTH/3, HEIGHT /2 );
     what->add(volSB, i18n("Adjust the volume here.<br>\n"
@@ -768,7 +772,7 @@ void KMidi::drawPanel()
     QString polyled = i18n("These leds show<br>\nthe number of notes<br>\nbeing played.");
 
     for (int i = 0; i < 17; i++) if (i < 7 || i > 10) {
-        led[i] = new KLed(led_color, this);
+        led[i] = new KLed(confclass->ledColor, this);
         led[i]->setLook(KLed::Sunken);
         led[i]->setShape(KLed::Rectangular);
         //led[i]->setGeometry(WIDTH/8 + i * WIDTH/4,3*HEIGHT+HEIGHT/6, WIDTH/6, HEIGHT/5);
@@ -842,9 +846,9 @@ void KMidi::drawPanel()
     regularheight = iy;
 
     meter = new MeterWidget ( this, "soundmeter" );
-    meter->setBackgroundColor( background_color );
-    meter->led_color = led_color;
-    meter->background_color = background_color;
+    meter->setBackgroundColor( confclass->backgroundColor );
+    meter->led_color = confclass->ledColor;
+    meter->background_color = confclass->backgroundColor;
     meter->setGeometry(ix,iy,SBARWIDTH - WIDTH/2, 3* HEIGHT - 1);
     what->add(meter, i18n("The display shows notes<br>\n being played on the<br>\n16 or 32 MIDI channels."));
     meter->hide();
@@ -867,10 +871,10 @@ void KMidi::drawPanel()
     topbarssize = QSize (totalwidth, menubarheight);
 
     logwindow = new LogWindow(this,"logwindow");
-    logwindow->setGeometry(ix,extendedheight, totalwidth, infowindowheight);
+    logwindow->setGeometry(ix,extendedheight, totalwidth, confclass->infoWindowHeight);
     what->add(logwindow, i18n("Here is information<br>\n"
 	"extracted from the MIDI<br>\nfile currently being played."));
-    logwindow->resize(totalwidth, infowindowheight);
+    logwindow->resize(totalwidth, confclass->infoWindowHeight);
     logwindow->hide();
 
 
@@ -997,7 +1001,7 @@ void KMidi::drawPanel()
     effectbutton->hide();
 
     voicespin = new QSpinBox( 1, MAX_VOICES, 1, this, "_spinv" );
-    voicespin->setValue(current_voices);
+    voicespin->setValue(confclass->currentVoices);
     voicespin->setGeometry( ix +WIDTH/2, iy, WIDTH/2, HEIGHT );
     voicespin->setFont( defaultFontBold );
     what->add(voicespin, i18n("Use this to set the maximum<br>\n"
@@ -1011,7 +1015,7 @@ void KMidi::drawPanel()
     iy += HEIGHT;
 
     meterspin = new QSpinBox( 0, 99, 1, this, "_spinm" );
-    meterspin->setValue(meterfudge);
+    meterspin->setValue(confclass->meterFudge);
     meterspin->setGeometry( ix, iy, WIDTH/2, HEIGHT );
     connect( meterspin, SIGNAL( valueChanged(int) ),
 	     SLOT( meterfudgeChanged(int) ) );
@@ -1042,7 +1046,7 @@ void KMidi::drawPanel()
 
 void KMidi::plActivated( int index )
 {
-    current_playlist_num = index;
+    confclass->playlistNum = index;
     loadplaylist(index);
     if (status != KPLAYING) resetSong();
     else flag_new_playlist = true;
@@ -1050,7 +1054,7 @@ void KMidi::plActivated( int index )
 
 void KMidi::updateIChecks( int which )
 {
-    interpolationrequest = which;
+    confclass->interpolationRequest = which;
     pipe_int_write(MOTIF_INTERPOLATION);
     pipe_int_write(which);
 }
@@ -1064,26 +1068,26 @@ void KMidi::updateRChecks( int which )
 	case 0:
 		// stereo voice
 	    check_states = (int)rcb1->state();
-	    if (check_states != 2) stereo_state = check_states;
-	    temp = stereo_state;
+	    if (check_states != 2) confclass->stereoState = check_states;
+	    temp = confclass->stereoState;
 	    break;
 	case 1:
 		// echo voice
 	    check_states = (int)rcb2->state();
-	    if (check_states != 2) echo_state = check_states;
-	    temp = echo_state;
+	    if (check_states != 2) confclass->echoState = check_states;
+	    temp = confclass->echoState;
 	    break;
 	case 2:
 		// detune voice
 	    check_states = (int)rcb3->state();
-	    if (check_states != 2) detune_state = check_states;
-	    temp = detune_state;
+	    if (check_states != 2) confclass->detuneState = check_states;
+	    temp = confclass->detuneState;
 	    break;
 	case 3:
 		// info window verbosity
 	    check_states = (int)rcb4->state();
-	    if (check_states != 2) verbosity_state = check_states;
-	    temp = verbosity_state;
+	    if (check_states != 2) confclass->verbosityState = check_states;
+	    temp = confclass->verbosityState;
 	    break;
 	default:
 	    return;
@@ -1098,13 +1102,13 @@ void KMidi::updateRChecks( int which )
 
 void KMidi::meterfudgeChanged( int newfudge )
 {
-    meterfudge = newfudge;
+    confclass->meterFudge = newfudge;
 }
 
 void KMidi::voicesChanged( int newvoices )
 {
     if (newvoices < 1 || newvoices > MAX_VOICES) return;
-    current_voices = newvoices;
+    confclass->currentVoices = newvoices;
     if (status != KSTOPPED) stopClicked();
     pipe_int_write(MOTIF_CHANGE_VOICES);
     pipe_int_write(newvoices);
@@ -1241,7 +1245,7 @@ void KMidi::setFilter( bool down )
 }
 void KMidi::setDry( bool down )
 {
-    dry_state = down;
+    confclass->dryState = down;
     pipe_int_write(  MOTIF_DRY );
     if (down) pipe_int_write( 1 );
     else pipe_int_write( 0 );
@@ -1249,33 +1253,33 @@ void KMidi::setDry( bool down )
 
 void KMidi::setReverb( int level )
 {
-    reverb_state = level;
+    confclass->reverbState = level;
     pipe_int_write(  MOTIF_REVERB );
     pipe_int_write(level);
 }
 void KMidi::setChorus( int level )
 {
-    chorus_state = level;
+    confclass->chorusState = level;
     pipe_int_write(  MOTIF_CHORUS );
     pipe_int_write(level);
 }
 void KMidi::setExpressionCurve( int curve )
 {
-    evs_state = (curve << 8) + (evs_state & 0xff);
+    confclass->evsState = (curve << 8) + (confclass->evsState & 0xff);
     pipe_int_write(  MOTIF_EVS );
-    pipe_int_write(evs_state);
+    pipe_int_write(confclass->evsState);
 }
 void KMidi::setVolumeCurve( int curve )
 {
-    evs_state = (curve << 4) + (evs_state & 0xf0f);
+    confclass->evsState = (curve << 4) + (confclass->evsState & 0xf0f);
     pipe_int_write(  MOTIF_EVS );
-    pipe_int_write(evs_state);
+    pipe_int_write(confclass->evsState);
 }
 void KMidi::setSurround( int yesno )
 {
-    evs_state = yesno + (evs_state & 0xff0);
+    confclass->evsState = yesno + (confclass->evsState & 0xff0);
     pipe_int_write(  MOTIF_EVS );
-    pipe_int_write(evs_state);
+    pipe_int_write(confclass->evsState);
 }
 
 void KMidi::logoClicked(){
@@ -1646,7 +1650,7 @@ void KMidi::quitClicked(){
     setLEDs("--:--");
     statusLA->clear();
 
-    writeconfig();
+    writeConfig();
     pipe_int_write(MOTIF_QUIT);
 
     if(output_device_open == 0){
@@ -1681,7 +1685,7 @@ void KMidi::replayClicked(){
 void KMidi::ejectClicked(){
 
     if(!playlistdlg)
-	playlistdlg = new PlaylistEdit("_pldlg", playlist, &current_playlist_num, listplaylists);
+	playlistdlg = new PlaylistEdit("_pldlg", playlist, &confclass->playlistNum, listplaylists);
     else playlistdlg->redoLists();
 
     playlistdlg->show();
@@ -1704,7 +1708,7 @@ void KMidi::restartPlayboxWith(const QString &songpath){
 void KMidi::acceptPlaylist(){
     updateUI();
     redoplaylistbox();
-    playlistbox->setCurrentItem(current_playlist_num);
+    playlistbox->setCurrentItem(confclass->playlistNum);
     restartPlaybox();
 }
 
@@ -1756,19 +1760,20 @@ void KMidi::postError(const QString& s) {
 
 void KMidi::aboutClicked()
 {
-   QColor old_background_color = background_color;
+   QColor old_background_color = confclass->backgroundColor;
 
    if (configdlg->exec() == QDialog::Accepted) {
-	background_color = configdlg->getData()->background_color;
-	led_color = configdlg->getData()->led_color;
-	meter->led_color = led_color;
-	meter->background_color = background_color;
-	if (old_background_color != background_color) {
-	    meter->setBackgroundColor(background_color);
+	confclass->backgroundColor = configdlg->getData()->background_color;
+	confclass->ledColor = configdlg->getData()->led_color;
+	meter->led_color = confclass->ledColor;
+	meter->background_color = confclass->backgroundColor;
+	if (old_background_color != confclass->backgroundColor) {
+	    meter->setBackgroundColor(confclass->backgroundColor);
 	    Panel->reset_panel = 10;
 	}
-	tooltips = configdlg->getData()->tooltips;
-	Panel->max_patch_megs = max_patch_megs = configdlg->getData()->max_patch_megs;
+	confclass->toolTips = configdlg->getData()->tooltips;
+	Panel->max_patch_megs = 
+		confclass->maxPatchMegs = configdlg->getData()->max_patch_megs;
 	setColors();
 	setToolTips();
    }
@@ -1826,49 +1831,49 @@ void KMidi::PlayCommandlineMods(){
 
 
   statusLA->setText(i18n("Ready"));
-  volChanged(volume);
+  volChanged(confclass->volume);
   //  readtimer->start(10);
-  if (showmeterrequest) logoClicked();
-  if (showinforequest) {
-    logwindow->resize(extendedsize.width(), infowindowheight);
+  if (confclass->meterVisible) logoClicked();
+  if (confclass->infoVisible) {
+    logwindow->resize(extendedsize.width(), confclass->infoWindowHeight);
     if(logwindow->isVisible()) logwindow->hide();
     infoslot();
   }
 
-  if (!showmeterrequest && !showinforequest)
+  if (!confclass->meterVisible && !confclass->infoVisible)
 	myresize(regularsize);
 
-  if (lpfilterrequest) filterbutton->setOn(TRUE);
-  if (effectsrequest) effectbutton->setOn(TRUE);
-  if (interpolationrequest != 1) {
-	ich[interpolationrequest]->setChecked( TRUE );
-	updateIChecks(interpolationrequest);
+  if (confclass->filterRequest) filterbutton->setOn(TRUE);
+  if (confclass->effectsRequest) effectbutton->setOn(TRUE);
+  if (confclass->interpolationRequest != 1) {
+	ich[confclass->interpolationRequest]->setChecked( TRUE );
+	updateIChecks(confclass->interpolationRequest);
   }
-  if (stereo_state != 1) {
-	rcb1->setChecked( (stereo_state>=2) );
+  if (confclass->stereoState != 1) {
+	rcb1->setChecked( (confclass->stereoState>=2) );
 	updateRChecks(0);
   }
-  if (echo_state != 1) {
-	rcb2->setChecked( (echo_state>=2) );
+  if (confclass->echoState != 1) {
+	rcb2->setChecked( (confclass->echoState>=2) );
 	updateRChecks(1);
   }
-  if (detune_state != 1) {
-	rcb3->setChecked( (detune_state>=2) );
+  if (confclass->detuneState != 1) {
+	rcb3->setChecked( (confclass->detuneState>=2) );
 	updateRChecks(2);
   }
-  if (verbosity_state != 1) {
-	rcb4->setChecked( (verbosity_state>=2) );
+  if (confclass->verbosityState != 1) {
+	rcb4->setChecked( (confclass->verbosityState>=2) );
 	updateRChecks(3);
   }
 
-  setDry(dry_state);
-  setReverb(reverb_state);
-  setChorus(chorus_state);
+  setDry(confclass->dryState);
+  setReverb(confclass->reverbState);
+  setChorus(confclass->chorusState);
 
   pipe_int_write(  MOTIF_EVS );
-  pipe_int_write(evs_state);
+  pipe_int_write(confclass->evsState);
 
-  Panel->max_patch_megs = max_patch_megs;
+  Panel->max_patch_megs = confclass->maxPatchMegs;
 
   pipe_int_write(  MOTIF_PATCHSET );
   pipe_int_write( Panel->currentpatchset );
@@ -1916,8 +1921,8 @@ void KMidi::loadplaylist( int which ) {
 	listplaylists->append(defaultlist);
         listplaylists->sort();
 	redoplaylistbox();
-	current_playlist_num = 0;
-	playlistbox->setCurrentItem(current_playlist_num);
+	confclass->playlistNum = 0;
+	playlistbox->setCurrentItem(confclass->playlistNum);
     }
     else {
 	QFile f(defaultlist);
@@ -2089,7 +2094,7 @@ void KMidi::ReadPipe(){
 		    last_status = KNONE;
 		    starting_up = false;
 		    if( !have_commandline_midis) {
-		        loadplaylist(current_playlist_num);
+		        loadplaylist(confclass->playlistNum);
 		    }
 		    return;
 		}
@@ -2186,7 +2191,7 @@ void KMidi::ReadPipe(){
 
 	    case CLOSE_MESSAGE : {
 		//	    printf("CLOSE_MESSAGE\n");
-		writeconfig();
+		writeConfig();
 		thisapp->quit();
 	    }
 	    break;
@@ -2274,7 +2279,7 @@ void KMidi::ReadPipe(){
 		else if (fastrewind) fastrewind--;
 
 
-		while (lyric_head != lyric_tail && lyric_time[lyric_tail] >= currplaytime+meterfudge) {
+		while (lyric_head != lyric_tail && lyric_time[lyric_tail] >= currplaytime+confclass->meterFudge) {
 			logwindow->insertStr(QString(lyric_buffer[lyric_tail]));
 			lyric_time[lyric_tail] = -1;
 			lyric_tail++;
@@ -2294,7 +2299,7 @@ void KMidi::ReadPipe(){
 	    case KNEXT:		c = Qt::magenta; break;
 	    case KPREVIOUS:	c = Qt::darkBlue; break;
 	    case KPAUSED:	c = Qt::yellow; break;
-	    default:		c = led_color; break;
+	    default:		c = confclass->ledColor; break;
 	}
 	if (status != KPLAYING) settletime = fastforward = fastrewind = nbvoice = 0;
 	else if (looping) c = Qt::blue;
@@ -2312,7 +2317,7 @@ void KMidi::ReadPipe(){
         led[BUFFER_LED]->setColor( QColor(250 - 2*Panel->buffer_state, 150, 50 ) );
 	last_buffer_state = Panel->buffer_state;
     }
-    rcheck_flags = echo_state << 4 + detune_state;
+    rcheck_flags = confclass->echoState << 4 + confclass->detuneState;
 
     if (Panel->various_flags != last_various_flags || rcheck_flags != last_rcheck_flags) {
 	last_various_flags = Panel->various_flags;
@@ -2322,19 +2327,19 @@ void KMidi::ReadPipe(){
 	//reverberation
 	if (last_various_flags & 2) led[REVERB_LED]->setColor(Qt::black);
         else {
-	    if (!echo_state) led[REVERB_LED]->setColor(Qt::black);
-	    else led[REVERB_LED]->setColor(QColor(0,0,5*echo_state+235));
+	    if (!confclass->echoState) led[REVERB_LED]->setColor(Qt::black);
+	    else led[REVERB_LED]->setColor(QColor(0,0,5*confclass->echoState+235));
 	}
 	//chorus
 	if (last_various_flags & 4) led[CHORUS_LED]->setColor(Qt::black);
         else {
-	    if (!detune_state) led[CHORUS_LED]->setColor(Qt::black);
-	    else led[CHORUS_LED]->setColor(QColor(5*echo_state+235,5*echo_state+235,0));
+	    if (!confclass->detuneState) led[CHORUS_LED]->setColor(Qt::black);
+	    else led[CHORUS_LED]->setColor(QColor(5*confclass->echoState+235,5*confclass->echoState+235,0));
 	}
 	last_rcheck_flags = rcheck_flags;
     }
     if (nbvoice != last_nbvoice) {
-	int quant = current_voices / 6;
+	int quant = confclass->currentVoices / 6;
 	if (nbvoice && !(last_nbvoice)) led[11]->setColor(Qt::cyan);
 	if (!nbvoice && last_nbvoice) led[11]->setColor(Qt::black);
 	if (nbvoice > quant && !(last_nbvoice > quant)) led[12]->setColor(Qt::cyan);
@@ -2352,101 +2357,31 @@ void KMidi::ReadPipe(){
 
 }
 
-void KMidi::set_current_dir(const QString &dir) {
+void KMidi::setCurrentDir(const QString &dir) {
 
    current_dir = QDir(dir);
 }
 
-void KMidi::readconfig(){
-    int e_state, v_state, s_state;
+void KMidi::readConfig(){
 
-    // let's set the defaults
+	confclass->loadConfig();
 
-    randomplay = false;
-
-    //////////////////////////////////////////
-
-    config=KApplication::kApplication()->config();
-    config->setGroup("KMidi");
-
-    QString str = config->readPathEntry("Directory");
-    if ( !str.isNull() ) set_current_dir(str);
-    else set_current_dir(QString(""));
-
-    volume = config->readNumEntry("Volume", 40);
-    current_voices = config->readNumEntry("Polyphony", DEFAULT_VOICES);
-    meterfudge = config->readNumEntry("MeterAdjust", 0);
-    tooltips = config->readBoolEntry("ToolTips", TRUE);
-    current_playlist_num = config->readNumEntry("Playlist", 0);
-    showmeterrequest = config->readBoolEntry("ShowMeter", TRUE);
-    showinforequest = config->readBoolEntry("ShowInfo", TRUE);
-    infowindowheight = config->readNumEntry("InfoWindowHeight", 80);
-    lpfilterrequest = config->readBoolEntry("Filter", FALSE);
-    effectsrequest = config->readBoolEntry("Effects", TRUE);
-    interpolationrequest = config->readNumEntry("Interpolation", 2);
-    max_patch_megs = config->readNumEntry("MegsOfPatches", 60);
-    stereo_state = config->readNumEntry("StereoNotes", 1);
-    echo_state = config->readNumEntry("EchoNotes", 1);
-    reverb_state = config->readNumEntry("Reverb", 0);
-    detune_state = config->readNumEntry("DetuneNotes", 1);
-    chorus_state = config->readNumEntry("Chorus", 1);
-    dry_state = config->readBoolEntry("Dry", FALSE);
-    e_state = config->readNumEntry("ExpressionCurve", 1);
-    v_state = config->readNumEntry("VolumeCurve", 1);
-    s_state = config->readNumEntry("Surround", 1);
-    evs_state = (e_state << 8) + (v_state << 4) + s_state;
-    verbosity_state = config->readNumEntry("Verbosity", 1);
-    Panel->currentpatchset = config->readNumEntry("Patchset", 0);
-
-    QColor defaultback = black;
-    QColor defaultled = QColor(107,227,88);
-
-    background_color = config->readColorEntry("BackColor",&defaultback);
-    led_color = config->readColorEntry("LEDColor",&defaultled);
+	if (! confclass->currentDirectory.isNull()) {
+    		setCurrentDir(confclass->currentDirectory);
+	}
 
 }
 
-void KMidi::writeconfig(){
-    int e_state, v_state, s_state;
+void KMidi::writeConfig(){
 
+    confclass->meterVisible = meter->isVisible();
+    confclass->infoVisible = logwindow->isVisible();
+    confclass->infoWindowHeight = logwindow->height();
+    confclass->filterRequest = filterbutton->isOn();
+    confclass->effectsRequest = effectbutton->isOn();
+    confclass->currentPatchSet = Panel->currentpatchset;
 
-    config=KApplication::kApplication()->config();
-
-    ///////////////////////////////////////////////////
-
-    config->setGroup("KMidi");
-
-    //config->writePathEntry("Directory", current_dir.filePath("."));
-    config->writeEntry("ToolTips", tooltips);
-
-    config->writeEntry("Volume", volume);
-    config->writeEntry("Polyphony", current_voices);
-    config->writeEntry("BackColor", background_color);
-    config->writeEntry("LEDColor", led_color);
-    config->writeEntry("MeterAdjust", meterfudge);
-    config->writeEntry("Playlist", current_playlist_num);
-    config->writeEntry("ShowMeter", meter->isVisible());
-    config->writeEntry("ShowInfo", logwindow->isVisible());
-    config->writeEntry("InfoWindowHeight", logwindow->height());
-    config->writeEntry("Filter", filterbutton->isOn());
-    config->writeEntry("Effects", effectbutton->isOn());
-    config->writeEntry("Interpolation", interpolationrequest);
-    config->writeEntry("MegsOfPatches", max_patch_megs);
-    config->writeEntry("StereoNotes", stereo_state);
-    config->writeEntry("EchoNotes", echo_state);
-    config->writeEntry("Reverb", reverb_state);
-    config->writeEntry("DetuneNotes", detune_state);
-    config->writeEntry("Chorus", chorus_state);
-    config->writeEntry("Dry", dry_state);
-    e_state = (evs_state >> 8) & 0x0f;
-    config->writeEntry("ExpressionCurve", e_state);
-    v_state = (evs_state >> 4) & 0x0f;
-    config->writeEntry("VolumeCurve", v_state);
-    s_state = evs_state & 0x0f;
-    config->writeEntry("Surround", s_state);
-    config->writeEntry("Verbosity", verbosity_state);
-    config->writeEntry("Patchset", Panel->currentpatchset);
-    config->sync();
+    confclass->saveConfig();
 }
 
 
@@ -2454,20 +2389,34 @@ void KMidi::setColors(){
 
     QPalette cp = palette();
 
-    backdrop->setBackgroundColor(background_color);
+    backdrop->setBackgroundColor(confclass->backgroundColor);
     //logwindow->setBackgroundColor(background_color);
 
 /*			 foreground, button, light, dark, mid, text, base   */
 
 
-    QColorGroup norm( led_color, background_color, cp.active().light(), cp.active().dark(),
-	cp.active().mid(), led_color, background_color );
-    QColorGroup dis( yellow, background_color, cp.disabled().light(), cp.disabled().dark(),
-	cp.disabled().mid(), yellow, background_color );
+    QColorGroup norm( confclass->ledColor, 
+		    confclass->backgroundColor, 
+		    cp.active().light(), cp.active().dark(),
+	            cp.active().mid(), 
+	            confclass->ledColor, 
+		    confclass->backgroundColor );
+    QColorGroup dis( yellow, 
+		    confclass->backgroundColor, 
+		    cp.disabled().light(), 
+		    cp.disabled().dark(),
+	            cp.disabled().mid(), 
+		    yellow, 
+		    confclass->backgroundColor );
 //    QColorGroup act( background_color, led_color, cp.active().light(), cp.active().dark(),
 //	cp.active().mid(), background_color, led_color );
-    QColorGroup act( led_color, background_color, cp.active().light(), cp.active().dark(),
-	cp.active().mid(), led_color, background_color );
+    QColorGroup act( confclass->ledColor, 
+		    confclass->backgroundColor, 
+		    cp.active().light(), 
+		    cp.active().dark(),
+	            cp.active().mid(), 
+		    confclass->ledColor, 
+		    confclass->backgroundColor );
 
     QPalette np(norm, dis, act);
 
@@ -2490,8 +2439,8 @@ void KMidi::setColors(){
 //    playbox->setPalette( np );
 
     for (int u = 0; u<=4;u++){
-	trackTimeLED[u]->setLEDoffColor(background_color);
-	trackTimeLED[u]->setLEDColor(led_color,background_color);
+	trackTimeLED[u]->setLEDoffColor(confclass->backgroundColor);
+	trackTimeLED[u]->setLEDColor(confclass->ledColor,confclass->backgroundColor);
     }
 
 }

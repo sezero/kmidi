@@ -1,3 +1,25 @@
+/*
+ *
+ *    kmidi - a midi to wav converter
+ *
+ *    configclass.cpp
+ *
+ *    Copyright 2003 Russell Miller <rmiller@duskglow.com>
+ *
+ *    This program is free software; you can redistribute it and/or modify
+ *    it under the terms of the GNU General Public License as published by
+ *    the Free Software Foundation; either version 2, or (at your option)
+ *    any later version.
+ *
+ *    This program is distributed in the hope that it will be useful,
+ *    but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *    GNU General Public License for more details.
+ *
+ *    You should have received a copy of the GNU General Public License
+ *    along with this program; if not, write to the Free Software
+ *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+ */
 
 #include <qcolor.h>
 #include <kconfig.h>
@@ -6,7 +28,7 @@
 #include "config.h"
 #include "configclass.h"
 
-kmidiConfig::kmidiConfig() {
+KmidiConfig::KmidiConfig() {
 
 	toolTips = false;
 	meterVisible = false;
@@ -21,16 +43,18 @@ kmidiConfig::kmidiConfig() {
 	meterAdjust = 0;
 	playlistNum = 0;
 	
-	stereoState = 0;
-	echoState = 0;
-	detuneState = 0;
-	verbosityState = 0;
+	stereoState = 1;
+	echoState = 1;
+	detuneState = 1;
+	verbosityState = 1;
 	dryState = 0;
 	eState = 0;
 	vState = 0;
 	sState = 0;
 	evsState = 0;
 	currentPatchSet = 0;
+
+	currentVoices = DEFAULT_VOICES;
 
 	backgroundColor = QColor(0,0,0);
 	ledColor = QColor(107,227,88);
@@ -42,11 +66,11 @@ kmidiConfig::kmidiConfig() {
 
 }
 
-kmidiConfig::~kmidiConfig() {
+KmidiConfig::~KmidiConfig() {
 
 }
 
-void kmidiConfig::saveConfig() {
+void KmidiConfig::saveConfig() {
 
 	 config->writeEntry("ToolTips", toolTips);
 
@@ -77,11 +101,13 @@ void kmidiConfig::saveConfig() {
 	 config->writeEntry("Surround", sState);
 	 config->writeEntry("Verbosity", verbosityState);
 	 config->writeEntry("Patchset", currentPatchSet);
+	 config->writeEntry("Directory", currentDirectory);
 	 config->sync();
 	 
 }
 
-void kmidiConfig::loadConfig() {
+void KmidiConfig::loadConfig() {
+
 
 	volume = config->readNumEntry("Volume", 40);
 	currentVoices = config->readNumEntry("Polyphony", DEFAULT_VOICES);
@@ -110,5 +136,7 @@ void kmidiConfig::loadConfig() {
 
 	backgroundColor = config->readColorEntry("BackColor", &QColor(0,0,0));
 	ledColor = config->readColorEntry("LEDColor", &QColor(107, 227, 98));
+
+	currentDirectory = config->readPathEntry("Directory");
 
 }

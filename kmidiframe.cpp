@@ -42,6 +42,8 @@
 #include "kmidiframe.h"
 #include <kpopupmenu.h>
 
+#include "configclass.h"
+
 
 int menubarheight = 0;
 bool menubarisvisible;
@@ -50,6 +52,8 @@ QSize requestedframesize = QSize (0, 0);
 int fixframesizecount = 0;
 
 KMidiFrame *kmidiframe;
+
+extern KmidiConfig *confclass;
 
 DockWidget*     dock_widget;
 
@@ -434,78 +438,78 @@ void KMidiFrame::fixViewItems() {
     view_options->setItemChecked( i_off_id, !kmidi->logwindow->isVisible());
 }
 void KMidiFrame::doViewInfoLevel(int id) {
-    if (id >= 100 && id <= 104 && (id-100 != kmidi->verbosity_state) ) {
+    if (id >= 100 && id <= 104 && (id-100 != confclass->verbosityState) ) {
 	if (id == 100) kmidi->rcb4->setChecked(false);
 	else if (id == 101) kmidi->rcb4->setNoChange();
 	else if (id >= 102) kmidi->rcb4->setChecked(true);
-	kmidi->verbosity_state = id-100;
+	confclass->verbosityState = id-100;
 	kmidi->updateRChecks(3);
     }
 }
 
 void KMidiFrame::fixInfoLevelItems() {
     view_level->setItemChecked( view_level->idAt(0),
-		    kmidi->verbosity_state == 0);
+		    confclass->verbosityState == 0);
     view_level->setItemChecked( view_level->idAt(1),
-		    kmidi->verbosity_state == 1);
+		    confclass->verbosityState == 1);
     view_level->setItemChecked( view_level->idAt(2),
-		    kmidi->verbosity_state == 2);
+		    confclass->verbosityState == 2);
     view_level->setItemChecked( view_level->idAt(3), 
-		    kmidi->verbosity_state == 3);
+		    confclass->verbosityState == 3);
     view_level->setItemChecked( view_level->idAt(4), 
-		    kmidi->verbosity_state == 4);
+		    confclass->verbosityState == 4);
 }
 void KMidiFrame::doEffectsMenuItem(int id) {
 
     if (id == effects_menu->idAt(0)) {
-	    if (kmidi->stereo_state != 0) {
+	    if (confclass->stereoState != 0) {
 		    kmidi->rcb1->setChecked(false);
-		    kmidi->stereo_state = 0;
+		    confclass->stereoState = 0;
 	    }
     	    kmidi->updateRChecks(0);
 	    return;
     }
 
     if (id == effects_menu->idAt(1)) {
-	    if (kmidi->stereo_state != 1) {
+	    if (confclass->stereoState != 1) {
 		    kmidi->rcb1->setNoChange();
-		    kmidi->stereo_state = 1;
+		    confclass->stereoState = 1;
 	    }
     	    kmidi->updateRChecks(0);
 	    return;
     }
 
     if (id == effects_menu->idAt(2)) {
-	    if (kmidi->stereo_state != 2) {
+	    if (confclass->stereoState != 2) {
 		    kmidi->rcb1->setChecked(true);
-		    kmidi->stereo_state = 2;
+		    confclass->stereoState = 2;
 	    }
     	    kmidi->updateRChecks(0);
 	    return;
     }
 
     if (id == effects_menu->idAt(3)) {
-        if (( kmidi->evs_state  & 0x0f ) == 1) kmidi->setSurround(0);
+        if (( confclass->evsState  & 0x0f ) == 1) kmidi->setSurround(0);
 	else kmidi->setSurround(1);
     }
 
     // reverb items
     if (id == effects_menu->idAt(5)) {
-	    kmidi->setDry(!kmidi->dry_state);
+	    kmidi->setDry(!confclass->dryState);
 	    kmidi->updateRChecks(1);
 	    return;
     }
 
     if (id == effects_menu->idAt(8)) {
 	    kmidi->rcb2->setChecked(false);
-	    kmidi->echo_state = 0;
+	    confclass->echoState = 0;
 	    kmidi->updateRChecks(1);
 	    return;
     }
 
     if (id == effects_menu->idAt(9)) {
 	    kmidi->rcb2->setNoChange();
-	    kmidi->echo_state = 1;
+	    confclass->echoState = 1;
 	    kmidi->updateRChecks(1);
 	    return;
     }
@@ -513,14 +517,14 @@ void KMidiFrame::doEffectsMenuItem(int id) {
     // chorus items
     if (id == effects_menu->idAt(14)) {
 	    kmidi->rcb3->setChecked(false);
-	    kmidi->detune_state = 0;
+	    confclass->detuneState = 0;
 	    kmidi->updateRChecks(2);
 	    return;
     }
 
     if (id == effects_menu->idAt(15)) {
     	kmidi->rcb3->setNoChange();
-	kmidi->detune_state = 1;
+	confclass->detuneState = 1;
 	kmidi->updateRChecks(2);
 	return;
     }
@@ -529,23 +533,23 @@ void KMidiFrame::doEffectsMenuItem(int id) {
 
 void KMidiFrame::fixEffectsItems() {
     effects_menu->setItemChecked( effects_menu->idAt(0), 
-		    kmidi->stereo_state == 0);
+		    confclass->stereoState == 0);
     effects_menu->setItemChecked( effects_menu->idAt(1), 
-		    kmidi->stereo_state == 1);
+		    confclass->stereoState == 1);
     effects_menu->setItemChecked( effects_menu->idAt(2), 
-		    kmidi->stereo_state == 2);
+		    confclass->stereoState == 2);
     effects_menu->setItemChecked( effects_menu->idAt(3), 
-		    ( kmidi->evs_state  & 0x0f ) == 1);
+		    ( confclass->evsState  & 0x0f ) == 1);
     effects_menu->setItemChecked( effects_menu->idAt(5), 
-		    kmidi->dry_state);
+		    confclass->dryState);
     effects_menu->setItemChecked( effects_menu->idAt(8), 
-		    kmidi->echo_state == 0);
+		    confclass->echoState == 0);
     effects_menu->setItemChecked( effects_menu->idAt(9), 
-		    kmidi->echo_state == 1);
+		    confclass->echoState == 1);
     effects_menu->setItemChecked( effects_menu->idAt(14), 
-		    kmidi->detune_state == 0);
+		    confclass->detuneState == 0);
     effects_menu->setItemChecked( effects_menu->idAt(15), 
-		    kmidi->detune_state == 1);
+		    confclass->detuneState == 1);
 }
 void KMidiFrame::doReverbLevel(int id) {
     kmidi->setReverb(reverb_level->indexOf(id));
@@ -553,81 +557,86 @@ void KMidiFrame::doReverbLevel(int id) {
 
 void KMidiFrame::doEchoLevel(int id) {
     if (id == echo_level->idAt(0)
-	    && kmidi->echo_state >= 2) {
+	    && confclass->echoState >= 2) {
 	//kmidi->rcb2->setChecked(false);
 	kmidi->rcb2->setNoChange();
 	kmidi->updateRChecks(1);
     }
-    else if (kmidi->echo_state != echo_level->indexOf(id) + 1) {
+    else if (confclass->echoState != echo_level->indexOf(id) + 1) {
 	kmidi->rcb2->setChecked(true);
-	kmidi->echo_state = echo_level->indexOf(id) + 1;
+	confclass->echoState = echo_level->indexOf(id) + 1;
 	kmidi->updateRChecks(1);
     }
 }
 void KMidiFrame::fixEchoLevelItems() {
-    echo_level->setItemChecked( echo_level->idAt(0), kmidi->echo_state < 2);
-    echo_level->setItemChecked( echo_level->idAt(1), kmidi->echo_state == 2);
-    echo_level->setItemChecked( echo_level->idAt(2), kmidi->echo_state == 3);
-    echo_level->setItemChecked( echo_level->idAt(3), kmidi->echo_state == 4);
-    echo_level->setItemChecked( echo_level->idAt(4), kmidi->echo_state == 5);
+    echo_level->setItemChecked( echo_level->idAt(0), 
+		    confclass->echoState < 2);
+    echo_level->setItemChecked( echo_level->idAt(1), 
+		    confclass->echoState == 2);
+    echo_level->setItemChecked( echo_level->idAt(2), 
+		    confclass->echoState == 3);
+    echo_level->setItemChecked( echo_level->idAt(3), 
+		    confclass->echoState == 4);
+    echo_level->setItemChecked( echo_level->idAt(4), 
+		    confclass->echoState == 5);
 
 }
 void KMidiFrame::fixReverbLevelItems() {
     reverb_level->setItemChecked( reverb_level->idAt(0), 
-		    kmidi->reverb_state < 2);
+		    confclass->reverbState < 2);
     reverb_level->setItemChecked( reverb_level->idAt(1), 
-		    kmidi->reverb_state == 2);
+		    confclass->reverbState == 2);
     reverb_level->setItemChecked( reverb_level->idAt(2), 
-		    kmidi->reverb_state == 3);
+		    confclass->reverbState == 3);
     reverb_level->setItemChecked( reverb_level->idAt(3), 
-		    kmidi->reverb_state == 4);
+		    confclass->reverbState == 4);
     reverb_level->setItemChecked( reverb_level->idAt(4), 
-		    kmidi->reverb_state == 5);
+		    confclass->reverbState == 5);
 }
 void KMidiFrame::doChorusLevel(int id) {
     kmidi->setChorus(id - 170);
 }
 void KMidiFrame::doDetuneLevel(int id) {
     if ((id == detune_level->idAt(0))
-	    && kmidi->detune_state >= 2) {
+	    && confclass->detuneState >= 2) {
 	kmidi->rcb3->setNoChange();
 	kmidi->updateRChecks(2);
     }
-    else if (kmidi->detune_state != detune_level->indexOf(id) + 1) {
+    else if (confclass->detuneState != detune_level->indexOf(id) + 1) {
 	kmidi->rcb3->setChecked(true);
-	kmidi->detune_state = detune_level->indexOf(id) + 1;
+	confclass->detuneState = detune_level->indexOf(id) + 1;
 	kmidi->updateRChecks(2);
     }
 }
 void KMidiFrame::fixChorusLevelItems() {
     chorus_level->setItemChecked( chorus_level->idAt(0), 
-		    kmidi->chorus_state == 0);
+		    confclass->chorusState == 0);
     chorus_level->setItemChecked( chorus_level->idAt(1), 
-		    kmidi->chorus_state == 1);
+		    confclass->chorusState == 1);
     chorus_level->setItemChecked( chorus_level->idAt(2), 
-		    kmidi->chorus_state == 2);
+		    confclass->chorusState == 2);
     chorus_level->setItemChecked( chorus_level->idAt(3), 
-		    kmidi->chorus_state == 3);
+		    confclass->chorusState == 3);
     chorus_level->setItemChecked( chorus_level->idAt(4), 
-		    kmidi->chorus_state == 4);
+		    confclass->chorusState == 4);
 }
 void KMidiFrame::fixDetuneLevelItems() {
     detune_level->setItemChecked( detune_level->idAt(0), 
-		    kmidi->detune_state < 2);
+		    confclass->detuneState < 2);
     detune_level->setItemChecked( detune_level->idAt(1), 
-		    kmidi->detune_state == 2);
+		    confclass->detuneState == 2);
     detune_level->setItemChecked( detune_level->idAt(2), 
-		    kmidi->detune_state == 3);
+		    confclass->detuneState == 3);
     detune_level->setItemChecked( detune_level->idAt(3), 
-		    kmidi->detune_state == 4);
+		    confclass->detuneState == 4);
     detune_level->setItemChecked( detune_level->idAt(4), 
-		    kmidi->detune_state == 5);
+		    confclass->detuneState == 5);
 }
 void KMidiFrame::doVolumeCurve(int id) {
     kmidi->setVolumeCurve(volume_curve->indexOf(id));
 }
 void KMidiFrame::fixVolumeCurveItems() {
-    int v_state = (kmidi->evs_state >> 4) & 0x0f;
+    int v_state = (confclass->evsState >> 4) & 0x0f;
     volume_curve->setItemChecked( volume_curve->idAt(0), v_state == 0);
     volume_curve->setItemChecked( volume_curve->idAt(1), v_state == 1);
     volume_curve->setItemChecked( volume_curve->idAt(2), v_state == 2);
@@ -636,7 +645,7 @@ void KMidiFrame::doExpressionCurve(int id) {
     kmidi->setExpressionCurve(expression_curve->indexOf(id));
 }
 void KMidiFrame::fixExpressionCurveItems() {
-    int e_state = (kmidi->evs_state >> 8) & 0x0f;
+    int e_state = (confclass->evsState >> 8) & 0x0f;
     expression_curve->setItemChecked( expression_curve->idAt(0), e_state == 0);
     expression_curve->setItemChecked( expression_curve->idAt(1), e_state == 1);
     expression_curve->setItemChecked( expression_curve->idAt(2), e_state == 2);

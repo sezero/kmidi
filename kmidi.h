@@ -182,13 +182,9 @@ public:
 	int 		init_volume;
 	int 		Child;
 	bool 		driver_error;
-	bool 		tooltips;
 	bool 		starting_up;
 	bool 		looping;
 	int 		timestopped;
-	int		max_patch_megs;
-	int		volume;
-	int		current_voices;
 	int 		max_sec;
 	int 		song_number;
 	int 		last_sec;
@@ -197,31 +193,12 @@ public:
 
 	bool		randomplay;
 	bool		singleplay;
-	QColor		background_color;
-	QColor		led_color;
 	bool 		playing;
 	bool 		blink;
 	bool		flag_new_playlist;
 
-	bool		showmeterrequest;
-	bool		showinforequest;
-	bool		lpfilterrequest;
-	bool		effectsrequest;
-	int		infowindowheight;
-	int		interpolationrequest;
-
-	int		stereo_state;
-	int		reverb_state;
-	int		chorus_state;
-	int		echo_state;
-	bool		dry_state;
-	int		detune_state;
-	int		verbosity_state;
-	int		evs_state;
-
 	QString		fileName;
 	QStringList	*playlist;
-	int		current_playlist_num;
 	QStringList	*listplaylists;
 
 	QStringList	*errorlist;
@@ -266,7 +243,7 @@ public:
 	void		setVolumeCurve( int curve );
 	void		setSurround( int yesno );
 	void		postError(const QString& s);
-	void		set_current_dir(const QString &dir);
+	void		setCurrentDir(const QString &dir);
 
 signals:
 	void		play();
@@ -280,8 +257,8 @@ public slots:
 	void 		setToolTips();
 	void 		PlayCommandlineMods();
 	void            PlayMOD();
-	void 		readconfig();
-        void 		writeconfig();
+	void 		readConfig();
+        void 		writeConfig();
 	void 		setColors();
 	void		playClicked();
 	void		stopClicked();
