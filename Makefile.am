@@ -9,7 +9,7 @@
 VERSION = 0.2i
 
 INCLUDES = $(all_includes)
-AM_CFLAGS = -DDEFAULT_PATH=\"$(TIMID_DIR)\" -DKMIDI $(EXTRADEFS)
+AM_CPPFLAGS = -DDEFAULT_PATH=\"$(TIMID_DIR)\" -DKMIDI $(EXTRADEFS) $(CPPFLAGS)
 CFLAGS = -O -Wall -W -Wpointer-arith -Wmissing-prototypes -Wwrite-strings -Wconversion $(CPPFLAGS)
 LDFLAGS = $(all_libraries) $(KDE_RPATH)
 LDADD = $(LIB_KDEUI) $(LIBALIB) $(LIBAUDIO) $(LIBMME) $(LIB_KFILE) $(EXTRALIBS)
@@ -30,16 +30,16 @@ dcopplay_LDADD = $(LIB_KDECORE)
 
 kmidi_SOURCES = kmidi.cpp  playlist.cpp bwlednum.cpp configdlg.cpp log.cpp \
 	docking.cpp \
-	timidity.c common.c readmidi.c playmidi.c resample.c mix.c instrum.c \
-	tables.c controls.c output.c filter.c wave_a.c raw_a.c dumb_c.c \
-	sndfont.c readsbk.c ctl.c \
-	linux_a.c dec_a.c sun_a.c hpux_a.c hpux_d_a.c alsa_a.c \
-	bsd20_a.c esd_a.c nas_a.c \
-	b_out.c fffload.c \
-	effects.c reverb_e.c chorus_e.c phaser_e.c celeste_e.c \
-	resample_l.c resample_f.c midiapplication.cpp kmidiframe.cpp
+	timidity.cpp common.cpp readmidi.cpp playmidi.cpp resample.cpp mix.cpp instrum.cpp \
+	tables.cpp controls.cpp output.cpp filter.cpp wave_a.cpp raw_a.cpp dumb_c.cpp \
+	sndfont.cpp readsbk.cpp ctl.cpp \
+	linux_a.cpp dec_a.cpp sun_a.cpp hpux_a.cpp hpux_d_a.cpp alsa_a.cpp \
+	bsd20_a.cpp esd_a.cpp nas_a.cpp \
+	b_out.cpp fffload.cpp \
+	effects.cpp reverb_e.cpp chorus_e.cpp phaser_e.cpp celeste_e.cpp \
+	resample_l.cpp resample_f.cpp midiapplication.cpp kmidiframe.cpp
 
-sf2cfg_SOURCES = sf2cfg.c readsbk.c
+sf2cfg_SOURCES = sf2cfg.cpp readsbk.cpp
 sf2cfg_LDADD =
 
 noinst_HEADERS = kmidi.h  playlist.h bwlednum.h configdlg.h \

@@ -28,7 +28,7 @@ rel := $(shell uname -r)
 major := $(basename $(basename $(rel)))
 
 ########### Compiler and flags.
-CC = gcc
+CC = g++
 #DEBUGFLAGS = -Wall -O2 -D__USE_FIXED_PROTOTYPES__
 #DEBUGFLAGS = -Wall -gstabs3 -O -D__USE_FIXED_PROTOTYPES__
 #DEBUGFLAGS = -Wall -gstabs3 -O
@@ -64,15 +64,15 @@ TCL_DIR = $(TIMID_DIR)
 
 ifeq ($(sys),Linux)
 # Select the Linux/FreeBSD audio driver
-SYSTEM += -DAU_LINUX
-SYSEXTRAS += linux_a.c b_out.c
+SYSTEM += -DAU_LINUX -DAU_OSS
+SYSEXTRAS += linux_a.cpp b_out.cpp
 #EXTRAINCS +=
 #EXTRALIBS += 
 endif
 
 ## Select the HP-UX network audio server
 #SYSTEM += -DHPUX -DAU_HPUX
-#SYSEXTRAS += hpux_a.c
+#SYSEXTRAS += hpux_a.cpp
 ##EXTRAINCS +=
 #EXTRALIBS += -lAlib
 
@@ -80,13 +80,13 @@ ifeq ($(sys),SunOS)
 ifeq ($(major),4)
 ## Select the Sun audio driver (for SunOS)
 SYSTEM += -DSUN -D__USE_GNU -DAU_SUN
-SYSEXTRAS += sun_a.c b_out.c
+SYSEXTRAS += sun_a.cpp b_out.cpp
 EXTRAINCS += -I/usr/demo/SOUND/multimedia
 EXTRALIBS += -L/usr/demo/SOUND -laudio
 else
 ## Select the Sun audio driver (for Solaris)
 SYSTEM += -DSUN -DSOLARIS -DAU_SUN
-SYSEXTRAS += sun_a.c b_out.c
+SYSEXTRAS += sun_a.cpp b_out.cpp
 EXTRAINCS += -I/usr/demo/SOUND/include
 EXTRALIBS += -L/usr/demo/SOUND/lib -laudio -lsocket
 endif
@@ -94,7 +94,7 @@ endif
 
 ## Select the DEC MMS audio server
 #SYSTEM += -DDEC -DAU_DEC
-#SYSEXTRAS += dec_a.c
+#SYSEXTRAS += dec_a.cpp
 #EXTRAINCS += -I/usr/include/mme
 #EXTRALIBS += -lmme
 
@@ -114,28 +114,28 @@ endif
 ifndef ADAGIOFLAGS
 # Select the ncurses full-screen interface
 SYSTEM += -DIA_NCURSES
-SYSEXTRAS += ncurs_c.c
+SYSEXTRAS += ncurs_c.cpp
 EXTRAINCS += -I/usr/include/ncurses
 EXTRALIBS += -lncurses
 
 # Select the S-Lang full-screen interface
 SYSTEM += -DIA_SLANG
-SYSEXTRAS += slang_c.c
+SYSEXTRAS += slang_c.cpp
 #EXTRAINCS += -I/usr/include/slang
 EXTRALIBS += -lslang
 
 # Select the MOTIF interface
-SYSTEM += -DMOTIF
-SYSEXTRAS += motif_c.c motif_i.c motif_p.c
+##SYSTEM += -DMOTIF
+##SYSEXTRAS += motif_c.cpp motif_i.cpp motif_p.cpp
 #EXTRAINCS += -I/usr/local/X11R5/include -L/usr/local/X11R5/lib
-EXTRAINCS += -I/usr/include/X11
-EXTRALIBS += -L/usr/X11R6/lib -lXm -lXt -lX11
+##EXTRAINCS += -I/usr/include/X11
+##EXTRALIBS += -L/usr/X11R6/lib -lXm -lXt -lX11
 # Solaris needs libgen?
 #EXTRALIBS += -lgen
 
 # Select the Tcl/Tk interface
 SYSTEM += -DTCLTK -DTKPROGPATH=\"$(TCL_DIR)/tkmidity.tcl\"
-SYSEXTRAS += tk_c.c
+SYSEXTRAS += tk_c.cpp
 INST_TK = install.tk
 #EXTRAINCS +=
 EXTRALIBS += -ltk -ltcl -L/usr/X11R6/lib -lX11
@@ -150,7 +150,7 @@ endif
 #########################################################################
 # You shouldn't need to change anything beyond this line
 
-.SUFFIXES: .c .h .ptcl .tcl .o .1 .txt .ps
+.SUFFIXES: .cpp .h .ptcl .tcl .o .1 .txt .ps
 
 VERSION = 0.2i
 FNVERSION = 02i
@@ -169,32 +169,32 @@ CFLAGS= $(DEBUGFLAGS) -DDEFAULT_PATH=\"$(TIMID_DIR)\" \
 ########### All relevant files.. Anybody know autoconf?
 
 # Sources needed for every installation
-CSRCS = timidity.c common.c readmidi.c playmidi.c resample.c mix.c instrum.c \
-        tables.c controls.c output.c filter.c \
-        wave_a.c raw_a.c dumb_c.c fffload.c \
-        sndfont.c readsbk.c \
-	effects.c reverb_e.c chorus_e.c phaser_e.c celeste_e.c \
-	resample_l.c resample_f.c
+CSRCS = timidity.cpp common.cpp readmidi.cpp playmidi.cpp resample.cpp mix.cpp instrum.cpp \
+        tables.cpp controls.cpp output.cpp filter.cpp \
+        wave_a.cpp raw_a.cpp dumb_c.cpp fffload.cpp \
+        sndfont.cpp readsbk.cpp \
+	effects.cpp reverb_e.cpp chorus_e.cpp phaser_e.cpp celeste_e.cpp \
+	resample_l.cpp resample_f.cpp
 
 # ... except for dsp.o
-DSPCSRCS = common.c playmidi.c resample.c mix.c instrum.c \
-        tables.c output.c filter.c \
-        dumb_c.c fffload.c \
-        sndfont.c readsbk.c resample_l.c resample_f.c
+DSPCSRCS = common.cpp playmidi.cpp resample.cpp mix.cpp instrum.cpp \
+        tables.cpp output.cpp filter.cpp \
+        dumb_c.cpp fffload.cpp \
+        sndfont.cpp readsbk.cpp resample_l.cpp resample_f.cpp
 
 # Optional installation-specific sources
-OPTSRCS = hpux_a.c linux_a.c sun_a.c dec_a.c win_a.c \
-	ncurs_c.c slang_c.c tk_c.c \
-	motif_c.c motif_i.c motif_p.c
+OPTSRCS = hpux_a.cpp linux_a.cpp sun_a.cpp dec_a.cpp win_a.cpp \
+	ncurs_c.cpp slang_c.cpp tk_c.cpp \
+	motif_c.cpp motif_i.cpp motif_p.cpp
 
 # External utility sources
-TOOLSRCS = bag.c wav2pat.c sf2cfg.c
+TOOLSRCS = bag.cpp wav2pat.cpp sf2cfg.cpp
 
 # Tcl interface sources
 TCLSRCS = tkmidity.ptcl tkpanel.tcl browser.tcl misc.tcl
 
 # Things used by MSDOS/Windows
-GETOPTSRCS = getopt.c timidity.ide timidity.mak
+GETOPTSRCS = getopt.cpp timidity.ide timidity.mak
 
 # Miscellaneous things to distribute in the source archive
 MAKEFILES = Makefile my my.pl
@@ -224,8 +224,8 @@ PSPAGES = $(MANPAGES:.1=.ps)
 DOCS = README README.tk README.DEC README.W32 \
 	COPYING INSTALL CHANGES TODO FAQ $(MANPAGES) $(TXTPAGES) $(PSPAGES)
 
-CONFIGF = config/timidity.cfg config/gsdrum.cfg config/gravis.cfg config/midia.cfg \
-	config/wowpats.cfg config/mt32.cfg config/chaos12-voices \
+CONFIGF = config/timidity.cppfg config/gsdrum.cppfg config/gravis.cppfg config/midia.cppfg \
+	config/wowpats.cppfg config/mt32.cppfg config/chaos12-voices \
 	config/chaos8-voices config/megadrum config/megainst
 
 PATCHF = patch/acpiano.pat patch/nylongt2.pat
@@ -240,10 +240,10 @@ SUPPDIST = $(PATCHF) $(SAMPLEF) README.lib
 
 ########### Rules
 
-COBJS = $(CSRCS:.c=.o) $(SYSEXTRAS:.c=.o)
-DSPCOBJS = $(DSPCSRCS:.c=.o) $(SYSEXTRAS:.c=.o)
+COBJS = $(CSRCS:.cpp=.o) $(SYSEXTRAS:.cpp=.o)
+DSPCOBJS = $(DSPCSRCS:.cpp=.o) $(SYSEXTRAS:.cpp=.o)
 
-TOOLS = $(TOOLSRCS:.c=)
+TOOLS = $(TOOLSRCS:.cpp=)
 
 #all: $(PROJ) $(TOOLS) $(CONFIGF) $(PATCHF) $(ALLTCLF)
 #all: $(PROJ) $(TOOLS) $(CONFIGF)
@@ -261,7 +261,7 @@ spotless: clean
 		$(DISTZIP) $(SDISTZIP) $(DISTZIP).CONTENTS $(SDISTZIP).CONTENTS
 	rm -r depends
 
-.c.o:
+.cpp.o:
 	$(CC) $(CFLAGS) $(ADAGIOFLAGS) -c $<
 
 $(PROJ): $(COBJS)
@@ -270,17 +270,17 @@ $(PROJ): $(COBJS)
 dsp.o: $(DSPCOBJS)
 	ld -r -o dsp.o $(DSPCOBJS) $(EXTRALIBS)
 
-bag: bag.c
-	$(CC) $(CFLAGS) -o bag bag.c
+bag: bag.cpp
+	$(CC) $(CFLAGS) -o bag bag.cpp
 
-wav2pat: wav2pat.c
-	$(CC) $(CFLAGS) -o wav2pat wav2pat.c
+wav2pat: wav2pat.cpp
+	$(CC) $(CFLAGS) -o wav2pat wav2pat.cpp
 
-sbktext: sbktext.c gentxt.o readsbk.o
-	$(CC) $(CFLAGS) -o sbktext sbktext.c gentxt.o readsbk.o
+sbktext: sbktext.cpp gentxt.o readsbk.o
+	$(CC) $(CFLAGS) -o sbktext sbktext.cpp gentxt.o readsbk.o
 
-sf2cfg: sf2cfg.c readsbk.o
-	$(CC) $(CFLAGS) -o sf2cfg sf2cfg.c readsbk.o
+sf2cfg: sf2cfg.cpp readsbk.o
+	$(CC) $(CFLAGS) -o sf2cfg sf2cfg.cpp readsbk.o
 
 depends depend dep:
 	$(CC) $(CFLAGS) -MM $(CSRCS) $(OPTSRCS) $(TOOLSRCS) > depends
@@ -310,7 +310,7 @@ install.man:
 	mkdir -p $(MAN_DIR)
 	$(INSTALL) -m 644 $(MANPAGES) $(MAN_DIR)
 
-install.lib: install.config install.patch $(INST_TK)
+install.lib: install.cpponfig install.patch $(INST_TK)
 
 install.config: $(CONFIGF)
 	mkdir -p $(TIMID_DIR)

@@ -87,7 +87,6 @@ const char * whatsthis_image[] = {
 #include "kmidiframe.h"
 
 
-extern "C" {
 
 #include "config.h"
 #include "output.h"
@@ -101,7 +100,6 @@ void pipe_int_write(int c);
 void pipe_int_read(int *c);
 void pipe_string_read(char *str);
 void pipe_string_write(char *str);
-}
 
 extern PlayMode *play_mode;
 extern int output_device_open;

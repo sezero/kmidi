@@ -39,7 +39,6 @@
 #include <kwm.h>
 #include <klocale.h>
 
-extern "C" {
 
 #include "config.h"
 #include "output.h"
@@ -48,7 +47,6 @@ extern "C" {
 #include "constants.h"
 #include "ctl.h"
 
-}
 
 MidiApplication * thisapp;
 extern KMidiFrame *kmidiframe;
@@ -151,8 +149,6 @@ int MidiApplication::newInstance(QValueList<QCString> params)
 
 
 
-extern "C" {
-
 int createKApplication(int *argc, char **argv) {
 
        int deref = *argc;
@@ -201,7 +197,6 @@ int createKApplication(int *argc, char **argv) {
 	return 0;
     }
 
-}
 
 #include "midiapplication.moc"
 /*
