@@ -8,18 +8,18 @@
 
 VERSION = 0.2i
 
-INCLUDES = $(X_INCLUDES) `$(bindir)/artsc-config --cflags`
+INCLUDES = $(X_INCLUDES) `$(ARTSCCONFIG) --cflags`
 AM_CFLAGS = -DDEFAULT_PATH=\"$(TIMID_DIR)\" $(EXTRATDEFS) $(EXTRATCFLAGS)
 if GXXOPTIMIZE
 CFLAGS = -O3 -fomit-frame-pointer -ffast-math
 endif
-LDFLAGS = `$(bindir)/artsc-config --libs`
+LDFLAGS = `$(ARTSCCONFIG) --libs`
 LDADD = $(LIBALIB) $(LIBAUDIO) $(LIBMME) $(EXTRATLIBS) $(X_LIBS) -lm
 
 # Where to install the patches, config files, and MIDI files.
 # If you change this, it's a good idea to recompile the binary,
 # or you'll need to invoke timidity with the -L option.
-TIMID_DIR = $(kde_datadir)/kmidi/config
+TIMID_DIR = /$(kde_datadir)/kmidi/config
 
 appsdir = $(kde_appsdir)/Multimedia
 apps_DATA = timidity.desktop
