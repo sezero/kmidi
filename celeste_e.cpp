@@ -10,6 +10,11 @@
 #include "config.h"
 
 #ifdef CHANNEL_EFFECT
+#ifndef NO_STRING_H
+#include <string.h>
+#else
+#include <strings.h>
+#endif
 
 #include <stdio.h>
 #ifndef __WIN32__
