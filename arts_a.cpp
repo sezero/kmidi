@@ -300,7 +300,7 @@ static int open_output(void) /* 0=success, 1=warning, -1=fatal error */
 	Dispatcher dispatcher;
 	SimpleSoundServer_var server;
 
-	server = SimpleSoundServer::_fromString("global:Arts_SimpleSoundServer");
+	server = SimpleSoundServer_base::_fromString("global:Arts_SimpleSoundServer");
 	if(!server)
 	{
 		cerr << "Can't connect to sound server" << endl;
