@@ -71,7 +71,7 @@ void create_cirbuff( cirbuff* pThis , uint32 count )
 	memset( pThis , 0 , sizeof( cirbuff ) ) ;
 	if( count != 0 )
 	{
-		pThis->m_pBufLast = safe_malloc( count * CIRCBUFF_PARAM * 4 ) ;
+		pThis->m_pBufLast = (int32 *) safe_malloc( count * CIRCBUFF_PARAM * 4 ) ;
 		memset( pThis->m_pBufLast , 0 , count * CIRCBUFF_PARAM * 4 ) ;
 		-- pThis->m_pBufLast ;
 		pThis->m_pBufCur = pThis->m_pBufLast + count * CIRCBUFF_PARAM ;
