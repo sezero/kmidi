@@ -649,8 +649,10 @@ static int ctl_open(int using_stdin, int using_stdout)
 
   for (i=0; i<4; i++)
     {
-      if (cfg_names[i]) strncpy(short_cfg_names[i], cfg_names[i], 5);
-      else strcpy(short_cfg_names[i], "(nne)");
+      if (cfg_names[i]) 
+        strlcpy(short_cfg_names[i], cfg_names[i], sizeof(short_cfg_names[i]));
+      else 
+        strlcpy(short_cfg_names[i], "(nne)", sizeof(short_cfg_names[i]));
       short_cfg_names[i][5] = '\0';
       slk_set(i+5, short_cfg_names[i], 1);
     }

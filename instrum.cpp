@@ -357,8 +357,8 @@ static InstrumentLayer *load_instrument(const char *name, int font_type, int per
 	{
 	  if (strlen(name)+strlen(patch_ext[i])<1024)
 	    {
-	      strcpy(tmpbuf, name);
-	      strcat(tmpbuf, patch_ext[i]);
+	      strlcpy(tmpbuf, name, sizeof(tmpbuf));
+	      strlcat(tmpbuf, patch_ext[i], sizeof(tmpbuf));
 	      if ((fp=open_file(tmpbuf, 1, OF_NORMAL, 0)))
 		{
 		  noluck=0;

@@ -2219,7 +2219,7 @@ void KMidi::ReadPipe(){
 		if (type == CMSG_LYRIC) {
 			pipe_int_read(&message_time);
 			pipe_string_read(strmessage);
-			strcpy(lyric_buffer[lyric_head], strmessage);
+			strlcpy(lyric_buffer[lyric_head], strmessage, sizeof(lyric_buffer[lyric_head]));
 			lyric_time[lyric_head] = message_time;
 			lyric_head++;
 			if (lyric_head == LYRBUFL) lyric_head = 0;

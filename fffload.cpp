@@ -342,7 +342,7 @@ static int make_hunks(unsigned char *start) {
 	    envelope = 0;
         }
         else if (hunk->tag == DATA)
-    	    strcpy(ptch_data_name, prev + SIZEOF_DATA_HEADER);
+    	    strlcpy(ptch_data_name, prev + SIZEOF_DATA_HEADER, sizeof(ptch_data_name));
         else if (hunk->tag == ENVP) {
 		last_layr = 0;
 		next_envelope = make_envp(prev + 8);
@@ -392,14 +392,14 @@ int loadfff(char * filename, int bank, int oldbank) {
 
     if (!filename) return(1);
     if (filename[0] == '/' || (filename[0] == '.' && filename[1] == '/'))
-	 strcpy(tmpnm, filename);
+	strlcpy(tmpnm, filename, sizeof(tmpnm));
     else {
-	strcpy(tmpnm, TIMID_DIR);
-	strcat(tmpnm, "/");
-	strcat(tmpnm, filename);
+	strlcpy(tmpnm, TIMID_DIR, sizeof(tmpnm));
+	strlcat(tmpnm, "/", sizeof(tmpnm));
+	strlcat(tmpnm, filename, sizeof(tmpnm));
     }
     if (strcmp(".fff", tmpnm + strlen(tmpnm) - 4))
-    	strcat(tmpnm,".fff");
+    	strlcat(tmpnm,".fff", sizeof(tmpnm));
 
     for (cnt = f_ix - 1; cnt >= 0; cnt--) if (!strcmp(tmpnm, fff_filename[cnt]))
 	return(0);
@@ -451,15 +451,15 @@ int loadfff(char * filename, int bank, int oldbank) {
     cprt_hunk = hunkit(fff + 8, CPRT);
     cnt = make_hunks(cprt_hunk->ptr);
 
-    strcpy(fff_filename[f_ix], tmpnm);
+    strlcpy(fff_filename[f_ix], tmpnm, sizeof(fff_filename[f_ix]));
 
     { int i = strlen(tmpnm);
       while ( i && tmpnm[--i] != '/' ) ;
       tmpnm[++i] = '\0';
-      strcat(tmpnm, ptch_data_name);
+      strlcat(tmpnm, ptch_data_name, sizeof(tmpnm));
     }
 
-    strcpy(dat_filename[f_ix], tmpnm);
+    strlcpy(dat_filename[f_ix], tmpnm, sizeof(dat_filename[f_ix]));
 
     f_ix++;
     free(fff);

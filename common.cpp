@@ -144,8 +144,7 @@ FILE *open_file(const char *name, int decompress, int noise_mode, int level)
 
   /* First try the given name */
 
-  strncpy(current_filename, name, 1023);
-  current_filename[1023]='\0';
+  strlcpy(current_filename, name, sizeof(current_filename));
 
   /* when called from read_config_file, do not look in current dir */
   if (level==0 || name[0]==PATH_SEP)
@@ -170,11 +169,11 @@ FILE *open_file(const char *name, int decompress, int noise_mode, int level)
 	l=strlen(plp->path);
 	if(l)
 	  {
-	    strcpy(current_filename, plp->path);
-	    if(current_filename[l-1]!=PATH_SEP)
-	      strcat(current_filename, PATH_STRING);
+	    strlcpy(current_filename, plp->path, sizeof(current_filename));
+	    if(plp->path[l-1]!=PATH_SEP)
+	      strlcat(current_filename, PATH_STRING, sizeof(current_filename));
 	  }
-	strcat(current_filename, name);
+	strlcat(current_filename, name, sizeof(current_filename));
 	ctl->cmsg(CMSG_INFO, VERB_DEBUG, "Trying to open %s", current_filename);
 	if ((fp=try_to_open(current_filename, decompress)))
 	  return fp;
@@ -270,7 +269,7 @@ void add_to_pathlist(char *s, int level)
 	      strcat(plp->path, PATH_STRING);
 	  }
 	else plp->path[0] = '\0';
-	strcat( plp->path, s);
+	strcat(plp->path, s);
   }
   plp->next=pathlist;
   plp->level=level;
