@@ -54,6 +54,10 @@
 #endif
 #endif
 
+#ifdef HAVE_STRING_H
+#include <string.h>
+#endif
+
 #include "common.h"
 #include "instrum.h"
 #include "playmidi.h"
