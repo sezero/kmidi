@@ -1,3 +1,10 @@
+1999-11-15  Greg Lee  <lee@hawaii.edu>
+
+	* use new docking
+	* leds a little taller
+	* status led starts out red
+	* propagated bug fix reported for 1.1.2
+
 1999-11-14  Greg Lee  <lee@hawaii.edu>
 
 	* kmidi.cpp: image for whatthis button

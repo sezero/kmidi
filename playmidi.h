@@ -207,10 +207,10 @@ typedef struct {
 
 #ifndef ADAGIO
 extern Channel channel[MAXCHAN];
-extern char drumvolume[MAXCHAN][MAXNOTE];
-extern char drumpanpot[MAXCHAN][MAXNOTE];
-extern char drumreverberation[MAXCHAN][MAXNOTE];
-extern char drumchorusdepth[MAXCHAN][MAXNOTE];
+extern signed char drumvolume[MAXCHAN][MAXNOTE];
+extern signed char drumpanpot[MAXCHAN][MAXNOTE];
+extern signed char drumreverberation[MAXCHAN][MAXNOTE];
+extern signed char drumchorusdepth[MAXCHAN][MAXNOTE];
 #else /* ADAGIO */
 extern Channel channel[MAX_TONE_VOICES];
 #endif /* ADAGIO */

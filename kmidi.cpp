@@ -747,7 +747,8 @@ void KMidi::drawPanel()
         led[i] = new KLed(led_color, this);
         led[i]->setLook(KLed::sunken);
         led[i]->setShape(KLed::Rectangular);
-        led[i]->setGeometry(WIDTH/8 + i * WIDTH/4,3*HEIGHT+HEIGHT/6, WIDTH/6, HEIGHT/5);
+        //led[i]->setGeometry(WIDTH/8 + i * WIDTH/4,3*HEIGHT+HEIGHT/6, WIDTH/6, HEIGHT/5);
+        led[i]->setGeometry(WIDTH/8 + i * WIDTH/4,3*HEIGHT+HEIGHT/8, WIDTH/6, HEIGHT/4);
 	led[i]->setColor(Qt::black);
 	if (i>10) what->add(led[i], polyled);
     }
@@ -1931,7 +1932,8 @@ void KMidi::ReadPipe(){
                 led[LYRICS_LED]->setColor(Qt::black);
 
 		if(starting_up){
-		    led[STATUS_LED]->setColor(Qt::green);
+		    led[STATUS_LED]->setColor(Qt::red);
+		    last_status = KNONE;
 		    starting_up = false;
 		    return;
 		}
@@ -2184,7 +2186,6 @@ void KMidi::ReadPipe(){
 	else if (randomplay) c = Qt::magenta;
 	last_status = status;
 	led[STATUS_LED]->setColor(c);
-	led[STATUS_LED]->setColor(Qt::green);
     }
 
     if (last_loading_blink && currplaytime) {

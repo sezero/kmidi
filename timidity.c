@@ -851,7 +851,9 @@ int main(int argc, char **argv)
   createKApplication(&argc, argv);
   if ( ! (KDEdir = getenv("KDEDIR")))                                          
    {
-     kmidi_config = DEFAULT_PATH;
+     /* kmidi_config = DEFAULT_PATH; */
+     kmidi_config = safe_malloc(strlen(DEFAULT_PATH)+1);
+     strcpy(kmidi_config, DEFAULT_PATH);
    }
   else
    {

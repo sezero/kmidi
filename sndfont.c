@@ -1577,7 +1577,7 @@ printf("PRESET %d\n",preset);
 	sp->v.envelope_rate[HOLD] = calc_rate(HOLD_EXCURSION, hold);
 
 /* ramp down by <sustain> in <decay> msecs */
-	if(sustain < ENV_BOTTOM) sustain = ENV_BOTTOM;
+	if(sustain <= ENV_BOTTOM) sustain = ENV_BOTTOM;
 	if(sustain > volume - HOLD_EXCURSION) sustain = volume - HOLD_EXCURSION;
 
 	sp->v.envelope_offset[DECAY] = to_offset(sustain);
@@ -1662,7 +1662,7 @@ printf("PRESET %d\n",preset);
 	sp->v.modulation_rate[HOLD] = calc_rate(HOLD_EXCURSION, hold);
 
 /* ramp down by <sustain> in <decay> msecs */
-	if(sustain < ENV_BOTTOM) sustain = ENV_BOTTOM;
+	if(sustain <= ENV_BOTTOM) sustain = ENV_BOTTOM;
 	if(sustain > volume - HOLD_EXCURSION) sustain = volume - HOLD_EXCURSION;
 
 	sp->v.modulation_offset[DECAY] = to_offset(sustain);

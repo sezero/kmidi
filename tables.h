@@ -25,6 +25,9 @@
 extern FLOAT_T sine(int x);
 #else
 #include <math.h>
+#ifndef PI
+#  define PI M_PI
+#endif
 #define sine(x) (sin((2*PI/1024.0) * (x)))
 #endif
 

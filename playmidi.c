@@ -104,10 +104,10 @@ static int voice_reserve=0;
 
 #ifndef ADAGIO
 Channel channel[MAXCHAN];
-char drumvolume[MAXCHAN][MAXNOTE];
-char drumpanpot[MAXCHAN][MAXNOTE];
-char drumreverberation[MAXCHAN][MAXNOTE];
-char drumchorusdepth[MAXCHAN][MAXNOTE];
+signed char drumvolume[MAXCHAN][MAXNOTE];
+signed char drumpanpot[MAXCHAN][MAXNOTE];
+signed char drumreverberation[MAXCHAN][MAXNOTE];
+signed char drumchorusdepth[MAXCHAN][MAXNOTE];
 #else /* ADAGIO */
 static void read_seq(unsigned char *from, unsigned char *to);
 Channel channel[MAX_TONE_VOICES];
@@ -1813,7 +1813,9 @@ static int xmp_epoch = -1;
 static unsigned xxmp_epoch = 0;
 static unsigned time_expired = 0;
 static unsigned last_time_expired = 0;
+#if !defined( _UNIXWARE ) && ! defined(__hpux__) && ! defined (sun) && ! defined(_SCO_DS) && ! defined (sgi)
 extern int gettimeofday(struct timeval *, struct timezone *);
+#endif
 static struct timeval tv;
 static struct timezone tz;
 static void time_sync(uint32 resync, int dosync)
