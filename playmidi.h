@@ -224,7 +224,8 @@ extern int opt_overlap_voice_allow;
 extern void recompute_freq(int v);
 extern int dont_cspline;
 #endif
-extern int dont_filter;
+extern int dont_filter_melodic;
+extern int dont_filter_drums;
 extern int command_cutoff_allowed;
 
 extern int GM_System_On;

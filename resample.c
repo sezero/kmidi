@@ -954,8 +954,11 @@ sample_t *resample_voice(int v, uint32 *countptr)
 
     rs = real_resample_voice(v, countptr);
 
-    if(!(vp->sample->sample_rate) ||
-	 (dont_filter && !vp->sample->note_to_use) ) return rs;
+    if (!(vp->sample->sample_rate)) return rs;
+    if (vp->sample->note_to_use) {
+    	if (dont_filter_drums) return rs;
+    }
+    else if (dont_filter_melodic) return rs;
 
     do_lowpass(vp->sample->sample_rate, rs, *countptr,
 	vp->sample->cutoff_freq, vp->sample->resonance);

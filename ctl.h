@@ -1,4 +1,8 @@
 
+#include <sys/ipc.h>
+#include <sys/shm.h>
+#include <sys/sem.h>
+
 #define INT_CODE 214
 #define NQUEUE 30
 #define MAXDISPCHAN 32
@@ -19,6 +23,7 @@ typedef struct {
 	char c_flags[MAXDISPCHAN];
 	char currentpatchset;
 	/* Channel channel[MAXDISPCHAN]; */
+	int wait_reset;
 } PanelInfo;
 
 

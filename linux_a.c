@@ -99,11 +99,11 @@ static int open_output(void)
   /* Set sample width to whichever the user wants. If it fails, try
      the other one. */
 
-  i=tmp=(dpm.encoding & PE_16BIT) ? 16 : 8;
+  i=tmp=(dpm.encoding & PE_16BIT) ? LE_LONG(16) : LE_LONG(8);
   if (ioctl(fd, SNDCTL_DSP_SAMPLESIZE, &tmp)<0 || tmp!=i)
     {
       /* Try the other one */
-      i=tmp=(dpm.encoding & PE_16BIT) ? 8 : 16;
+      i=tmp=(dpm.encoding & PE_16BIT) ? LE_LONG(8) : LE_LONG(16);
       if (ioctl(fd, SNDCTL_DSP_SAMPLESIZE, &tmp)<0 || tmp!=i)
 	{
 	  ctl->cmsg(CMSG_ERROR, VERB_NORMAL, 

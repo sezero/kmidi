@@ -92,7 +92,8 @@ int opt_channel_pressure = 1;
 int opt_overlap_voice_allow = 1;
 int dont_cspline=0;
 #endif
-int dont_filter=0;
+int dont_filter_melodic=1;
+int dont_filter_drums=1;
 static int voice_reserve=0;
 
 #ifndef ADAGIO
@@ -1282,8 +1283,10 @@ debug_count--;
   if (obf < 5 && current_polyphony > voices / 5) reduce_polyphony();
   if (obf < 4 && current_polyphony > voices / 6) reduce_polyphony();
 
-  if (command_cutoff_allowed) dont_filter = 0;
-  else dont_filter = 1;
+  if (command_cutoff_allowed) dont_filter_drums = 0;
+  else dont_filter_drums = 1;
+
+  dont_filter_melodic = 1;
 
 }
 
@@ -1602,11 +1605,13 @@ static void time_sync(int32 resync)
 
 static int got_a_lyric = 0;
 
+#define META_BUF_LEN 1024
+
 static void show_markers(int32 until_time)
 {
     static struct meta_text_type *meta;
-    char buf[1024];
-    int i, j, len;
+    char buf[META_BUF_LEN];
+    int i, j, len, lyriclen;
 
     if (!meta_text_list) return;
 
@@ -1626,15 +1631,18 @@ static void show_markers(int32 until_time)
 	if (meta->time <= time_expired) {
 	  if (meta->type == 5) got_a_lyric = 1;
 	  if (!got_a_lyric || meta->type == 5) {
-	    len += strlen(meta->text);
-	    if (len < 100) strcat(buf, meta->text);
+	    lyriclen = strlen(meta->text);
+	    if (len + lyriclen + 1 < META_BUF_LEN) {
+	      len += lyriclen;
+	      strcat(buf, meta->text);
+	    }
 	    if (!meta->next) strcat(buf, " \n");
 	  }
 	  meta = meta->next;
 	}
 	else break;
     len = strlen(buf);
-    for (i = 0, j = 0; j < 1024 && j < len; j++)
+    for (i = 0, j = 0; j < META_BUF_LEN && j < len; j++)
 	if (buf[j] == '\n') {
 	    buf[j] = '\0';
 	    if (j - i > 0) ctl->cmsg(CMSG_INFO, VERB_ALWAYS, buf + i);
@@ -2839,7 +2847,6 @@ int play_midi_file(char *fn)
 #ifdef tplus
   dont_cspline = 0;
 #endif
-  dont_filter = 0;
   got_a_lyric = 0;
   rc=play_midi(event, events, samples);
   if (free_instruments_afterwards)

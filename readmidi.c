@@ -145,7 +145,8 @@ static int metatext(int type, int leng, char *mess)
     struct meta_text_type *meta, *mlast;
     char *meta_string;
 
-    if (at > 0 && (type == 1||type == 5||type == 6||type == 7)) {
+    /* if (at > 0 && (type == 1||type == 5||type == 6||type == 7)) { */
+    if (type==5 || ( at > 0 && (type==1||type==6||type==7) )) {
 	meta = (struct meta_text_type *)safe_malloc(sizeof(struct meta_text_type));
 	if (leng > 72) leng = 72;
 	meta_string = (char *)safe_malloc(leng+8);
@@ -182,6 +183,20 @@ static int metatext(int type, int leng, char *mess)
 	meta->text = meta_string;
 	meta->time = at;
 	meta->next = NULL;
+/*
+while at==0
+1. head = meta1; head->next = NULL
+2. for ...: mlast = head
+   if ...: not <
+   else ...: meta2->next = NULL
+	     head->next = meta2
+   so: (meta1, meta2)
+3. for ...: mlast = meta2
+   if ...:
+   else: meta3->next = NULL
+	 meta2->next = meta3
+   so: (meta1, meta2, meta3)
+*/
 	if (meta_text_list == NULL) {
 	    meta->next = meta_text_list;
 	    meta_text_list = meta;
@@ -446,8 +461,8 @@ static MidiEventList *read_midi_event(void)
 	  if (type>0 && type<16)
 	    {
 	      static char *label[]={
-		"Text: ", "Text: ", "Copyright: ", "Track ",
-		"Instrument ", "Lyric: ", "Marker: ", "Cue point: "};
+		"text: ", "text: ", "Copyright: ", "track: ",
+		"instrument: ", "lyric: ", "marker: ", "cue point: "};
 	      dumpstring(len, label[(type>7) ? 0 : type], type);
 	    }
 	  else
@@ -984,6 +999,8 @@ static MidiEvent *groom_list(int32 divisions, uint32 *eventsp, uint32 *samplesp)
 	 */
 	  if (XG_System_On && meep->event.a > 0 && meep->event.a < 48) {
 	      channel[meep->event.channel].variationbank=meep->event.a;
+	      ctl->cmsg(CMSG_WARNING, VERB_VERBOSE,
+		   "XG variation bank %d on channel", meep->event.a, meep->event.channel);
 	      new_value=meep->event.a=0;
 	  }
 	  else if (tonebank[meep->event.a]) /* Is this a defined tone bank? */

@@ -30,14 +30,12 @@
 #include <sys/ioctl.h>
 #include <signal.h>
 #include <sys/ioctl.h>
-#include <sys/ipc.h>
-#include <sys/shm.h>
 #ifdef _SCO_DS
 #include <sys/socket.h>
 #endif
 #include <errno.h>
 
-#include "../config.h"
+/* #include "../config.h" */
 
 #ifdef HAVE_SYS_FILIO_H
 #include <sys/filio.h>
@@ -139,12 +137,12 @@ PanelInfo *Panel;
 static int songoffset = 0;
 
 static int shmid;	/* shared memory id */
+static int semid;	/* semaphore id */
 static int child_killed = 0;
 
 static int pipeAppli[2],pipeMotif[2];
 static int fpip_in, fpip_out;	
-/*static int child_pid;	        */
-int pid;
+static int child_pid;
 
 extern int Launch_KMidi_Process(int );
 
@@ -407,6 +405,14 @@ static void ctl_reset(void)
 
 	if (!ctl.trace_playing)
 		return;
+
+	Panel->wait_reset = 1;
+
+#if 0
+	while(Panel->wait_reset)
+	    /* VOLATILE_TOUCH(Panel->wait_reset)*/;
+#endif
+
 	for (i = 0; i < MAXDISPCHAN; i++) {
 		ctl_program(i, channel[i].program);
 		ctl_volume(i, channel[i].volume);
@@ -422,7 +428,6 @@ static void ctl_reset(void)
 			Panel->notecount[j][i] = 0;
 		}
 	}
-	Panel->reset_panel = 1;
 }
 
 /***********************************************************************/
@@ -459,7 +464,7 @@ static void ctl_close(void)
 	if (ctl.opened) {
 	  pipe_int_write(CLOSE_MESSAGE);
 
-	  /*	  kill(child_pid, SIGTERM);*/
+	  kill(child_pid, SIGTERM);
 	  shm_free(100);
 	  ctl.opened=0;
 	}
@@ -744,7 +749,7 @@ void pipe_open()
     res=pipe(pipeMotif);
     if (res!=0) pipe_error("PIPE_KMIDI CREATION");
  
-    if ((pid=fork())==0)   /*child*/
+    if ((child_pid=fork())==0)   /*child*/
 	{
 	    close(pipeMotif[1]); 
 	    close(pipeAppli[0]);
@@ -963,18 +968,43 @@ static void shm_alloc(void)
 		fprintf(stderr, "can't allocate shared memory\n");
 		exit(1);
 	}
-	Panel = (PanelInfo *)shmat(shmid, 0, 0);
+
+	semid = semget(IPC_PRIVATE, 1, IPC_CREAT|0600);
+	if (semid < 0) {
+	    perror("semget");
+	    shmctl(shmid, IPC_RMID,NULL);
+	    exit(1);
+	}
+
+	/* bin semaphore: only call once at first */
+#if 0
+	semaphore_V(semid);
+#endif
+
+	if ((Panel = (PanelInfo *)shmat (shmid, (char *)0, SHM_RND)) == (PanelInfo *) -1) {
+		fprintf(stderr, "can't address shared memory\n");
+		exit(1);
+	}
+
 	Panel->reset_panel = 0;
-	Panel->multi_part = 0;
+	Panel->wait_reset = 0;
 }
 
 static void shm_free(int sig)
-{ 
-  /*    	kill(child_pid, SIGTERM);
-	while (!child_killed)
-		;*/
+{
+	int status;
+#if defined(linux) || defined(__FreeBSD__)
+	union semun dmy;
+#else /* Solaris 2.x, BSDI, OSF/1, HPUX */
+	void *dmy;
+#endif
 
-	shmctl(shmid, IPC_RMID,NULL);
+	kill(child_pid, SIGTERM);
+	while(wait(&status) != child_pid)
+	    ;
+	memset(&dmy, 0, sizeof(dmy)); /* Shut compiler warning up :-) */
+	semctl(semid, 0, IPC_RMID, dmy);
+	shmctl(shmid, IPC_RMID, NULL);
 	shmdt((char *)Panel);
 	if (sig != 100)
 		exit(0);

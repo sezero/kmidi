@@ -309,7 +309,8 @@ static InstrumentLayer *load_instrument(char *name, int font_type, int percussio
       return 0;
     }
       
-  ctl->cmsg(CMSG_INFO, VERB_NOISY, "Loading instrument %s", current_filename);
+  /*ctl->cmsg(CMSG_INFO, VERB_NOISY, "Loading instrument %s", current_filename); */
+  ctl->cmsg(CMSG_INFO, VERB_NOISY, "%s%s", percussion? "   " : "", name);
 
   /* Read some headers and do cursory sanity checks. There are loads
      of magic offsets. This could be rewritten... */
@@ -828,9 +829,8 @@ static int fill_bank(int b)
 	  if (!(bank->tone[i].name))
 	    {
 	      ctl->cmsg(CMSG_WARNING, (b!=0) ? VERB_VERBOSE : VERB_NORMAL,
-		   "No instrument mapped to %s %d, program %d%s",
-		   (dr)? "drum set" : "tone bank", b, i, 
-		   (b!=0) ? "" : " - this instrument will not be heard");
+		   "No patch for %s %d, program %d",
+		   (dr)? "drumset" : "bank", b, i);
 	      if (b!=0)
 		{
 		  /* Mark the corresponding instrument in the default

@@ -360,11 +360,12 @@ InstrumentLayer *load_sbk_patch(char *name, int gm_num, int bank, int percussion
 	if (ip && (ip->samples || ip->rsamples)) {
 		ip->already_loaded = 0;
 		sfrec.fname = ip->fname;
-    		ctl->cmsg(CMSG_INFO, VERB_NOISY, "%s%s%s[%d,%d] %s (vel %d to %d).",
+    		ctl->cmsg(CMSG_INFO, VERB_NOISY, "%s%s[%d,%d] %s%s (%d-%d)",
+			(percussion)? "   ":"", name,
+			(percussion)? keynote : preset, (percussion)? preset : bank,
 			(ip->rsamples)? "2 " : "",
-			(percussion)? "Drum ":"", name,
-			(percussion)? keynote : preset, (percussion)? preset : bank, sfrec.fname,
-				LO_VAL(ip->velrange),
+			sfrec.fname,
+			LO_VAL(ip->velrange),
 				HI_VAL(ip->velrange)? HI_VAL(ip->velrange) : 127 );
 		sfrec.fd = ip->fd;
 		inst = load_from_file(&sfrec, ip, amp);
@@ -555,7 +556,7 @@ static int load_one_side(SFInsts *rec, SampleList *sp, int sample_count, Sample 
 		}
 #endif
 
-		if (!sample->sample_rate) {
+		if (!sample->sample_rate && !dont_filter_drums) {
     		        if (!i) ctl->cmsg(CMSG_INFO, VERB_DEBUG, "cutoff = %ld ; resonance = %g",
 				sp->cutoff_freq, sp->resonance);
 			do_lowpass(samplerate_save, sample->data, sample->data_length >> FRACTION_BITS,
@@ -1279,6 +1280,15 @@ fprintf(stderr, "preset %d, root_freq %ld\n", preset, sp->v.root_freq);
 
 	if (lay->set[SF_sampleFlags]) sampleFlags = lay->val[SF_sampleFlags];
 	else sampleFlags = 0;
+
+	/* arbitrary adjustments */
+	if (banknum != 128) {
+		if (program >= 16 && program <= 23) sampleFlags = 3;
+		else if (program >= 40 && program <= 43) sampleFlags = 3;
+		else if (program >= 52 && program <= 54) sampleFlags = 3;
+		else if (program >= 56 && program <= 79) sampleFlags = 3;
+		else if (program >= 80 && program <= 103) sampleFlags = 3;
+	}
 
 	if (sampleFlags == 2) sampleFlags = 0;
 

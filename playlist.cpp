@@ -411,7 +411,7 @@ void PlaylistDialog::set_local_dir(const QString &dir){
 
 	parse_fileinfo(fi,mylistboxitem1);
 
-	local_list->insertItem( mylistboxitem1 );
+	local_list->insertItem( mylistboxitem1, -1 );
 
 	cur_local_fileinfo.append(fi);
 
@@ -424,7 +424,7 @@ void PlaylistDialog::set_local_dir(const QString &dir){
 	  MyListBoxItem* mylistboxitem1 = new MyListBoxItem(fi->fileName()
 							,kmidi->folder_pixmap);
 	  parse_fileinfo(fi,mylistboxitem1);
-	  local_list->insertItem( mylistboxitem1 );
+	  local_list->insertItem( mylistboxitem1, -1 );
 	  cur_local_fileinfo.append(fi);
 	}
       }
@@ -453,7 +453,7 @@ void PlaylistDialog::set_local_dir(const QString &dir){
       MyListBoxItem* mylistboxitem2 = new MyListBoxItem(fi->fileName()
 							,kmidi->file_pixmap);
       parse_fileinfo(fi,mylistboxitem2);
-      local_list->insertItem( mylistboxitem2 );
+      local_list->insertItem( mylistboxitem2, -1 );
       cur_local_fileinfo.append(fi);
       //printf("file:%s\n",fi->fileName().data());
     }
