@@ -248,7 +248,7 @@ printf(" %d cbel = %f vol\n", i, YTO_VOLUME(i));
 	free_sbk(&sfinfo);
 
 	/* mark instruments as loaded so they won't be loaded again if we're re-called */
-	for (ip = sfrec.instlist; ip; ip = ip->next) ip->already_loaded = 1;
+	for (ip = sfrec.instlist; ip; ip = ip->next) ip->already_loaded = 10000000;
 
 }
 
@@ -314,7 +314,7 @@ InstrumentLayer *load_sbk_patch(char *name, int gm_num, int bank, int percussion
 			   int strip_tail) {
 #endif
 	int preset;
-	int not_done;
+	int not_done, load_index=0;
 	InstList *ip;
 	InstrumentLayer *lp, *nlp;
 	Instrument *inst = NULL;
@@ -355,18 +355,20 @@ InstrumentLayer *load_sbk_patch(char *name, int gm_num, int bank, int percussion
 
 	for (ip = sfrec.instlist; ip; ip = ip->next) {
 		if (ip->bank == bank && ip->preset == preset &&
-			ip->already_loaded &&
+			ip->already_loaded > load_index &&
 		    (keynote < 0 || keynote == ip->keynote))
 			break;
 	}
 	inst = 0;
 	if (ip && (ip->samples || ip->rsamples)) {
-		ip->already_loaded = 0;
+		if (!load_index)
+			load_index = ip->already_loaded - 1;
+		ip->already_loaded = load_index;
 		sfrec.fname = ip->fname;
     		ctl->cmsg(CMSG_INFO, VERB_NOISY, "%s%s[%d,%d] %s%s (%d-%d)",
 			(percussion)? "   ":"", name,
 			(percussion)? keynote : preset, (percussion)? preset : bank,
-			(ip->rsamples)? "2 " : "",
+			(ip->rsamples)? "(2) " : "",
 			sfrec.fname,
 			LO_VAL(ip->velrange),
 				HI_VAL(ip->velrange)? HI_VAL(ip->velrange) : 127 );

@@ -77,6 +77,9 @@ int fast_decay=1;
 int fast_decay=0;
 #endif
 
+int current_tune_number = 0;
+int keep_patches_tunes = 4;
+
 static void free_instrument(Instrument *ip)
 {
   Sample *sp;
@@ -100,8 +103,14 @@ static void free_instrument(Instrument *ip)
 
 static void free_layer(InstrumentLayer *lp)
 {
-  free_instrument(lp->instrument);
-  free(lp);
+  InstrumentLayer *next;
+
+  for (; lp; lp = next)
+   {
+     next = lp->next;
+     free_instrument(lp->instrument);
+     free(lp);
+   }
 }
 
 #ifndef ADAGIO
@@ -122,8 +131,31 @@ static void free_bank(int b)
       {
 	/* Not that this could ever happen, of course */
 	if (bank->tone[i].layer != MAGIC_LOAD_INSTRUMENT)
-	  free_layer(bank->tone[i].layer);
-	bank->tone[i].layer=0;
+	  {
+	    free_layer(bank->tone[i].layer);
+	    bank->tone[i].layer=0;
+	    bank->tone[i].last_used=-1;
+	  }
+      }
+}
+
+static void free_old_bank(int dr, int b, int how_old)
+{
+  int i;
+  ToneBank *bank=((dr) ? drumset[b] : tonebank[b]);
+  for (i=0; i<MAXPROG; i++)
+    if (bank->tone[i].layer && bank->tone[i].last_used < how_old)
+      {
+	if (bank->tone[i].layer != MAGIC_LOAD_INSTRUMENT)
+	  {
+	    ctl->cmsg(CMSG_INFO, VERB_DEBUG,
+		"Unloading %s %s[%d,%d] - last used %d.",
+		(dr)? "drum" : "inst", bank->tone[i].name,
+		i, b, bank->tone[i].last_used);
+	    free_layer(bank->tone[i].layer);
+	    bank->tone[i].layer=0;
+	    bank->tone[i].last_used=-1;
+	  }
       }
 }
 
@@ -288,8 +320,6 @@ static InstrumentLayer *load_instrument(char *name, int font_type, int percussio
   if ((lp = load_sbk_patch(0, gm_num, tpgm, reverb, main_volume))) return(lp);
   }
 #else
-  extern InstrumentLayer *load_fff_patch(char *, int, int, int, int, int, int, int, int, int);
-  extern InstrumentLayer *load_sbk_patch(char *, int, int, int, int, int, int, int, int, int);
 
   if (gm_num >= 0) {
       if (font_type == FONT_FFF && (lp = load_fff_patch(name, gm_num, bank, percussion,
@@ -939,9 +969,26 @@ static int fill_bank(int b)
 		   (dr)? "drum set" : "tone bank", b, i);
 	      errors++;
 	    }
-	}
-    }
+	  else
+	    { /* it's loaded now */
+		bank->tone[i].last_used = current_tune_number;
+	    }
+
+	} /* if MAGIC ... */
+    } /* for */
   return errors;
+}
+
+static void free_old_instruments(int how_old)
+{
+  int i=MAXBANK;
+  while(i--)
+    {
+      if (tonebank[i])
+	free_old_bank(0, i, how_old);
+      if (drumset[i])
+	free_old_bank(1, i, how_old);
+    }
 }
 
 int load_missing_instruments(void)
@@ -951,6 +998,10 @@ int load_missing_instruments(void)
   errors+=fill_bank(0);
 #else
   int i=MAXBANK,errors=0;
+
+  if (current_tune_number > keep_patches_tunes)
+    free_old_instruments(current_tune_number - keep_patches_tunes);
+
   while (i--)
     {
       if (tonebank[i])
@@ -958,6 +1009,7 @@ int load_missing_instruments(void)
       if (drumset[i])
 	errors+=fill_bank(1,i);
     }
+  current_tune_number++;
 #endif
   return errors;
 }

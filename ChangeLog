@@ -1,6 +1,7 @@
-1999-10-17  Greg Lee  <lee@hawaii.edu>
+1999-10-18  Greg Lee  <lee@hawaii.edu>
 
 	* implement lfo freq modulation
+	* unload least recently used patches
 
 1999-10-16  Greg Lee  <lee@hawaii.edu>
 

@@ -557,6 +557,7 @@ static int ctl_blocking_read(int32 *valp)
 */
 	      case MOTIF_PATCHSET:
 		  pipe_int_read(&arg);
+		  if (cfg_select == arg) return RC_NONE;
 		  cfg_select = arg;
 	/* fprintf(stderr,"ctl_blocking_read set #%d\n", cfg_select); */
 		  return RC_PATCHCHANGE;
