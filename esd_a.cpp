@@ -42,6 +42,7 @@
 #else
 #include <strings.h>
 #endif
+#include <errno.h>
 
 #include <esd.h>
 
@@ -62,13 +63,16 @@
 #include "miditrace.h"
 #endif
 
+#ifdef ORIG_TIMPP
+static int acntl(int request, void *arg);
+#endif
 static int open_output(void); /* 0=success, 1=warning, -1=fatal error */
 static void close_output(void);
-#ifdef ORIG_TIMPP
-static int output_data(char *buf, int32 nbytes);
-static int acntl(int request, void *arg);
-#else
-#endif
+static void output_data(int32 *buf, uint32 count);
+static int driver_output_data(int32 *buf, uint32 count);
+static void flush_output(void);
+static void purge_output(void);
+static int output_count(uint32 ct);
 
 /* export the playback mode */
 
@@ -99,21 +103,25 @@ PlayMode dpm = {
     open_output,
     close_output,
     output_data,
+    driver_output_data,
     flush_output,
-    purge_output
+    purge_output,
+    output_count
 };
 #endif
 
+#define PE_ALAW 	0x20
 
 /*************************************************************************/
 /* We currently only honor the PE_MONO bit, and the sample rate. */
 
 static int open_output(void)
 {
-    int fd, tmp, i, warnings = 0;
-    int include_enc, exclude_enc;
+    int fd, /*tmp, i,*/ warnings = 0;
+    /* int include_enc, exclude_enc; */
     esd_format_t esdformat;
 
+#if 0
     include_enc = 0;
     exclude_enc = PE_ULAW|PE_ALAW|PE_BYTESWAP; /* They can't mean these */
     if(dpm.encoding & PE_16BIT)
@@ -121,6 +129,7 @@ static int open_output(void)
     else
 	exclude_enc |= PE_SIGNED;
     dpm.encoding = validate_encoding(dpm.encoding, include_enc, exclude_enc);
+#endif
 
     /* Open the audio device */
     esdformat = (dpm.encoding & PE_16BIT) ? ESD_BITS16 : ESD_BITS8;
@@ -139,14 +148,19 @@ static int open_output(void)
     return warnings;
 }
 
-#ifdef ORIG_TIMPP
-static int output_data(char *buf, int32 nbytes)
+static int driver_output_data(int32 *buf, uint32 count)
+{
+    return write(dpm.fd, buf, count);
+}
+
+#ifdef ORIG_TMPP
+static int output_data(char *buf, uint32 count)
 {
     int n;
 
-    while(nbytes > 0)
+    while(count > 0)
     {
-	if((n = write(dpm.fd, buf, nbytes)) == -1)
+	if((n = write(dpm.fd, buf, count)) == -1)
 	{
 	    ctl->cmsg(CMSG_WARNING, VERB_VERBOSE,
 		      "%s: %s", dpm.name, strerror(errno));
@@ -160,30 +174,29 @@ static int output_data(char *buf, int32 nbytes)
 	    return -1;
 	}
 	buf += n;
-	nbytes -= n;
+	count -= n;
     }
 
     return 0;
 }
-#else
+#endif
 
-int driver_output_data(char *buf, uint32 count) {
-  return snd_pcm_write(handle, buf, count);
-}
+#ifndef ORIG_TIMPP
 
-
-int current_sample_count(uint32 ct)
+static int output_count(uint32 ct)
 {
   int samples = -1;
-  int samples_queued, samples_sent = (int)ct;
+  int samples_queued = 0, samples_sent = (int)ct;
   extern int b_out_count();
 
   samples = samples_sent = b_out_count();
 
   if (samples_sent) {
 /* samples_queued is PM_REQ_GETFILLED */
+#if 0
       if (snd_pcm_playback_status(handle, &playback_status) == 0)
 	samples_queued = playback_status.queue;
+#endif
       samples -= samples_queued;
   }
   if (!(dpm.encoding & PE_MONO)) samples >>= 1;

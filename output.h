@@ -42,8 +42,10 @@ typedef struct {
   int (*open_output)(void); /* 0=success, 1=warning, -1=fatal error */
   void (*close_output)(void);
   void (*output_data)(int32 *buf, uint32 count);
+  int (*driver_output_data)(int32 *buf, uint32 count);
   void (*flush_output)(void);
   void (*purge_output)(void);
+  int (*output_count)(uint32 ct);
 } PlayMode;
 
 extern PlayMode *play_mode_list[], *play_mode;
@@ -52,8 +54,8 @@ extern int got_a_configuration;
 
 extern int output_buffer_full;
 extern int output_device_open;
-extern int current_sample_count(uint32 ct);
-extern int driver_output_data(char *buf, uint32 count);
+/* extern int current_sample_count(uint32 ct); */
+/* extern int driver_output_data(char *buf, uint32 count); */
 extern int b_out_count(void);
 extern void b_out(int fd, int *buf, int ocount);
 /* Conversion functions -- These overwrite the int32 data in *lp with

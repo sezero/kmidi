@@ -1,3 +1,10 @@
+2000-01-24  Greg Lee  <lee@hawaii.edu>
+
+	* fix output esd interface (flag -Oe)
+	* add output interface for linux 2nd
+	  soundcard (flag -Od)
+	* make "-O<letter>" a cfg file option
+
 2000-01-22  Greg Lee  <lee@hawaii.edu>
 
 	* fix kmidi reading commandline files

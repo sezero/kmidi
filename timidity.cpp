@@ -247,7 +247,7 @@ static int set_value(int32 *param, int32 i, int32 low, int32 high, const char *n
   return 0;
 }
 
-static int set_play_mode(char *cp)
+int set_play_mode(char *cp)
 {
   PlayMode *pmp, **pmpp=play_mode_list;
 

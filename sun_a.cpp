@@ -50,13 +50,13 @@
 #include "output.h"
 #include "controls.h"
 
-extern void b_out(int fd, int *buf, int ocount);
-
 static int open_output(void); /* 0=success, 1=warning, -1=fatal error */
 static void close_output(void);
 static void output_data(int32 *buf, uint32 count);
+static int driver_output_data(int32 *buf, uint32 count);
 static void flush_output(void);
 static void purge_output(void);
+static int output_count(uint32 ct);
 
 /* export the playback mode */
 
@@ -71,8 +71,10 @@ PlayMode dpm = {
   open_output,
   close_output,
   output_data,
+  driver_output_data,
   flush_output,
-  purge_output  
+  purge_output,
+  output_count
 };
 
 /*************************************************************************/
@@ -247,11 +249,16 @@ static int open_output(void)
   return warnings;
 }
 
-int current_sample_count(uint32 ct)
+static int output_count(uint32 ct)
 {
   extern int ioctl();
   if (ioctl(dpm.fd, AUDIO_GETINFO, &auinfo)<0) return (int)ct;
   return auinfo.play.samples;
+}
+
+static int driver_output_data(int32 *buf, uint32 count)
+{
+  return write(fd,buf,ccount);
 }
 
 static void output_data(int32 *buf, uint32 count)

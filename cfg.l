@@ -25,6 +25,7 @@
 	 result = fread( buf, 1, max_size, yyin );
 
 
+extern int set_play_mode(char *cp);
 static int prescanning;
 static char doing_drums = false;
 static char doing_sf = false;
@@ -398,7 +399,7 @@ cm	[ \t]*("#".*)?\n
 		j = atoi(yytext+i+2);
 		if (j > 1 && j < MAX_AMPLIFICATION) amplification = j;
 	} }
-^{owh}"-C"{wh}[0-9]+	{ if (prescanning) {
+^{owh}"-C"{owh}[0-9]+	{ if (prescanning) {
 		i=0; while(isspace(yytext[i])) i++;
 		j = atoi(yytext+i+2);
 		if (j > 1 && j < MAX_CONTROL_RATIO) control_ratio = j;
@@ -428,6 +429,12 @@ cm	[ \t]*("#".*)?\n
 		i=0; while(isspace(yytext[i])) i++;
 		j = atoi(yytext+i+2);
 		if (j >= 0 && j <= 2) opt_volume_curve = j;
+	} }
+^{owh}"-O"{owh}[a-zA-Z]	{ if (prescanning) {
+		i=0; while(isspace(yytext[i])) i++;
+		i+=2;
+		while(isspace(yytext[i])) i++;
+		if (set_play_mode(yytext+i)) /* error */;
 	} }
 
 <P>{owh}"amp"{owh}"="{owh}[0-9]+	{

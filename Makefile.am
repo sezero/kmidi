@@ -35,7 +35,7 @@ kmidi_SOURCES = kmidi.cpp  playlist.cpp bwlednum.cpp configdlg.cpp log.cpp \
 	timidity.cpp common.cpp readmidi.cpp playmidi.cpp resample.cpp mix.cpp instrum.cpp \
 	tables.cpp controls.cpp output.cpp filter.cpp wave_a.cpp raw_a.cpp dumb_c.cpp \
 	sndfont.cpp readsbk.cpp ncurs_c.cpp slang_c.cpp ctl.cpp cfg.cpp \
-	linux_a.cpp dec_a.cpp sun_a.cpp hpux_a.cpp hpux_d_a.cpp alsa_a.cpp \
+	linux_a.cpp linux_a2.cpp dec_a.cpp sun_a.cpp hpux_a.cpp hpux_d_a.cpp alsa_a.cpp \
 	bsd20_a.cpp esd_a.cpp nas_a.cpp \
 	b_out.cpp fffload.cpp \
 	effects.cpp reverb_e.cpp chorus_e.cpp phaser_e.cpp celeste_e.cpp \

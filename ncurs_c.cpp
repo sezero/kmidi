@@ -260,7 +260,7 @@ static void ctl_current_time(uint32 ct)
   if (!ctl.trace_playing) 
     return;
 
-  realct = current_sample_count(ct);
+  realct = play_mode->output_count(ct);
   if (realct < 0) realct = 0;
   else realct += songoffset;
   centisecs = realct / (play_mode->rate/100);

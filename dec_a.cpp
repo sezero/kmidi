@@ -56,8 +56,10 @@
 static int open_output(void); /* 0=success, 1=warning, -1=fatal error */
 static void close_output(void);
 static void output_data(int32 *buf, uint32 count);
+static int driver_output_data(int32 *buf, uint32 count);
 static void flush_output(void);
 static void purge_output(void);
+static int output_count(uint32 ct);
 
 /* export the playback mode */
 
@@ -72,8 +74,10 @@ PlayMode dpm = {
   open_output,
   close_output,
   output_data,
+  driver_output_data,
   flush_output,
-  purge_output  
+  purge_output,
+  output_count
 };
 
 /* Global variables */
@@ -232,6 +236,10 @@ static int open_output(void)
 }
 
 
+static int driver_output_data(int32 *buf, uint32 count)
+{
+  return count;
+}
 
 /* Output of audio data from timidity */
 
@@ -294,7 +302,7 @@ static void purge_output(void)
  }
 } 
 
-int current_sample_count(uint32 ct)
+static int output_count(uint32 ct)
 {
   return (int)ct;
 }

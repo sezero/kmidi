@@ -75,7 +75,8 @@ static int writedevaudio(char *buf, int32 len);
 static int ioctldevaudio(int request, void *arg);
 static int acntl(int request, void *arg);
 #else
-static int writedevaudio(char *buf, uint32 len);
+static void output_data(int32 *buf, uint32 count);
+static int driver_output_data(int32 *buf, uint32 count);
 static void flush_output(void);
 static void purge_output(void);
 #endif
@@ -106,9 +107,11 @@ PlayMode dpm=
   (char*)0,
   opendevaudio,
   closedevaudio,
-  writedevaudio,
+  output_data,
+  driver_output_data,
   flush_output,
-  purge_output
+  purge_output,
+  output_count
 };
 #endif
 
@@ -133,7 +136,7 @@ static void reset_sample_counters()
 }
 
 #ifndef ORIG_TIMPP
-int current_sample_count(uint32 ct)
+static int output_count(uint32 ct)
 {
     return play_counter;
 }
@@ -303,9 +306,16 @@ static void closedevaudio(void)
   }
 }
 
+#ifdef ORIG_TIMPP
 static int writedevaudio(char *buf, int32 len)
+#else
+static int driver_output_data(char *buf, uint32 count)
+#endif
 {
   int done = 0;
+#ifndef ORIG_TIMPP
+  int len = (int)count;
+#endif
 
   while ((fd.used+(len-done))>fd.capacity)
   {
@@ -323,6 +333,29 @@ static int writedevaudio(char *buf, int32 len)
 }
 
 #ifndef ORIG_TIMPP
+static void output_data(int32 *buf, uint32 count)
+{
+  int ocount;
+
+  if (!(dpm.encoding & PE_MONO)) count*=2; /* Stereo samples */
+  ocount = (int)count;
+
+  if (ocount) {
+    if (dpm.encoding & PE_16BIT)
+      {
+        /* Convert data to signed 16-bit PCM */
+        s32tos16(buf, count);
+        ocount *= 2;
+      }
+    else
+      {
+        /* Convert to 8-bit unsigned and write out. */
+        s32tou8(buf, count);
+      }
+  }
+
+  b_out(dpm.fd, (int *)buf, ocount);
+}
 
 static void flush_output(void)
 {

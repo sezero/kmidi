@@ -28,24 +28,46 @@
 
 
 /* These are very likely mutually exclusive.. */
-#ifdef __osf__
+/* #ifdef __osf__ */
+#ifdef AU_DEC
 extern PlayMode dec_play_mode;
 #define DEFAULT_PLAY_MODE &dec_play_mode
 #endif
 
-#if defined(linux) || defined(__FreeBSD__)
+/* #if defined(linux) || defined(__FreeBSD__) */
+#ifdef AU_OSS
 extern PlayMode linux_play_mode;
+extern PlayMode linux_play_mode_two;
 #define DEFAULT_PLAY_MODE &linux_play_mode
 #endif
 
-#if defined(hpux) || defined(__hpux)
+/* #if defined(hpux) || defined(__hpux) */
+#if defined(AU_HPUX_ALIB) || defined(AU_HPUX)
 extern PlayMode hpux_play_mode;
 #define DEFAULT_PLAY_MODE &hpux_play_mode
 #endif
 
-#if defined(sun)
+/* #if defined(sun) */
+#ifdef AU_SUN
 extern PlayMode sun_play_mode;
 #define DEFAULT_PLAY_MODE &sun_play_mode
+#endif
+
+#ifdef AU_ALSA
+extern PlayMode alsa_play_mode;
+#define DEFAULT_PLAY_MODE &alsa_play_mode
+#endif
+
+#ifdef AU_NAS
+extern PlayMode nas_play_mode;
+#define DEFAULT_PLAY_MODE &nas_play_mode
+#endif
+
+#ifdef AU_ESD
+extern PlayMode esd_play_mode;
+#ifndef DEFAULT_PLAY_MODE
+#define DEFAULT_PLAY_MODE &esd_play_mode
+#endif
 #endif
 
 #ifdef AU_WIN32
@@ -61,6 +83,12 @@ extern PlayMode raw_play_mode, wave_play_mode;
 PlayMode *play_mode_list[] = {
 #ifdef DEFAULT_PLAY_MODE
   DEFAULT_PLAY_MODE,
+#endif
+#ifdef AU_OSS
+  &linux_play_mode_two,
+#endif
+#ifdef AU_ESD
+  &esd_play_mode,
 #endif
 #ifndef ADAGIO
   &wave_play_mode,

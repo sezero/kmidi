@@ -67,9 +67,11 @@ static void close_output(void);
 static int output_data(char *buf, int32 nbytes);
 static int acntl(int request, void *arg);
 #else
-static int output_data(char *buf, uint32 count);
+static void output_data(char *buf, uint32 count);
+static int driver_output_data(char *buf, uint32 count);
 static void flush_output(void);
 static void purge_output(void);
+static int output_count(uint32 ct);
 #endif
 static int total_bytes, output_counter;
 
@@ -99,8 +101,10 @@ PlayMode dpm = {
   open_output,
   close_output,
   output_data,
+  driver_output_data,
   flush_output,
-  purge_output
+  purge_output,
+  output_count
 };
 #endif
 
@@ -488,12 +492,12 @@ static int output_data(char *buf, int32 nbytes)
 }
 #else
 
-int driver_output_data(char *buf, uint32 count) {
+static int driver_output_data(char *buf, uint32 count) {
   return snd_pcm_write(handle, buf, count);
 }
 
 
-int current_sample_count(uint32 ct)
+static int output_count(uint32 ct)
 {
   int samples = -1;
   int samples_queued, samples_sent = (int)ct;
