@@ -585,41 +585,57 @@ static int ctl_blocking_read(int32 *valp)
 		  songoffset =
 		  *valp= new_centiseconds*(play_mode->rate / 100) ;
 		  ctl_reset();
+		  pausing = 0;
 		  return RC_JUMP;
 		  
 	      case MOTIF_FWD:
 		  pipe_int_read(&new_centiseconds);
 		  songoffset +=
 		  *valp= new_centiseconds*(play_mode->rate / 100) ;
+		  pausing = 0;
 		  return RC_FORWARD;
 		  
 	      case MOTIF_RWD:
 		  pipe_int_read(&new_centiseconds);
 		  songoffset -=
 		  *valp= new_centiseconds*(play_mode->rate / 100) ;
+		  pausing = 0;
 		  return RC_BACK;
 		  
 	      case MOTIF_QUIT:
+		  songoffset = 0;
+		  ctl_reset();
+		  pausing = 0;
 		  return RC_QUIT;
+		
+	      case MOTIF_STOP:
+		  songoffset = 0;
+		  ctl_reset();
+		  pausing = 0;
+		  return RC_STOP;
 		
 	      case MOTIF_PLAY_FILE:
 		  songoffset = 0;
 		  ctl_reset();
+		  pausing = 0;
 		  return RC_LOAD_FILE;		  
 		  
 	      case MOTIF_NEXT:
 		  songoffset = 0;
 		  ctl_reset();
+		  pausing = 0;
 		  return RC_NEXT;
 		  
 	      case MOTIF_PREV:
 		  songoffset = 0;
 		  ctl_reset();
+		  pausing = 0;
 		  return RC_REALLY_PREVIOUS;
 		  
 	      case MOTIF_RESTART:
 		  songoffset = 0;
 		  ctl_reset();
+		  pausing = 0;
 		  return RC_RESTART;
 /* not used
 	      case MOTIF_FWD:
@@ -636,6 +652,7 @@ static int ctl_blocking_read(int32 *valp)
 		  pipe_int_read(&arg);
 		  /*if (cfg_select == arg) return RC_NONE;*/
 		  cfg_select = arg;
+		  pausing = 0;
 		  return RC_PATCHCHANGE;
 	/* fprintf(stderr,"ctl_blocking_read set #%d\n", cfg_select); */
 #if 0
@@ -701,6 +718,7 @@ static int ctl_blocking_read(int32 *valp)
 		  pipe_int_read(&arg);
 		  change_in_voices =
 		    *valp= arg;
+		  pausing = 0;
 		  return RC_CHANGE_VOICES;
 		  
 	      case MOTIF_CHECK_STATE:
@@ -746,6 +764,7 @@ static int ctl_blocking_read(int32 *valp)
 		  break;
 
 	      case TRY_OPEN_DEVICE:
+		  pausing = 0;
 		  return RC_TRY_OPEN_DEVICE;
 	      }
 	  
@@ -876,6 +895,7 @@ static void ctl_pass_playing_list(int number_of_files, char *list_of_files[])
 			case RC_FORWARD:
 			case RC_BACK:
 			case RC_NONE:
+			case RC_STOP:
 			    break;
 			default:
 			    printf("UNKNOWN COMMAND ERROR: %i\n",command);

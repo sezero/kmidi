@@ -79,14 +79,7 @@ bool MidiApplication::process(const QCString &fun, const QByteArray &data,
   QString res;
   int exitcode;
 
-  if (fun == "doIt(int)") {
-    int arg;
-    stream >> arg;
-    res = "self->doIt(arg)";
-    stream2 << res;
-    replyType = "QString";
-    return true;
-  } else if (fun == "newInstance(QValueList<QCString>)") {
+  if (fun == "newInstance(QValueList<QCString>)") {
     QValueList<QCString> arg;
     stream >> arg;
     newInstance(arg);
@@ -98,7 +91,6 @@ bool MidiApplication::process(const QCString &fun, const QByteArray &data,
     QString arg;
     stream >> arg;
     replyType = "void";
-    fprintf(stderr,"playing %s\n", arg.ascii());
     kmidi->stopClicked();
     kmidi->playlist->clear();
     kmidi->playlist->append(arg);

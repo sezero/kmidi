@@ -22,6 +22,7 @@
 #define RC_TRY_OPEN_DEVICE 15
 #define RC_PATCHCHANGE 16
 #define RC_CHANGE_VOICES 17
+#define RC_STOP 18
 
 #define CMSG_INFO	0
 #define CMSG_WARNING	1
@@ -91,4 +92,5 @@
 #define MOTIF_REVERB 18
 #define MOTIF_CHORUS 19
 #define MOTIF_DRY 20
+#define MOTIF_STOP 21
 

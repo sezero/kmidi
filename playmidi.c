@@ -2124,6 +2124,7 @@ static int apply_controls(void)
 #ifdef KMIDI
       case RC_PATCHCHANGE:
       case RC_CHANGE_VOICES:
+      case RC_STOP:
 #endif
 	play_mode->purge_output();
 	return rc;

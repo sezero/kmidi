@@ -1429,7 +1429,8 @@ void KMidi::stopClicked()
      timeSB->setValue(0);
      randomplay = false;
      shufflebutton->setOn( FALSE );
-     if (status != KPAUSED && status != KSTOPPED) pipe_int_write(MOTIF_PAUSE);
+     //if (status != KPAUSED && status != KSTOPPED) pipe_int_write(MOTIF_STOP);
+     if (status != KSTOPPED) pipe_int_write(MOTIF_STOP);
      status = KSTOPPED;
      playPB->setOn( FALSE );
      statusLA->setText(i18n("Ready"));
