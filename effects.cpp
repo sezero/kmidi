@@ -16,6 +16,12 @@
 #endif
 #include <stdlib.h>
 
+#ifndef NO_STRING_H
+#include <string.h>
+#else
+#include <strings.h>
+#endif
+
 #include "common.h"
 #include "instrum.h"
 #include "playmidi.h"
