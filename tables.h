@@ -41,6 +41,7 @@ extern FLOAT_T *xg_vol_table; /* == gs_vol_table */
 #else
 extern FLOAT_T vol_table[];
 #endif
+extern FLOAT_T expr_table[];
 extern FLOAT_T bend_fine[];
 extern FLOAT_T bend_coarse[];
 #ifdef tplus

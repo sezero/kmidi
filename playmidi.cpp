@@ -500,8 +500,8 @@ static void recompute_amp(int v)
    }
 
   tempamp= (int32)((FLOAT_T)vel *
-	    127.0 * def_vol_table[vol] * 
-	    127.0 * def_vol_table[channel[chan].expression] ); /* 21 bits */
+	    127.0 * expr_table[vol] * 
+	    127.0 * expr_table[channel[chan].expression] ); /* 21 bits */
 
   if (!(play_mode->encoding & PE_MONO))
     {
@@ -739,16 +739,24 @@ static void clone_voice(Instrument *ip, int v, MidiEvent *e, uint8 clone_type, i
 	  right = w;
 	}
 	if (panrequest < 64) {
+#if 0
 	  if (voice[left].sample->panning < panrequest)
 		voice[left].panning = voice[left].sample->panning;
 	  else voice[left].panning = panrequest;
-	  voice[right].panning = (voice[right].sample->panning + panrequest + 32) / 2;
+	  voice[right].panning = (voice[right].sample->panning + panrequest + 32) / 2;A
+#endif
+	  voice[left].panning = 0;
+	  voice[right].panning = panrequest;
 	}
 	else {
+#if 0
 	  if (voice[right].sample->panning > panrequest)
 		voice[right].panning = voice[right].sample->panning;
 	  else voice[right].panning = panrequest;
-	  voice[left].panning = (voice[left].sample->panning + panrequest - 32) / 2;
+	  voice[left].panning = (voice[left].sample->panning + panrequest - 32) / 2;A
+#endif
+	  voice[left].panning = panrequest;
+	  voice[right].panning = 127;
 	}
     }
 #ifdef DEBUG_CLONE_NOTES
@@ -774,8 +782,12 @@ fprintf(stderr,"STEREO_CLONE v%d vol%f pan%d\n", w, voice[w].volume, voice[w].pa
 	if (voice[w].panning < 64) voice[w].panning = 127;
 	else voice[w].panning = 0;
 #endif
+#if 0
 	if (voice[v].panning < 64) voice[w].panning = 64 + reverb/2;
 	else voice[w].panning = 64 - reverb/2;
+#endif
+	if (voice[w].panning > 64) voice[w].panning = 127;
+	else voice[w].panning = 0;
 
 #ifdef DEBUG_REVERBERATION
 printf("r=%d vol %f", reverb, voice[w].volume);
@@ -3007,7 +3019,7 @@ static void read_seq(unsigned char *from, unsigned char *to)
   } /* for */
 
 }
-#endif ADAGIO
+#endif /* ADAGIO */
 
 
 #ifndef ADAGIO

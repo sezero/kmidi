@@ -1,3 +1,9 @@
+1999-12-25  Greg Lee  <lee@hawaii.edu>
+
+	* playmidi.cpp: increase stereo separation
+	* instrum.cpp: demote some error msgs to info
+	* tables.cpp: expression table
+
 1999-12-24  Greg Lee  <lee@hawaii.edu>
 
 	* fix multiple references to soundfonts

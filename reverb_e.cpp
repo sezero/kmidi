@@ -106,13 +106,13 @@ static int32 d1 , d2 , d3 , d4 , d5 , d6 , d7;
 static uint32 dieTime;
 
 /** gain param normalized to G */
-static int32 g1 = G * G1 ;
-static int32 g2 = G * G2;
-static int32 g3 = G * G3 ;
-static int32 g4 = G * G4 ;
-static int32 g5 = G * G5;
-static int32 g6 = G * G6 ;
-static int32 g7 = G * G7 ;
+static int32 g1 = (int32)(G * G1);
+static int32 g2 = (int32)(G * G2);
+static int32 g3 = (int32)(G * G3);
+static int32 g4 = (int32)(G * G4);
+static int32 g5 = (int32)(G * G5);
+static int32 g6 = (int32)(G * G6);
+static int32 g7 = (int32)(G * G7);
 
 
 static int32 gm ;
@@ -317,8 +317,8 @@ if ( 1+delay_flt-d6 < 0 ) fprintf(stderr,"Check reverb_e.c!\n");
 				redim_cirbuff( &( pThis->rightYa) , (uint32)(1 + delay_flt - d6) ) ;
 			}
 
-			pThis->ge = G * ( ( GE_MAX * G_MIN ) + ( GE_MAX * ( 1.0 - G_MIN ) / 126.0 ) * ( amount - 1 ) ) ;			
-			pThis->ga = G * ( ( GA_MAX * G_MIN ) + ( GA_MAX * ( 1.0 - G_MIN ) / 126.0 ) * ( amount - 1 ) ) ;
+			pThis->ge = (int32)( G * ( ( GE_MAX * G_MIN ) + ( GE_MAX * ( 1.0 - G_MIN ) / 126.0 ) * ( amount - 1 ) ) );			
+			pThis->ga = (int32)( G * ( ( GA_MAX * G_MIN ) + ( GA_MAX * ( 1.0 - G_MIN ) / 126.0 ) * ( amount - 1 ) ) );
 
 		}
 		else

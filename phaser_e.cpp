@@ -255,12 +255,12 @@ static void CtrlReset( phaser_effect* pThis )
 	
 	pThis->gy = 0 ;
 	
-	d_max = ( ( ( D * ( 1.0 + ( SWEEP / 2 ) ) * play_mode->rate ) / 1000 ) - 1 ) * FRACTION ;
-	d_min = ( ( ( D * ( 1.0 - ( SWEEP / 2 ) ) * play_mode->rate ) / 1000 ) - 1 ) * FRACTION ;
+	d_max = (uint32)( ( ( ( D * ( 1.0 + ( SWEEP / 2 ) ) * play_mode->rate ) / 1000 ) - 1 ) * FRACTION );
+	d_min = (uint32)( ( ( ( D * ( 1.0 - ( SWEEP / 2 ) ) * play_mode->rate ) / 1000 ) - 1 ) * FRACTION );
 
-	pThis->incr = ( 2 * ( d_max - d_min ) * FREQU ) / play_mode->rate  ;
+	pThis->incr = (int32)( ( 2 * ( d_max - d_min ) * FREQU ) / play_mode->rate  );
 	pThis->d =  d_min ;
-	dieTime = ( DIE_TIME  * play_mode->rate ) / 1000 ;
+	dieTime = (uint32)( ( DIE_TIME  * play_mode->rate ) / 1000 );
 }
 
 static void CtrlChange( phaser_effect* pThis , MidiEvent* pCurrentEvent )
@@ -277,7 +277,7 @@ static void CtrlChange( phaser_effect* pThis , MidiEvent* pCurrentEvent )
 				redim_cirbuff( &( pThis->rightX ) , ( d_max >> FRACTION_BITS ) + 1 ) ;
 				redim_cirbuff( &( pThis->rightY ) , ( d_max >> FRACTION_BITS ) + 1 ) ;
 			}
-			pThis->gy = G * ( G_MIN  + ( ( 1.0 - G_MIN ) / 126.0 ) * ( pCurrentEvent->a - 1 ) );
+			pThis->gy = (int32)( G * ( G_MIN  + ( ( 1.0 - G_MIN ) / 126.0 ) * ( pCurrentEvent->a - 1 ) ) );
 		}
 		else
 			CtrlReset( pThis ) ;
@@ -307,7 +307,7 @@ static void Destruct( phaser_effect* pThis  )
 Effect* PhaserCtor() 
 {
 	phaser_effect* pReturn = 0 ;
-	pReturn = malloc( sizeof( phaser_effect) ) ;
+	pReturn = ( phaser_effect* )malloc( sizeof( phaser_effect) ) ;
 	memset( pReturn , 0 , sizeof( phaser_effect ) ) ;
 	
 	pReturn->m_pfnActionMono =  &ActionMono ;

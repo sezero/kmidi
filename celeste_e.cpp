@@ -214,7 +214,7 @@ static void CtrlReset( celeste_effect* pThis )
 	pThis->d_max = 0 ;
 	pThis->incr = 0 ;
 	pThis->d = 0 ;
-	dieTime = ( DIE_TIME  * play_mode->rate ) / 1000 ;
+	dieTime = (uint32)( ( DIE_TIME  * play_mode->rate ) / 1000 );
 }
 
 static void CtrlChange( celeste_effect* pThis , MidiEvent* pCurrentEvent )
@@ -227,8 +227,8 @@ static void CtrlChange( celeste_effect* pThis , MidiEvent* pCurrentEvent )
 	{
 		if( amount != 0 )
 		{
-			pThis->d_max = ( ( D_MAX * play_mode->rate *  ( D_MIN  + ( ( 1.0 - D_MIN ) / 126.0 ) * ( amount - 1 ) ) ) / FREQU ) * FRACTION ;
-			pThis->incr = ( 2 * pThis->d_max * FREQU ) / play_mode->rate  ;
+			pThis->d_max = (uint32)( ( ( D_MAX * play_mode->rate *  ( D_MIN  + ( ( 1.0 - D_MIN ) / 126.0 ) * ( amount - 1 ) ) ) / FREQU ) * FRACTION );
+			pThis->incr = (int32)( ( 2 * pThis->d_max * FREQU ) / play_mode->rate );
 			redim_cirbuff( &( pThis->leftX ) , ( pThis->d_max >> FRACTION_BITS ) + 2 ) ;
 			if( ! ( play_mode->encoding & PE_MONO ) )
 			{
@@ -261,7 +261,7 @@ static void Destruct( celeste_effect* pThis  )
 Effect* CelesteCtor(void) 
 {
 	celeste_effect* pReturn = 0 ;
-	pReturn = malloc( sizeof( celeste_effect) ) ;
+	pReturn = ( celeste_effect* )malloc( sizeof( celeste_effect) ) ;
 	memset( pReturn , 0 , sizeof( celeste_effect ) ) ;
 	
 	pReturn->m_pfnActionMono =  &ActionMono ;

@@ -374,7 +374,7 @@ static InstrumentLayer *load_instrument(char *name, int font_type, int percussio
   
   if (noluck)
     {
-      ctl->cmsg(CMSG_ERROR, VERB_NORMAL, 
+      ctl->cmsg(CMSG_INFO, VERB_NORMAL, 
 		"Instrument `%s' can't be found.", name);
     #ifdef ADAGIO
       gus_voice[tpgm].volume = DOES_NOT_EXIST;
@@ -1031,7 +1031,7 @@ static int fill_bank(int b)
 				     bank->tone[i].main_volume )))
 				#endif /* ADAGIO */
 	    {
-	      ctl->cmsg(CMSG_ERROR, VERB_NORMAL, 
+	      ctl->cmsg(CMSG_INFO, VERB_NORMAL, 
 		   "Couldn't load instrument %s (%s %d, program %d)",
 		   bank->tone[i].name,
 		   (dr)? "drum set" : "tone bank", b, i);

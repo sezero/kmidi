@@ -1418,10 +1418,11 @@ if (strip_loop == 1) {
 
 	/* root pitch */
 	sp->v.root_freq = calc_root_pitch(lay, sf, sp);
-/*
-if (banknum < 128 && (preset == 16 || preset == 17))
-fprintf(stderr, "preset %d, root_freq %ld\n", preset, sp->v.root_freq);
-*/
+/* *
+if (banknum < 128 && (preset == 11 || preset == 42))
+fprintf(stderr, "preset %d, root_freq %ld (scale tune %d, freq scale %d, center %d)\n", preset, sp->v.root_freq,
+sp->v.scale_tuning, sp->v.freq_scale, sp->v.freq_center);
+* */
 	/* volume envelope & total volume */
 	sp->v.volume = 1.0; /* was calc_volume(lay,sf) */
 
@@ -1609,8 +1610,7 @@ static int32 calc_root_pitch(Layer *lay, SFInfo *sf, SampleList *sp)
 		tune += lay->val[SF_coarseTune] * sp->v.scale_tuning +
 			lay->val[SF_fineTune] * sp->v.scale_tuning / 100;
 	} else {
-
-		/* orverride root key */
+		/* override root key */
 		if (lay->set[SF_rootKey])
 			root = lay->val[SF_rootKey];
 		/* tuning */
@@ -1646,6 +1646,8 @@ static int32 calc_root_pitch(Layer *lay, SFInfo *sf, SampleList *sp)
 
     /* -100 < tune <= 0 */
     tune = (-tune * 256) / 100;
+    /* 256 > tune >= 0 */
+    /* 1.059 >= bend_fine[tune] >= 1.0 */
 
     if(root > 127)
 	return (int32)((FLOAT_T)freq_table[127] *
@@ -1661,6 +1663,7 @@ static int32 calc_root_pitch(Layer *lay, SFInfo *sf, SampleList *sp)
 	return (int32)((double)freq_table[root] * bend_fine[(-tune*255)/100]);
 #endif
 }
+
 
 /* #define EXAMINE_SOME_ENVELOPES */
 /*----------------------------------------------------------------

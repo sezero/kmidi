@@ -232,10 +232,10 @@ static void CtrlReset( chorus_effect* pThis )
 	redim_cirbuff( &( pThis->leftX ) , 0 ) ;
 	redim_cirbuff( &( pThis->rightX ) , 0 ) ;	
 	
-	d_max = ( ( ( D * ( 1.0 + ( SWEEP / 2 ) ) * play_mode->rate ) / 1000 ) - 1 ) * FRACTION ;
-	d_min = ( ( ( D * ( 1.0 - ( SWEEP / 2 ) ) * play_mode->rate ) / 1000 ) - 1 ) * FRACTION  ;
+	d_max = (uint32)( ( ( ( D * ( 1.0 + ( SWEEP / 2 ) ) * play_mode->rate ) / 1000 ) - 1 ) * FRACTION );
+	d_min = (uint32)( ( ( ( D * ( 1.0 - ( SWEEP / 2 ) ) * play_mode->rate ) / 1000 ) - 1 ) * FRACTION );
 
-	pThis->incr_left = ( 2 * ( d_max - d_min ) * FREQU ) / play_mode->rate  ;
+	pThis->incr_left = (int32)( ( 2 * ( d_max - d_min ) * FREQU ) / play_mode->rate );
 	pThis->incr_right = pThis->incr_left ;
 	pThis->d_left = ( d_max + d_min ) / 2 ;
 	pThis->d_right = d_min ;
@@ -260,7 +260,7 @@ static void CtrlChange( chorus_effect* pThis , MidiEvent* pCurrentEvent )
 			{
 				redim_cirbuff( &( pThis->rightX ) , ( d_max >> FRACTION_BITS ) + 1 ) ;
 			}
-			pThis->a = G * ( A_MIN + ( A_MAX - A_MIN ) * ( amount - 1 ) / 126.0 ) ;	
+			pThis->a = (int32)( G * ( A_MIN + ( A_MAX - A_MIN ) * ( amount - 1 ) / 126.0 ) );	
 		}
 		else
 			CtrlReset( pThis ) ;
