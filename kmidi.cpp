@@ -103,16 +103,16 @@ KMidi::KMidi( QWidget *parent, const char *name ) :
     playlist = new QStrList(TRUE);
 
     if ( !folder_pixmap.loadFromData(folder_bmp_data, folder_bmp_len) ) {
-	QMessageBox::message( i18n("Error"), i18n("Could not load folder.bmp") );
+	QMessageBox::critical(this, i18n("Error"), i18n("Could not load folder.bmp"), i18n("OK") );
     }
 
 
     if ( !cdup_pixmap.loadFromData(cdup_bmp_data, cdup_bmp_len) ) {
-	QMessageBox::message( i18n("Error"), i18n("Could not load cdup.bmp") );
+	QMessageBox::critical(this, i18n("Error"), i18n("Could not load cdup.bmp"), i18n("OK") );
     }
 
     if ( !file_pixmap.loadFromData(file_bmp_data, file_bmp_len) ) {
-	QMessageBox::message( i18n("Error"), i18n("Could not load file.bmp") );
+	QMessageBox::critical(this, i18n("Error"), i18n("Could not load file.bmp"), i18n("OK"));
     }
 
     timer = new QTimer( this );

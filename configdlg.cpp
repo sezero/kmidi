@@ -113,7 +113,7 @@ void ConfigDlg::ttclicked(){
 void ConfigDlg::help(){
 
   if(thisapp)
-    thisapp->invokeHTMLHelp("kmidi/kmidi.html","");
+    thisapp->invokeHTMLHelp("","");
 }
 
 void ConfigDlg::cancelbutton() {

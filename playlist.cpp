@@ -24,7 +24,10 @@
 
 #include <stdio.h>
 
+#include <qtextstream.h>
+
 #include <klocale.h>
+#include <kstddirs.h>
 
 #include "playlist.h"
 #include "playlist.moc"
@@ -213,7 +216,7 @@ void PlaylistDialog::set_local_dir(const QString &dir){
   if (!dir.isEmpty()){
     if ( !cur_local_dir.setCurrent(dir)){
       QString str = i18n("Can not enter directory: %1\n").arg(dir);
-      QMessageBox::message(i18n("Sorry"),str,i18n("OK"));
+      QMessageBox::information(this, i18n("Sorry"),str,i18n("OK"));
       return;
     }
   }
@@ -281,7 +284,7 @@ void PlaylistDialog::set_local_dir(const QString &dir){
     }
   } else {
     qApp->restoreOverrideCursor();
-    QMessageBox::message( i18n("Sorry"), i18n("Cannot open or read directory.") );
+    QMessageBox::information(this, i18n("Sorry"), i18n("Cannot open or read directory."), i18n("OK") );
     qApp ->setOverrideCursor( waitCursor );
   }
   local_list->setAutoUpdate( TRUE );
@@ -423,7 +426,6 @@ void PlaylistDialog::deletePlaylist(){
 }
 
 void PlaylistDialog::loadPlaylist(const QString &name){
-
      
   current_playlist = name;
   
@@ -446,6 +448,9 @@ void PlaylistDialog::loadPlaylist(const QString &name){
  QString tempstring;
 
  while(!f.atEnd()){
+   tempstring = tempstring.stripWhiteSpace();
+   if (!tempstring.isEmpty())
+      listbox->insertItem(tempstring,-1);
    buffer[0] = (char) 0;
    f.readLine(buffer,511);
    //printf("Found:%s\n",buffer);
@@ -466,8 +471,6 @@ void PlaylistDialog::help(){
   if(!thisapp)
     return;
 
-  thisapp->invokeHTMLHelp("kmidi/kmidi.html","");
+  thisapp->invokeHTMLHelp("","");
 
 }
-
-
