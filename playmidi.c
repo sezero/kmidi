@@ -784,6 +784,9 @@ static void clone_voice(Instrument *ip, int v, MidiEvent *e, uint8 clone_type, i
 	  voice[left].panning = (voice[left].sample->panning + panrequest - 32) / 2;
 	}
     }
+#ifdef DEBUG_CLONE_NOTES
+fprintf(stderr,"STEREO_CLONE v%d vol%f pan%d\n", w, voice[w].volume, voice[w].panning);
+#endif
   }
 
 #ifdef tplus
@@ -799,20 +802,28 @@ static void clone_voice(Instrument *ip, int v, MidiEvent *e, uint8 clone_type, i
   milli = play_mode->rate/1000;
 
   if (reverb) {
+
+#if 0
 	if (voice[w].panning < 64) voice[w].panning = 127;
 	else voice[w].panning = 0;
+#endif
+	if (voice[v].panning < 64) voice[w].panning = 64 + reverb/2;
+	else voice[w].panning = 64 - reverb/2;
 
 #ifdef DEBUG_REVERBERATION
 printf("r=%d vol %f", reverb, voice[w].volume);
 #endif
-	voice[w].volume = vol_table[(127-reverb)/8 + 127 - 15 - 1];
+
+/* try 98->99 for melodic instruments ? (bit much for percussion) */
+	voice[w].volume = vol_table[(127-reverb)/8 + 98];
 
 #ifdef DEBUG_REVERBERATION
 printf(" -> vol %f", voice[w].volume);
 
 printf(" delay %d", voice[w].echo_delay);
 #endif
-	voice[w].echo_delay += (reverb>>1) * milli;
+	/*voice[w].echo_delay += (reverb>>1) * milli;*/
+	voice[w].echo_delay += reverb * milli;
 #ifdef DEBUG_REVERBERATION
 printf(" -> delay %d\n", voice[w].echo_delay);
 #endif
@@ -855,6 +866,10 @@ printf(" -> delay %d\n", voice[w].echo_delay);
 	        default: break;
 	    }
 	}
+#ifdef DEBUG_CLONE_NOTES
+fprintf(stderr,"REVERB_CLONE v%d vol=%f pan=%d reverb=%d delay=%dms\n", w, voice[w].volume, voice[w].panning, reverb,
+	voice[w].echo_delay / milli);
+#endif
   }
   played_note = voice[w].sample->note_to_use;
   if (!played_note) {
@@ -941,6 +956,9 @@ printf(" -> delay %d\n", voice[w].echo_delay);
 		  break;
 	    }
 	}
+#ifdef DEBUG_CLONE_NOTES
+fprintf(stderr,"CHORUS_CLONE v%d vol%f pan%d chorus%d\n", w, voice[w].volume, voice[w].panning, chorus);
+#endif
   }
   voice[w].loop_start = voice[w].sample->loop_start;
   voice[w].loop_end = voice[w].sample->loop_end;
@@ -1333,6 +1351,10 @@ printf("(new rel time = %ld)\n",
     }
   voice[i].clone_voice = -1;
   voice[i].clone_type = NOT_CLONE;
+#ifdef DEBUG_CLONE_NOTES
+fprintf(stderr,"NOT_CLONE v%d vol%f pan%d\n", i, voice[i].volume, voice[i].panning);
+#endif
+
   if (reverb_options & OPT_STEREO_VOICE) clone_voice(ip, i, e, STEREO_CLONE, variationbank);
   if (reverb_options & OPT_CHORUS_VOICE) clone_voice(ip, i, e, CHORUS_CLONE, variationbank);
   if (reverb_options & OPT_REVERB_VOICE) clone_voice(ip, i, e, REVERB_CLONE, variationbank);

@@ -1,7 +1,11 @@
+1999-10-26  Greg Lee  <lee@hawaii.edu>
+
+	* playmidi.c: longer echo delays
+
 1999-10-24  Greg Lee  <lee@hawaii.edu>
 
 	* resample.c: fixed bug in note terminations
-	  but now it sounds worse
+	  but now it sounds worse (clicks)
 	* b_out.c: lie about room in buffer at start up
 	  to prevent too much polyphony at beginning of
 	  some songs
@@ -11,6 +15,7 @@
 	  for strings
 	* ctl.c: kmidi shouldn't kill timidity on exit
 	* kmidi.cpp: rename reverb/chorus to echo/detune
+	* effects.c: route XG phaser request to phaser filter
 
 1999-10-23  Greg Lee  <lee@hawaii.edu>
 

@@ -1,3 +1,15 @@
+Implementation
+Greg Lee, Oct. 1999
+
+
+	Processes
+
+KMidi is the user front end which handles the screen display and button
+presses, etc.  It executes as a separate process from TiMidity, which
+reads midi files and plays them.
+
+
+	Synthesis Model
 
 TiMidity has a tone generator, two envelope generators, three low frequency
 sine-wave oscillators, a low pass filter, and an effects unit.
@@ -26,4 +38,20 @@ a patch set may provide separate patches for different note-velocity ranges
 (commonly for pianos) and for different note-pitch ranges.  GUS patch sets,
 however, provide only one tone element and one velocity range per instrument.
 
+
+	Computation Issues
+
+TiMidity can fall behind in computing data to send out to the sound driver, and
+then there are dropouts in the music.  TiMidity tries to anticipate the possibility
+of a dropout by monitoring the state of its output buffer and those of the
+sound driver, and when there is not much in the buffers, it tries to catch up
+by minimising the calculations it has to do: it uses a cruder interpolation
+routine in resampling, stops doing extra echo and detuned notes for reverb and
+chorus effects, and starts terminating notes early, or even skipping notes
+altogether.  So, depending on midi song, patchset, how fast your system is,
+even if you don't hear dropouts, you will notice a loss in quality as TiMidity
+gets busier.  KMidi's front panel lights give some picture of how desperate
+TiMidity is becoming in its effort to keep the music playing.
+
+	Memory Issues
 
