@@ -453,7 +453,8 @@ static void recompute_amp(int v)
 
   if (!(play_mode->encoding & PE_MONO))
     {
-      if (voice[v].panning > 60 && voice[v].panning < 68)
+      /*if (voice[v].panning > 60 && voice[v].panning < 68)*/
+      if (voice[v].panning > 62 && voice[v].panning < 66)
 	{
 	  voice[v].panned=PANNED_CENTER;
 
@@ -571,8 +572,6 @@ static void clone_voice(Instrument *ip, int v, MidiEvent *e, uint8 clone_type)
 {
   int w, k, played_note, chorus, reverb;
   int chan = voice[v].channel;
-  voice[v].clone_voice = -1;
-  voice[v].clone_type = 0;
 
   if (clone_type == STEREO_CLONE && !voice[v].right_sample) return;
 
@@ -670,10 +669,6 @@ static void clone_voice(Instrument *ip, int v, MidiEvent *e, uint8 clone_type)
   voice[w].porta_control_ratio = voice[v].porta_control_ratio;
   voice[w].porta_dpb = voice[v].porta_dpb;
   voice[w].porta_pb = voice[v].porta_pb;
-/*
-  voice[w].vibrato_control_ratio = voice[v].vibrato_control_ratio;
-  voice[w].vibrato_depth = voice[v].vibrato_depth;
-*/
   voice[w].vibrato_delay = 0;
 #endif
   if (reverb) {
@@ -737,6 +732,11 @@ static void clone_voice(Instrument *ip, int v, MidiEvent *e, uint8 clone_type)
 	/*voice[w].orig_frequency += (voice[w].orig_frequency/128) * chorus;*/
 /*fprintf(stderr, "voice %d v sweep from %ld (cr %d, depth %d)", w, voice[w].vibrato_sweep,
 	 voice[w].vibrato_control_ratio, voice[w].vibrato_depth);*/
+	voice[w].panning = voice[v].panning - 16;
+	if (voice[w].panning < 0) voice[w].panning = 0;
+	voice[v].panning += 16;
+	if (voice[v].panning > 127) voice[v].panning = 127;
+
 	if (!voice[w].vibrato_control_ratio) {
 		voice[w].vibrato_control_ratio = 100;
 		voice[w].vibrato_depth = 6;
@@ -782,6 +782,7 @@ static void clone_voice(Instrument *ip, int v, MidiEvent *e, uint8 clone_type)
 	    }
 	}
   }
+
   recompute_freq(w);
   recompute_amp(w);
   if (voice[w].sample->modes & MODES_ENVELOPE)
@@ -993,6 +994,34 @@ printf("(new rel time = %ld)\n",
       channel[e->channel].last_note_fine = voice[i].note * 256; */
 #endif
 
+  if (reverb_options & OPT_STEREO_EXTRA) {
+    int pan = voice[i].panning;
+    int disturb = 0;
+    /* If they're close up (no reverb) and you are behind the pianist,
+     * high notes come from the right, so we'll spread piano etc. notes
+     * out horizontally according to their pitches.
+     */
+    if (channel[e->channel].program < 21) {
+	    int n = voice[i].velocity - 32;
+	    if (n < 0) n = 0;
+	    if (n > 64) n = 64;
+	    pan = pan/2 + n;
+	}
+    /* For other types of instruments, the music sounds more alive if
+     * notes come from slightly different directions.  However, instruments
+     * do drift around in a sometimes disconcerting way, so the following
+     * might not be such a good idea.
+     */
+    else disturb = (voice[i].velocity/32 % 8) +
+	(voice[i].note % 8); /* /16? */
+
+    if (pan < 64) pan += disturb;
+    else pan -= disturb;
+    if (pan < 0) pan = 0;
+    else if (pan > 127) pan = 127;
+    voice[i].panning = pan;
+  }
+
   recompute_freq(i);
   recompute_amp(i);
   if (voice[i].sample->modes & MODES_ENVELOPE)
@@ -1009,6 +1038,8 @@ printf("(new rel time = %ld)\n",
       voice[i].envelope_increment=0;
       apply_envelope_to_amp(i);
     }
+  voice[i].clone_voice = -1;
+  voice[i].clone_type = 0;
   if (reverb_options & OPT_STEREO_VOICE) clone_voice(ip, i, e, STEREO_CLONE);
   if (reverb_options & OPT_REVERB_VOICE) clone_voice(ip, i, e, REVERB_CLONE);
   if (reverb_options & OPT_CHORUS_VOICE) clone_voice(ip, i, e, CHORUS_CLONE);

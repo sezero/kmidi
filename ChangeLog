@@ -1,7 +1,8 @@
-1999-08-23  Greg Lee  <lee@hawaii.edu>
+1999-08-22  Greg Lee  <lee@hawaii.edu>
 
 	* panel control of stereo/reverb/chorus voice & verbosity
 	* midi channel pressure
+	* log.cpp: set text window to read-only (no special reason)
 
 1999-08-21  Greg Lee  <lee@hawaii.edu>
 

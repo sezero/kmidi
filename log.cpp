@@ -56,7 +56,7 @@ LogWindow::LogWindow(QWidget *parent, const char *name)
   text_window = new myMultiEdit(this,"logwindow");
   text_window->setGeometry(2,5,500, 300);
   text_window->setFocusPolicy ( QWidget::NoFocus );
-
+  text_window->setReadOnly( TRUE );
 
   dismiss = new QPushButton(this,"dismissbutton");
   dismiss->setGeometry(330,340,70,30);
