@@ -69,7 +69,7 @@ EXTRA_DIST = $(apps_DATA) $(pics_DATA)
 
 cfg.cpp: cfg.l
 	rm -f cfg.cpp
-	flex -t -B cfg.l >cfg.cpp
+	flex -t -B $(srcdir)/cfg.l >cfg.cpp
 
 install-data-local:
 	$(mkinstalldirs) $(TIMID_DIR)/patch

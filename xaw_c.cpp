@@ -28,7 +28,7 @@
 #include "config.h"
 #endif /* HAVE_CONFIG_H */
 #else
-#include "../config.h"
+#define HAVE_UNISTD_H
 #endif
 
 #include <stdio.h>
@@ -231,7 +231,7 @@ static void ctl_current_time(uint32 ct)
     int centisecs, realct, sec;
   static int previous_sec=-1,last_voices=-1;
   static int last_v=-1, last_time=-1;
-    realct = current_sample_count(ct);
+    realct = play_mode->output_count(ct);
     if (realct < 0) realct = 0;
     /* else realct += songoffset; */
     centisecs = realct / (play_mode->rate/100);

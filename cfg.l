@@ -24,6 +24,12 @@
 #define YY_INPUT(buf,result,max_size) \
 	 result = fread( buf, 1, max_size, yyin );
 
+#ifndef true
+#define true 1
+#endif
+#ifndef false
+#define false 0
+#endif
 
 extern int set_play_mode(char *cp);
 static int prescanning;

@@ -62,6 +62,13 @@ int check_for_rc(void) {
 # endif
 #endif
 
+#ifdef IA_GTK
+  extern ControlMode gtk_control_mode;
+# ifndef DEFAULT_CONTROL_MODE
+#  define DEFAULT_CONTROL_MODE &gtk_control_mode
+# endif
+#endif
+
 #ifdef MOTIF
   extern ControlMode motif_control_mode;
 # ifndef DEFAULT_CONTROL_MODE

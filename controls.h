@@ -43,6 +43,10 @@
 #define RC_CHANGE_VOLUME 12
 #define RC_LOAD_FILE 13		/* Load a new midifile */
 #define RC_TUNE_END 14		/* The tune is over, play it again sam? */
+#define RC_TRY_OPEN_DEVICE 15
+#define RC_PATCHCHANGE 16
+#define RC_CHANGE_VOICES 17
+#define RC_STOP 18
 
 #define CMSG_INFO	0
 #define CMSG_WARNING	1

@@ -57,9 +57,9 @@ static int output_count(uint32 ct);
 /* export the playback mode */
 
 #ifdef LINUX_SECOND_DEVICE
-#define dpm linux_play_mode
-#else
 #define dpm linux_play_mode_two
+#else
+#define dpm linux_play_mode
 #endif
 
 PlayMode dpm = {
@@ -67,11 +67,11 @@ PlayMode dpm = {
   -1,
   {0}, /* default: get all the buffer fragments you can */
 #ifdef LINUX_SECOND_DEVICE
-  "Linux dsp device", 'd',
-  "/dev/dsp",
-#else
   "Linux dsp device", 'D',
   "/dev/dsp1",
+#else
+  "Linux dsp device", 'd',
+  "/dev/dsp",
 #endif
   open_output,
   close_output,

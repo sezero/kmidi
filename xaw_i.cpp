@@ -28,7 +28,8 @@
 #include "config.h"
 #endif /* HAVE_CONFIG_H */
 #else
-#include "../config.h"
+#define HAVE_UNISTD_H
+#define STDC_HEADERS
 #endif
 
 #include <stdio.h>

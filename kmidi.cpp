@@ -2447,8 +2447,10 @@ void KMidi::setColors(){
 	cp.normal().mid(), led_color, background_color );
     QColorGroup dis( yellow, background_color, cp.disabled().light(), cp.disabled().dark(),
 	cp.disabled().mid(), yellow, background_color );
-    QColorGroup act( background_color, led_color, cp.active().light(), cp.active().dark(),
-	cp.active().mid(), background_color, led_color );
+//    QColorGroup act( background_color, led_color, cp.active().light(), cp.active().dark(),
+//	cp.active().mid(), background_color, led_color );
+    QColorGroup act( led_color, background_color, cp.normal().light(), cp.normal().dark(),
+	cp.normal().mid(), led_color, background_color );
 
     QPalette np(norm, dis, act);
 

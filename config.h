@@ -24,9 +24,15 @@
 #include "allphase.h"
 #endif /* ADAGIO */
 
+#ifdef KMIDI
 #include "../config.h"
 #ifndef HAVE_STRING_H
 #define NO_STRING_H
+#endif
+#else
+#define HAVE_STRING_H
+#define HAVE_SLANG_H
+#define HAVE_USLEEP
 #endif
 
 #ifndef TIMID_DIR
