@@ -23,6 +23,7 @@
 #include <qdir.h>
 #include <klocale.h>
 #include <kglobal.h>
+#include <kpushbutton.h>
 #include <kurl.h>
 #include <kurlcombobox.h>
 #include <kdiroperator.h>
