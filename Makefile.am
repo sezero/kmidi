@@ -57,7 +57,7 @@ noinst_HEADERS = kmidi.h  playlist.h bwlednum.h configdlg.h \
 
 METASOURCES = AUTO
 
-SUBDIRS = config bitmaps midis prep-TIMIDITY TIMIDITY BITMAPS
+SUBDIRS = config bitmaps prep-TIMIDITY TIMIDITY BITMAPS
 
 appsdir = $(kde_appsdir)/Multimedia/More
 apps_DATA = kmidi.desktop
@@ -86,10 +86,6 @@ install-data-local:
 	if [ ! -f $(DESTDIR)$(TIMID_DIR)/patch/cymride1.pat ]; then $(INSTALL_DATA) $(srcdir)/config/patch/cymride1.pat $(DESTDIR)$(TIMID_DIR)/patch ; fi
 	if [ ! -f $(DESTDIR)$(TIMID_DIR)/patch/acbass.pat ]; then $(INSTALL_DATA) $(srcdir)/config/patch/acbass.pat $(DESTDIR)$(TIMID_DIR)/patch ; fi
 
-	@echo ""
-	@echo "Midis:"
-	@echo "I have included a couple of nice midis in the kmidi/midis directory."
-	@echo "These are installed in KDEDIR/share/apps/kmidi."
 	@echo ""
 	@echo "Sound Patches:"
 	@echo "Only a simple  piano and guitar sound patch and 3 drum patches come with "
