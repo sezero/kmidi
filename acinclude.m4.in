@@ -1045,6 +1045,7 @@ AC_DEFUN(KMIDI_OPTIMIZE,
 [
   kde_gcc3_is_horrible_broken=no
   if test "$ac_cv_prog_gxx" = "yes"; then
+    EXTRATCFLAGS="$EXTRATCFLAGS -fasm"
     if test "`$CXX --version`" = "3.0" || test "`$CXX --version`" = "3.0.1"; then
       kde_gcc3_is_horrible_broken=yes
     fi
