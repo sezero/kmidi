@@ -2519,8 +2519,12 @@ int play_midi(MidiEvent *eventlist, uint32 events, uint32 samples)
 		  	channel[current_event->channel].bank=57;
 		  else */
 		  channel[current_event->channel].bank=current_event->a;
+		/*
 	          ctl->program(current_event->channel, current_event->a,
 			channel[current_event->channel].name);
+		*/
+	          ctl->program(current_event->channel, current_event->a,
+      			drumset[channel[current_event->channel].bank]->name);
 		}
 	      else
 		{

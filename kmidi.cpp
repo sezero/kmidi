@@ -2199,7 +2199,8 @@ void KMidi::ReadPipe(){
 		pipe_int_read(&channel);
 		pipe_int_read(&pgm);
 		pipe_string_read(progname);
-		channelwindow->setProgram(channel, pgm, progname);
+		channelwindow->setProgram(channel, pgm, progname,
+		    (int)Panel->c_bank[channel], (int)Panel->c_variationbank[channel]);
 		//printf("NOTE chn%i %i %s\n",channel,pgm, progname);
 	    }
 	    break;

@@ -28,6 +28,8 @@ typedef struct {
 	uint8 chorusdepth[NQUEUE][MAXDISPCHAN];
 	uint8 volume[NQUEUE][MAXDISPCHAN];
 
+	uint8 c_bank[MAXDISPCHAN];
+	uint8 c_variationbank[MAXDISPCHAN];
 	char c_flags[MAXDISPCHAN];
 	char currentpatchset;
 	/* Channel channel[MAXDISPCHAN]; */

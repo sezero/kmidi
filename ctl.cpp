@@ -327,6 +327,9 @@ static void ctl_channel_note(int ch, /*int note, int vel,*/ int start)
 	Panel->reverberation[slot][ch] = (uint8)channel[ch].reverberation;
 	Panel->chorusdepth[slot][ch] = (uint8)channel[ch].chorusdepth;
 	Panel->volume[slot][ch] = (uint8)channel[ch].volume;
+
+	//Panel->c_bank[ch] = (uint8)channel[ch].bank;
+	//Panel->c_variationbank[ch] = (uint8)channel[ch].variationbank;
 }
 
 static void ctl_note(int v)
@@ -375,16 +378,20 @@ static void ctl_program( int ch, int val, char *name)
 	if (!ctl.trace_playing) 
 		return;
 
+	ch &= 0x1f;
+	if (channel[ch].kit) Panel->c_bank[ch] = (uint8)channel[ch].kit;
+	else Panel->c_bank[ch] = (uint8)channel[ch].bank;
+	Panel->c_variationbank[ch] = (uint8)channel[ch].variationbank;
+
 	noname[0] = '*';
 	noname[1] = '\0';
 
        	pipe_int_write(PROGRAM_MESSAGE);
        	pipe_int_write(ch);
        	pipe_int_write(val);
-	if (name && strlen(name) > 0 && strlen(name) < 80) pipe_string_write(name);
+	if (name && strlen(name) > 0 && strlen(name) < 99) pipe_string_write(name);
 	else pipe_string_write(noname);
 /*
-	ch &= 0x1f;
 	Panel->channel[ch].program = val;
 	Panel->c_flags[ch] |= FLAG_PROG;
 */

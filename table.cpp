@@ -51,7 +51,7 @@ Table::Table( int width, int height, QWidget *parent, const char *name )
     contents[indexOf(0,5)] = QString("Rev");
     contents[indexOf(0,6)] = QString("Chor");
     contents[indexOf(0,7)] = QString("Vol");
-    contents[indexOf(0,8)] = QString("?");
+    contents[indexOf(0,8)] = QString("Bank");
 
     for (n=0; n<16; n++) {
 	c_flags[n] = 0;
@@ -95,6 +95,7 @@ void Table::clearChannels( void )
         contents[indexOf( chan, 5 )] = QString::null;
         contents[indexOf( chan, 6 )] = QString::null;
         contents[indexOf( chan, 7 )] = QString::null;
+        contents[indexOf( chan, 8 )] = QString::null;
 	t_expression[chan-1] = 0;
 	c_flags[chan-1] = 0;
 	t_panning[chan-1] = 64;
@@ -108,10 +109,11 @@ void Table::clearChannels( void )
 	updateCell( chan, 5 );
 	updateCell( chan, 6 );
 	updateCell( chan, 7 );
+	updateCell( chan, 8 );
     }
 }
 
-void Table::setProgram( int chan, int val, const char *inst )
+void Table::setProgram( int chan, int val, const char *inst, int bank, int variationbank )
 {
     if (chan < 0 || chan > 15) return;
     chan++;
@@ -119,6 +121,9 @@ void Table::setProgram( int chan, int val, const char *inst )
     contents[indexOf( chan, 2 )].setNum(val);
 	updateCell( chan, 1 );
 	updateCell( chan, 2 );
+    if (variationbank) contents[indexOf( chan, 8 )].setNum(variationbank);
+    else contents[indexOf( chan, 8 )].setNum(bank);
+	updateCell( chan, 8 );
 }
 
 
@@ -233,7 +238,7 @@ void Table::paintCell( QPainter* p, int row, int col )
       Draw cell content (text)
     */
 
-    if (row==0 || col==0 || col==2)
+    if (row==0 || col==0 || col==2 || col==8)
         p->drawText( 0, 0, w, h, AlignCenter, contents[indexOf(row,col)] );
 
     else if (col==1)

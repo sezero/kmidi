@@ -25,7 +25,7 @@ public:
     void setCellContent( int row, int col, const char* );
 
     void clearChannels( void );
-    void setProgram( int chan, int val, const char *inst );
+    void setProgram( int chan, int val, const char *inst, int bank, int variationbank );
     void setExpression( int chan, int val );
     void setPanning( int chan, int val );
     void setReverberation( int chan, int val );

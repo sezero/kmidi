@@ -1448,7 +1448,7 @@ fprintf(stderr, "preset %d, root_freq %ld\n", preset, sp->v.root_freq);
 	sp->v.modes = MODES_16BIT | MODES_ENVELOPE;
 
 
-	if (sampleFlags == 3 || banknum == 128) sp->v.modes |= MODES_FAST_RELEASE;
+	if (sampleFlags == 3) sp->v.modes |= MODES_FAST_RELEASE;
 
 	/* arbitrary adjustments (look at sustain of vol envelope? ) */
 	if (sampleFlags && lay->val[SF_sustainEnv2] == 0) sampleFlags = 3;
