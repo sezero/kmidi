@@ -53,14 +53,20 @@ static int dont_cspline = 0;
 
 #define FILTER_INTERPOLATION
 
+#define PATCH_OVERSHOOT (40<<FRACTION_BITS)
+
 #if defined(CSPLINE_INTERPOLATION)
 #ifndef FILTER_INTERPOLATION
 # define INTERPVARS      int32   ofsd, v0, v1, v2, v3, temp;
 # define RESAMPLATION \
-	if (ofs >= vp->sample->data_length) v1 = 0; \
-        else  v1 = (int32)src[(ofs>>FRACTION_BITS)]; \
-	if (ofs + (1L<<FRACTION_BITS) >= vp->sample->data_length) v2 = 0; \
-        else  v2 = (int32)src[(ofs>>FRACTION_BITS)+1]; \
+	if (ofs >= se) { \
+		int32 delta = (ofs - se)>>FRACTION_BITS ; \
+        	v1 = (int32)src[(se>>FRACTION_BITS)-1]; \
+		if (v1) v1 = (v1 - delta) / v1; \
+        }else  v1 = (int32)src[(ofs>>FRACTION_BITS)]; \
+	if (ofs + (1L<<FRACTION_BITS) >= se) { \
+		v2 = v1; \
+        }else  v2 = (int32)src[(ofs>>FRACTION_BITS)+1]; \
 	if(dont_cspline || \
 	   ((ofs-(1L<<FRACTION_BITS))<ls)||((ofs+(2L<<FRACTION_BITS))>le)){ \
                 *dest++ = (sample_t)(v1 + ((int32)((v2-v1) * (ofs & FRACTION_MASK)) >> FRACTION_BITS)); \
@@ -94,10 +100,14 @@ static int dont_cspline = 0;
 			b0 = butterworth[bw_index][3]; \
 			b1 = butterworth[bw_index][4];
 # define RESAMPLATION \
-	if (ofs >= vp->sample->data_length) v1 = 0; \
-        else  v1 = (int32)src[(ofs>>FRACTION_BITS)]; \
-	if (ofs + (1L<<FRACTION_BITS) >= vp->sample->data_length) v2 = 0; \
-        else  v2 = (int32)src[(ofs>>FRACTION_BITS)+1]; \
+	if (ofs >= se) { \
+		int32 delta = (ofs - se)>>FRACTION_BITS ; \
+        	v1 = (int32)src[(se>>FRACTION_BITS)-1]; \
+		if (v1) v1 = (v1 - delta) / v1; \
+        }else  v1 = (int32)src[(ofs>>FRACTION_BITS)]; \
+	if (ofs + (1L<<FRACTION_BITS) >= se) { \
+		v2 = v1; \
+        }else  v2 = (int32)src[(ofs>>FRACTION_BITS)+1]; \
 	if(dont_cspline || \
 	   ((ofs-(1L<<FRACTION_BITS))<ls)||((ofs+(2L<<FRACTION_BITS))>le)){ \
 		if (dont_filter_melodic) bw_index = 0; \
@@ -177,10 +187,14 @@ static int dont_cspline = 0;
 #elif defined(LAGRANGE_INTERPOLATION)
 # define INTERPVARS      int32   ofsd, v0, v1, v2, v3;
 # define RESAMPLATION \
-	if (ofs >= vp->sample->data_length) v1 = 0; \
-        else  v1 = (int32)src[(ofs>>FRACTION_BITS)]; \
-	if (ofs + (1L<<FRACTION_BITS) >= vp->sample->data_length) v2 = 0; \
-        else  v2 = (int32)src[(ofs>>FRACTION_BITS)+1]; \
+	if (ofs >= se) { \
+		int32 delta = (ofs - se)>>FRACTION_BITS ; \
+        	v1 = (int32)src[(se>>FRACTION_BITS)-1]; \
+		if (v1) v1 = (v1 - delta) / v1; \
+        }else  v1 = (int32)src[(ofs>>FRACTION_BITS)]; \
+	if (ofs + (1L<<FRACTION_BITS) >= se) { \
+		v2 = v1; \
+        }else  v2 = (int32)src[(ofs>>FRACTION_BITS)+1]; \
 	if(dont_cspline || \
 	   ((ofs-(1L<<FRACTION_BITS))<ls)||((ofs+(2L<<FRACTION_BITS))>le)){ \
                 *dest++ = (sample_t)(v1 + ((int32)((v2-v1) * (ofs & FRACTION_MASK)) >> FRACTION_BITS)); \
@@ -208,31 +222,37 @@ static int dont_cspline = 0;
 #elif defined(LINEAR_INTERPOLATION)
 # if defined(LOOKUP_HACK) && defined(LOOKUP_INTERPOLATION)
 #   define RESAMPLATION \
-	if (ofs >= vp->sample->data_length) v1 = 0; \
-        else  v1 = (int32)src[(ofs>>FRACTION_BITS)]; \
-	if (ofs + (1L<<FRACTION_BITS) >= vp->sample->data_length) v2 = 0; \
-        else  v2 = (int32)src[(ofs>>FRACTION_BITS)+1]; \
+	if (ofs >= se) { \
+		int32 delta = (ofs - se)>>FRACTION_BITS ; \
+        	v1 = (int32)src[(se>>FRACTION_BITS)-1]; \
+		if (v1) v1 = (v1 - delta) / v1; \
+        }else  v1 = (int32)src[(ofs>>FRACTION_BITS)]; \
+	if (ofs + (1L<<FRACTION_BITS) >= se) { \
+		v2 = v1; \
+        }else  v2 = (int32)src[(ofs>>FRACTION_BITS)+1]; \
 	*dest++ = (sample_t)(v1 + (iplookup[(((v2-v1)<<5) & 0x03FE0) | \
            ((int32)(ofs & FRACTION_MASK) >> (FRACTION_BITS-5))]));
 # else
 #   define RESAMPLATION \
-	if (ofs >= vp->sample->data_length) v1 = 0; \
-        else  v1 = (int32)src[(ofs>>FRACTION_BITS)]; \
-	if (ofs + (1L<<FRACTION_BITS) >= vp->sample->data_length) v2 = 0; \
-        else  v2 = (int32)src[(ofs>>FRACTION_BITS)+1]; \
+	if (ofs >= se) { \
+		int32 delta = (ofs - se)>>FRACTION_BITS ; \
+        	v1 = (int32)src[(se>>FRACTION_BITS)-1]; \
+		if (v1) v1 = (v1 - delta) / v1; \
+        }else  v1 = (int32)src[(ofs>>FRACTION_BITS)]; \
+	if (ofs + (1L<<FRACTION_BITS) >= se) { \
+		v2 = v1; \
+        }else  v2 = (int32)src[(ofs>>FRACTION_BITS)+1]; \
 	*dest++ = (sample_t)(v1 + ((int32)((v2-v1) * (ofs & FRACTION_MASK)) >> FRACTION_BITS));
 # endif
 #  define INTERPVARS int32 v1, v2;
 #else
 /* Earplugs recommended for maximum listening enjoyment */
 #  define RESAMPLATION \
-	if (ofs >= vp->sample->data_length) *dest++ = 0; \
+	if (ofs >= se) *dest++ = 0; \
 	else *dest++=src[ofs>>FRACTION_BITS];
 #  define INTERPVARS
 #endif
 
-#define FINALINTERP if (ofs == le) *dest++=src[(ofs>>FRACTION_BITS)-1]/2;
-/* So it isn't interpolation. At least it's final. */
 
 static sample_t resample_buffer[AUDIO_BUFFER_SIZE];
 static uint32 resample_buffer_offset;
@@ -344,6 +364,8 @@ static sample_t *rs_plain(int v, uint32 *countptr)
     ls=0,
 #endif /* LAGRANGE_INTERPOLATION */
     le=vp->sample->data_length,
+    se=vp->sample->data_length;
+  uint32
     count=*countptr;
 
   if (!incr) return resample_buffer+resample_buffer_offset; /* --gl */
@@ -356,9 +378,8 @@ static sample_t *rs_plain(int v, uint32 *countptr)
     {
       RESAMPLATION;
       ofs += incr;
-      if (ofs >= le)
+      if (ofs >= se + PATCH_OVERSHOOT)
 	{
-	  FINALINTERP;
 	  vp->status=VOICE_FREE;
  	  ctl->note(v);
 	  *countptr-=count+1;
@@ -373,7 +394,7 @@ REMEMBER_FILTER_STATE
   return resample_buffer+resample_buffer_offset;
 }
 
-static sample_t *rs_loop(int v, Voice *vp, uint32 count)
+static sample_t *rs_loop(int v, Voice *vp, uint32 *countptr)
 {
   /* Play sample until end-of-loop, skip back and continue. */
   INTERPVARS
@@ -381,6 +402,7 @@ static sample_t *rs_loop(int v, Voice *vp, uint32 count)
     ofs=vp->sample_offset,
     incr=vp->sample_increment,
     le=vp->loop_end,
+    se=vp->sample->data_length,
 #if defined(LAGRANGE_INTERPOLATION) || defined(CSPLINE_INTERPOLATION)
     ls=vp->loop_start,
 #endif /* LAGRANGE_INTERPOLATION */
@@ -388,6 +410,8 @@ static sample_t *rs_loop(int v, Voice *vp, uint32 count)
   sample_t
     *dest=resample_buffer+resample_buffer_offset,
     *src=vp->sample->data;
+  uint32
+    count = *countptr;
 
 #ifdef BUTTERWORTH_COEFFICIENTS
   BUTTERWORTH_COEFFICIENTS
@@ -397,7 +421,14 @@ static sample_t *rs_loop(int v, Voice *vp, uint32 count)
     {
       RESAMPLATION;
       ofs += incr;
-      if (ofs>=le && vp->status != VOICE_OFF)
+      if (ofs >= se + PATCH_OVERSHOOT)
+	{
+	  vp->status=VOICE_FREE;
+ 	  ctl->note(v);
+	  *countptr-=count+1;
+	  break;
+	}
+      if (ofs>=le && vp->status != VOICE_OFF && vp->status != VOICE_DIE)
 	ofs -= ll; /* Hopefully the loop is longer than an increment. */
     }
 
@@ -415,6 +446,7 @@ static sample_t *rs_bidir(int v, Voice *vp, uint32 count)
     ofs=vp->sample_offset,
     incr=vp->sample_increment,
     le=vp->loop_end,
+    se=vp->sample->data_length,
     ls=vp->loop_start;
   sample_t
     *dest=resample_buffer+resample_buffer_offset,
@@ -426,6 +458,8 @@ static sample_t *rs_bidir(int v, Voice *vp, uint32 count)
 #ifdef BUTTERWORTH_COEFFICIENTS
   BUTTERWORTH_COEFFICIENTS
 #endif
+
+/* following dumps core */
 
   /* Play normally until inside the loop region */
 
@@ -465,7 +499,8 @@ static sample_t *rs_bidir(int v, Voice *vp, uint32 count)
 
   int32
     le2 = le<<1,
-    ls2 = ls<<1,
+    ls2 = ls<<1;
+  uint32
     i, j;
   /* Play normally until inside the loop region */
 
@@ -634,6 +669,7 @@ static sample_t *rs_vib_plain(int v, uint32 *countptr)
     ls=0,
 #endif /* LAGRANGE_INTERPOLATION */
     le=vp->sample->data_length,
+    se=vp->sample->data_length,
     ofs=vp->sample_offset,
     incr=vp->sample_increment;
   uint32
@@ -658,9 +694,8 @@ static sample_t *rs_vib_plain(int v, uint32 *countptr)
 	}
       RESAMPLATION;
       ofs += incr;
-      if (ofs >= le)
+      if (ofs >= se + PATCH_OVERSHOOT)
 	{
-	  FINALINTERP;
 	  vp->status=VOICE_FREE;
  	  ctl->note(v);
 	  *countptr-=count+1;
@@ -677,7 +712,7 @@ REMEMBER_FILTER_STATE
   return resample_buffer+resample_buffer_offset;
 }
 
-static sample_t *rs_vib_loop(int v, Voice *vp, uint32 count)
+static sample_t *rs_vib_loop(int v, Voice *vp, uint32 *countptr)
 {
   /* Play sample until end-of-loop, skip back and continue. */
   INTERPVARS
@@ -688,10 +723,13 @@ static sample_t *rs_vib_loop(int v, Voice *vp, uint32 count)
     ls=vp->loop_start,
 #endif /* LAGRANGE_INTERPOLATION */
     le=vp->loop_end,
+    se=vp->sample->data_length,
     ll=le - vp->loop_start;
   sample_t
     *dest=resample_buffer+resample_buffer_offset,
     *src=vp->sample->data;
+  uint32
+    count = *countptr;
   int
     cc=vp->vibrato_control_counter;
 
@@ -708,7 +746,14 @@ static sample_t *rs_vib_loop(int v, Voice *vp, uint32 count)
 	}
       RESAMPLATION;
       ofs += incr;
-      if (ofs>=le && vp->status != VOICE_OFF)
+      if (ofs >= se + PATCH_OVERSHOOT)
+	{
+	  vp->status=VOICE_FREE;
+ 	  ctl->note(v);
+	  *countptr-=count+1;
+	  break;
+	}
+      if (ofs>=le && vp->status != VOICE_OFF && vp->status != VOICE_DIE)
 	ofs -= ll; /* Hopefully the loop is longer than an increment. */
     }
 
@@ -728,6 +773,7 @@ static sample_t *rs_vib_bidir(int v, Voice *vp, uint32 count)
     ofs=vp->sample_offset,
     incr=vp->sample_increment,
     le=vp->loop_end,
+    se=vp->sample->data_length,
     ls=vp->loop_start;
   sample_t
     *dest=resample_buffer+resample_buffer_offset,
@@ -735,7 +781,7 @@ static sample_t *rs_vib_bidir(int v, Voice *vp, uint32 count)
   int
     cc=vp->vibrato_control_counter;
 
-
+#if 0
 #ifdef BUTTERWORTH_COEFFICIENTS
   BUTTERWORTH_COEFFICIENTS
 #endif
@@ -782,6 +828,82 @@ static sample_t *rs_vib_bidir(int v, Voice *vp, uint32 count)
 	    incr = -incr;
 	  }
       }
+#endif
+
+  int32
+    le2=le<<1,
+    ls2=ls<<1,
+    i, j;
+  int
+    vibflag = 0;
+
+#ifdef BUTTERWORTH_COEFFICIENTS
+  BUTTERWORTH_COEFFICIENTS
+#endif
+
+  /* Play normally until inside the loop region */
+  while (count && (ofs <= ls))
+    {
+      i = (ls - ofs) / incr + 1;
+      if (i > count) i = count;
+      if (i > cc)
+	{
+	  i = cc;
+	  vibflag = 1;
+	}
+      else cc -= i;
+      count -= i;
+      for(j = 0; j < i; j++)
+	{
+	  RESAMPLATION;
+	  ofs += incr;
+	}
+      if (vibflag)
+	{
+	  cc = vp->vibrato_control_ratio;
+	  incr = update_vibrato(vp, 0);
+	  vibflag = 0;
+	}
+    }
+
+  /* Then do the bidirectional looping */
+
+  while (count)
+    {
+      /* Precalc how many times we should go through the loop */
+      i = ((incr > 0 ? le : ls) - ofs) / incr + 1;
+      if(i > count) i = count;
+      if(i > cc)
+	{
+	  i = cc;
+	  vibflag = 1;
+	}
+      else cc -= i;
+      count -= i;
+      while (i--)
+	{
+	  RESAMPLATION;
+	  ofs += incr;
+	}
+      if (vibflag)
+	{
+	  cc = vp->vibrato_control_ratio;
+	  incr = update_vibrato(vp, (incr < 0));
+	  vibflag = 0;
+	}
+      if (ofs >= le)
+	{
+	  /* fold the overshoot back in */
+	  ofs = le2 - ofs;
+	  incr *= -1;
+	}
+      else if (ofs <= ls)
+	{
+	  ofs = ls2 - ofs;
+	  incr *= -1;
+	}
+    }
+
 
   vp->vibrato_control_counter=cc;
   vp->sample_increment=incr;
@@ -876,7 +998,7 @@ static sample_t *vib_resample_voice(int v, uint32 *countptr, int mode)
 
     /* vp->cache = NULL; */
     if(mode == 0)
-	return rs_vib_loop(v, vp, *countptr);
+	return rs_vib_loop(v, vp, countptr);
     if(mode == 1)
 	return rs_vib_plain(v, countptr);
     return rs_vib_bidir(v, vp, *countptr);
@@ -886,7 +1008,7 @@ static sample_t *normal_resample_voice(int v, uint32 *countptr, int mode)
 {
     Voice *vp = &voice[v];
     if(mode == 0)
-	return rs_loop(v, vp, *countptr);
+	return rs_loop(v, vp, countptr);
     if(mode == 1)
 	return rs_plain(v, countptr);
     return rs_bidir(v, vp, *countptr);
