@@ -126,7 +126,7 @@ ConfigDlg::ConfigDlg(QWidget *parent, struct configstruct *data, const char *nam
     connect(button2,SIGNAL(changed( const QColor & )),this,SLOT(set_background_color( const QColor & )));
     what->add(button2, str);
 
-    ttcheckbox = new QCheckBox(i18n("Show Tool Tips"), w, "tooltipscheckbox");
+    ttcheckbox = new QCheckBox(i18n("Show tool tips"), w, "tooltipscheckbox");
     ttcheckbox->setGeometry(30,150,135,25);
     ttcheckbox->setFixedSize( ttcheckbox->sizeHint() );
     ttcheckbox->setChecked(configdata.tooltips);
