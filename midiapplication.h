@@ -68,7 +68,7 @@
 #include <fcntl.h>
 #include <sys/ioctl.h>
 
-#include <kapp.h>
+#include <kapplication.h>
 #include <kuniqueapp.h>
 
 class MidiApplication : public KUniqueApplication

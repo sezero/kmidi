@@ -22,7 +22,7 @@
  */
 
 #include <stdio.h>
-//#include <kapp.h>
+//#include <kapplication.h>
 #include <klocale.h>
 
 #include "log.moc"
