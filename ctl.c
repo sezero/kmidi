@@ -419,6 +419,8 @@ static void ctl_close(void)
 
 /* commands are: PREV, NEXT, QUIT, STOP, LOAD, JUMP, VOLM */
 
+static int change_in_volume = 0;
+
 static int ctl_blocking_read(int32 *valp)
 {
   int command;
@@ -434,7 +436,8 @@ static int ctl_blocking_read(int32 *valp)
 	      {
 	      case MOTIF_CHANGE_VOLUME:
 		  pipe_int_read(&new_volume);
-		  *valp= new_volume - amplification ;
+		  change_in_volume =
+		    *valp= new_volume - amplification ;
 		  return RC_CHANGE_VOLUME;
 		  
 	      case MOTIF_CHANGE_LOCATOR:
@@ -552,6 +555,14 @@ static void ctl_pass_playing_list(int number_of_files, char *list_of_files[])
 			  }
 			  }
 			 break;
+      			case RC_CHANGE_VOLUME:
+			    if (change_in_volume>0 || amplification > -change_in_volume)
+	  			amplification += change_in_volume;
+			    else amplification = 0;
+			    if (amplification > MAX_AMPLIFICATION)
+	  			amplification=MAX_AMPLIFICATION;
+			    ctl_master_volume(amplification);
+			    break;
 			case RC_NEXT:
 			    pipe_int_write(NEXT_FILE_MESSAGE);
 			    break;
