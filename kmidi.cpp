@@ -593,7 +593,7 @@ void KMidi::drawPanel()
     patchbox = new QComboBox( FALSE, this );
     patchbox->setGeometry(ix, iy, WIDTH + WIDTH/2, HEIGHT);
     patchbox->setFont( QFont( "helvetica", 10, QFont::Normal) );
-    int lx, sx;
+    int lx;
     for (lx = 30; lx > 0; lx--) if (cfg_names[lx-1]) break;
     for (int sx = 0; sx < lx; sx++)
 	if (cfg_names[sx]) patchbox->insertItem( cfg_names[sx] );
