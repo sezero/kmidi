@@ -24,7 +24,7 @@
 */
 
 #ifndef EFFECTS_H
-#define EFFECTS_H
+	#define EFFECTS_H
 
 
 extern int XG_effect_chorus_is_celeste_flag;

@@ -74,11 +74,11 @@ void b_out(char id, int fd, int *buf, int ocount)
     bbuf = (unsigned char *)malloc(BB_SIZE);
     if (!bbuf) {
 	    fprintf(stderr, "malloc output error");
-#ifdef ADAGIO
+	    #ifdef ADAGIO
 	    X_EXIT
-#else
+	    #else
 	    exit(1);
-#endif
+	    #endif
     }
   }
 
@@ -141,11 +141,11 @@ void b_out(char id, int fd, int *buf, int ocount)
 	}
 	else {
 	    perror("error writing to dsp device");
-#ifdef ADAGIO
+	    #ifdef ADAGIO
 	    X_EXIT
-#else
+	    #else
 	    exit(1);
-#endif
+	    #endif
 	}
     }
     else {
@@ -191,11 +191,11 @@ void b_out(char id, int fd, int *buf, int ocount)
 	}
 	else {
 	    perror("error writing to dsp device");
-#ifdef ADAGIO
+	    #ifdef ADAGIO
 	    X_EXIT
-#else
+	    #else
 	    exit(1);
-#endif
+	    #endif
 	}
     }
     else {

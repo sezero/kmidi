@@ -377,9 +377,9 @@ static InstrumentLayer *load_instrument(const char *name, int font_type, int per
     {
       ctl->cmsg(CMSG_INFO, VERB_NORMAL, 
 		"Instrument `%s' can't be found.", name);
-#ifdef ADAGIO
+    #ifdef ADAGIO
       gus_voice[tpgm].volume = DOES_NOT_EXIST;
-#endif
+    #endif
   
       return 0;
     }
@@ -957,25 +957,25 @@ static int fill_bank(int b)
   if (!bank)
     {
       ctl->cmsg(CMSG_ERROR, VERB_NORMAL, 
-#ifndef ADAGIO
+	#ifndef ADAGIO
 	   "Huh. Tried to load instruments in non-existent %s %d",
 	   (dr) ? "drumset" : "tone bank", b);
-#else /* ADAGIO */
+	#else /* ADAGIO */
 	   "Huh. Tried to load instruments in non-existent tone bank %d", b);
-#endif /* ADAGIO */
+	#endif /* ADAGIO */
       return 0;
     }
-#ifndef ADAGIO
+  #ifndef ADAGIO
   for (i=0; i<MAXPROG; i++)
-#else /* ADAGIO */
+  #else /* ADAGIO */
   for (i=0; i<MAX_TONE_VOICES; i++)
-#endif /* ADAGIO */
+  #endif /* ADAGIO */
     {
       if (check_for_rc()) return 0;
-#ifdef ADAGIO
+      #ifdef ADAGIO
       dr = (bank->tone[i].gm_num - 128);
       if (dr < 0) dr = 0;
-#endif /* ADAGIO */
+      #endif /* ADAGIO */
       if (bank->tone[i].layer==MAGIC_LOAD_INSTRUMENT)
 	{
 	  if (!(bank->tone[i].name))
@@ -993,14 +993,14 @@ static int fill_bank(int b)
 		{
 		  /* Mark the corresponding instrument in the default
 		     bank / drumset for loading (if it isn't already) */
-#ifndef ADAGIO
+		#ifndef ADAGIO
 		  if (!dr)
 		    {
-#endif /* not ADAGIO */
+		#endif /* not ADAGIO */
 		      if (!(standard_tonebank.tone[i].layer))
 			standard_tonebank.tone[i].layer=
 			  MAGIC_LOAD_INSTRUMENT;
-#ifndef ADAGIO
+		#ifndef ADAGIO
 		    }
 		  else
 		    {
@@ -1008,7 +1008,7 @@ static int fill_bank(int b)
 			standard_drumset.tone[i].layer=
 			  MAGIC_LOAD_INSTRUMENT;
 		    }
-#endif /* not ADAGIO */
+		#endif /* not ADAGIO */
 		}
 	      bank->tone[i].layer=0;
 	      errors++;
@@ -1022,30 +1022,30 @@ static int fill_bank(int b)
 				     bank->tone[i].tuning,
 				     (bank->tone[i].note!=-1) ? 
 				     bank->tone[i].note :
-#ifndef ADAGIO
+				#ifndef ADAGIO
 				     ((dr) ? i : -1),
-#else /* ADAGIO */
+				#else /* ADAGIO */
 				     ((dr) ? dr : -1),
-#endif /* ADAGIO */
+				#endif /* ADAGIO */
 				     (bank->tone[i].strip_loop!=-1) ?
 				     bank->tone[i].strip_loop :
 				     ((dr) ? 1 : -1),
 				     (bank->tone[i].strip_envelope != -1) ? 
 				     bank->tone[i].strip_envelope :
 				     ((dr) ? 1 : -1),
-#ifndef ADAGIO
+				#ifndef ADAGIO
 				     bank->tone[i].strip_tail,
 				     b,
 				     ((dr) ? i + 128 : i),
 				     bank->tone[i].sf_ix
 					 )))
-#else /* ADAGIO */
+				#else /* ADAGIO */
 				     bank->tone[i].strip_tail,
 				     bank->tone[i].gm_num,
 				     bank->tone[i].tpgm,
 				     bank->tone[i].reverb,
 				     bank->tone[i].main_volume )))
-#endif /* ADAGIO */
+				#endif /* ADAGIO */
 	    {
 	      ctl->cmsg(CMSG_INFO, VERB_NORMAL, 
 		   "Couldn't load instrument %s (%s %d, program %d)",
@@ -1144,13 +1144,13 @@ void free_instruments(void)
   while(i--)
     {
       if (tonebank[i])
-#ifndef ADAGIO
+    #ifndef ADAGIO
 	free_bank(0,i);
       if (drumset[i])
 	free_bank(1,i);
-#else /* ADAGIO */
+    #else /* ADAGIO */
 	free_bank(i);
-#endif /* ADAGIO */
+    #endif /* ADAGIO */
     }
 }
 
