@@ -32,12 +32,8 @@
 #include <fcntl.h>
 #include <errno.h>
 
-#ifdef __FreeBSD__
 #include <stdio.h>
-#endif
-
 #include <string.h>
-#include <stdio.h>
 
 #include "config.h"
 #include "output.h"

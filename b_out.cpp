@@ -19,6 +19,10 @@
 #ifdef __FreeBSD__
 #include <machine/soundcard.h>
 #endif
+
+#ifdef __bsdi__
+#include <sys/soundcard.h>
+#endif
 #endif
 
 #include <malloc.h>

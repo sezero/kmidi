@@ -141,7 +141,7 @@ typedef double FLOAT_T;
 /* The size of the internal buffer is 2^AUDIO_BUFFER_BITS samples.
    This determines maximum number of samples ever computed in a row.
 
-   For Linux and FreeBSD users:
+   For Linux, FreeBSD and BSD/OS users:
    
    This also specifies the size of the buffer fragment.  A smaller
    fragment gives a faster response in interactive mode -- 10 or 11 is
@@ -227,7 +227,7 @@ typedef double FLOAT_T;
 #define MAX_CONTROL_RATIO 255
 
 /* Audio buffer size has to be a power of two to allow DMA buffer
-   fragments under the VoxWare (Linux & FreeBSD) audio driver */
+   fragments under the VoxWare (Linux & FreeBSD & BSD/OS) audio driver */
 #define AUDIO_BUFFER_SIZE (1<<AUDIO_BUFFER_BITS)
 #define BB_SIZE (AUDIO_BUFFER_SIZE*512)
 
@@ -270,7 +270,7 @@ typedef double FLOAT_T;
 # endif        
 #endif /* linux */
 
-#if defined(__FreeBSD__) || defined(__NetBSD__)
+#if defined(__FreeBSD__) || defined(__NetBSD__) || defined(__bsdi__)
 #include <sys/types.h>
 #include <errno.h>
 #include <machine/endian.h>
@@ -456,7 +456,7 @@ extern char *sys_errlist[];
   #define PI 3.14159265358979323846
 #endif
 
-#ifdef __FreeBSD__
+#if defined (__FreeBSD__) || defined(__bsdi__) 
 #include <math.h>
 #ifndef PI
 #define PI M_PI

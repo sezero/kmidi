@@ -32,7 +32,7 @@
 #include <strings.h>
 #endif
 
-#if defined(__FreeBSD__) || defined (__WIN32__)
+#if defined(__FreeBSD__) || defined (__WIN32__) || defined(__bsdi__)
 #include <stdlib.h>
 #else
 #include <malloc.h>

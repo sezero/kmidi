@@ -33,15 +33,11 @@
 #include <fcntl.h>
 #include <errno.h>
 
-#ifdef __FreeBSD__
 #include <stdio.h>
-#endif
 
 #include "config.h"
 #include "output.h"
 #include "controls.h"
-
-#include <stdio.h>
 
 #if !defined(OPEN_MODE)
 #ifdef __WIN32__

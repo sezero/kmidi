@@ -23,7 +23,7 @@
 
 #include <string.h>
 
-#if defined(__linux__) || defined(__FreeBSD__)
+#if defined(__linux__) || defined(__FreeBSD__) || defined(__bsdi__)
 #ifndef AU_LINUX
 #define AU_LINUX
 #endif

@@ -1,5 +1,5 @@
 /*
-	$Id:$
+	$Id$
 
     TiMidity++ -- MIDI to WAVE converter and player
     Copyright (C) 1999 Masanao Izumo <mo@goice.co.jp>
@@ -23,7 +23,7 @@
 
 #include <math.h>
 #include <stdio.h>
-#ifdef __FreeBSD__
+#if defined(__FreeBSD__) || defined(__bsdi__)
 #include <stdlib.h>
 #else
 #include <malloc.h>

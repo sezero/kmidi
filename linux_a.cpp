@@ -20,11 +20,11 @@
 
     linux_audio.c
 
-    Functions to play sound on the VoxWare audio driver (Linux or FreeBSD)
+    Functions to play sound on the VoxWare audio driver (Linux or FreeBSD or BSD/OS)
 
 */
 
-/* #if defined(__linux__) || defined(__FreeBSD__) */
+/* #if defined(__linux__) || defined(__FreeBSD__) || defined(__bsdi__) */
 #ifdef AU_OSS
 #define _GNU_SOURCE
 #include <unistd.h>
@@ -39,6 +39,11 @@
 #ifdef __FreeBSD__
 #include <stdio.h>
 #include <machine/soundcard.h>
+#endif
+
+#ifdef __bsdi__
+#include <stdio.h>
+#include <sys/soundcard.h>
 #endif
 
 #include "config.h"
@@ -324,4 +329,4 @@ static void purge_output(void)
   ioctl(dpm.fd, SNDCTL_DSP_RESET);
 }
 
-#endif /* defined(__linux__) || defined(__FreeBSD__) */
+#endif /* defined(__linux__) || defined(__FreeBSD__) || defined(__bsdi__) */

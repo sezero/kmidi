@@ -23,7 +23,7 @@
 
 #include <math.h>
 #include <stdio.h>
-#ifdef __FreeBSD__
+#if defined(__FreeBSD__) || defined(__bsdi__)
 #include <stdlib.h>
 #else
 #include <malloc.h>

@@ -178,7 +178,7 @@ if test "x$au_enable_oss" = xyes; then
     AC_MSG_RESULT(yes - <sys/soundcard.h>)
   else
     case "$target" in
-      *linux*|*freebsd*)
+      *linux*|*freebsd*|*bsdi*)
 	dnl <linux/soundcard.h> or <machine/soundcard.h>
 	AC_MSG_RESULT(yes)
 	;;
