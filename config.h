@@ -26,6 +26,11 @@
 
 #ifdef KMIDI
 #include "../config.h"
+#else
+#if (defined(SUN) && defined(SYSV)) || defined(__WIN32__)
+#else
+#define NO_STRING_H
+#endif
 #endif
 
 #ifndef TIMID_DIR

@@ -11,6 +11,8 @@ EXTRADEFS=
 EXTRALIBS=
 SYSEXTRAS=
 
+AC_CHECK_HEADER(string.h,, [ EXTRADEFS="$EXTRADEFS -DNO_STRING_H " ])
+
 dnl
 dnl Audio section
 dnl

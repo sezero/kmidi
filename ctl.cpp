@@ -322,10 +322,11 @@ static void ctl_channel_note(int ch, /*int note, int vel,*/ int start)
 	if (channel[ch].kit) Panel->c_flags[ch] |= FLAG_PERCUSSION;
 	else Panel->c_flags[ch] &= ~FLAG_PERCUSSION;
 
-	Panel->volume[slot][ch] = (uint8)channel[ch].volume;
-	Panel->sustain[slot][ch] = (uint8)channel[ch].sustain;
 	Panel->panning[slot][ch] = (uint8)channel[ch].panning;
 	Panel->expression[slot][ch] = (uint8)channel[ch].expression;
+	Panel->reverberation[slot][ch] = (uint8)channel[ch].reverberation;
+	Panel->chorusdepth[slot][ch] = (uint8)channel[ch].chorusdepth;
+	Panel->volume[slot][ch] = (uint8)channel[ch].volume;
 }
 
 static void ctl_note(int v)

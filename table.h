@@ -26,11 +26,14 @@ public:
 
     void clearChannels( void );
     void setProgram( int chan, int val, const char *inst );
-    void setVolume( int chan, int val );
     void setExpression( int chan, int val );
     void setPanning( int chan, int val );
-    void setPitchbend( int chan, int val );
-    void setSustain( int chan, int val );
+    void setReverberation( int chan, int val );
+    void setChorusDepth( int chan, int val );
+    void setVolume( int chan, int val );
+    //void setPitchbend( int chan, int val );
+    //void setSustain( int chan, int val );
+    int c_flags[16];
 
 protected:
     void paintCell( QPainter*, int row, int col );
@@ -41,6 +44,12 @@ private:
     QString* contents;
     int curRow;
     int curCol;
+    int t_expression[16];
+    int t_panning[16];
+    int t_reverberation[16];
+    int t_chorusdepth[16];
+    int t_volume[16];
+
 };
 
 #endif // TABLE_H

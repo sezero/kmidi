@@ -439,6 +439,9 @@ void MeterWidget::remeter()
 	 last_sustain[MAXDISPCHAN],
 	 last_expression[MAXDISPCHAN],
 	 last_panning[MAXDISPCHAN],
+	 last_reverberation[MAXDISPCHAN],
+	 last_chorusdepth[MAXDISPCHAN],
+	 last_volume[MAXDISPCHAN],
 	 meterpainttime = 0;
 	int ch, x1, y1, slot, amplitude, notetime, chnotes;
 
@@ -446,10 +449,13 @@ void MeterWidget::remeter()
 		erase();
 		for (ch = 0; ch < MAXDISPCHAN; ch++) {
 			lastvol[ch] =
-			 lastamp[ch] =
-			 last_expression[ch] =
-			 last_panning[ch] =
-			 last_sustain[ch] = 0;
+			lastamp[ch] =
+			last_expression[ch] =
+			last_reverberation[ch] =
+			last_chorusdepth[ch] =
+			last_volume[ch] =
+			last_sustain[ch] = 0;
+			last_panning[ch] = 64;
 			for (slot = 0; slot < NQUEUE; slot++)
 			    Panel->ctime[slot][ch] = -1;
 		}
@@ -477,15 +483,34 @@ void MeterWidget::remeter()
 		    if (amplitude < Panel->ctotal[slot][ch])
 			amplitude = Panel->ctotal[slot][ch];
 		    last_sustain[ch] = Panel->ctotal_sustain[slot][ch];
-		    tmp = Panel->expression[slot][ch];
-		    if (last_expression[ch] != tmp) {
+		    if (ch < 16) {
+		      tmp = Panel->expression[slot][ch];
+		      if (last_expression[ch] != tmp) {
 		        last_expression[ch] = tmp;
+			channelwindow->c_flags[ch] = Panel->c_flags[ch];
 			channelwindow->setExpression(ch, tmp);
-		    }
-		    tmp = Panel->panning[slot][ch];
-		    if (tmp < 128 && last_panning[ch] != tmp) {
+		      }
+		      tmp = Panel->reverberation[slot][ch];
+		      if (last_reverberation[ch] != tmp) {
+		        last_reverberation[ch] = tmp;
+			channelwindow->setReverberation(ch, tmp);
+		      }
+		      tmp = Panel->chorusdepth[slot][ch];
+		      if (last_chorusdepth[ch] != tmp) {
+		        last_chorusdepth[ch] = tmp;
+			channelwindow->setChorusDepth(ch, tmp);
+		      }
+		      tmp = Panel->volume[slot][ch];
+		      if (last_volume[ch] != tmp) {
+		        last_volume[ch] = tmp;
+			channelwindow->c_flags[ch] = Panel->c_flags[ch];
+			channelwindow->setVolume(ch, tmp);
+		      }
+		      tmp = Panel->panning[slot][ch];
+		      if (tmp < 128 && last_panning[ch] != tmp) {
 		        last_panning[ch] = tmp;
 			channelwindow->setPanning(ch, tmp);
+		      }
 		    }
 		    Panel->ctime[slot][ch] = -1;
 		  }
@@ -826,7 +851,7 @@ void KMidi::drawPanel()
     ix = 0;
     iy += 3*HEIGHT;
 
-    int CHHEIGHT = 16 * (HEIGHT/2);
+    int CHHEIGHT = 17 * (HEIGHT/2);
     channelwindow = new Table( totalwidth, CHHEIGHT, this, "channels" );
     channelwindow->setFont( QFont( "helvetica", 10, QFont::Normal) );
 

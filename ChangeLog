@@ -1,3 +1,15 @@
+1999-12-14  Greg Lee  <lee@hawaii.edu>
+
+	* bar graphics for channel view
+
+1999-12-13  Greg Lee  <lee@hawaii.edu>
+
+	* configure.in.in: define NO_STRING_H (to
+	  make bero's changes interpretable
+	* config.h: define NO_STRING_H for timidity
+	* readmidi.cpp: bulletproofing against bad
+	  midi files
+
 1999-12-12  Greg Lee  <lee@hawaii.edu>
 
 	* channel view window

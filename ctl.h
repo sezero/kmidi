@@ -22,10 +22,11 @@ typedef struct {
 	int32 ctime[NQUEUE][MAXDISPCHAN];
 	int16 notecount[NQUEUE][MAXDISPCHAN];
 
-	uint8 volume[NQUEUE][MAXDISPCHAN];
-	uint8 sustain[NQUEUE][MAXDISPCHAN];
 	uint8 panning[NQUEUE][MAXDISPCHAN];
 	uint8 expression[NQUEUE][MAXDISPCHAN];
+	uint8 reverberation[NQUEUE][MAXDISPCHAN];
+	uint8 chorusdepth[NQUEUE][MAXDISPCHAN];
+	uint8 volume[NQUEUE][MAXDISPCHAN];
 
 	char c_flags[MAXDISPCHAN];
 	char currentpatchset;
