@@ -1850,7 +1850,11 @@ void KMidi::PlayCommandlineMods(){
   volChanged(volume);
   //  readtimer->start(10);
   if (showmeterrequest) logoClicked();
-  if (showinforequest) infoslot();
+  if (showinforequest) {
+    logwindow->resize(extendedsize.width(), infowindowheight);
+    if(logwindow->isVisible()) logwindow->hide();
+    infoslot();
+  }
 
   if (!showmeterrequest && !showinforequest)
 	myresize(regularsize);
