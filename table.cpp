@@ -8,15 +8,15 @@
 **
 *****************************************************************************/
 
-#include "table.h"
-#include <qpainter.h>
-//#include <qkeycode.h>
-//#include <qprinter.h>
+#include <sys/types.h>
 
 #include "config.h"
+#include "table.h"
 #include "instrum.h"
 #include "playmidi.h"
 #include "ctl.h"
+
+#include <qpainter.h>
 
 static const int NUMCOLS = 9;
 static const int NUMROWS = 17;
