@@ -1,3 +1,7 @@
+1999-12-21  Greg Lee  <lee@hawaii.edu>
+
+	* disable qmultilineedit undo
+
 1999-12-20  Greg Lee  <lee@hawaii.edu>
 
 	* fix display sync problem
