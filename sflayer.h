@@ -1,4 +1,5 @@
 /*================================================================
+ *	$Id$
  * sflayer.h
  *	SoundFont layer structure
  *================================================================*/
@@ -21,12 +22,12 @@ enum {
         SF_env1ToFilterFc,     /* filter env: env1(aux)-> filter * cutoff */
         SF_endAddrsHi,         /* high word of endAddrs */
         SF_lfo1ToVolume,       /* tremolo: lfo1-> volume */
-        SF_env2ToVolume,       /* Env2Depth: env2-> volume */
+        SF_env2ToVolume,       /* unused1 : ?? Env2Depth: env2-> volume */
         SF_chorusEffectsSend,  /* chorus */
         SF_reverbEffectsSend,  /* reverb */
         SF_panEffectsSend,     /* pan */
-        SF_auxEffectsSend,     /* pan auxdata (internal) */
-        SF_sampleVolume,       /* used internally */
+        SF_auxEffectsSend,     /* unused2 : ?? pan auxdata (internal) */
+        SF_sampleVolume,       /* unused3 : ?? used internally */
         SF_unused3,
         SF_delayLfo1,          /* delay 0x8000-n*(725us) */
         SF_freqLfo1,           /* frequency */
@@ -56,7 +57,7 @@ enum {
         SF_keynum,               /* */
         SF_velocity,             /* */
         SF_instVol,              /* */
-        SF_keyTuning,
+        SF_keyTuning,		/* reserved2 */
         SF_endloopAddrsHi,       /* high word of endloopAddrs */
         SF_coarseTune,
         SF_fineTune,
@@ -67,8 +68,9 @@ enum {
         SF_keyExclusiveClass,
         SF_rootKey,
 	SF_EOF,
+	SF_EOF2,
 };
 
-#define PARM_SIZE	SF_EOF
+#define PARM_SIZE	SF_EOF2
 
 #endif
