@@ -34,7 +34,7 @@
 /*#define SF_SUPPRESS_CUTOFF*/
 
 /* sounds crappy -- 2mbgmgs.sf2 has them */
-/* #define DO_LINKED_WAVES */
+#define DO_LINKED_WAVES
 
 /*----------------------------------------------------------------
  * local parameters

@@ -532,7 +532,7 @@ int read_config_file(char *name)
       /******* sfx ********/
 		else if (!strcmp(w[0], "sfx"))
 	{
-	  i=MAXBANK-1;
+	  i=SFXBANK;
 	  if (!tonebank[i])
 		 {
 			tonebank[i]=safe_malloc(sizeof(ToneBank));
@@ -540,6 +540,44 @@ int read_config_file(char *name)
 	         }
 	  banknum=i;
 	  bank=tonebank[i];
+	  font_type=FONT_NORMAL;
+	  if (words > 1)
+		{
+			if (!strcmp(w[1], "sbk")) font_type = FONT_SBK;
+			else if (!strcmp(w[2], "sf")) font_type = FONT_SBK;
+			else if (!strcmp(w[1], "fff")) font_type = FONT_FFF;
+		}
+	}
+      /******* drumsfx1 ********/
+		else if (!strcmp(w[0], "drumsfx1"))
+	{
+	  i=SFXDRUM1;
+	  if (!drumset[i])
+		 {
+			drumset[i]=safe_malloc(sizeof(ToneBank));
+	      		memset(drumset[i], 0, sizeof(ToneBank));
+	         }
+	  banknum=i;
+	  bank=drumset[i];
+	  font_type=FONT_NORMAL;
+	  if (words > 1)
+		{
+			if (!strcmp(w[1], "sbk")) font_type = FONT_SBK;
+			else if (!strcmp(w[2], "sf")) font_type = FONT_SBK;
+			else if (!strcmp(w[1], "fff")) font_type = FONT_FFF;
+		}
+	}
+      /******* drumsfx2 ********/
+		else if (!strcmp(w[0], "drumsfx2"))
+	{
+	  i=SFXDRUM2;
+	  if (!drumset[i])
+		 {
+			drumset[i]=safe_malloc(sizeof(ToneBank));
+	      		memset(drumset[i], 0, sizeof(ToneBank));
+	         }
+	  banknum=i;
+	  bank=drumset[i];
 	  font_type=FONT_NORMAL;
 	  if (words > 1)
 		{

@@ -43,11 +43,11 @@ static void ctl_file_name(char *name);
 static void ctl_current_time(int ct);
 static void ctl_note(int v);
 static void ctl_program(int ch, int val);
-static void ctl_volume(int channel, int val);
-static void ctl_expression(int channel, int val);
-static void ctl_panning(int channel, int val);
-static void ctl_sustain(int channel, int val);
-static void ctl_pitch_bend(int channel, int val);
+static void ctl_volume(int ch, int val);
+static void ctl_expression(int ch, int val);
+static void ctl_panning(int ch, int val);
+static void ctl_sustain(int ch, int val);
+static void ctl_pitch_bend(int ch, int val);
 static void ctl_reset(void);
 static int ctl_open(int using_stdin, int using_stdout);
 static void ctl_close(void);
@@ -180,7 +180,7 @@ static void ctl_note(int v)
   if (!ctl.trace_playing) 
     return;
   xl=voice[v].note%(COLS-24);
-  wmove(dftwin, 8+voice[v].channel,xl+3);
+  wmove(dftwin, 8+(voice[v].channel & 0x0f),xl+3);
   switch(voice[v].status)
     {
     case VOICE_DIE:
@@ -205,6 +205,7 @@ static void ctl_program(int ch, int val)
 {
   if (!ctl.trace_playing) 
     return;
+  ch &= 0x0f;
   wmove(dftwin, 8+ch, COLS-20);
   if (ISDRUMCHANNEL(ch))
     {
@@ -216,27 +217,30 @@ static void ctl_program(int ch, int val)
     wprintw(dftwin, "%03d", val);
 }
 
-static void ctl_volume(int channel, int val)
+static void ctl_volume(int ch, int val)
 {
   if (!ctl.trace_playing) 
     return;
-  wmove(dftwin, 8+channel, COLS-16);
+  ch &= 0x0f;
+  wmove(dftwin, 8+ch, COLS-16);
   wprintw(dftwin, "%3d", (val*100)/127);
 }
 
-static void ctl_expression(int channel, int val)
+static void ctl_expression(int ch, int val)
 {
   if (!ctl.trace_playing) 
     return;
-  wmove(dftwin, 8+channel, COLS-12);
+  ch &= 0x0f;
+  wmove(dftwin, 8+ch, COLS-12);
   wprintw(dftwin, "%3d", (val*100)/127);
 }
 
-static void ctl_panning(int channel, int val)
+static void ctl_panning(int ch, int val)
 {
   if (!ctl.trace_playing) 
     return;
-  wmove(dftwin, 8+channel, COLS-8);
+  ch &= 0x0f;
+  wmove(dftwin, 8+ch, COLS-8);
   if (val==NO_PANNING)
     waddstr(dftwin, "   ");
   else if (val<5)
@@ -259,20 +263,22 @@ static void ctl_panning(int channel, int val)
     }
 }
 
-static void ctl_sustain(int channel, int val)
+static void ctl_sustain(int ch, int val)
 {
   if (!ctl.trace_playing) 
     return;
-  wmove(dftwin, 8+channel, COLS-4);
+  ch &= 0x0f;
+  wmove(dftwin, 8+ch, COLS-4);
   if (val) waddch(dftwin, 'S');
   else waddch(dftwin, ' ');
 }
 
-static void ctl_pitch_bend(int channel, int val)
+static void ctl_pitch_bend(int ch, int val)
 {
   if (!ctl.trace_playing) 
     return;
-  wmove(dftwin, 8+channel, COLS-2);
+  ch &= 0x0f;
+  wmove(dftwin, 8+ch, COLS-2);
   if (val>0x2000) waddch(dftwin, '+');
   else if (val<0x2000) waddch(dftwin, '-');
   else waddch(dftwin, ' ');

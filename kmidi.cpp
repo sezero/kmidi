@@ -393,9 +393,12 @@ void MeterWidget::remeter()
 			}
 			/*if (amplitude < Panel->ctotal[slot][ch])*/
 				amplitude = Panel->ctotal[slot][ch];
+			if (amplitude < 20) amplitude = 20;
 		    }
-		    if (!chnotes && amplitude > 0) amplitude--;
-		    if (!chnotes && amplitude > 0) amplitude--;
+		    if (!chnotes && amplitude > 0) {
+			amplitude -= DELTA_VEL;
+			if (amplitude < 0) amplitude = 0;
+		    }
 		    Panel->ctime[slot][ch] = -1;
 		    slot++;
 		    if (slot == NQUEUE) slot = 0;

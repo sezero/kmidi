@@ -2035,9 +2035,9 @@ int play_midi(MidiEvent *eventlist, int32 events, int32 samples)
   	      if (channel[current_event->channel].kit)
 		{
 		  /* Change drum set */
-		  if (channel[current_event->channel].kit==126)
+		  /* if (channel[current_event->channel].kit==126)
 		  	channel[current_event->channel].bank=57;
-		  else channel[current_event->channel].bank=current_event->a;
+		  else */ channel[current_event->channel].bank=current_event->a;
 		}
 	      else
 		{

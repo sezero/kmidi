@@ -1,3 +1,10 @@
+1999-09-08  Greg Lee  <lee@hawaii.edu>
+
+	* remove config/sndfont.cfg: obsolete
+	* kmidi.cpp: tweak meter display
+	* *_c.c: update other interfaces to merge extra channels
+	* sndfont.c: enable stereo patch support
+
 1999-09-06  Greg Lee  <lee@hawaii.edu>
 
 	* up 16 channels to 64 (32 on meter display)

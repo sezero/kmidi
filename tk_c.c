@@ -39,11 +39,11 @@ static void ctl_file_name(char *name);
 static void ctl_current_time(int ct);
 static void ctl_note(int v);
 static void ctl_program(int ch, int val);
-static void ctl_volume(int channel, int val);
-static void ctl_expression(int channel, int val);
-static void ctl_panning(int channel, int val);
-static void ctl_sustain(int channel, int val);
-static void ctl_pitch_bend(int channel, int val);
+static void ctl_volume(int ch, int val);
+static void ctl_expression(int ch, int val);
+static void ctl_panning(int ch, int val);
+static void ctl_sustain(int ch, int val);
+static void ctl_pitch_bend(int ch, int val);
 static void ctl_reset(void);
 static int ctl_open(int using_stdin, int using_stdout);
 static void ctl_close(void);
@@ -197,6 +197,7 @@ static void ctl_current_time(int ct)
 
 static void ctl_channel_note(int ch, int note, int vel)
 {
+	ch &= 0x0f;
 	if (vel == 0) {
 		if (note == Panel->cnote[ch])
 			Panel->v_flags[ch] = FLAG_NOTE_OFF;
@@ -218,6 +219,7 @@ static void ctl_note(int v)
 		return;
 
 	ch = voice[v].channel;
+	ch &= 0x0f;
 	if (ch < 0 || ch >= MAX_MIDI_CHANNELS) return;
 
 	note = voice[v].note;
@@ -232,6 +234,7 @@ static void ctl_program(int ch, int val)
 {
 	if (!ctl.trace_playing) 
 		return;
+	ch &= 0x0f;
 	if (ch < 0 || ch >= MAX_MIDI_CHANNELS) return;
 	Panel->channel[ch].program = val;
 	Panel->c_flags[ch] |= FLAG_PROG;
@@ -241,6 +244,7 @@ static void ctl_volume(int ch, int val)
 {
 	if (!ctl.trace_playing)
 		return;
+	ch &= 0x0f;
 	Panel->channel[ch].volume = val;
 	ctl_channel_note(ch, Panel->cnote[ch], Panel->cvel[ch]);
 }
@@ -249,6 +253,7 @@ static void ctl_expression(int ch, int val)
 {
 	if (!ctl.trace_playing)
 		return;
+	ch &= 0x0f;
 	Panel->channel[ch].expression = val;
 	ctl_channel_note(ch, Panel->cnote[ch], Panel->cvel[ch]);
 }
@@ -257,6 +262,7 @@ static void ctl_panning(int ch, int val)
 {
 	if (!ctl.trace_playing) 
 		return;
+	ch &= 0x0f;
 	Panel->channel[ch].panning = val;
 	Panel->c_flags[ch] |= FLAG_PAN;
 }
@@ -265,11 +271,12 @@ static void ctl_sustain(int ch, int val)
 {
 	if (!ctl.trace_playing)
 		return;
+	ch &= 0x0f;
 	Panel->channel[ch].sustain = val;
 	Panel->c_flags[ch] |= FLAG_SUST;
 }
 
-static void ctl_pitch_bend(int channel, int val)
+static void ctl_pitch_bend(int ch, int val)
 {
 }
 

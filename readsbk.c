@@ -36,7 +36,21 @@ static int READW(uint16 *vp, FILE *fd)
 	return 1;
 }
 
-#define READSTR(var,fd)	fread(var, 20, 1, fd)
+/* #define READSTR(var,fd)	fread(var, 20, 1, fd) */
+
+static int READSTR(char *str, FILE *fd)
+{
+    int n;
+
+    if(fread(str, 20, 1, fd) != 1) return -1;
+    str[19] = '\0';
+    n = strlen(str);
+    while(n > 0 && str[n - 1] == ' ')
+	n--;
+    str[n] = '\0';
+    return n;
+}
+
 #define READID(var,fd)	fread(var, 1, 4, fd)
 #define READB(var,fd)	fread(var, 1, 1, fd)
 #define SKIPB(fd)	{uint8 dummy; fread(&dummy, 1, 1, fd);}
@@ -61,6 +75,9 @@ enum {
 	INFO_ID, SDTA_ID, PDTA_ID,
 	/* info stuff */
 	IFIL_ID, ISNG_ID, IROM_ID, INAM_ID, IVER_ID, IPRD_ID, ICOP_ID,
+#ifdef tplussbk
+	ICRD_ID, IENG_ID, ISFT_ID, ICMT_ID,
+#endif
 	/* sample data stuff */
 	SNAM_ID, SMPL_ID,
 	/* preset stuff */

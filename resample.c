@@ -930,7 +930,7 @@ void pre_resample(Sample * sp)
   double a, xdiff;
   int32 incr, ofs, newlen, count;
   int16 *newdata, *dest, *src = (int16 *)sp->data, *vptr;
-  int32 v, v1, v2, v3, v4, v5, i;
+  int32 v1, v2, v3, v4, v5, i;
   static const char note_name[12][3] =
   {
     "C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"
@@ -943,7 +943,7 @@ void pre_resample(Sample * sp)
 
   a = ((double) (sp->sample_rate) * freq_table[(int) (sp->note_to_use)]) /
     ((double) (sp->root_freq) * play_mode->rate);
-  if (a<1.0) return;
+  /* if (a<1.0) return; */
   if(sp->data_length / a >= 0x7fffffffL)
   {
       /* Too large to compute */
@@ -973,13 +973,18 @@ void pre_resample(Sample * sp)
   count--;
   for(i = 0; i < count; i++)
     {
+#ifdef tplussliding
+      int32 v;
+#endif
       vptr = src + (ofs >> FRACTION_BITS);
       v1 = *(vptr - 1);
       v2 = *vptr;
       v3 = *(vptr + 1);
       v4 = *(vptr + 2);
+#ifdef tplussliding
       v5 = v2 - v3;
       xdiff = FRSCALENEG(ofs & FRACTION_MASK, FRACTION_BITS);
+/* this looks a little strange: v1 - v2 - v5 = v1 + v3 */
       v = (int32)(v2 + xdiff * (1.0/6.0) * (3 * (v3 - v5) - 2 * v1 - v4 +
        xdiff * (3 * (v1 - v2 - v5) + xdiff * (3 * v5 + v4 - v1))));
       if(v < -32768)
@@ -988,6 +993,11 @@ void pre_resample(Sample * sp)
 	  *dest++ = 32767;
       else
 	  *dest++ = (int16)v;
+#else
+      xdiff = FRSCALENEG(ofs & FRACTION_MASK, FRACTION_BITS);
+      *dest++ = v2 + (xdiff / 6.0) * (-2 * v1 - 3 * v2 + 6 * v3 - v4 +
+      xdiff * (3 * (v1 - 2 * v2 + v3) + xdiff * (-v1 + 3 * (v2 - v3) + v4)));
+#endif
       ofs += incr;
     }
 

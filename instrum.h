@@ -96,8 +96,10 @@ typedef struct {
    entire MIDI file. */
 #define MAGIC_LOAD_INSTRUMENT ((Instrument *)(-1))
 #define MAXPROG 128
-#define MAXBANK 129
+#define MAXBANK 130
 #define SFXBANK (MAXBANK-1)
+#define SFXDRUM1 (MAXBANK-2)
+#define SFXDRUM2 (MAXBANK-1)
 
 typedef struct {
 #ifndef ADAGIO

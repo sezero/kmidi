@@ -222,7 +222,6 @@ static int sysex(int32 len, uint8 *syschan, uint8 *sysa, uint8 *sysb)
       return 0;
     }
   ch = adlo & 0x0f;
-  ch = MERGE_CHANNEL_PORT(ch);
   *syschan=(uint8)ch;
   if (id==0x7f && len==7 && port==0x7f && model==0x04 && adhi==0x01)
     {
@@ -235,6 +234,8 @@ static int sysex(int32 len, uint8 *syschan, uint8 *sysa, uint8 *sysb)
     }
   if (len<8) { free(s); return 0; }
   port &=0x0f;
+  ch = (adlo & 0x0f) | ((port & 0x03) << 4);
+  *syschan=(uint8)ch;
   cd=s[5]; dta=s[6];
   if (len >= 8) dtb=s[7];
   else dtb=-1;
@@ -817,8 +818,24 @@ static MidiEvent *groom_list(int32 divisions,int32 *eventsp,int32 *samplesp)
 	      if (current_kit[meep->event.channel]==126)
 		{
 		  /* note request for 2nd sfx rhythm kit */
-		  if (meep->event.a) current_kit[meep->event.channel]=125;
-		  break;
+		  if (meep->event.a && drumset[SFXDRUM2])
+		  {
+			 current_kit[meep->event.channel]=125;
+			 current_set[meep->event.channel]=SFXDRUM2;
+		         new_value=SFXDRUM2;
+		  }
+		  else if (!meep->event.a && drumset[SFXDRUM1])
+		  {
+			 current_set[meep->event.channel]=SFXDRUM1;
+		         new_value=SFXDRUM1;
+		  }
+		  else
+		  {
+		  	ctl->cmsg(CMSG_WARNING, VERB_VERBOSE,
+		       		"XG SFX drum set is undefined");
+			skip_this_event=1;
+		  	break;
+		  }
 		}
 	      if (drumset[meep->event.a]) /* Is this a defined drumset? */
 		new_value=meep->event.a;
@@ -855,6 +872,8 @@ static MidiEvent *groom_list(int32 divisions,int32 *eventsp,int32 *samplesp)
 	    counting_time=1;
 	  if (current_kit[meep->event.channel])
 	    {
+	      int dset = current_set[meep->event.channel];
+#if 0
 	      int dnote=meep->event.a;
 
 	      if (dnote>99) dnote=0;
@@ -862,22 +881,16 @@ static MidiEvent *groom_list(int32 divisions,int32 *eventsp,int32 *samplesp)
 		meep->event.a=sfxdrum2[dnote];
 	      else if (current_kit[meep->event.channel]==126)
 		meep->event.a=sfxdrum1[dnote];
-
+#endif
 	      /* Mark this instrument to be loaded */
-	      if (!(drumset[current_set[meep->event.channel]]
-		    ->tone[meep->event.a].instrument))
-		drumset[current_set[meep->event.channel]]
-		  ->tone[meep->event.a].instrument=
+	      if (!(drumset[dset]->tone[meep->event.a].instrument))
+		drumset[dset]->tone[meep->event.a].instrument=
 		    MAGIC_LOAD_INSTRUMENT;
-	      if (drumset[current_set[meep->event.channel]]
-		  ->tone[meep->event.a].brightness==-1)
-	        drumset[current_set[meep->event.channel]]
-		  ->tone[meep->event.a].brightness=
+	      if (drumset[dset]->tone[meep->event.a].brightness==-1)
+	        drumset[dset]->tone[meep->event.a].brightness=
 		    channel[meep->event.channel].brightness;
-	      if (drumset[current_set[meep->event.channel]]
-		  ->tone[meep->event.a].harmoniccontent==-1)
-	        drumset[current_set[meep->event.channel]]
-		  ->tone[meep->event.a].harmoniccontent=
+	      if (drumset[dset]->tone[meep->event.a].harmoniccontent==-1)
+	        drumset[dset]->tone[meep->event.a].harmoniccontent=
 		    channel[meep->event.channel].harmoniccontent;
 	    }
 	  else
@@ -921,7 +934,7 @@ static MidiEvent *groom_list(int32 divisions,int32 *eventsp,int32 *samplesp)
 	    }
 	  else if (meep->event.a == 126)
 	    {
-	      if (drumset[57]) /* Is this a defined tone bank? */
+	      if (drumset[SFXDRUM1]) /* Is this a defined tone bank? */
 	        new_value=meep->event.a;
 	      else
 		{
@@ -930,7 +943,7 @@ static MidiEvent *groom_list(int32 divisions,int32 *eventsp,int32 *samplesp)
 	          skip_this_event=1;
 	          break;
 		}
-	      current_set[meep->event.channel]=57;
+	      current_set[meep->event.channel]=SFXDRUM1;
 	      current_kit[meep->event.channel]=new_value;
 	      break;
 	    }
