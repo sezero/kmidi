@@ -40,6 +40,7 @@
 #include "kmidi.h"
 
 #include "kmidiframe.h"
+#include <kpopupmenu.h>
 
 
 int menubarheight = 0;
