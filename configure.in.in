@@ -337,9 +337,13 @@ if test "x$au_enable_nas" = xyes; then
     EXTRATLIBS="$EXTRATLIBS $with_nas_library -lX11"
   else
     AC_MSG_RESULT()
-    LIBS="-L/usr/X11R6/lib -lX11"
+    LDFLAGS_safe="$LDFLAGS"
+    LIBS_safe="$LIBS"
+    LDFLAGS="$LDFLAGS $(all_libraries)"
+    LIBS="$LIBS -lX11"
     MY_SEARCH_LIBS(AuOpenServer,
-	[/usr/X11R6/lib/libaudio.a \
+	[/usr/openwin/lib/libaudio.a \
+        /usr/X11R6/lib/libaudio.a \
 	/usr/lib/libaudio.so \
 	/usr/lib/libaudio.a ],
 	[ AC_MSG_RESULT(NAS: $timidity_cv_search_AuOpenServer)
@@ -347,6 +351,8 @@ if test "x$au_enable_nas" = xyes; then
 	  EXTRALIBS="$EXTRALIBS $timidity_cv_search_AuOpenServer"
 	  EXTRATLIBS="$EXTRALIBS $timidity_cv_search_AuOpenServer"],
 	[AC_MSG_WARN(NAS library is not found.)])
+    LIBS="$LIBS_safe"
+    LDFLAGS="$LDFLAGS_safe" 
   fi
   test "x$with_nas_includes" != x && CPPFLAGS="$CPPFLAGS -I$with_nas_includes"
 dnl  lib_xt_opt=-lXt
@@ -634,7 +640,7 @@ dnl    else
 dnl      lib_xaw_opt=-lXaw
 dnl    fi
     EXTRATDEFS="$EXTRATDEFS -DIA_XAW"
-    EXTRATLIBS="$EXTRATLIBS -L/usr/X11R6/lib -lXaw -lXt -lX11"
+    EXTRATLIBS="$EXTRATLIBS $all_libraries -lXaw -Xt -X11"
 dnl    if test "x$have_xext" = xyes; then
 dnl      a_so_libs="-lXext -lX11"
 dnl    else
