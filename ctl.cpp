@@ -77,7 +77,7 @@ static void ctl_master_volume(int mv);
 static void ctl_file_name(char *name);
 static void ctl_current_time(uint32 ct);
 static void ctl_note(int v);
-static void ctl_program( int ch, int val);
+static void ctl_program( int ch, int val, char *name);
 static void ctl_volume( int ch, int val );
 static void ctl_expression( int ch, int val );
 static void ctl_panning( int ch, int val );
@@ -396,7 +396,7 @@ static void ctl_note(int v)
 	ctl_channel_note(ch, /* note, vel,*/ start);
 }
 
-static void ctl_program( int ch, int val)
+static void ctl_program( int ch, int val, char *name)
 {
 #ifdef MISC_PANEL_UPDATE
 	if (!ctl.trace_playing) 
@@ -406,7 +406,7 @@ static void ctl_program( int ch, int val)
 	/*Panel->channel[ch].program = val;*/
 	Panel->c_flags[ch] |= FLAG_PROG;
 #else
-	ch=val=0;
+	ch=val=name=0;
 #endif
 }
 
@@ -484,7 +484,7 @@ static void ctl_reset(void)
 
 	for (i = 0; i < MAXDISPCHAN; i++) {
 	#if 0
-		ctl_program(i, channel[i].program);
+		ctl_program(i, channel[i].program, channel[i].name);
 		ctl_volume(i, channel[i].volume);
 		ctl_expression(i, channel[i].expression);
 		ctl_panning(i, channel[i].panning);

@@ -109,6 +109,7 @@ typedef struct {
 
   char
     transpose;
+  char *name;
 } Channel;
 
 /* Causes the instrument's default panning to be used. */

@@ -921,8 +921,12 @@ static MidiEvent *groom_list(int32 divisions, uint32 *eventsp, uint32 *samplesp)
 #endif
 	      /* Mark this instrument to be loaded */
 	      if (!(drumset[dset]->tone[meep->event.a].layer))
+	       {
 		drumset[dset]->tone[meep->event.a].layer=
 		    MAGIC_LOAD_INSTRUMENT;
+		if (!channel[meep->event.channel].name) channel[meep->event.channel].name=
+		    drumset[dset]->name;
+	       }
 	      else drumset[dset]->tone[meep->event.a].last_used
 		 = current_tune_number;
 	    }
@@ -937,11 +941,13 @@ static MidiEvent *groom_list(int32 divisions, uint32 *eventsp, uint32 *samplesp)
 	      if (current_program[chan]==SPECIAL_PROGRAM)
 		break;
 	      /* Mark this instrument to be loaded */
-	      if (!(tonebank[banknum]
-		    ->tone[current_program[chan]].layer))
-		tonebank[banknum]
-		  ->tone[current_program[chan]].layer=
+	      if (!(tonebank[banknum]->tone[current_program[chan]].layer))
+		{
+		  tonebank[banknum]->tone[current_program[chan]].layer=
 		    MAGIC_LOAD_INSTRUMENT;
+		  if (!channel[meep->event.channel].name) channel[meep->event.channel].name=
+		    tonebank[banknum]->tone[current_program[chan]].name;
+		}
 	      else tonebank[banknum]->tone[current_program[chan]].last_used
 		 = current_tune_number;
 	    }
@@ -1108,6 +1114,9 @@ MidiEvent *read_midi_file(FILE *mfp, uint32 *count, uint32 *sp)
 	channel[i].brightness = 64;
 	channel[i].harmoniccontent = 64;
 	channel[i].variationbank = 0;
+	channel[i].chorusdepth = 0;
+	channel[i].reverberation = 0;
+	channel[i].name = 0;
      }
 
   if ((fread(tmp,1,4,fp) != 4) || (fread(&len,4,1,fp) != 1))

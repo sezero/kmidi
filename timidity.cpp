@@ -332,6 +332,8 @@ void clear_config(void)
 		if (tonebank[i])
 		{
 			bank = tonebank[i];
+			if (bank->name) free(bank->name);
+			bank->name = 0;
 			for (j = 0; j < MAXPROG; j++)
 			  if (bank->tone[j].name)
 			  {
@@ -347,6 +349,8 @@ void clear_config(void)
 		if (drumset[i])
 		{
 			bank = drumset[i];
+			if (bank->name) free(bank->name);
+			bank->name = 0;
 			for (j = 0; j < MAXPROG; j++)
 			  if (bank->tone[j].name)
 			  {
@@ -524,6 +528,10 @@ int read_config_file(const char *name, int prescanning)
 			if (!strcmp(w[2], "sbk")) font_type = FONT_SBK;
 			else if (!strcmp(w[2], "sf")) font_type = FONT_SBK;
 			else if (!strcmp(w[2], "fff")) font_type = FONT_FFF;
+			else if (!bank->name)
+			  strcpy((bank->name=(char *)safe_malloc(strlen(w[2])+1)),w[2]);
+			if (words > 3 && !bank->name)
+			  strcpy((bank->name=(char *)safe_malloc(strlen(w[3])+1)),w[3]);
 		}
 	}
       /******* bank ********/
@@ -557,6 +565,10 @@ int read_config_file(const char *name, int prescanning)
 			if (!strcmp(w[2], "sbk")) font_type = FONT_SBK;
 			else if (!strcmp(w[2], "sf")) font_type = FONT_SBK;
 			else if (!strcmp(w[2], "fff")) font_type = FONT_FFF;
+			else if (!bank->name)
+			  strcpy((bank->name=(char *)safe_malloc(strlen(w[2])+1)),w[2]);
+			if (words > 3 && !bank->name)
+			  strcpy((bank->name=(char *)safe_malloc(strlen(w[3])+1)),w[3]);
 		}
 	}
       /******* sfx ********/
@@ -574,8 +586,12 @@ int read_config_file(const char *name, int prescanning)
 	  if (words > 1)
 		{
 			if (!strcmp(w[1], "sbk")) font_type = FONT_SBK;
-			else if (!strcmp(w[2], "sf")) font_type = FONT_SBK;
+			else if (!strcmp(w[1], "sf")) font_type = FONT_SBK;
 			else if (!strcmp(w[1], "fff")) font_type = FONT_FFF;
+			else if (!bank->name)
+			  strcpy((bank->name=(char *)safe_malloc(strlen(w[1])+1)),w[1]);
+			if (words > 2 && !bank->name)
+			  strcpy((bank->name=(char *)safe_malloc(strlen(w[2])+1)),w[2]);
 		}
 	}
       /******* drumsfx1 ********/
@@ -593,8 +609,12 @@ int read_config_file(const char *name, int prescanning)
 	  if (words > 1)
 		{
 			if (!strcmp(w[1], "sbk")) font_type = FONT_SBK;
-			else if (!strcmp(w[2], "sf")) font_type = FONT_SBK;
+			else if (!strcmp(w[1], "sf")) font_type = FONT_SBK;
 			else if (!strcmp(w[1], "fff")) font_type = FONT_FFF;
+			else if (!bank->name)
+			  strcpy((bank->name=(char *)safe_malloc(strlen(w[1])+1)),w[1]);
+			if (words > 2 && !bank->name)
+			  strcpy((bank->name=(char *)safe_malloc(strlen(w[2])+1)),w[2]);
 		}
 	}
       /******* drumsfx2 ********/
@@ -612,8 +632,12 @@ int read_config_file(const char *name, int prescanning)
 	  if (words > 1)
 		{
 			if (!strcmp(w[1], "sbk")) font_type = FONT_SBK;
-			else if (!strcmp(w[2], "sf")) font_type = FONT_SBK;
+			else if (!strcmp(w[1], "sf")) font_type = FONT_SBK;
 			else if (!strcmp(w[1], "fff")) font_type = FONT_FFF;
+			else if (!bank->name)
+			  strcpy((bank->name=(char *)safe_malloc(strlen(w[1])+1)),w[1]);
+			if (words > 2 && !bank->name)
+			  strcpy((bank->name=(char *)safe_malloc(strlen(w[2])+1)),w[2]);
 		}
 	}
 #ifdef FFF_HAS_BEEN_FIXED

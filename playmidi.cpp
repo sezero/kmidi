@@ -2524,7 +2524,8 @@ int play_midi(MidiEvent *eventlist, uint32 events, uint32 samples)
 		{
 		  channel[current_event->channel].program=current_event->a;
 		}
-	      ctl->program(current_event->channel, current_event->a);
+	      ctl->program(current_event->channel, current_event->a,
+			channel[current_event->channel].name);
 	      break;
 
 	    case ME_SUSTAIN:

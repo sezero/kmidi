@@ -128,7 +128,7 @@ static void print_sbk(SFInfo *sf, FILE *fout)
 	    }
 	    else {
 		int keynote, c, dpreset;
-		fprintf(fout, "\ndrumset %d sbk\t\t#%s\n", ip[i].preset, getname(ip[i].name));
+		fprintf(fout, "\ndrumset %d sbk\t\t%s\n", ip[i].preset, getname(ip[i].name));
 
 		for (dpreset = 0; dpreset < 128; dpreset++)
 	        for (c = ip[i].bagNdx; c < ip[i+1].bagNdx; c++) {

@@ -38,7 +38,7 @@ static void ctl_master_volume(int mv);
 static void ctl_file_name(char *name);
 static void ctl_current_time(uint32 ct);
 static void ctl_note(int v);
-static void ctl_program(int ch, int val);
+static void ctl_program(int ch, int val, char *name);
 static void ctl_volume(int ch, int val);
 static void ctl_expression(int ch, int val);
 static void ctl_panning(int ch, int val);
@@ -162,7 +162,7 @@ static void ctl_current_time(uint32 ct)
 
 static void ctl_note(int v) { v = 0; }
 
-static void ctl_program(int ch, int val) { ch = val = 0; }
+static void ctl_program(int ch, int val, char *name) { ch = val = name = 0; }
 
 static void ctl_volume(int ch, int val) { ch = val = 0; }
 

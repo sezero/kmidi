@@ -3,7 +3,7 @@
 #
 #  ** Presets: 334
 
-bank 0 sbk
+bank 0 sbk	standard
 	  0 Piano_1
 	  1 Piano_2
 	  2 Piano_3
@@ -129,7 +129,7 @@ bank 0 sbk
 	126 Applause
 	127 Gunshot
 
-bank 1 sbk
+bank 1 sbk	effects1
 	120 Cut_Noise
 	121 Fl._Key_Click
 	122 Rain
@@ -138,7 +138,7 @@ bank 1 sbk
 	126 Laughing
 	127 Machine_Gun
 
-bank 2 sbk
+bank 2 sbk	effects2
 	120 String_Slap
 	122 Thunder
 	123 Horse-Gallop
@@ -147,32 +147,32 @@ bank 2 sbk
 	126 Screaming
 	127 Lasergun
 
-bank 3 sbk
+bank 3 sbk	effects3
 	122 Wind
 	124 Door
 	125 Car-Pass
 	126 Punch
 	127 Explosion
 
-bank 4 sbk
+bank 4 sbk	effects4
 	122 Stream
 	124 Scratch
 	125 Car-Crash
 	126 Heart_Beat
 
-bank 5 sbk
+bank 5 sbk	effects5
 	122 Bubble
 	124 Windchime
 	125 Siren
 	126 Footsteps
 
-bank 6 sbk
+bank 6 sbk	effects6
 	125 Train
 
-bank 7 sbk
+bank 7 sbk	effects7
 	125 Jetplane
 
-bank 8 sbk
+bank 8 sbk	bank8
 	  4 Detuned_Rhodes
 	  5 Detuned_EP2
 	  6 Coupled_Harpsichord
@@ -203,13 +203,13 @@ bank 8 sbk
 	118 808_Tom
 	125 Starship
 
-bank 9 sbk
+bank 9 sbk	effects9
 	125 Burst_Noise
 
-bank 16 sbk
+bank 16 sbk	mandolin
 	 25 Mandolin
 
-bank 127 sbk
+bank 127 sbk	bank127
 	  0 Acou_Piano_1
 	  1 Acou_Piano_2
 	  2 Acou_Piano_3
@@ -336,7 +336,7 @@ bank 127 sbk
 	126 Water_Bell
 	127 Jungle_Tune
 
-drumset 0 sbk		#Standard_1_[SC-55]
+drumset 0 sbk		Standard_1_[SC-55]
 	 27 Filter_Snap
 	 28 Slap
 	 29 Scratch_Pull
@@ -399,7 +399,7 @@ drumset 0 sbk		#Standard_1_[SC-55]
 	 86 Surdo_Mute
 	 87 Surdo_Open
 
-drumset 1 sbk		#Standard_2_[SC-88]
+drumset 1 sbk		Standard_2_[SC-88]
 	 27 Filter_Snap
 	 28 Slap
 	 29 Scratch_Pull
@@ -462,7 +462,7 @@ drumset 1 sbk		#Standard_2_[SC-88]
 	 86 Surdo_Mute
 	 87 Surdo_Open
 
-drumset 7 sbk		#Room_[SC-88]
+drumset 7 sbk		Room_[SC-88]
 	 27 Filter_Snap
 	 28 Slap
 	 29 Scratch_Pull
@@ -525,7 +525,7 @@ drumset 7 sbk		#Room_[SC-88]
 	 86 Surdo_Mute
 	 87 Surdo_Open
 
-drumset 8 sbk		#Room_[SC-55]
+drumset 8 sbk		Room_[SC-55]
 	 27 Filter_Snap
 	 28 Slap
 	 29 Scratch_Pull
@@ -588,7 +588,7 @@ drumset 8 sbk		#Room_[SC-55]
 	 86 Surdo_Mute
 	 87 Surdo_Open
 
-drumset 16 sbk		#Power_[SC-55]
+drumset 16 sbk		Power_[SC-55]
 	 27 Filter_Snap
 	 28 Slap
 	 29 Scratch_Pull
@@ -651,7 +651,7 @@ drumset 16 sbk		#Power_[SC-55]
 	 86 Surdo_Mute
 	 87 Surdo_Open
 
-drumset 24 sbk		#Electronic_[SC-55]
+drumset 24 sbk		Electronic_[SC-55]
 	 27 Filter_Snap
 	 28 Slap
 	 29 Scratch_Pull
@@ -714,7 +714,7 @@ drumset 24 sbk		#Electronic_[SC-55]
 	 86 Surdo_Mute
 	 87 Surdo_Open
 
-drumset 25 sbk		#TR-909_[SC-55]
+drumset 25 sbk		TR-909_[SC-55]
 	 27 Filter_Snap
 	 28 Slap
 	 29 Scratch_Pull_[TR909]
@@ -777,7 +777,7 @@ drumset 25 sbk		#TR-909_[SC-55]
 	 86 Surdo_Mute
 	 87 Surdo_Open
 
-drumset 26 sbk		#Dance_[SC-88]
+drumset 26 sbk		Dance_[SC-88]
 	 27 Filter_Snap
 	 28 Slap
 	 29 Scratch_Pull_[TR909]
@@ -840,7 +840,7 @@ drumset 26 sbk		#Dance_[SC-88]
 	 86 Surdo_Mute
 	 87 Surdo_Open
 
-drumset 32 sbk		#Jazz_[SC-55]
+drumset 32 sbk		Jazz_[SC-55]
 	 27 Filter_Snap
 	 28 Slap
 	 29 Scratch_Pull
@@ -903,7 +903,7 @@ drumset 32 sbk		#Jazz_[SC-55]
 	 86 Surdo_Mute
 	 87 Surdo_Open
 
-drumset 40 sbk		#Brush_[SC-55]
+drumset 40 sbk		Brush_[SC-55]
 	 27 Filter_Snap
 	 28 Slap
 	 29 Scratch_Pull
@@ -966,7 +966,7 @@ drumset 40 sbk		#Brush_[SC-55]
 	 86 Surdo_Mute
 	 87 Surdo_Open
 
-drumset 48 sbk		#Orchestra_[SC-55]
+drumset 48 sbk		Orchestra_[SC-55]
 	 27 Hat
 	 28 Hat
 	 29 Hat
@@ -1020,7 +1020,7 @@ drumset 48 sbk		#Orchestra_[SC-55]
 	 87 Surdo_Open
 	 88 Applause
 
-drumset 49 sbk		#Ethnic_[SC-88]
+drumset 49 sbk		Ethnic_[SC-88]
 	 27 Hat
 	 28 Hat
 	 29 Hat
@@ -1074,7 +1074,7 @@ drumset 49 sbk		#Ethnic_[SC-88]
 	 87 Surdo_Open
 	 88 Applause
 
-drumset 50 sbk		#Kick_&_Snare_[SC-88]
+drumset 50 sbk		Kick_&_Snare_[SC-88]
 	 27 Hat
 	 28 Hat
 	 29 Hat
@@ -1128,7 +1128,7 @@ drumset 50 sbk		#Kick_&_Snare_[SC-88]
 	 87 Surdo_Open
 	 88 Applause
 
-drumset 56 sbk		#SFX_[SC-55]
+drumset 56 sbk		SFX_[SC-55]
 	 39 Filter_Snap
 	 40 Slap
 	 41 Scratch_Pull
@@ -1176,7 +1176,7 @@ drumset 56 sbk		#SFX_[SC-55]
 	 83 Brook1oct
 	 84 Bubbles1oct
 
-drumset 57 sbk		#Rhythm_FX_[SC-88]
+drumset 57 sbk		Rhythm_FX_[SC-88]
 	 39 Filter_Snap
 	 40 Slap
 	 41 Scratch_Pull
@@ -1224,7 +1224,7 @@ drumset 57 sbk		#Rhythm_FX_[SC-88]
 	 83 Brook1oct
 	 84 Bubbles1oct
 
-drumset 99 sbk		#Chaos_Standard_Drum
+drumset 99 sbk		Chaos_Standard_Drum
 	 27 Filter_Snap
 	 28 Slap
 	 29 Scratch_Pull
@@ -1287,7 +1287,7 @@ drumset 99 sbk		#Chaos_Standard_Drum
 	 86 Surdo_Mute
 	 87 Surdo_Open
 
-drumset 127 sbk		#CM-64/32_Set_[SC-55]
+drumset 127 sbk		CM-64/32_Set_[SC-55]
 	 27 Filter_Snap
 	 28 Slap
 	 29 Scratch_Pull

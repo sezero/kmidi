@@ -116,6 +116,7 @@ typedef struct {
 #define SFXDRUM2 (MAXBANK-1)
 
 typedef struct {
+  char *name;
 #ifndef ADAGIO
   ToneBankElement tone[MAXPROG];
 #else /* ADAGIO */

@@ -70,7 +70,7 @@ static int ctl_read(int32 *valp);
 static int cmsg(int type, int verbosity_level, char *fmt, ...);
 static void ctl_event(CtlEvent *e);
 #else
-static int cmsg(int type, int verbosity_level, const char *fmt, ...);
+static int cmsg(int type, int verbosity_level, char *fmt, ...);
 #endif
 static void ctl_pass_playing_list(int number_of_files, char *list_of_files[]);
 
@@ -79,7 +79,11 @@ static int a_pipe_ready(void);
 static void ctl_master_volume(int);
 void a_pipe_write(char *);
 int a_pipe_read(char *,int);
+#ifdef ORIG_XAW
 static void a_pipe_write_msg(char *msg);
+#else
+static void a_pipe_write_msg(char *msg, int lyric);
+#endif
 
 static void ctl_refresh(void);
 #ifdef ORIG_XAW
@@ -93,7 +97,7 @@ static void ctl_total_time(uint32 tt);
 static void ctl_file_name(char *name);
 static void ctl_xaw_note(int status, int ch, int note, int velocity);
 static void ctl_note(int v);
-static void ctl_program( int ch, int val);
+static void ctl_program( int ch, int val, char *name);
 #endif
 static void ctl_volume(int ch, int val);
 static void ctl_expression(int ch, int val);
@@ -165,15 +169,22 @@ static int cmsg(int type, int verbosity_level, char *fmt, ...) {
   char *buff;
   MBlockList pool;
 #else
-static int cmsg(int type, int verbosity_level, const char *fmt, ...) {
+static int cmsg(int type, int verbosity_level, char *fmt, ...) {
   char buff[2048];
+  int flagnl = 1;
 #endif
   va_list ap;
 
   if ((type==CMSG_TEXT || type==CMSG_INFO || type==CMSG_WARNING) &&
       ctl.verbosity<verbosity_level)
     return 0;
-
+#ifndef ORIG_XAW
+  if (*fmt == '~')
+   {
+     flagnl = 0;
+     fmt++;
+   }
+#endif
   va_start(ap, fmt);
 
   if(!xaw_ready) {
@@ -195,7 +206,8 @@ static int cmsg(int type, int verbosity_level, const char *fmt, ...) {
   reuse_mblock(&pool);
 #else
   vsprintf(buff, fmt, ap);
-  a_pipe_write_msg(buff);
+  if (flagnl) a_pipe_write_msg(buff, 0);
+  else a_pipe_write_msg(buff, 1);
 #endif
 
   va_end(ap);
@@ -373,7 +385,7 @@ static int ctl_open(int using_stdin, int using_stdout) {
 #ifdef ORIG_XAW
   set_trace_loop_hook(update_indicator);
 #else
-ctl.trace_playing = 1;
+  ctl.trace_playing = 1;
 #endif
   /* The child process won't come back from this call  */
   a_pipe_open();
@@ -822,11 +834,16 @@ int a_pipe_nread(char *buf, int n)
     return j;
 }
 
+#ifdef ORIG_XAW
 static void a_pipe_write_msg(char *msg)
+#else
+static void a_pipe_write_msg(char *msg, int lyric)
+#endif
 {
     int msglen;
     char buf[2 + sizeof(int)], *p, *q;
 
+#ifdef ORIG_XAW
     /* strip '\r' */
     p = q = msg;
     while(*q) {
@@ -835,15 +852,29 @@ static void a_pipe_write_msg(char *msg)
     q++;
     }
     *p = '\0';
+#endif
 
+#ifdef ORIG_XAW
     msglen = strlen(msg) + 1; /* +1 for '\n' */
+#else
+    msglen = strlen(msg);
+    if (~lyric) msglen++;
+#endif
     buf[0] = 'L';
     buf[1] = '\n';
 
     memcpy(buf + 2, &msglen, sizeof(int));
     write(pipe_out_fd, buf, sizeof(buf));
+#ifdef ORIG_XAW
     write(pipe_out_fd, msg, msglen - 1);
     write(pipe_out_fd, "\n", 1);
+#else
+    if (lyric) write(pipe_out_fd, msg, msglen);
+    else {
+        write(pipe_out_fd, msg, msglen - 1);
+        write(pipe_out_fd, "\n", 1);
+    }
+#endif
 }
 
 #ifdef ORIG_XAW
@@ -904,7 +935,7 @@ static void ctl_note(int v)
 #ifdef ORIG_XAW
 static void ctl_program(int ch, int val, void *comm)
 #else
-static void ctl_program( int ch, int val)
+static void ctl_program( int ch, int val, char *name)
 #endif
 {
   if(ch >= MAX_XAW_MIDI_CHANNELS) return;
@@ -926,6 +957,10 @@ static void ctl_program( int ch, int val)
               (!strlen((char *)comm))? "<drum>":(char *)comm);
     a_pipe_write(local_buf);
   }
+#else
+  if (name) sprintf(local_buf, "I%c%s", ch+'A', name);
+  else sprintf(local_buf, "I%c%s", ch+'A', "");
+    a_pipe_write(local_buf);
 #endif
 }
 
@@ -952,11 +987,7 @@ static void ctl_event(CtlEvent *e)
       ctl_note((int)e->v1, (int)e->v2, (int)e->v3, (int)e->v4);
       break;
     case CTLE_PROGRAM:
-#ifdef ORIG_XAW
       ctl_program((int)e->v1, (int)e->v2, (char *)e->v3);
-#else
-      ctl_program((int)e->v1, (int)e->v2);
-#endif
       break;
     case CTLE_VOLUME:
       ctl_volume((int)e->v1, (int)e->v2);
@@ -1022,15 +1053,18 @@ static void ctl_reset(void)
   indicator_last_update = 0;
 #endif
   for (i=0; i<MAX_XAW_MIDI_CHANNELS; i++) {
-    if(ISDRUMCHANNEL(i)) {
 #ifdef ORIG_XAW
+    if(ISDRUMCHANNEL(i)) {
       ctl_program(i, channel[i].bank, channel_instrum_name(i));
 #else
-      ctl_program(i, channel[i].bank);
+    if (channel[i].kit) {
+      ctl_program(i, channel[i].bank, channel[i].name);
 #endif
 #ifdef ORIG_XAW
       if (opt_reverb_control)
         set_otherinfo(i, get_reverb_level(i), 'r');
+#else
+        set_otherinfo(i, channel[i].reverberation, 'r');
 #endif
     } else {
       ToneBank *bank;
@@ -1039,7 +1073,7 @@ static void ctl_reset(void)
 #ifdef ORIG_XAW
       ctl_program(i, channel[i].program, channel_instrum_name(i));
 #else
-      ctl_program(i, channel[i].program);
+      ctl_program(i, channel[i].program, channel[i].name);
 #endif
       b = channel[i].bank;
 #ifdef ORIG_XAW
@@ -1056,6 +1090,9 @@ static void ctl_reset(void)
 
       if(opt_chorus_control)
         set_otherinfo(i, get_chorus_level(i), 'c');
+#else
+        set_otherinfo(i, channel[i].reverberation, 'r');
+        set_otherinfo(i, channel[i].chorusdepth, 'c');
 #endif
     }
     ctl_volume(i, channel[i].volume);

@@ -197,7 +197,7 @@ DSPCSRCS = common.cpp playmidi.cpp resample.cpp mix.cpp instrum.cpp \
 # Optional installation-specific sources
 OPTSRCS = hpux_a.cpp linux_a.cpp sun_a.cpp dec_a.cpp win_a.cpp \
 	ncurs_c.cpp slang_c.cpp tk_c.cpp \
-	motif_c.cpp motif_i.cpp motif_p.cpp
+	motif_c.cpp motif_i.cpp motif_p.cpp xaw_i.cpp xaw_c.cpp
 
 # External utility sources
 TOOLSRCS = bag.cpp wav2pat.cpp sf2cfg.cpp
@@ -218,7 +218,7 @@ BITMAPS = $(BITMAPF) \
 
 # All headers
 CHDRS = config.h common.h readmidi.h playmidi.h resample.h mix.h instrum.h \
-        tables.h controls.h output.h filter.h motif.h
+        tables.h controls.h output.h filter.h motif.h xaw.h
 
 # Used in making the distribution archive
 ALLSRCS = $(CSRCS) $(OPTSRCS) $(CHDRS) $(TOOLSRCS) $(TCLSRCS) $(MAKEFILES) \

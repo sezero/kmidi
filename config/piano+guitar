@@ -1,5 +1,5 @@
 
-bank 0
+bank 0	standard
 #	  0 "Piano 1"
 	  0 patch/sologrnd
 #	  1 "Piano 2"

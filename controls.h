@@ -82,7 +82,7 @@ typedef struct {
 
   void (*note)(int v);
   void (*master_volume)(int mv);
-  void (*program)(int channel, int val);
+  void (*program)(int channel, int val, char *name);
   void (*volume)(int channel, int val);
   void (*expression)(int channel, int val);
   void (*panning)(int channel, int val);

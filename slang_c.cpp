@@ -68,7 +68,7 @@ static void ctl_master_volume(int mv);
 static void ctl_file_name(char *name);
 static void ctl_current_time(uint32 ct);
 static void ctl_note(int v);
-static void ctl_program(int ch, int val);
+static void ctl_program(int ch, int val, char *name);
 static void ctl_volume(int ch, int val);
 static void ctl_expression(int ch, int val);
 static void ctl_panning(int ch, int val);
@@ -250,7 +250,7 @@ static void ctl_note(int v)
     }
 }
 
-static void ctl_program(int ch, int val)
+static void ctl_program(int ch, int val, char *name)
 {
   if (!ctl.trace_playing) 
     return;
@@ -342,7 +342,7 @@ static void ctl_reset(void)
       SLsmg_gotorc(8+i, 3);
       for (j=0; j<SLtt_Screen_Cols-24; j++)
       SLsmg_write_char('.');
-      ctl_program(i, channel[i].program);
+      ctl_program(i, channel[i].program, channel[i].name);
       ctl_volume(i, channel[i].volume);
       ctl_expression(i, channel[i].expression);
       ctl_panning(i, channel[i].panning);
