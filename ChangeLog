@@ -1,3 +1,7 @@
+1999-11-24  Greg Lee  <lee@hawaii.edu>
+
+	* redid array references in resampling code
+
 1999-11-23  Greg Lee  <lee@hawaii.edu>
 
 	* Makefile.am: change -O2 to -O to avoid
