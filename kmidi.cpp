@@ -610,7 +610,7 @@ void KMidi::drawPanel()
     ejectPB = makeButton( ix, iy, WIDTH/2, HEIGHT, "Eject" );
     what->add(ejectPB, i18n("open up the play list editor"));
     infobutton = makeButton( ix +WIDTH/2, iy, WIDTH/2, HEIGHT, "info" );
-    what->add(infobutton, i18n("open up or close<br>\nthe display of info about the<br>\nsong being played"));
+    what->add(infobutton, i18n("open up or close<br>\nthe display containing info about the<br>\nsong being played"));
     iy += HEIGHT;
 
     //leds here
@@ -1018,7 +1018,7 @@ void KMidi::drawPanel()
     voicespin->setFont( QFont( "helvetica", smallPtSize(), QFont::Bold) );
     what->add(voicespin, i18n("Use this to set the maximum<br>\n"
 			      "notes that can be played<br>\n"
-			      "at one time.  Use a lower<br>\n"
+			      "at one time. Use a lower<br>\n"
 			      "setting to avoid dropouts."));
     connect( voicespin, SIGNAL( valueChanged(int) ),
 	     SLOT( voicesChanged(int) ) );
@@ -1048,7 +1048,7 @@ void KMidi::drawPanel()
 				 "is used for drum patches<br>\n"
 				 "when they are first loaded<br>\n"
 				 "and when the patch itself<br>\n"
-				 "requests this.  The filter<br>\n"
+				 "requests this. The filter<br>\n"
 				 "is also used for melodic voices<br>\n"
 				 "if you have chosed the<br>\n<i>cspline+filter</i><br>\n"
 				 "interpolation option."));
