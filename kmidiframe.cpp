@@ -78,28 +78,28 @@ KMidiFrame::KMidiFrame( const char *name ) :
     menuBar->insertItem( i18n("&View"), view_options );
     connect( view_options, SIGNAL(activated(int)), this, SLOT(doViewMenuItem(int)) );
     connect( view_options, SIGNAL(aboutToShow()), this, SLOT(fixViewItems()) );
-	m_on_id = view_options->insertItem(  i18n("Meter shown") );
+	m_on_id = view_options->insertItem(  i18n("Meter Shown") );
 	view_options->setWhatsThis(m_on_id, i18n("When you can see this<br>\n"
 				"menu, the channel meter<br>\n"
 				"is always turned on.") );
-	m_off_id = view_options->insertItem(  i18n("Meter off") );
+	m_off_id = view_options->insertItem(  i18n("Meter Off") );
 	view_options->setWhatsThis(m_off_id, i18n("This turns off the channel<br>\n"
 				"meter display, and also hides<br>\n"
 				"this menu bar.") );
 	view_options->insertSeparator();
-	i_on_id = view_options->insertItem(  i18n("Info shown") );
+	i_on_id = view_options->insertItem(  i18n("Info Shown") );
 	view_options->setWhatsThis(i_on_id, i18n("Shows a window at the<br>\n"
 				"bottom with info about the<br>\n"
 				"midi file being played.") );
-	i_off_id = view_options->insertItem(  i18n("Info off") );
+	i_off_id = view_options->insertItem(  i18n("Info Off") );
 	view_options->setWhatsThis(i_off_id, i18n("Turns off the info window<br>\n"
 				"at the bottom.") );
     view_level = new QPopupMenu();
     Q_CHECK_PTR( view_level );
     view_level->setCheckable( TRUE );
     view_options->insertSeparator();
-    view_options->insertItem( i18n("Info level"), view_level);
-        view_level->insertItem( i18n("Lyrics only") , 100);
+    view_options->insertItem( i18n("Info Level"), view_level);
+        view_level->insertItem( i18n("Lyrics Only") , 100);
 	view_level->setWhatsThis(100, i18n("The info window will<br>\n"
 				"show only lyrics, if any,<br>\n"
 				"and the name of the midi file.") );
@@ -136,24 +136,24 @@ KMidiFrame::KMidiFrame( const char *name ) :
     menuBar->insertItem( i18n("Stereo"), stereo_options );
     connect( stereo_options, SIGNAL(activated(int)), this, SLOT(doStereoMenuItem(int)) );
     connect( stereo_options, SIGNAL(aboutToShow()), this, SLOT(fixStereoItems()) );
-	stereo_options->insertItem(  i18n("No stereo patch"), 110 );
+	stereo_options->insertItem(  i18n("No Stereo Patch"), 110 );
 	stereo_options->setWhatsThis(110, i18n("Prevents playing the<br>\n"
 				"second instrument for those<br>\n"
 				"patches that have two<br>\n"
 				"(you probably don't want<br>\n"
 				"to choose this option).") );
-	stereo_options->insertItem(  i18n("Normal stereo") , 111);
+	stereo_options->insertItem(  i18n("Normal Stereo") , 111);
 	stereo_options->setWhatsThis(111, i18n("Plays both instruments<br>\n"
 				"for those (sf2) patches<br>\n"
 				"which have two.") );
-	stereo_options->insertItem(  i18n("Extra stereo") , 112);
+	stereo_options->insertItem(  i18n("Extra Stereo") , 112);
 	stereo_options->setWhatsThis(112, i18n("For keyboard instruments,<br>\n"
 				"lower notes come from the left<br>\n"
 				"For other instruments, position is<br>\n"
 				"made a function of note<br>\n"
 				"velocity.") );
 	stereo_options->insertSeparator();
-	stereo_options->insertItem(  i18n("Surround stereo") , 113);
+	stereo_options->insertItem(  i18n("Surround Stereo") , 113);
 	stereo_options->setWhatsThis(112, i18n("Extra stereo, echo, and<br>" \
 				"detuned notes are spread out more<br>" \
 				"to left and right.") );
@@ -177,7 +177,7 @@ KMidiFrame::KMidiFrame( const char *name ) :
     Q_CHECK_PTR( reverb_level );
     reverb_level->setCheckable( TRUE );
     reverb_options->insertSeparator();
-    reverb_options->insertItem( i18n("Reverb level"), reverb_level);
+    reverb_options->insertItem( i18n("Reverb Level"), reverb_level);
         reverb_level->insertItem( i18n("default") , 160);
 	reverb_level->setWhatsThis(160, i18n("The reverberation level<br>\n"
 				"is set according to the midi<br>\n"
@@ -261,10 +261,10 @@ KMidiFrame::KMidiFrame( const char *name ) :
     connect( chorus_level, SIGNAL(activated(int)), this, SLOT(doChorusLevel(int)) );
     connect( chorus_level, SIGNAL(aboutToShow()), this, SLOT(fixChorusLevelItems()) );
     chorus_options->insertSeparator();
-    chorus_options->insertItem(  i18n("No detune"), 140 );
+    chorus_options->insertItem(  i18n("No Detune"), 140 );
     chorus_options->setWhatsThis(140, i18n("Prevents playing extra<br>\n"
 					   "detuned notes for chorus effect.") );
-    chorus_options->insertItem(  i18n("Normal detune") , 141);
+    chorus_options->insertItem(  i18n("Normal Detune") , 141);
     chorus_options->setWhatsThis(141, i18n("Extra detuned notes are<br>\n"
 					   "played to get the effect<br>\n"
 					   "of chorusing") );
@@ -272,7 +272,7 @@ KMidiFrame::KMidiFrame( const char *name ) :
     Q_CHECK_PTR( detune_level );
     detune_level->setCheckable( TRUE );
     chorus_options->insertSeparator();
-    chorus_options->insertItem( i18n("Detune level"), detune_level);
+    chorus_options->insertItem( i18n("Detune Level"), detune_level);
     detune_level->insertItem( i18n("default") , 150);
     detune_level->setWhatsThis(150, i18n("The level for detuned notes<br>\n"
 					 "is set according to the midi<br>\n"
