@@ -101,8 +101,8 @@ void b_out(char id, int fd, int *buf, int ocount)
 #endif /* SNDCTL_DSP_GETOSPACE */
 #endif
 #ifdef AU_ALSA
-    extern void alsa_tell(int *, int *);
     if (id == 's') {
+	extern void alsa_tell(int *, int *);
 	alsa_tell(&fragsize, &fragstotal);
 	outchunk = fragsize;
 	total_bytes = fragstotal * fragsize;
