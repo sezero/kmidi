@@ -54,7 +54,7 @@ noinst_HEADERS = kmidi.h  playlist.h bwlednum.h configdlg.h \
 
 METASOURCES = AUTO
 
-SUBDIRS = config bitmaps patch midis TIMIDITY
+SUBDIRS = config bitmaps patch midis TIMIDITY BITMAPS
 
 appsdir = $(kde_appsdir)/Multimedia
 apps_DATA = kmidi.desktop

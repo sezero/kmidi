@@ -765,17 +765,17 @@ proc CreateWindow {} {
 	    -command "PlayCmd"
     button .body.button.stop -bitmap @$bitmap_path/stop.xbm\
 	    -command "StopCmd"
-    button .body.button.prev -bitmap @$bitmap_path/prev.xbm\
+    button .body.button.prev -bitmap @$bitmap_path/tprev.xbm\
 	    -command "PrevCmd"
-    button .body.button.back -bitmap @$bitmap_path/back.xbm\
+    button .body.button.back -bitmap @$bitmap_path/tback.xbm\
 	    -command "BackwardCmd"
     button .body.button.fwrd -bitmap @$bitmap_path/fwrd.xbm\
 	    -command "ForwardCmd"
-    button .body.button.next -bitmap @$bitmap_path/next.xbm\
+    button .body.button.next -bitmap @$bitmap_path/tnext.xbm\
 	    -command "NextCmd"
-    button .body.button.pause -bitmap @$bitmap_path/pause.xbm\
+    button .body.button.pause -bitmap @$bitmap_path/tpause.xbm\
 	    -command "PauseCmd"
-    button .body.button.quit -bitmap @$bitmap_path/quit.xbm\
+    button .body.button.quit -bitmap @$bitmap_path/tquit.xbm\
 	    -command "QuitCmd"
     pack .body.button.play .body.button.pause\
 	    .body.button.prev .body.button.back\

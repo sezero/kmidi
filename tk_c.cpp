@@ -647,7 +647,7 @@ static void start_panel(void)
 	argc = 0;
 	argv[argc++] = "-f";
 	/* argv[argc++] = TKPROGPATH; */
-	argv[argc++] = TIMID_DIR;
+	argv[argc++] = TIMID_DIR "/tkmidity.tcl";
 
 	if (ctl.trace_playing) {
 		argv[argc++] = "-mode";
