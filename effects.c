@@ -24,25 +24,24 @@
 #include "mix.h"
 #include "controls.h"
 
-extern int opt_effect;
 int XG_effect_chorus_is_celeste_flag = 0;
 int XG_effect_chorus_is_flanger_flag = 0;
 int XG_effect_chorus_is_phaser_flag = 0;
 
 /**************************************************************************/
 /**	null terminated list of effects types
- */
 extern Effect* ChorusCtor( int ) ;
 extern Effect* PhaserCtor( int ) ;
 extern Effect* CelesteCtor( int ) ;
 extern Effect* ReverbCtor( int ) ;
+ */
 
 EFFECT_CTOR effect_type_list[]={
   ChorusCtor , PhaserCtor , CelesteCtor , ReverbCtor , 0
 };
 
 /* number of effects*/
-#define NUM_EFFECTS ( sizeof(effect_type_list) / sizeof(EFFECT_CTOR) ) - 1
+#define NUM_EFFECTS (int)(( sizeof(effect_type_list) / sizeof(EFFECT_CTOR) ) - 1)
 
 Effect* effect_list[ NUM_EFFECTS ][MAXCHAN] ; 
 
@@ -53,6 +52,8 @@ char effect_name[NUM_EFFECTS][MAXCHAN] ;
  */
 static int32 channel_buffer[MAXCHAN][AUDIO_BUFFER_SIZE*2] ; /* stereo samples */
 static int channel_buffer_state[MAXCHAN] ; /* 0 means null signal , 1 non null */
+
+void do_compute_data_effect(uint32 count);
 
 /**************************************************************************/
 /**	c_buff structure helpers functions */
@@ -203,7 +204,8 @@ static void DebugCircBuffer()
  */ 
 void do_compute_data_effect(uint32 count)
 {
-	int idChannel , idVoice , byteCount , idEffect;
+	int idChannel , idVoice , idEffect;
+	uint32 byteCount;
 	int32 *pBuffDestEnd ;
 
 	if( play_mode->encoding & PE_MONO )
@@ -354,7 +356,7 @@ int init_effect()
 		channel_buffer_state[ idChannel ] = 0 ;
 		for( idEffect = 0 ; idEffect < NUM_EFFECTS ; ++ idEffect ) 
 		{
-			effect_list[ idEffect ][ idChannel ] = effect_type_list[idEffect]( idChannel ) ;
+			effect_list[ idEffect ][ idChannel ] = effect_type_list[idEffect]() ;
 			if( effect_list[ idEffect ][ idChannel ] == 0 )
 				return 0 ;			
 			if( idChannel == 0 )

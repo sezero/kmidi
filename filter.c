@@ -167,7 +167,7 @@ static void filter(sample_t *result,sample_t *data, int32 length,float coef[])
 /* I don't worry about looping point -> they will remain soft if they  */
 /* were already                                                        */
 /***********************************************************************/
-void antialiasing(Sample *sp, int32 output_rate )
+void antialiasing(Sample *sp, uint32 output_rate )
 {
     sample_t *temp;
     int i;

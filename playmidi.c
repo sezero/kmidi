@@ -595,10 +595,10 @@ static void recompute_amp(int v)
 
 static int current_polyphony = 0;
 
-#define NOT_CLONE 0
-#define STEREO_CLONE 1
-#define REVERB_CLONE 2
-#define CHORUS_CLONE 3
+#define NOT_CLONE (uint8)0
+#define STEREO_CLONE (uint8)1
+#define REVERB_CLONE (uint8)2
+#define CHORUS_CLONE (uint8)3
 
 
 /* just a variant of note_on() */
@@ -1816,11 +1816,11 @@ static unsigned last_time_expired = 0;
 extern int gettimeofday(struct timeval *, struct timezone *);
 static struct timeval tv;
 static struct timezone tz;
-static void time_sync(int32 resync)
+static void time_sync(uint32 resync, int dosync)
 {
 	unsigned jiffies;
 
-	if (resync >= 0) {
+	if (dosync) {
 		last_time_expired = resync;
 		xmp_epoch = -1;
 		xxmp_epoch = 0; 
@@ -1840,7 +1840,7 @@ static int got_a_lyric = 0;
 
 #define META_BUF_LEN 1024
 
-static void show_markers(int32 until_time)
+static void show_markers(uint32 until_time, int dosync)
 {
     static struct meta_text_type *meta;
     char buf[META_BUF_LEN];
@@ -1848,15 +1848,15 @@ static void show_markers(int32 until_time)
 
     if (!meta_text_list) return;
 
-    if (until_time >= 0) {
-	time_sync(until_time);
+    if (dosync) {
+	time_sync(until_time, 1);
 	for (meta = meta_text_list; meta && meta->time < until_time; meta = meta->next) ;
 	return;
     }
 
     if (!time_expired) meta = meta_text_list;
 
-    time_sync(-1);
+    time_sync(0, 0);
 
     buf[0] = '\0';
     len = 0;
@@ -1887,10 +1887,10 @@ static void show_markers(int32 until_time)
 #endif
 
 #ifndef ADAGIO
-static void seek_forward(int32 until_time)
+static void seek_forward(uint32 until_time)
 {
   reset_voices();
-  show_markers(until_time);
+  show_markers(until_time, 1);
   while (current_event->time < until_time)
     {
       switch(current_event->type)
@@ -2057,7 +2057,7 @@ static void seek_forward(int32 until_time)
 }
 #endif /* ADAGIO */
 
-static void skip_to(int32 until_time)
+static void skip_to(uint32 until_time)
 {
   if (current_sample > until_time)
     current_sample=0;
@@ -2070,7 +2070,7 @@ static void skip_to(int32 until_time)
 #ifndef ADAGIO
   if (until_time)
     seek_forward(until_time);
-  else show_markers(until_time);
+  else show_markers(until_time, 1);
   ctl->reset();
 #endif /* ADAGIO */
 }
@@ -2142,9 +2142,9 @@ static int apply_controls(void)
 	
       case RC_JUMP:
 	play_mode->purge_output();
-	if (val >= sample_count)
+	if (val >= (int32)sample_count)
 	  return RC_NEXT;
-	skip_to(val);
+	skip_to((uint32)val);
 	return rc;
 	
       case RC_FORWARD: /* >> */
@@ -2157,8 +2157,8 @@ static int apply_controls(void)
 	
       case RC_BACK: /* << */
 	/*play_mode->purge_output();*/
-	if (current_sample > val)
-	  skip_to(current_sample-val);
+	if (current_sample > (uint32)val)
+	  skip_to(current_sample-(uint32)val);
 	else
 	  skip_to(0); /* We can't seek to end of previous song. */
 	did_skip=1;
@@ -2235,7 +2235,7 @@ else fprintf(stderr,"z");
       
       ctl->current_time(current_sample);
 #ifndef ADAGIO
-      show_markers(-1);
+      show_markers(0, 0);
       if ((rc=apply_controls())!=RC_NONE)
 	return rc;
 #endif /* not ADAGIO */
@@ -2250,7 +2250,7 @@ else fprintf(stderr,"z");
 }
 
 #ifdef tplus
-static void update_modulation_wheel(int ch, int val)
+static void update_modulation_wheel(int ch, uint32 val)
 {
     int i, uv = /*upper_*/voices;
     for(i = 0; i < uv; i++)

@@ -29,7 +29,7 @@ extern FLOAT_T sine(int x);
 #endif
 
 #define SINE_CYCLE_LENGTH 1024
-extern int32 freq_table[];
+extern uint32 freq_table[];
 #ifdef tplus
 extern FLOAT_T *vol_table;
 extern FLOAT_T def_vol_table[];

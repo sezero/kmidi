@@ -36,7 +36,7 @@
 #include "common.h"
 #include "tables.h"
 
-int32 freq_table[128]=
+uint32 freq_table[128]=
 {
  8176, 8662, 9177, 9723, 
  10301, 10913, 11562, 12250, 

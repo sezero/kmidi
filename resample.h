@@ -24,7 +24,7 @@ extern sample_t *resample_voice(int v, uint32 *countptr);
 extern sample_t *resample_voice_lagrange(int v, uint32 *countptr);
 extern sample_t *resample_voice_filter(int v, uint32 *countptr);
 extern void pre_resample(Sample *sp);
-extern void do_lowpass(Sample *sample, uint32 srate, sample_t *buf, uint32 count, int32 freq, FLOAT_T resonance);
+extern void do_lowpass(Sample *sample, uint32 srate, sample_t *buf, uint32 count, uint32 freq, FLOAT_T resonance);
 extern int recompute_modulation(int v);
 extern sample_t resample_buffer[AUDIO_BUFFER_SIZE+100];
 extern uint32 resample_buffer_offset;

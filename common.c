@@ -55,7 +55,7 @@ char *program_name, current_filename[1024];
 
 /* Try to open a file for reading. If the filename ends in one of the 
    defined compressor extensions, pipe the file through the decompressor */
-static FILE *try_to_open(char *name, int decompress, int noise_mode)
+static FILE *try_to_open(char *name, int decompress)
 {
   FILE *fp;
 
@@ -68,7 +68,7 @@ static FILE *try_to_open(char *name, int decompress, int noise_mode)
   if (decompress)
     {
       int l,el;
-      static char *decompressor_list[] = DECOMPRESSOR_LIST, **dec;
+      static const char *decompressor_list[] = DECOMPRESSOR_LIST, **dec;
       char tmp[1024], tmp2[1024], *cp, *cp2;
       /* Check if it's a compressed file */ 
       l=strlen(name);
@@ -114,7 +114,7 @@ static FILE *try_to_open(char *name, int decompress, int noise_mode)
 
 /* This is meant to find and open files for reading, possibly piping
    them through a decompressor. */
-FILE *open_file(char *name, int decompress, int noise_mode)
+FILE *open_file(const char *name, int decompress, int noise_mode)
 {
   FILE *fp;
   PathList *plp=pathlist;
@@ -132,7 +132,7 @@ FILE *open_file(char *name, int decompress, int noise_mode)
   current_filename[1023]='\0';
 
   ctl->cmsg(CMSG_INFO, VERB_DEBUG, "Trying to open %s", current_filename);
-  if ((fp=try_to_open(current_filename, decompress, noise_mode)))
+  if ((fp=try_to_open(current_filename, decompress)))
     return fp;
 
   if (noise_mode && (errno != ENOENT))
@@ -155,7 +155,7 @@ FILE *open_file(char *name, int decompress, int noise_mode)
 	  }
 	strcat(current_filename, name);
 	ctl->cmsg(CMSG_INFO, VERB_DEBUG, "Trying to open %s", current_filename);
-	if ((fp=try_to_open(current_filename, decompress, noise_mode)))
+	if ((fp=try_to_open(current_filename, decompress)))
 	  return fp;
 	if (noise_mode && (errno != ENOENT))
 	  {

@@ -317,7 +317,7 @@ static InstrumentLayer *load_instrument(char *name, int font_type, int percussio
   uint8 tmp[1024];
   int i,j,noluck=0;
 #ifdef PATCH_EXT_LIST
-  static char *patch_ext[] = PATCH_EXT_LIST;
+  static const char *patch_ext[] = PATCH_EXT_LIST;
 #endif
 #ifdef ADAGIO
   int newmode;

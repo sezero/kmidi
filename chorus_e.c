@@ -58,7 +58,7 @@
 #define A_MIN 0.3
 
 /** time param normalized to sampling rate*/
-static int32 dieTime = 0 ;
+static uint32 dieTime = 0 ;
 
 /** approximate chorus frequency Hz */
 #define FREQU	1.5
@@ -278,7 +278,7 @@ static void Destruct( chorus_effect* pThis  )
 /**************************************************************************/
 /**	 chorus_effect construction function prototype
  */
-Effect* ChorusCtor( int idChannel ) 
+Effect* ChorusCtor() 
 {
 	chorus_effect* pReturn = 0 ;
 	pReturn = malloc( sizeof( chorus_effect ) ) ;

@@ -242,7 +242,7 @@ static void mix_mystery_signal(sample_t *sp, int32 *lp, int v, uint32 count)
   final_volume_t 
     left=vp->left_mix, 
     right=vp->right_mix;
-  int cc;
+  uint32 cc;
   sample_t s;
 
   if (!(cc = vp->control_counter))
@@ -288,7 +288,7 @@ static void mix_center_signal(sample_t *sp, int32 *lp, int v, uint32 count)
   Voice *vp = voice + v;
   final_volume_t 
     left=vp->left_mix;
-  int cc;
+  uint32 cc;
   sample_t s;
 
   if (!(cc = vp->control_counter))
@@ -332,7 +332,7 @@ static void mix_single_signal(sample_t *sp, int32 *lp, int v, uint32 count)
   Voice *vp = voice + v;
   final_volume_t 
     left=vp->left_mix;
-  int cc;
+  uint32 cc;
   sample_t s;
   
   if (!(cc = vp->control_counter))
@@ -376,7 +376,7 @@ static void mix_mono_signal(sample_t *sp, int32 *lp, int v, uint32 count)
   Voice *vp = voice + v;
   final_volume_t 
     left=vp->left_mix;
-  int cc;
+  uint32 cc;
   sample_t s;
   
   if (!(cc = vp->control_counter))

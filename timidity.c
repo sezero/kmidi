@@ -55,7 +55,7 @@ static char def_instr_name[256]="";
 int cfg_select = 0;
 #ifdef CHANNEL_EFFECT
 extern void effect_activate( int iSwitch ) ;
-extern int init_effect() ;
+extern int init_effect(void) ;
 #endif /*CHANNEL_EFFECT*/
 
 #ifdef KMIDI
@@ -218,7 +218,7 @@ static void interesting_message(void)
 }
 #endif
 
-static int set_channel_flag(int32 *flags, int32 i, char *name)
+static int set_channel_flag(int32 *flags, int32 i, const char *name)
 {
   if (i==0) *flags=0;
   else if ((i<1 || i>16) && (i<-16 || i>-1))
@@ -236,7 +236,7 @@ static int set_channel_flag(int32 *flags, int32 i, char *name)
   return 0;
 }
 
-static int set_value(int32 *param, int32 i, int32 low, int32 high, char *name)
+static int set_value(int32 *param, int32 i, int32 low, int32 high, const char *name)
 {
   if (i<low || i > high)
     {
@@ -365,7 +365,7 @@ void clear_config(void)
 
 #define MAXWORDS 10
 
-int read_config_file(char *name)
+int read_config_file(const char *name)
 {
   FILE *fp;
   char tmp[1024], *w[MAXWORDS], *cp;

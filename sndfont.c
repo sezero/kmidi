@@ -45,8 +45,8 @@ typedef struct _Layer {
 typedef struct _SampleList {
 	Sample v;
 	struct _SampleList *next;
-	int32 startsample, endsample;
-	int32 cutoff_freq;
+	uint32 startsample, endsample;
+	uint32 cutoff_freq;
 	FLOAT_T resonance;
 } SampleList;
 
@@ -473,7 +473,7 @@ static int load_one_side(SFInsts *rec, SampleList *sp, int sample_count, Sample 
 		memcpy(sample, &sp->v, sizeof(Sample));
 		sample->data = safe_malloc(sp->endsample);
 		patch_memory += sp->endsample;
-		if (fseek(rec->fd, sp->startsample, SEEK_SET)) {
+		if (fseek(rec->fd, (int)sp->startsample, SEEK_SET)) {
 			ctl->cmsg(CMSG_INFO, VERB_NORMAL, "Can't find sample in file!\n");
 			return 0;
 		}
@@ -515,7 +515,7 @@ static int load_one_side(SFInsts *rec, SampleList *sp, int sample_count, Sample 
 	  /* Try to determine a volume scaling factor for the sample.
 	     This is a very crude adjustment, but things sound more
 	     balanced with it. Still, this should be a runtime option. */
-	  int32 i=sp->endsample/2;
+	  uint32 i=sp->endsample/2;
 	  int16 maxamp=0,a;
 	  int16 *tmp=(int16 *)sample->data;
 	  while (i--)
@@ -1226,10 +1226,12 @@ if (pk_range)
 }
 #endif
 
+#if 0
 	if (sp->v.loop_start < 0) {
 		ctl->cmsg(CMSG_INFO, VERB_DEBUG, " - Negative loop pointer: removing loop");
 		strip_loop = 1;
 	}
+#endif
 	if (sp->v.loop_start > sp->v.loop_end) {
 		ctl->cmsg(CMSG_INFO, VERB_DEBUG, " - Illegal loop position: removing loop");
 		strip_loop = 1;
@@ -1804,7 +1806,8 @@ static int32 calc_modulation_sustain(Layer *lay, SFInfo *sf, int banknum, int pr
 
 static void convert_tremolo(Layer *lay, SFInfo *sf, SampleList *sp)
 {
-	int32 level, freq;
+	int32 level;
+	uint32 freq;
 
 	if (!lay->set[SF_lfo1ToVolume])
 		return;

@@ -51,7 +51,7 @@ int32 quietchannels=0;
 static MidiEventList *evlist;
 static int32 event_count;
 static FILE *fp;
-static int32 at;
+static uint32 at;
 
 /* taken from tplus --gl */
 static int midi_port_number;
@@ -108,9 +108,9 @@ static void compute_sample_increment(int32 tempo, int32 divisions)
 }
 
 /* Read variable-length number (7 bits per byte, MSB first) */
-static int32 getvl(void)
+static uint32 getvl(void)
 {
-  int32 l=0;
+  uint32 l=0;
   uint8 c;
   for (;;)
     {
@@ -137,10 +137,11 @@ static void free_metatext()
     }
 }
 
-static int metatext(int type, int leng, char *mess)
+static int metatext(int type, uint32 leng, char *mess)
 {
     static int continued_flag = 0;
-    int n, c;
+    int c;
+    uint32 n;
     unsigned char *p = (unsigned char *)mess;
     struct meta_text_type *meta, *mlast;
     char *meta_string;
@@ -218,7 +219,7 @@ while at==0
     else return 0;
 }
 
-static int sysex(int32 len, uint8 *syschan, uint8 *sysa, uint8 *sysb)
+static int sysex(uint32 len, uint8 *syschan, uint8 *sysa, uint8 *sysb)
 {
   unsigned char *s=safe_malloc(len);
   int id, model, ch, port, adhi, adlo, cd, dta, dtb, dtc;
@@ -391,7 +392,7 @@ static int sysex(int32 len, uint8 *syschan, uint8 *sysa, uint8 *sysb)
 
 /* Print a string from the file, followed by a newline. Any non-ASCII
    or unprintable characters will be converted to periods. */
-static int dumpstring(int32 len, char *label, int type)
+static int dumpstring(uint32 len, const char *label, int type)
 {
   signed char *s=safe_malloc(len+1);
   if (len != fread(s, 1, len, fp))
@@ -429,7 +430,7 @@ static MidiEventList *read_midi_event(void)
   static uint8 laststatus, lastchan;
   static uint8 nrpn=0, rpn_msb[MAXCHAN], rpn_lsb[MAXCHAN]; /* one per channel */
   uint8 me, type, a,b,c;
-  int32 len;
+  uint32 len;
   MidiEventList *new;
 
   for (;;)
@@ -460,7 +461,7 @@ static MidiEventList *read_midi_event(void)
 	  len=getvl();
 	  if (type>0 && type<16)
 	    {
-	      static char *label[]={
+	      static const char *label[]={
 		"text: ", "text: ", "Copyright: ", "track: ",
 		"instrument: ", "lyric: ", "marker: ", "cue point: "};
 	      dumpstring(len, label[(type>7) ? 0 : type], type);
@@ -787,7 +788,8 @@ static MidiEvent *groom_list(int32 divisions, uint32 *eventsp, uint32 *samplesp)
   MidiEvent *groomed_list, *lp;
   MidiEventList *meep;
   int32 i, our_event_count, tempo, skip_this_event, new_value;
-  int32 sample_cum, samples_to_do, at, st, dt, counting_time;
+  int32 sample_cum, samples_to_do, st, dt, counting_time;
+  uint32 at;
   struct meta_text_type *meta = meta_text_list;
 
   int current_bank[MAXCHAN], current_banktype[MAXCHAN], current_set[MAXCHAN],
@@ -1084,7 +1086,8 @@ static MidiEvent *groom_list(int32 divisions, uint32 *eventsp, uint32 *samplesp)
 
 MidiEvent *read_midi_file(FILE *mfp, uint32 *count, uint32 *sp)
 {
-  int32 len, divisions;
+  uint32 len;
+  int32 divisions;
   int16 format, tracks, divisions_tmp;
   int i;
   char tmp[4];

@@ -59,7 +59,7 @@ static int READSTR(char *str, FILE *fd)
 #define SKIPW(fd)	{uint16 dummy; fread(&dummy, 2, 1, fd);}
 #define SKIPDW(fd)	{uint32 dummy; fread(&dummy, 4, 1, fd);}
 
-static int getchunk(char *id);
+static int getchunk(const char *id);
 static void process_chunk(int id, int s, SFInfo *sf, FILE *fd);
 static void load_sample_names(int size, SFInfo *sf, FILE *fd);
 static void load_preset_header(int size, SFInfo *sf, FILE *fd);
@@ -169,10 +169,10 @@ void free_sbk(SFInfo *sf)
  * get id value
  *----------------------------------------------------------------*/
 
-static int getchunk(char *id)
+static int getchunk(const char *id)
 {
 	static struct idstring {
-		char *str;
+		const char *str;
 		int id;
 	} idlist[] = {
 		{"LIST", LIST_ID},
@@ -208,7 +208,7 @@ static int getchunk(char *id)
 #endif
 	};
 
-	int i;
+	unsigned int i;
 
 	for (i = 0; i < sizeof(idlist)/sizeof(idlist[0]); i++) {
 		if (strncmp(id, idlist[i].str, 4) == 0) {

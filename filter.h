@@ -32,4 +32,4 @@
 #define PI   3.14159265
 #endif
 
-extern void antialiasing(Sample *sp, int32 output_rate);
+extern void antialiasing(Sample *sp, uint32 output_rate);

@@ -68,7 +68,7 @@ enum {
         SF_keyExclusiveClass,	/* 57 */
         SF_rootKey,		/* 58 */
 	SF_EOF,			/* 59 */
-	SF_EOF2,		/* 60 */
+	SF_EOF2			/* 60 */
 };
 
 #define PARM_SIZE	SF_EOF2

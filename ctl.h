@@ -41,8 +41,3 @@ typedef struct {
 extern PanelInfo *Panel;
 extern MidiEvent *current_event;
 extern int output_device_open;
-extern int cfg_select;
-extern int read_config_file(char *name);
-extern void clear_config(void);
-extern void effect_activate( int iSwitch );
-extern int reverb_options;

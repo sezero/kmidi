@@ -30,7 +30,11 @@ major := $(basename $(basename $(rel)))
 ########### Compiler and flags.
 CC = gcc
 #DEBUGFLAGS = -Wall -O2 -D__USE_FIXED_PROTOTYPES__
-DEBUGFLAGS = -Wall -gstabs3 -O -D__USE_FIXED_PROTOTYPES__
+#DEBUGFLAGS = -Wall -gstabs3 -O -D__USE_FIXED_PROTOTYPES__
+#DEBUGFLAGS = -Wall -gstabs3 -O
+#DEBUGFLAGS = -O2 -gstabs3 -Wall -pedantic -W -Wpointer-arith -Wmissing-prototypes -Wwrite-strings -Wconversion
+#DEBUGFLAGS = -O2 -gstabs3 -Wall -W -Wpointer-arith -Wmissing-prototypes -Wwrite-strings -Wconversion
+DEBUGFLAGS = -O3 -Wall -W -Wpointer-arith -Wmissing-prototypes -Wwrite-strings -Wconversion
 
 ########### Install.
 INSTALL = /usr/bin/install

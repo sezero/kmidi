@@ -96,7 +96,8 @@
 static int delay_flt = 0 ;
 
 /** time param normalized to sampling rate*/
-static int32 d1 , d2 , d3 , d4 , d5 , d6 , d7 , dieTime;
+static int32 d1 , d2 , d3 , d4 , d5 , d6 , d7;
+static uint32 dieTime;
 
 /** gain param normalized to G */
 static int32 g1 = G * G1 ;
@@ -295,12 +296,16 @@ static void CtrlChange( reverb_effect* pThis , MidiEvent* pCurrentEvent )
 	{
 		if( pCurrentEvent->a != 0 )
 		{
-			redim_cirbuff( &( pThis->leftX ) , 1 - d6 ) ;
-			redim_cirbuff( &( pThis->leftYa ) ,  1 + delay_flt - d6 ) ;
+if ( 1-d6 < 0 ) fprintf(stderr,"Check reverb_e.c!\n");
+			redim_cirbuff( &( pThis->leftX ) , (uint32)(1 - d6) ) ;
+if ( 1+delay_flt-d6 < 0 ) fprintf(stderr,"Check reverb_e.c!\n");
+			redim_cirbuff( &( pThis->leftYa ) ,  (uint32)(1 + delay_flt - d6) ) ;
 			if( ! ( play_mode->encoding & PE_MONO ) )
 			{
-				redim_cirbuff( &( pThis->rightX ) , 1 - d6 ) ;
-				redim_cirbuff( &( pThis->rightYa) , 1 + delay_flt - d6 ) ;
+if ( 1-d6 < 0 ) fprintf(stderr,"Check reverb_e.c!\n");
+				redim_cirbuff( &( pThis->rightX ) , (uint32)(1 - d6) ) ;
+if ( 1+delay_flt-d6 < 0 ) fprintf(stderr,"Check reverb_e.c!\n");
+				redim_cirbuff( &( pThis->rightYa) , (uint32)(1 + delay_flt - d6) ) ;
 			}
 
 			pThis->ge = G * ( ( GE_MAX * G_MIN ) + ( GE_MAX * ( 1.0 - G_MIN ) / 126.0 ) * ( pCurrentEvent->a - 1 ) ) ;			
@@ -332,7 +337,7 @@ static void Destruct( reverb_effect* pThis  )
 /**************************************************************************/
 /**	 reverb_effect construction function prototype
  */
-Effect* ReverbCtor( int idChannel ) 
+Effect* ReverbCtor() 
 {
 	reverb_effect* pReturn = 0 ;
 	pReturn = malloc( sizeof( reverb_effect ) ) ;

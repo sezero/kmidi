@@ -100,7 +100,7 @@ typedef struct
 	 *	PARAM : 1 if this buffer is not null signal, may be set to 1 by this function
 	 *  RELATED GLOBAL VAR : sample_count, current_sample (current sample counter)
 	 */
-	void (*m_pfnActionMono)( void* , int32* , int32 , int* ) ;
+	void (*m_pfnActionMono)( void* , int32* , uint32 , int* ) ;
 
 	/** called each time a new stereo data chunk is to be processed 
 	 *	PARAM : this Effect derived structure
@@ -110,7 +110,7 @@ typedef struct
 	 *  RELATED GLOBAL VAR : sample_count, current_sample (current sample counter)
 	 *	RQ : sample buffer contains 2 * PARAM2 samples
 	 */
-	void (*m_pfnActionStereo)( void* , int32* , int32 , int* ) ;
+	void (*m_pfnActionStereo)( void* , int32* , uint32 , int* ) ;
 
 	/** hook function : called when a controller have changed 
 	 * PARAM : this Effect derived structure
@@ -144,7 +144,7 @@ typedef struct
  *	RETURN : shall return an allocated effect object whose structure is compatible 
  *	whith the Effect one
  */
-typedef Effect* (*EFFECT_CTOR)( int ) ;
+typedef Effect* (*EFFECT_CTOR)(void) ;
 
 /**************************************************************************/
 /**	null terminated list effects types contructors
@@ -186,3 +186,9 @@ void effect_activate( int iSwitch ) ;
 
 #endif /*EFFECTS_H*/
 /****************************************************************************************/
+extern int opt_effect;
+extern Effect* ChorusCtor(void) ;
+extern Effect* PhaserCtor(void) ;
+extern Effect* CelesteCtor(void) ;
+extern Effect* ReverbCtor(void) ;
+extern int init_effect(void) ;

@@ -23,7 +23,7 @@
    */
 
 typedef struct {
-  int32 time;
+  uint32 time;
   uint8 channel, type, a, b;
 } MidiEvent;
 
@@ -84,10 +84,13 @@ typedef struct {
     bank, kit, sfx, program, volume, sustain, panning, pitchbend, expression, 
     variationbank, mono, /* one note only on this channel -- not implemented yet */
 #ifdef tplus
-    portamento, modulation_wheel,
+    portamento,
 #endif
     reverberation, chorusdepth, harmoniccontent, releasetime, attacktime, brightness,
     pitchsens;
+#ifdef tplus
+  uint32 modulation_wheel;
+#endif
   /* chorus, reverb... Coming soon to a 300-MHz, eight-way superscalar
      processor near you */
   FLOAT_T
@@ -123,9 +126,9 @@ typedef struct {
   uint32
     orig_frequency, frequency,
     sample_offset, loop_start, loop_end;
-  int32
+  uint32
     envelope_volume, modulation_volume;
-  int32
+  uint32
     envelope_target, modulation_target;
   uint32
     tremolo_sweep, tremolo_sweep_position, tremolo_phase,
@@ -149,9 +152,9 @@ typedef struct {
     current_x0, current_x1, current_y0, current_y1;
   int32
     vibrato_sample_increment[VIBRATO_SAMPLE_INCREMENTS];
-  int32
+  uint32
     envelope_rate[MAXPOINT], envelope_offset[MAXPOINT];
-  int
+  uint32
     vibrato_phase, vibrato_control_ratio, vibrato_control_counter,
 #ifdef tplus
     vibrato_delay, orig_vibrato_control_ratio, modulation_wheel,
@@ -256,4 +259,8 @@ extern void dumb_pass_playing_list(int number_of_files, char *list_of_files[]);
 #ifdef ADAGIO
 extern int play_midi(unsigned char *, unsigned char *, int);
 #endif /* ADAGIO */
-extern int read_config_file(char *name);
+extern int read_config_file(const char *name);
+extern int reverb_options;
+extern int cfg_select;
+extern void clear_config(void);
+extern void effect_activate( int iSwitch );

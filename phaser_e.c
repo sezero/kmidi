@@ -63,7 +63,7 @@
 #define SWEEP ( D / 1.01 )
 
 /** time param normalized to sampling rate*/
-static int32 dieTime = 0 ;
+static uint32 dieTime = 0 ;
 
 /** phaser loopback gain normalized to G */
 static int32 gp = ( (int32)( GP * G) ) ;
@@ -300,7 +300,7 @@ static void Destruct( phaser_effect* pThis  )
 /**************************************************************************/
 /**	 phaser_effect construction function prototype
  */
-Effect* PhaserCtor( int idChannel ) 
+Effect* PhaserCtor() 
 {
 	phaser_effect* pReturn = 0 ;
 	pReturn = malloc( sizeof( phaser_effect) ) ;

@@ -25,29 +25,29 @@
 			if (overshoot < 0) overshoot = -overshoot;
 # define RESAMPLATION \
 	if (ofs >= se) { \
-		int32 delta = (ofs - se)>>FRACTION_BITS ; \
-        	v1 = (int32)src[(se>>FRACTION_BITS)-1]; \
+		int32 delta = (int32)((ofs - se)>>FRACTION_BITS) ; \
+        	v1 = (int32)src[(int)(se>>FRACTION_BITS)-1]; \
 		v1 -=  (delta+1) * v1 / overshoot; \
-        }else  v1 = (int32)src[(ofs>>FRACTION_BITS)]; \
+        }else  v1 = (int32)src[(int)(ofs>>FRACTION_BITS)]; \
 	if (ofs + (1L<<FRACTION_BITS) >= se) { \
 		v2 = v1; \
-        }else  v2 = (int32)src[(ofs>>FRACTION_BITS)+1]; \
+        }else  v2 = (int32)src[(int)(ofs>>FRACTION_BITS)+1]; \
 	if(dont_cspline || \
 	   ((ofs-(1L<<FRACTION_BITS))<ls)||((ofs+(2L<<FRACTION_BITS))>le)){ \
-                *dest++ = (sample_t)(v1 + ((int32)((v2-v1) * (ofs & FRACTION_MASK)) >> FRACTION_BITS)); \
+                *dest++ = (sample_t)(v1 + ((int32)((v2-v1) * (int32)(ofs & FRACTION_MASK)) >> FRACTION_BITS)); \
 	}else{ \
 		ofsd=ofs; \
-                v0 = (int32)src[(ofs>>FRACTION_BITS)-1]; \
-                v3 = (int32)src[(ofs>>FRACTION_BITS)+2]; \
+                v0 = (int32)src[(int)(ofs>>FRACTION_BITS)-1]; \
+                v3 = (int32)src[(int)(ofs>>FRACTION_BITS)+2]; \
                 ofs &= FRACTION_MASK; \
                 temp=v2; \
 		v2 = (6*v2 + \
-		      ((((((5*v3 - 11*v2 + 7*v1 - v0)* \
-		       ofs)>>FRACTION_BITS)*ofs)>>(FRACTION_BITS+2))-1))*ofs; \
+		      (((( ( (5*v3 - 11*v2 + 7*v1 - v0)* \
+		       (int32)ofs) >>FRACTION_BITS)*(int32)ofs)>>(FRACTION_BITS+2))-1))*(int32)ofs; \
                 ofs = (1L << FRACTION_BITS) - ofs; \
 		v1 = (6*v1 + \
 		      ((((((5*v0 - 11*v1 + 7*temp - v3)* \
-		       ofs)>>FRACTION_BITS)*ofs)>>(FRACTION_BITS+2))-1))*ofs; \
+		       (int32)ofs)>>FRACTION_BITS)*(int32)ofs)>>(FRACTION_BITS+2))-1))*(int32)ofs; \
 		v1 = (v1 + v2)/(6L<<FRACTION_BITS); \
 		*dest++ = (v1 > 32767)? 32767: ((v1 < -32768)? -32768: v1); \
 		ofs=ofsd; \

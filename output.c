@@ -81,7 +81,7 @@ PlayMode *play_mode_list[] = {
 int output_clips = 0;
 int output_buffer_full = 50;
 
-void s32tos8(int32 *lp, int32 c)
+void s32tos8(int32 *lp, uint32 c)
 {
   int8 *cp=(int8 *)(lp);
   int32 l;
@@ -94,7 +94,7 @@ void s32tos8(int32 *lp, int32 c)
     }
 }
 
-void s32tou8(int32 *lp, int32 c)
+void s32tou8(int32 *lp, uint32 c)
 {
   uint8 *cp=(uint8 *)(lp);
   int32 l;
@@ -107,7 +107,7 @@ void s32tou8(int32 *lp, int32 c)
     }
 }
 
-void s32tos16(int32 *lp, int32 c)
+void s32tos16(int32 *lp, uint32 c)
 {
   int16 *sp=(int16 *)(lp);
   int32 l;
@@ -120,7 +120,7 @@ void s32tos16(int32 *lp, int32 c)
     }
 }
 
-void s32tou16(int32 *lp, int32 c)
+void s32tou16(int32 *lp, uint32 c)
 {
   uint16 *sp=(uint16 *)(lp);
   int32 l;
@@ -133,7 +133,7 @@ void s32tou16(int32 *lp, int32 c)
     }
 }
 
-void s32tos16x(int32 *lp, int32 c)
+void s32tos16x(int32 *lp, uint32 c)
 {
   int16 *sp=(int16 *)(lp);
   int32 l;
@@ -146,7 +146,7 @@ void s32tos16x(int32 *lp, int32 c)
     }
 }
 
-void s32tou16x(int32 *lp, int32 c)
+void s32tou16x(int32 *lp, uint32 c)
 {
   uint16 *sp=(uint16 *)(lp);
   int32 l;
@@ -159,7 +159,7 @@ void s32tou16x(int32 *lp, int32 c)
     }
 }
 
-void s32toulaw(int32 *lp, int32 c)
+void s32toulaw(int32 *lp, uint32 c)
 {
   uint8 *up=(uint8 *)(lp);
   int32 l;

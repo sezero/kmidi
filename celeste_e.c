@@ -54,7 +54,7 @@
 #define FREQU 20.0
 
 /** time param normalized to sampling rate*/
-static int32 dieTime = 0 ;
+static uint32 dieTime = 0 ;
 
 
 typedef struct 
@@ -90,6 +90,7 @@ typedef struct
 	int32 incr ;
 
 } celeste_effect ;
+
 
 /**************************************************************************/
 /**	 reverb_effect function overriding
@@ -249,7 +250,7 @@ static void Destruct( celeste_effect* pThis  )
 /**************************************************************************/
 /**	 chorus_effect construction function prototype
  */
-Effect* CelesteCtor( int idChannel ) 
+Effect* CelesteCtor(void) 
 {
 	celeste_effect* pReturn = 0 ;
 	pReturn = malloc( sizeof( celeste_effect) ) ;

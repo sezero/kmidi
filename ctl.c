@@ -72,10 +72,10 @@
 #endif
 
 static void ctl_refresh(void);
-static void ctl_total_time(int tt);
+static void ctl_total_time(uint32 tt);
 static void ctl_master_volume(int mv);
 static void ctl_file_name(char *name);
-static void ctl_current_time(int ct);
+static void ctl_current_time(uint32 ct);
 static void ctl_note(int v);
 static void ctl_program(int ch, int val);
 static void ctl_volume(int channel, int val);
@@ -110,7 +110,7 @@ void pipe_string_write(char *str);
 void pipe_string_read(char *str);
 
 void 	pipe_open();
-void	pipe_error(char *st);
+void	pipe_error(const char *st);
 int 	pipe_read_ready();
 
 /*
@@ -220,7 +220,7 @@ static int cmsg(int type, int verbosity_level, char *fmt, ...)
        		pipe_int_write(type);
 
 		if (type == CMSG_LYRIC) {
-		     pipe_int_write( current_event->time / (play_mode->rate/100) );
+		     pipe_int_write( (int)(current_event->time / (play_mode->rate/100)) );
 		}
 		/*printf("writing CMSG of length %d and type %d \n",strlen(local),type);*/
 
@@ -243,9 +243,9 @@ static void ctl_refresh(void)
 {
 }
 
-static void ctl_total_time(int tt)
+static void ctl_total_time(uint32 tt)
 {
-  int centisecs=tt/(play_mode->rate/100);
+  int centisecs=(int)tt/(play_mode->rate/100);
 
   pipe_int_write(TOTALTIME_MESSAGE);
   pipe_int_write(centisecs);
@@ -268,7 +268,7 @@ static void ctl_file_name(char *name)
     pipe_string_write(name);
 }
 
-static void ctl_current_time(int ct)
+static void ctl_current_time(uint32 ct)
 {
 
     int i,v, flags=0;
@@ -279,7 +279,7 @@ static void ctl_current_time(int ct)
     else realct += songoffset;
     centisecs = realct / (play_mode->rate/100);
 #else
-    int centisecs=ct/(play_mode->rate/100);
+    int centisecs=(int)(ct/(play_mode->rate/100));
 #endif
 
     if (!ctl.trace_playing) 
@@ -851,7 +851,7 @@ void pipe_open()
 /* PIPE COMUNICATION                                                   */
 /***********************************************************************/
 
-void pipe_error(char *st)
+void pipe_error(const char *st)
 {
     fprintf(stderr,"Kmidi:Problem with %s due to:%s\n",
 	    st,
@@ -941,7 +941,7 @@ void pipe_int_read(int *c)
 
 void pipe_string_write(char *str)
 {
-   int len, slen;
+   uint32 len, slen;
 
 #ifdef DEBUGPIPE
    int code=STRING_CODE;
@@ -960,7 +960,7 @@ void pipe_string_write(char *str)
 
 void pipe_string_read(char *str)
 {
-    int len, slen;
+    uint32 len, slen;
 
 #ifdef DEBUGPIPE
     int code;

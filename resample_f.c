@@ -145,10 +145,11 @@ static sample_t *rs_plain(int v, uint32 *countptr)
     *src=vp->sample->data;
 /*WHY not uint32??*/
   int32
-    ofs=vp->sample_offset,
     incr=vp->sample_increment;
+  uint32
+    ofs=vp->sample_offset;
 #if defined(LAGRANGE_INTERPOLATION) || defined(CSPLINE_INTERPOLATION)
-  int32
+  uint32
     ls=0,
     le=vp->sample->data_length;
 #endif /* LAGRANGE_INTERPOLATION */
@@ -200,19 +201,22 @@ static sample_t *rs_loop(int v, Voice *vp, uint32 *countptr)
   CCVARS
   #endif
 /*WHY not uint32??*/
+  uint32
+    ofs=vp->sample_offset;
   int32
-    ofs=vp->sample_offset,
-    incr=vp->sample_increment,
+    incr=vp->sample_increment;
+  uint32
     le=vp->loop_end,
 #if defined(LAGRANGE_INTERPOLATION) || defined(CSPLINE_INTERPOLATION)
     ls=vp->loop_start,
 #endif /* LAGRANGE_INTERPOLATION */
     ll=le - vp->loop_start;
+  uint32
+    se=vp->sample->data_length;
   sample_t
     *dest=resample_buffer+resample_buffer_offset,
     *src=vp->sample->data;
   uint32
-    se=vp->sample->data_length,
     count = *countptr;
 
 #ifdef BUTTERWORTH_COEFFICIENTS
@@ -262,8 +266,9 @@ static sample_t *rs_bidir(int v, Voice *vp, uint32 count)
   INTERPVARS
 /*WHY not uint32??*/
   int32
+    incr=vp->sample_increment;
+  uint32
     ofs=vp->sample_offset,
-    incr=vp->sample_increment,
     le=vp->loop_end,
     ls=vp->loop_start;
   uint32
@@ -316,10 +321,11 @@ static sample_t *rs_bidir(int v, Voice *vp, uint32 count)
       }
 #endif
 
-
+#ifdef USE_BIDIR_OVERSHOOT
   int32
     le2 = le<<1,
     ls2 = ls<<1;
+#endif
   uint32
     i, j;
   /* Play normally until inside the loop region */
@@ -366,6 +372,7 @@ static sample_t *rs_bidir(int v, Voice *vp, uint32 count)
 	  RESAMPLATION;
 	  ofs += incr;
 	}
+#ifdef USE_BIDIR_OVERSHOOT
       if (ofs>=le)
 	{
 	  /* fold the overshoot back in */
@@ -377,6 +384,9 @@ static sample_t *rs_bidir(int v, Voice *vp, uint32 count)
 	  ofs = ls2 - ofs;
 	  incr *= -1;
 	}
+#else
+	  incr *= -1;
+#endif
     }
 
   vp->sample_increment=incr;
@@ -390,7 +400,7 @@ REMEMBER_FILTER_STATE
 /*********************** vibrato versions ***************************/
 
 /* We only need to compute one half of the vibrato sine cycle */
-static int vib_phase_to_inc_ptr(int phase)
+static uint32 vib_phase_to_inc_ptr(uint32 phase)
 {
   if (phase < VIBRATO_SAMPLE_INCREMENTS/2)
     return VIBRATO_SAMPLE_INCREMENTS/2-1-phase;
@@ -402,11 +412,12 @@ static int vib_phase_to_inc_ptr(int phase)
 
 static int32 update_vibrato(Voice *vp, int sign)
 {
-  int32 depth, freq=vp->frequency;
+  uint32 depth, freq=vp->frequency;
 #ifdef ENVELOPE_PITCH_MODULATION
   FLOAT_T mod_amount=vp->sample->modEnvToPitch;
 #endif
-  int phase, pb;
+  uint32 phase;
+  int pb;
   double a;
 
   if(vp->vibrato_delay > 0)
@@ -497,17 +508,19 @@ static sample_t *rs_vib_plain(int v, uint32 *countptr)
     *dest=resample_buffer+resample_buffer_offset,
     *src=vp->sample->data;
 /*WHY not uint32??*/
-  int32
+  uint32
 #if defined(LAGRANGE_INTERPOLATION) || defined(CSPLINE_INTERPOLATION)
     ls=0,
     le=vp->sample->data_length,
 #endif /* LAGRANGE_INTERPOLATION */
-    ofs=vp->sample_offset,
+    ofs=vp->sample_offset;
+  int32
     incr=vp->sample_increment;
   uint32
-    se=vp->sample->data_length,
+    se=vp->sample->data_length;
+  uint32
     count=*countptr;
-  int
+  uint32
     cc=vp->vibrato_control_counter;
 
   /* This has never been tested */
@@ -554,20 +567,22 @@ static sample_t *rs_vib_loop(int v, Voice *vp, uint32 *countptr)
   INTERPVARS
 /*WHY not uint32??*/
   int32
+    incr=vp->sample_increment;
+  uint32
     ofs=vp->sample_offset,
-    incr=vp->sample_increment,
 #if defined(LAGRANGE_INTERPOLATION) || defined(CSPLINE_INTERPOLATION)
     ls=vp->loop_start,
 #endif /* LAGRANGE_INTERPOLATION */
     le=vp->loop_end,
     ll=le - vp->loop_start;
+  uint32
+    se=vp->sample->data_length;
   sample_t
     *dest=resample_buffer+resample_buffer_offset,
     *src=vp->sample->data;
   uint32
-    se=vp->sample->data_length,
     count = *countptr;
-  int
+  uint32
     cc=vp->vibrato_control_counter;
 
 
@@ -618,8 +633,9 @@ static sample_t *rs_vib_bidir(int v, Voice *vp, uint32 count)
   INTERPVARS
 /*WHY not uint32??*/
   int32
+    incr=vp->sample_increment;
+  uint32
     ofs=vp->sample_offset,
-    incr=vp->sample_increment,
     le=vp->loop_end,
     ls=vp->loop_start;
   uint32
@@ -627,7 +643,7 @@ static sample_t *rs_vib_bidir(int v, Voice *vp, uint32 count)
   sample_t
     *dest=resample_buffer+resample_buffer_offset,
     *src=vp->sample->data;
-  int
+  uint32
     cc=vp->vibrato_control_counter;
 
 #if 0
@@ -679,9 +695,12 @@ static sample_t *rs_vib_bidir(int v, Voice *vp, uint32 count)
       }
 #endif
 
-  int32
+#ifdef USE_BIDIR_OVERSHOOT
+  uint32
     le2=le<<1,
-    ls2=ls<<1,
+    ls2=ls<<1;
+#endif
+  uint32
     i, j;
   int
     vibflag = 0;
@@ -743,12 +762,16 @@ static sample_t *rs_vib_bidir(int v, Voice *vp, uint32 count)
       if (ofs >= le)
 	{
 	  /* fold the overshoot back in */
+#ifdef USE_BIDIR_OVERSHOOT
 	  ofs = le2 - ofs;
+#endif
 	  incr *= -1;
 	}
       else if (ofs <= ls)
 	{
+#ifdef USE_BIDIR_OVERSHOOT
 	  ofs = ls2 - ofs;
+#endif
 	  incr *= -1;
 	}
     }
@@ -796,9 +819,9 @@ static sample_t *porta_resample_voice(int v, uint32 *countptr, int mode)
 {
     Voice *vp=&voice[v];
     uint32 n = *countptr;
-    int32 i;
+    uint32 i;
     sample_t *(* resampler)(int, uint32 *, int);
-    int cc = vp->porta_control_counter;
+    uint32 cc = vp->porta_control_counter;
     int loop;
 
     if(vp->vibrato_control_ratio)

@@ -71,13 +71,13 @@ typedef struct {
   void (*pass_playing_list)(int number_of_files, char *list_of_files[]);
   void (*close)(void);
   int (*read)(int32 *valp);
-  int (*cmsg)(int type, int verbosity_level, char *fmt, ...);
+  int (*cmsg)(int type, int verbosity_level, const char *fmt, ...);
 
   void (*refresh)(void);
   void (*reset)(void);
   void (*file_name)(char *name);
-  void (*total_time)(int tt);
-  void (*current_time)(int ct);
+  void (*total_time)(uint32 tt);
+  void (*current_time)(uint32 ct);
 
   void (*note)(int v);
   void (*master_volume)(int mv);

@@ -32,7 +32,7 @@
 #define PE_BYTESWAP	0x10  /* versus the other way */
 
 typedef struct {
-  int32 rate, encoding;
+  uint32 rate, encoding;
   int fd; /* file descriptor for the audio device */
   int32 extra_param[5]; /* e.g. buffer fragments, output channel, ... */
   char *id_name, id_character;
@@ -40,7 +40,7 @@ typedef struct {
 
   int (*open_output)(void); /* 0=success, 1=warning, -1=fatal error */
   void (*close_output)(void);
-  void (*output_data)(int32 *buf, int32 count);
+  void (*output_data)(int32 *buf, uint32 count);
   void (*flush_output)(void);
   void (*purge_output)(void);
 } PlayMode;
@@ -56,19 +56,19 @@ extern int current_sample_count(void);
 extern int output_clips;
 
 /* 8-bit signed and unsigned*/
-extern void s32tos8(int32 *lp, int32 c);
-extern void s32tou8(int32 *lp, int32 c);
+extern void s32tos8(int32 *lp, uint32 c);
+extern void s32tou8(int32 *lp, uint32 c);
 
 /* 16-bit */
-extern void s32tos16(int32 *lp, int32 c);
-extern void s32tou16(int32 *lp, int32 c);
+extern void s32tos16(int32 *lp, uint32 c);
+extern void s32tou16(int32 *lp, uint32 c);
 
 /* byte-exchanged 16-bit */
-extern void s32tos16x(int32 *lp, int32 c);
-extern void s32tou16x(int32 *lp, int32 c);
+extern void s32tos16x(int32 *lp, uint32 c);
+extern void s32tou16x(int32 *lp, uint32 c);
 
 /* uLaw (8 bits) */
-extern void s32toulaw(int32 *lp, int32 c);
+extern void s32toulaw(int32 *lp, uint32 c);
 
 /* little-endian and big-endian specific */
 #ifdef LITTLE_ENDIAN
