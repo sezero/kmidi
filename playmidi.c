@@ -47,6 +47,7 @@
 #include "output.h"
 #include "mix.h"
 #include "controls.h"
+#include "resample.h"
 
 #include "tables.h"
 /*<95GUI_MODIF_BEGIN>*/
@@ -708,11 +709,18 @@ static void clone_voice(Instrument *ip, int v, MidiEvent *e, uint8 clone_type, i
   voice[w].frequency = voice[v].frequency;
   voice[w].sample_offset = voice[v].sample_offset;
   voice[w].sample_increment = voice[v].sample_increment;
+  voice[w].current_x0 =
+    voice[w].current_x1 =
+    voice[w].current_y0 =
+    voice[w].current_y1 = 0;
   voice[w].echo_delay = voice[v].echo_delay;
   voice[w].starttime = voice[v].starttime;
   voice[w].envelope_volume = voice[v].envelope_volume;
   voice[w].envelope_target = voice[v].envelope_target;
   voice[w].envelope_increment = voice[v].envelope_increment;
+  voice[w].modulation_volume = voice[v].modulation_volume;
+  voice[w].modulation_target = voice[v].modulation_target;
+  voice[w].modulation_increment = voice[v].modulation_increment;
   voice[w].tremolo_sweep = voice[w].sample->tremolo_sweep_increment;
   voice[w].tremolo_sweep_position = voice[v].tremolo_sweep_position;
   voice[w].tremolo_phase = voice[v].tremolo_phase;
@@ -737,6 +745,7 @@ static void clone_voice(Instrument *ip, int v, MidiEvent *e, uint8 clone_type, i
   voice[w].vibrato_control_ratio = voice[w].sample->vibrato_control_ratio;
   voice[w].vibrato_control_counter = voice[v].vibrato_control_counter;
   voice[w].envelope_stage = voice[v].envelope_stage;
+  voice[w].modulation_stage = voice[v].modulation_stage;
   voice[w].control_counter = voice[v].control_counter;
   /*voice[w].panned = voice[v].panned;*/
   voice[w].panned = PANNED_RIGHT;
@@ -881,14 +890,19 @@ static void clone_voice(Instrument *ip, int v, MidiEvent *e, uint8 clone_type, i
     {
       /* Ramp up from 0 */
       voice[w].envelope_stage=ATTACK;
+      voice[w].modulation_stage=ATTACK;
       voice[w].envelope_volume=0;
+      voice[w].modulation_volume=0;
       voice[w].control_counter=0;
+      voice[w].modulation_counter=0;
       recompute_envelope(w);
+      recompute_modulation(w);
       apply_envelope_to_amp(w);
     }
   else
     {
       voice[w].envelope_increment=0;
+      voice[w].modulation_increment=0;
       apply_envelope_to_amp(w);
     }
 }
@@ -979,6 +993,10 @@ static void start_note(MidiEvent *e, int i)
 #endif
   voice[i].sample_offset=0;
   voice[i].sample_increment=0; /* make sure it isn't negative */
+  voice[i].current_x0 =
+    voice[i].current_x1 =
+    voice[i].current_y0 =
+    voice[i].current_y1 = 0;
 #ifdef tplus
   voice[i].modulation_wheel=channel[ch].modulation_wheel;
 #endif
@@ -1190,7 +1208,11 @@ printf("(new rel time = %ld)\n",
       voice[i].envelope_stage=ATTACK;
       voice[i].envelope_volume=0;
       voice[i].control_counter=0;
+      voice[i].modulation_stage=ATTACK;
+      voice[i].modulation_volume=0;
+      voice[i].modulation_counter=0;
       recompute_envelope(i);
+      recompute_modulation(i);
       apply_envelope_to_amp(i);
     }
   else

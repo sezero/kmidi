@@ -1,3 +1,7 @@
+1999-10-09  Greg Lee  <lee@hawaii.edu>
+
+	* resample.c: cutoff filter is faster
+
 1999-10-08  Greg Lee  <lee@hawaii.edu>
 
 	* resample.c: change cutoff filter - ignore resonance

@@ -51,7 +51,7 @@ typedef struct {
   uint8
     attenuation, freq_center;
   int32
-    freq_scale;
+    freq_scale, modEnvToFilterFc;
 } Sample;
 
 /* Bits in modes: */

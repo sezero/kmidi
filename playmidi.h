@@ -124,9 +124,9 @@ typedef struct {
     orig_frequency, frequency,
     sample_offset;
   int32
-    envelope_volume;
+    envelope_volume, modulation_volume;
   int32
-    envelope_target;
+    envelope_target, modulation_target;
   uint32
     tremolo_sweep, tremolo_sweep_position,
     tremolo_phase,
@@ -135,12 +135,15 @@ typedef struct {
   int32
     sample_increment,
     envelope_increment,
+    modulation_increment,
     tremolo_phase_increment;
   
   final_volume_t left_mix, right_mix;
 
   FLOAT_T
     left_amp, right_amp, tremolo_volume;
+  float
+    current_x0, current_x1, current_y0, current_y1;
   int32
     vibrato_sample_increment[VIBRATO_SAMPLE_INCREMENTS];
   int32
@@ -150,7 +153,7 @@ typedef struct {
 #ifdef tplus
     vibrato_delay, orig_vibrato_control_ratio, modulation_wheel,
 #endif
-    envelope_stage, control_counter, panning, panned;
+    envelope_stage, modulation_stage, control_counter, modulation_counter, panning, panned;
 
 #ifdef tplus
   /* for portamento */

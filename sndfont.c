@@ -561,7 +561,7 @@ static int load_one_side(SFInsts *rec, SampleList *sp, int sample_count, Sample 
 		if (!sample->sample_rate && !dont_filter_drums) {
     		        if (!i) ctl->cmsg(CMSG_INFO, VERB_DEBUG, "cutoff = %ld ; resonance = %g",
 				sp->cutoff_freq, sp->resonance);
-			do_lowpass(samplerate_save, sample->data, sample->data_length >> FRACTION_BITS,
+			do_lowpass(sample, samplerate_save, sample->data, sample->data_length >> FRACTION_BITS,
 				sp->cutoff_freq, sp->resonance);
 		}
 /*
@@ -1881,8 +1881,10 @@ static void calc_cutoff(Layer *lay, SFInfo *sf, SampleList *sp)
 		}
 	}
 	if (lay->set[SF_env1ToFilterFc]) {
-		val += lay->val[SF_env1ToFilterFc];
+		/* val += lay->val[SF_env1ToFilterFc]; */
+		sp->v.modEnvToFilterFc = lay->val[SF_env1ToFilterFc];
 	}
+	else sp->v.modEnvToFilterFc = 0;
 	if (val < 6500 || val >= 13500)
 		sp->cutoff_freq = 0;
 	else
