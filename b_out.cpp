@@ -5,8 +5,10 @@
 /* #if defined(linux) || defined(__FreeBSD__) || defined(sun) */
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <unistd.h>
 #include <errno.h>
+#include <string.h>
 
 #ifdef linux
 #include <sys/ioctl.h> /* new with 1.2.0? Didn't need this under 1.1.64 */
