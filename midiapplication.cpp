@@ -178,7 +178,9 @@ int createKApplication(int *argc, char ***argv)
           deref_argv[i] = (*argv)[i];
 
 //fprintf(stderr,"making about\n");
-       KAboutData about( "kmidi", I18N_NOOP("KMidi"), "1.3alpha");
+// This should be static, because libkdecore do access KAboutData object later
+// so it should not be destructed on return from this function
+       static KAboutData about( "kmidi", I18N_NOOP("KMidi"), "1.3alpha");
 
 //fprintf(stderr,"init deref\n");
        KCmdLineArgs::init(deref_argc, deref_argv, &about);
