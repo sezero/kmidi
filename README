@@ -4,12 +4,37 @@ There are several user interfaces provided for, including a "dumb" command
 line version and a KDE version, done by Bernd Wuebben (see below).  The 
 patches can be GUS, i.e. Gravis/Forte, type files, Gravis InterWave 
 sound fonts, or AWE sbk/sf2 sound fonts.  The InterWave font support was 
-done by Greg Lee  and the AWE support was done by Takashi Iwai
-(see README.sf2).
+done by Greg Lee  and the AWE support was done by Takashi Iwai.
 
 PLEASE READE THE SECTION TITLED "NOTES" FURTHER BELOW!
 thanks,
 Bernd
+
+
+KMidi 1.3-alpha
+=========
+
+New:
+     o  If you have a previous version, remove $KDEDIR/share/apps/kmidi/config/
+	before installing this version, since new versions of the files here
+	won't be installed if you have old versions.  An old timidity.cfg
+	using your own patchset, however, should be compatible, unless you've
+	used "order"/"exclude"/"font" statements for sf2 fonts (I removed
+	support for these).
+     o  Click on the KMidi logo or drag the bottom of the panel down to
+	see some new gizmos (and as yet unimplemented buttons).
+     o  The midi modulation wheel is now implemented, and also (buggily)
+	portamento.
+     o  With the "eff" button down, you'll hear midi phaser, celeste, and
+	better chorus and reverb effects (thanks to Nicolas Witczak).
+     o  Note the panel's channel display may be poorly synchronized with the
+	sound on systems not using the OSS (Hannu Savolainen) driver for
+	/dev/dsp, since linux_a.c uses an OSS specific call to find out
+	how much has actually been played -- constructive suggestions
+	are welcome.
+
+Greg Lee
+lee@hawaii.edu
 
 
 KMidi 0.4
