@@ -50,8 +50,8 @@ extern KApplication *thisapp;
 extern KMidi *kmidi;
 
 
-PlaylistEdit::PlaylistEdit(const char *name, QStrList *playlist,
-	int *current_playlist_ptr, QStrList *listplaylists)
+PlaylistEdit::PlaylistEdit(const char *name, QStringList *playlist,
+	int *current_playlist_ptr, QStringList *listplaylists)
   : KTMainWindow(name){
 
   setCaption(i18n("Compose Play List"));
@@ -341,14 +341,15 @@ void PlaylistEdit::local_file_selected(int index){
 void PlaylistEdit::redoplist()
 {
     QString filenamestr;
-    int i, index;
-    int last = listsonglist->count();
+    int index;
 
     plistbox->clear();
 
-    for (i = 0; i < last; i++) {
-
-	filenamestr = listsonglist->at(i);
+    for ( QStringList::Iterator it = listsonglist->begin();
+          it != listsonglist->end();
+          ++it )
+    {
+	filenamestr = *it;
 	index = filenamestr.findRev('/',-1,TRUE);
 	if(index != -1)
 	    filenamestr = filenamestr.right(filenamestr.length() -index -1);
@@ -392,7 +393,7 @@ void PlaylistEdit::removeIt()
   QString path = locateLocal("appdata", name);
   QFile f(path);
   if (f.remove()) {
-    listsonglist->remove(i);
+    listsonglist->remove(listsonglist->at(i));
     redoDisplay();
   }
 }
@@ -438,7 +439,6 @@ void PlaylistEdit::set_local_dir(const QString &dir){
    cur_local_dir.setSorting( cur_local_dir.sorting() | QDir::DirsFirst );
 
   qApp ->setOverrideCursor( waitCursor );
-  local_list ->setAutoUpdate( FALSE );
   local_list->clear();
 
   cur_local_fileinfo.clear();
@@ -513,7 +513,6 @@ void PlaylistEdit::set_local_dir(const QString &dir){
     KMessageBox::error(this, i18n("Cannot open or read directory."));
     qApp ->setOverrideCursor( waitCursor );
   }
-  local_list->setAutoUpdate( TRUE );
   local_list->repaint();
 
   //updatePathBox( d.path() );
@@ -586,8 +585,9 @@ void PlaylistEdit::newPlaylist(){
 	newEdit->clear();
 	plf += ".plist";
         QString path = locateLocal("appdata", plf);
-	listsonglist->inSort(path);
-	*playlist_ptr = listsonglist->at();
+	listsonglist->append(path);
+        listsonglist->sort();
+	*playlist_ptr = listsonglist->findIndex(path);
 	savePlaylistbyName(plf, true);
 	redoDisplay();
 }
@@ -604,10 +604,10 @@ void PlaylistEdit::savePlaylistbyName(const QString &name, bool truncate)
   if (truncate) f.open( IO_ReadWrite | IO_Translate | IO_Truncate);
   else f.open( IO_ReadWrite | IO_Translate | IO_Append);
 
-  QString tempstring;
+  QCString tempstring;
 
   for (int i = 0; i < (int)listbox->count(); i++){
-    tempstring = listbox->text(i);
+    tempstring = QFile::encodeName(listbox->text(i));
     tempstring += '\n';
     f.writeBlock(tempstring,tempstring.length());
   }

@@ -40,8 +40,7 @@ LogWindow::LogWindow(QWidget *parent, const char *name)
   //text_window->setMaxLineLength( 24 );
   text_window->setMaxLines( 110 ); // text_window->numRows() ??
 
-  stringlist = new QStrList(TRUE); // deep copies
-  stringlist->setAutoDelete(TRUE);
+  stringlist = new QStringList;
 
   sltimer = new QTimer(this);
   connect(sltimer,SIGNAL(timeout()),this,SLOT(updatewindow()));
@@ -64,17 +63,20 @@ void LogWindow::updatewindow(){
 
     text_window->setAutoUpdate(FALSE);
 
-    for(stringlist->first();stringlist->current();stringlist->next()){
+    for ( QStringList::Iterator it = stringlist->begin();
+          it != stringlist->end();
+          ++it )
+    {
       /* after a string starting with "~", don't start a new line --gl */
 	static int tildaflag = 0;
 	int futuretilda, len;
-	char *s = stringlist->current();
-	if (*s == '~') {
+	QString s = *it;
+	if (s.at(0) == '~') {
 	    futuretilda = 1;
-	    s++;
+            s = s.remove(0, 1);
 	}
 	else futuretilda = 0;
-	len = strlen(s);
+	len = s.length();
 	if (tildaflag && len) {
 	    text_window->insertAt(s, line, col);
 	    col += len;

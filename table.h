@@ -21,7 +21,7 @@ public:
     Table( int width, int height, QWidget* parent=0, const char* name=0, WFlags f=0 );
     ~Table();
     
-    const char* cellContent( int row, int col ) const;
+    QString cellContent( int row, int col ) const;
     void setCellContent( int row, int col, const char* );
 
     void clearChannels( void );

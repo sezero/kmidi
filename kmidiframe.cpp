@@ -333,11 +333,10 @@ KMidiFrame::KMidiFrame( const char *name ) :
 
     menuBar->insertSeparator();
 
-    QString aboutapp;
-    aboutapp.sprintf(i18n("KDE midi file player\n\n"
+    QString aboutapp = i18n("KDE midi file player\n\n"
                      "A software synthesizer for playing\n"
                      "midi songs using Tuukka Toivonen's\n"
-                     "TiMidity"));
+                     "TiMidity");
 
     QPopupMenu *about = helpMenu(aboutapp);
     menuBar->insertItem( i18n("About"), about);

@@ -222,11 +222,11 @@ public:
 	int		evs_state;
 
 	QString		fileName;
-	QStrList	*playlist;
+	QStringList	*playlist;
 	int		current_playlist_num;
-	QStrList	*listplaylists;
+	QStringList	*listplaylists;
 
-	QStrList	*errorlist;
+	QStringList	*errorlist;
 
 	LogWindow 	*logwindow;
 	ConfigDlg       *configdlg;

@@ -178,7 +178,7 @@ void Table::setVolume( int chan, int val )
   Return content of cell
 */
 
-const char* Table::cellContent( int row, int col ) const
+QString Table::cellContent( int row, int col ) const
 {
     return contents[indexOf( row, col )];	// contents array lookup
 }

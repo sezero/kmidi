@@ -156,25 +156,27 @@ KMidi::KMidi( QWidget *parent, const char *name )
     setColors();
     setToolTips();
 
-    playlist = new QStrList(TRUE);
-    errorlist = new QStrList(TRUE);
-    listplaylists = new QStrList(TRUE);
+    playlist = new QStringList;
+    errorlist = new QStringList;
+    listplaylists = new QStringList;
 
     QStringList listf = KGlobal::dirs()->findAllResources("appdata", "*.plist");
 
-    for ( QStringList::Iterator it = listf.begin(); it != listf.end(); ++it ) {
-	    listplaylists->inSort( *it );
-    }
+    // for ( QStringList::Iterator it = listf.begin(); it != listf.end(); ++it ) {
+    //   listplaylists->append( *it );
+    // }
+    *listplaylists = listf;
+    listplaylists->sort();
 
 
     if ( !folder_pixmap.loadFromData(folder_bmp_data, folder_bmp_len) )
-	KMessageBox::error(this, i18n("Error"), i18n("Could not load folder.bmp"));
+	KMessageBox::error(this, i18n("Could not load folder.bmp"));
 
     if ( !cdup_pixmap.loadFromData(cdup_bmp_data, cdup_bmp_len) )
-	KMessageBox::error(this, i18n("Error"), i18n("Could not load cdup.bmp"));
+	KMessageBox::error(this, i18n("Could not load cdup.bmp"));
 
     if ( !file_pixmap.loadFromData(file_bmp_data, file_bmp_len) )
-	KMessageBox::error(this, i18n("Error"), i18n("Could not load file.bmp"));
+	KMessageBox::error(this, i18n("Could not load file.bmp"));
 
     timer = new QTimer( this );
     readtimer = new QTimer( this);
@@ -248,7 +250,7 @@ int KMidi::smallPtSize()
 
 void KMidi::dragEnterEvent( QDragEnterEvent *e )
 {
-    if ( QUrlDrag::canDecode( e ) )
+    if ( QUriDrag::canDecode( e ) )
     {
 	e->accept();
     }
@@ -261,7 +263,7 @@ void KMidi::dropEvent( QDropEvent * e )
     QStringList files;
     int newones = 0;
     char mbuff[5];
-    if ( QUrlDrag::decodeLocalFiles( e, files ) ) {
+    if ( QUriDrag::decodeLocalFiles( e, files ) ) {
 	for (QStringList::Iterator i=files.begin(); i!=files.end(); ++i) {
 
             QFile f(*i);
@@ -394,10 +396,10 @@ void KMidi::volChanged( int vol )
 	
     QString volumetext;
     if (vol == 100){
-	volumetext.sprintf(i18n("Vol:%03d%%"),vol);
+	volumetext.sprintf(i18n("Vol:%03d%%").utf8().data(),vol);
     }
     else{
-	volumetext.sprintf(i18n("Vol:%02d%%"),vol);
+	volumetext.sprintf(i18n("Vol:%02d%%").utf8().data(),vol);
     }
     volLA->setText( volumetext );
 
@@ -703,7 +705,7 @@ void KMidi::drawPanel()
 
 
     QString volumetext;
-    volumetext.sprintf(i18n("Vol:%02d%%"),volume);
+    volumetext.sprintf(i18n("Vol:%02d%%").utf8().data(),volume);
     volLA->setText( volumetext );
 
     modlabel = new QLabel( this );
@@ -1169,7 +1171,7 @@ void KMidi::setSong( int number )
     playbox->setCurrentItem(number);
     song_number = number + 1;
 
-    if (playlist->at(song_number-1)[0] == '#') { stopClicked(); return; }
+    if ((*playlist->at(song_number-1))[0] == '#') { stopClicked(); return; }
 
     fileName = playbox->text(number);
     if(output_device_open)
@@ -1183,21 +1185,22 @@ void KMidi::setSong( int number )
     statusLA->setText(i18n("Playing"));
 
     pipe_int_write(MOTIF_PLAY_FILE);
-    pipe_string_write(playlist->at(song_number-1));
+    pipe_string_write(QFile::encodeName(*playlist->at(song_number-1)));
     status = KPLAYING;
 }
 
 void KMidi::redoplaybox()
 {
     QString filenamestr;
-    int i, index, errindex;
-    int last = playlist->count();
+    int index, errindex;
 
     playbox->clear();
 
-    for (i = 0; i < last; i++) {
-
-	filenamestr = playlist->at(i);
+    for ( QStringList::Iterator it = playlist->begin();
+          it != playlist->end();
+          ++it )
+    {
+	filenamestr = *it;
 //This doesn't work -- the "#" is not there when playbox redone, for some reason.
 	errindex = filenamestr.find('#',0,TRUE);
 	index = filenamestr.findRev('/',-1,TRUE);
@@ -1218,14 +1221,15 @@ void KMidi::redoplaybox()
 void KMidi::redoplaylistbox()
 {
     QString filenamestr;
-    int i, index;
-    int last = listplaylists->count();
+    int index;
 
     playlistbox->clear();
 
-    for (i = 0; i < last; i++) {
-
-	filenamestr = listplaylists->at(i);
+    for ( QStringList::Iterator it = listplaylists->begin();
+          it != listplaylists->end();
+          ++it )
+    {
+	filenamestr = *it;
 	index = filenamestr.findRev('/',-1,TRUE);
 	if(index != -1)
 	    filenamestr = filenamestr.right(filenamestr.length() -index -1);
@@ -1442,9 +1446,9 @@ void KMidi::randomClicked(){
     int index = randomSong() - 1;
     song_number = index + 1;
     playbox->setCurrentItem(index);
-    if (playlist->at(index)[0] == '#') { stopClicked(); return; }
+    if ((*playlist->at(index))[0] == '#') { stopClicked(); return; }
     pipe_int_write(MOTIF_PLAY_FILE);
-    pipe_string_write(playlist->at(index));
+    pipe_string_write(QFile::encodeName(*playlist->at(index)));
 
     playPB->setOn( TRUE );
     status = KPLAYING;
@@ -1464,9 +1468,9 @@ void KMidi::randomPlay(){
     int index = randomSong() - 1;
     song_number = index + 1;
     playbox->setCurrentItem(index);
-    if (playlist->at(index)[0] == '#') { stopClicked(); return; }
+    if ((*playlist->at(index))[0] == '#') { stopClicked(); return; }
     pipe_int_write(MOTIF_PLAY_FILE);
-    pipe_string_write(playlist->at(index));
+    pipe_string_write(QFile::encodeName(*playlist->at(index)));
 
     playPB->setOn( TRUE );
     status = KPLAYING;
@@ -1507,13 +1511,13 @@ void KMidi::playClicked()
   if (index < 0) index = 0;
 
   if(((int)playlist->count()  > index) && (index >= 0)){
-    if (playlist->at(index)[0] == '#') { stopClicked(); return; }
+    if ((*playlist->at(index))[0] == '#') { stopClicked(); return; }
     setLEDs("OO:OO");
     settletime = fastforward = fastrewind = nbvoice = currplaytime = 0;
     statusLA->setText(i18n("Playing"));
 
     pipe_int_write(MOTIF_PLAY_FILE);
-    pipe_string_write(playlist->at(index));
+    pipe_string_write(QFile::encodeName(*playlist->at(index)));
 
     status = KPLAYING;
     playPB->setOn( TRUE );
@@ -1552,7 +1556,7 @@ void KMidi::prevClicked(){
       song_number = playlist->count();
 
     playbox->setCurrentItem(song_number-1);
-    if (playlist->at(song_number-1)[0] == '#') { stopClicked(); return; }
+    if ((*playlist->at(song_number-1))[0] == '#') { stopClicked(); return; }
     if(status == KPLAYING)
       setLEDs("OO:OO");
     settletime = fastforward = fastrewind = currplaytime = nbvoice = 0;
@@ -1561,7 +1565,7 @@ void KMidi::prevClicked(){
     statusLA->setText(i18n("Playing"));
 
     pipe_int_write(MOTIF_PLAY_FILE);
-    pipe_string_write(playlist->at(song_number-1));
+    pipe_string_write(QFile::encodeName(*playlist->at(song_number-1)));
     status = KPLAYING;
 }
 
@@ -1601,7 +1605,7 @@ void KMidi::nextClicked(){
     if(song_number > (int)playlist->count())
       song_number = 1;
     playbox->setCurrentItem(song_number-1);
-    if (playlist->at(song_number-1)[0] == '#') { stopClicked(); return; }
+    if ((*playlist->at(song_number-1))[0] == '#') { stopClicked(); return; }
 
     if(status == KPLAYING)
       setLEDs("OO:OO");
@@ -1611,7 +1615,7 @@ void KMidi::nextClicked(){
     statusLA->setText(i18n("Playing"));
 
     pipe_int_write(MOTIF_PLAY_FILE);
-    pipe_string_write(playlist->at(song_number-1));
+    pipe_string_write(QFile::encodeName(*playlist->at(song_number-1)));
     status = KPLAYING;
 }
 
@@ -1727,8 +1731,8 @@ void KMidi::PlayMOD(){
 
     while (!errorlist->isEmpty()) {
 	  errcount++;
-	  KMessageBox::sorry(this, QString( errorlist->first() ) );
-	  errorlist->removeFirst();
+	  KMessageBox::sorry(this, errorlist->first() );
+	  errorlist->remove(errorlist->first());
     }
 
     if (errcount) {
@@ -1755,9 +1759,9 @@ void KMidi::postError(const QString& s) {
 	int i;
         int last = playlist->count();
 	if (!unplayable.isEmpty()) for (i = 0; i < last; i++) {
-	    if (!QString::compare(unplayable, playlist->at(i))) {
+	    if (!QString::compare(unplayable, *playlist->at(i))) {
 		//mark it
-		playlist->at(i)[0] = '#';
+		(*playlist->at(i))[0] = '#';
 	    }
 	}
     }
@@ -1897,7 +1901,7 @@ void KMidi::loadplaylist( int which ) {
     QString s;
     if (!listplaylists->count()) s = "default.plist";
     else {
-        s = listplaylists->at(which);
+        s = *listplaylists->at(which);
         int i = s.findRev('/',-1,TRUE);
         if(i != -1) s = s.right(s.length() -i -1);
     }
@@ -1909,18 +1913,19 @@ void KMidi::loadplaylist( int which ) {
 	defaultlist = locateLocal("appdata", "default.plist");
 	QFile f(defaultlist);
 	f.open( IO_ReadWrite | IO_Translate|IO_Truncate);
-	QString tempstring;
+	QCString tempstring;
 
 	QStringList list = KGlobal::dirs()->findAllResources("appdata", "*.mid");
 
 	for ( QStringList::Iterator it = list.begin(); it != list.end(); ++it ) {
-	    tempstring = *it;
+	    tempstring = QFile::encodeName(*it);
 	    playlist->append( *it );
 	    tempstring += '\n';
 	    f.writeBlock(tempstring,tempstring.length());
         }
 	f.close();
-	listplaylists->inSort(defaultlist);
+	listplaylists->append(defaultlist);
+        listplaylists->sort();
 	redoplaylistbox();
 	current_playlist_num = 0;
 	playlistbox->setCurrentItem(current_playlist_num);
@@ -2131,7 +2136,7 @@ void KMidi::ReadPipe(){
 			statusLA->setText(i18n("Ready"));
     			settletime = fastforward = fastrewind = nbvoice = currplaytime = 0;
 			QString str;
-			str.sprintf(i18n("Song: --/%02d"),playlist->count());
+			str.sprintf(i18n("Song: --/%02d").utf8().data(),playlist->count());
 			song_count_label->setText(str);
 			modlabel->setText("");
 			totaltimelabel->setText("--:--");
@@ -2544,7 +2549,7 @@ void KMidi::updateUI(){
     QString songstr;
 
     if(playlist->count() >0)
-	songstr.sprintf(i18n("Song: %02d/%02d"),song_number,playlist->count());
+	songstr.sprintf(i18n("Song: %02d/%02d").utf8().data(),song_number,playlist->count());
     else
 	songstr = i18n("Song: --/--");
 

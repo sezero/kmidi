@@ -80,8 +80,8 @@ class PlaylistEdit : public KTMainWindow {
 Q_OBJECT
 
 public:
-       PlaylistEdit(const char *name=0, QStrList *playlist = 0,
-	int *current_playlist_ptr=0, QStrList *listplaylists = 0);
+       PlaylistEdit(const char *name=0, QStringList *playlist = 0,
+	int *current_playlist_ptr=0, QStringList *listplaylists = 0);
        ~PlaylistEdit();
 
 //private:
@@ -139,8 +139,8 @@ private:
     //QPushButton* removeButton;
     //QPushButton* cancelButton;
     QWhatsThis *what;
-    QStrList*  songlist;
-    QStrList*  listsonglist;
+    QStringList*  songlist;
+    QStringList*  listsonglist;
     QLineEdit* newEdit;
     int *playlist_ptr;
     QFrame* snpopup;

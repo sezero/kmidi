@@ -53,7 +53,7 @@ private:
 
   bool timerset;
   QTimer *sltimer;
-  QStrList *stringlist;
+  QStringList *stringlist;
   QMultiLineEdit *text_window;
 
 };
