@@ -55,6 +55,16 @@
 #include "constants.h"
 #include "ctl.h"
 
+#ifdef _SEM_SEMUN_UNDEFINED
+   union semun
+   {
+     int val;
+     struct semid_ds *buf;
+     unsigned short int *array;
+     struct seminfo *__buf;
+   };
+#endif
+
 static void ctl_refresh(void);
 static void ctl_total_time(int tt);
 static void ctl_master_volume(int mv);
