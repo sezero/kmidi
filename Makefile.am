@@ -62,7 +62,7 @@ apps_DATA = kmidi.desktop
 KDE_ICON = kmidi
 
 picsdir = $(kde_datadir)/kmidi/pics
-pics_DATA = kmidilogo.png mini-kmidi.png
+pics_DATA = kmidilogo.png 
 
 EXTRA_DIST = $(apps_DATA) $(pics_DATA)
 
