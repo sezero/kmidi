@@ -61,8 +61,7 @@ void KMidiFileDlg::playFile(const QString& fname)
       }
       if (!thePath.isNull())
       {
-	kmidi->playlist->insert(0, thePath);
-	kmidi->restartPlaybox();
+	kmidi->restartPlayboxWith(thePath);
       }
     }
 }

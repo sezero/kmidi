@@ -279,7 +279,8 @@ void KMidi::dropEvent( QDropEvent * e )
             }
             f.close();
 
-	    playlist->insert(0, *i);
+	    //playlist->insert(0, *i);
+	    playlist->prepend(*i);
 	    newones++;
 	}
     }
@@ -1714,6 +1715,11 @@ void KMidi::restartPlaybox(){
     if (status != KPLAYING) setSong(0);
     else flag_new_playlist = true;
     if (status != KPLAYING) timer->start( 200, TRUE );  // single shot
+}
+
+void KMidi::restartPlayboxWith(const QString &songpath){
+    playlist->prepend(songpath);
+    restartPlaybox();
 }
 
 void KMidi::acceptPlaylist(){

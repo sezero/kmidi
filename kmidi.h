@@ -260,6 +260,7 @@ public:
 
 	void 		redoplaybox();
 	void 		restartPlaybox();
+	void 		restartPlayboxWith(const QString &songpath);
 	void		setDry(bool);
 	void		setReverb(int level);
 	void		setChorus(int level);
