@@ -631,7 +631,7 @@ dnl    else
 dnl      lib_xaw_opt=-lXaw
 dnl    fi
     EXTRATDEFS="$EXTRATDEFS -DIA_XAW"
-    EXTRATLIBS="$EXTRATLIBS -L/usr/X11R6 -lXaw -lXt -lX11"
+    EXTRATLIBS="$EXTRATLIBS -L/usr/X11R6/lib -lXaw -lXt -lX11"
 dnl    if test "x$have_xext" = xyes; then
 dnl      a_so_libs="-lXext -lX11"
 dnl    else
