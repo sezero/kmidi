@@ -24,7 +24,8 @@
 
 */
 
-#if defined(linux) || defined(__FreeBSD__)
+/* #if defined(linux) || defined(__FreeBSD__) */
+#ifdef AU_OSS
 #define _GNU_SOURCE
 #include <unistd.h>
 #include <fcntl.h>

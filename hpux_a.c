@@ -34,7 +34,8 @@
 
 */
 
-#if defined(hpux) || defined(__hpux)
+#ifdef AU_HPUX
+/* #if defined(hpux) || defined(__hpux) */
 
 #include <stdlib.h>
 #include <stdio.h>

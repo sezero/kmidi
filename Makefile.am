@@ -9,10 +9,10 @@
 VERSION = 0.2i
 
 INCLUDES = $(all_includes)
-AM_CFLAGS = -DDEFAULT_PATH=\"$(TIMID_DIR)\" -DKMIDI
-CFLAGS = -O -Wall -W -Wpointer-arith -Wmissing-prototypes -Wwrite-strings -Wconversion
+AM_CFLAGS = -DDEFAULT_PATH=\"$(TIMID_DIR)\" -DKMIDI $(EXTRADEFS)
+CFLAGS = -O -Wall -W -Wpointer-arith -Wmissing-prototypes -Wwrite-strings -Wconversion $(CPPFLAGS)
 LDFLAGS = $(all_libraries) $(KDE_RPATH)
-LDADD = $(LIB_KDEUI) $(LIBALIB) $(LIBAUDIO) $(LIBMME) $(LIB_KFILE)
+LDADD = $(LIB_KDEUI) $(LIBALIB) $(LIBAUDIO) $(LIBMME) $(LIB_KFILE) $(EXTRALIBS)
 
 # Where to install the patches, config files, and MIDI files.
 # If you change this, it's a good idea to recompile the binary,
@@ -26,7 +26,8 @@ kmidi_SOURCES = kmidi.cpp  playlist.cpp bwlednum.cpp configdlg.cpp log.cpp \
 	docking.cpp \
 	timidity.c common.c readmidi.c playmidi.c resample.c mix.c instrum.c \
 	tables.c controls.c output.c filter.c wave_a.c raw_a.c dumb_c.c \
-	sndfont.c readsbk.c linux_a.c ctl.c dec_a.c sun_a.c hpux_a.c \
+	sndfont.c readsbk.c ctl.c \
+	linux_a.c dec_a.c sun_a.c hpux_a.c \
 	b_out.c fffload.c \
 	effects.c reverb_e.c chorus_e.c phaser_e.c celeste_e.c \
 	resample_l.c resample_f.c midiapplication.cpp kmidiframe.cpp

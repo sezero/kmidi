@@ -27,7 +27,8 @@
 
 */
 
-#if defined(sun)
+#ifdef AU_SUN
+/* #if defined(sun) */
 
 #include <unistd.h>
 #include <fcntl.h>

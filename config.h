@@ -24,6 +24,10 @@
 #include "allphase.h"
 #endif /* ADAGIO */
 
+#ifdef KMIDI
+#include "../config.h"
+#endif
+
 #ifndef TIMID_DIR
 #ifdef DEFAULT_PATH
 #define TIMID_DIR  DEFAULT_PATH
@@ -213,6 +217,7 @@ typedef float FLOAT_T;
 /* Audio buffer size has to be a power of two to allow DMA buffer
    fragments under the VoxWare (Linux & FreeBSD) audio driver */
 #define AUDIO_BUFFER_SIZE (1<<AUDIO_BUFFER_BITS)
+#define BB_SIZE (AUDIO_BUFFER_SIZE*512)
 
 /* Byte order, defined in <machine/endian.h> for FreeBSD and DEC OSF/1 */
 #ifdef __osf__

@@ -40,7 +40,8 @@
     Thanks Tuukka for a great program!!
 */
 
-#ifdef __osf__
+#ifdef AU_DEC
+/* #ifdef __osf__ */
 
 #include <unistd.h>
 #include <fcntl.h>

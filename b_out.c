@@ -24,7 +24,7 @@
 #define PRESUMED_FULLNESS 20
 
 /* #define BB_SIZE (AUDIO_BUFFER_SIZE*128) */
-#define BB_SIZE (AUDIO_BUFFER_SIZE*256)
+/* #define BB_SIZE (AUDIO_BUFFER_SIZE*256) */
 static unsigned char *bbuf = 0;
 static int bboffset = 0, bbcount = 0;
 static uint32 outchunk = 0;
