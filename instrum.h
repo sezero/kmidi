@@ -34,7 +34,8 @@ typedef struct {
     envelope_rate[7], envelope_offset[7],
     modulation_rate[7], modulation_offset[7];
   FLOAT_T
-    volume, resonance, modEnvToFilterFc;
+    volume, resonance,
+    modEnvToFilterFc, modEnvToPitch;
   sample_t *data;
   int32 
     tremolo_sweep_increment, tremolo_phase_increment, 
@@ -47,7 +48,8 @@ typedef struct {
   uint8
     panning, note_to_use, exclusiveClass;
   int16
-    scale_tuning;
+    scale_tuning, keyToModEnvHold, keyToModEnvDecay,
+    keyToVolEnvHold, keyToVolEnvDecay;
   uint8
     attenuation, freq_center;
   int32

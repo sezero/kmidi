@@ -67,6 +67,7 @@
 #include <sys/ioctl.h>
 
 #include <kapp.h>
+#include <kled.h>
 
 #define PLAYLIST_WIDTH  550
 #define PLAYLIST_HEIGHT 440
@@ -125,6 +126,8 @@ public:
 	QTabDialog      *tabdialog;
 	QPushButton 	*infobutton;
 	BW_LED_Number	*trackTimeLED[9];
+
+	KLed		*led[18];
 
 	QComboBox	*patchbox;
 	QComboBox	*playbox;

@@ -414,6 +414,10 @@ static InstrumentLayer *load_instrument(char *name, int font_type, int percussio
       sp->reverberation=0;
       sp->chorusdepth=0;
       sp->exclusiveClass=0;
+      sp->keyToModEnvHold=0;
+      sp->keyToModEnvDecay=0;
+      sp->keyToVolEnvHold=0;
+      sp->keyToVolEnvDecay=0;
 
       /* envelope, tremolo, and vibrato */
       if (18 != fread(tmp, 1, 18, fp)) goto fail; 
@@ -628,6 +632,7 @@ static InstrumentLayer *load_instrument(char *name, int font_type, int percussio
 	}
       sp->modulation_rate[DELAY] = sp->modulation_offset[DELAY] = 0;
       sp->modEnvToFilterFc=0;
+      sp->modEnvToPitch=0;
 
 #ifdef EXAMINE_SOME_ENVELOPES
 if (percussion /* && (gm_num >= 42 && gm_num <= 51) */) {

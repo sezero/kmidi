@@ -1847,14 +1847,15 @@ static void convert_vibrato(Layer *lay, SFInfo *sf, SampleList *sp)
 
 	/* cents to linear; 400cents = 256 */
 	/*sp->v.vibrato_depth = (int8)((int32)shift * 256 / 400);*/
-	sp->v.vibrato_depth = shift * 400 / 64;
+	/** sp->v.vibrato_depth = shift * 400 / 64; **/
 
+	sp->v.vibrato_depth = 127.0 * pow(2.0, ((FLOAT_T)shift/1200.0)) * VIBRATO_RATE_TUNING;
 	/* frequency in mHz */
 	if (!freq) {
 		if (sf->version == 1)
 			freq = TO_HZ(-725);
 		else
-			freq = 0;
+			freq = 8;
 	} else {
 		if (sf->version == 1)
 			freq = (int)(3986.0 * log10((double)freq) - 7925.0);
@@ -1890,8 +1891,21 @@ static void calc_cutoff(Layer *lay, SFInfo *sf, SampleList *sp)
 	}
 	else sp->v.modEnvToFilterFc = 0;
 
+	if (lay->set[SF_env1ToPitch]) {
+		sp->v.modEnvToPitch = pow(2.0, ((FLOAT_T)lay->val[SF_env1ToPitch]/1200.0));
+	}
+	else sp->v.modEnvToFilterFc = 0;
+
 	sp->cutoff_freq = TO_HZ(val);
 
+	if (lay->set[SF_autoHoldEnv1]) sp->v.keyToModEnvHold=lay->val[SF_autoHoldEnv1];
+	else sp->v.keyToModEnvHold=0;
+	if (lay->set[SF_autoDecayEnv1]) sp->v.keyToModEnvDecay=lay->val[SF_autoDecayEnv1];
+	else sp->v.keyToModEnvDecay=0;
+	if (lay->set[SF_autoHoldEnv2]) sp->v.keyToVolEnvHold=lay->val[SF_autoHoldEnv2];
+	else sp->v.keyToVolEnvHold=0;
+	if (lay->set[SF_autoDecayEnv2]) sp->v.keyToVolEnvDecay=lay->val[SF_autoDecayEnv2];
+	else sp->v.keyToVolEnvDecay=0;
 }
 
 static void calc_filterQ(Layer *lay, SFInfo *sf, SampleList *sp)

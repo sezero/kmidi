@@ -110,8 +110,7 @@ static int dont_cspline = 0;
         }else  v2 = (int32)src[(ofs>>FRACTION_BITS)+1]; \
 	if(dont_cspline || \
 	   ((ofs-(1L<<FRACTION_BITS))<ls)||((ofs+(2L<<FRACTION_BITS))>le)){ \
-		if (dont_filter_melodic) bw_index = 0; \
-		else if (!cc_count--) { \
+		if (!cc_count--) { \
 		    cc_count = control_ratio - 1; \
 		    if (calc_bw_index(v)) { \
 		        bw_index = vp->bw_index; \
@@ -122,6 +121,7 @@ static int dont_cspline = 0;
 			b1 = butterworth[bw_index][4]; \
 		    } \
 		} \
+		if (dont_filter_melodic) bw_index = 0; \
                 newsample = (sample_t)(v1 + ((int32)((v2-v1) * (ofs & FRACTION_MASK)) >> FRACTION_BITS)); \
 	        if (bw_index) { \
                     insamp = (float)newsample; \
@@ -147,8 +147,7 @@ static int dont_cspline = 0;
 		      ((((((5*v0 - 11*v1 + 7*temp - v3)* \
 		       ofs)>>FRACTION_BITS)*ofs)>>(FRACTION_BITS+2))-1))*ofs; \
 		v1 = (v1 + v2)/(6L<<FRACTION_BITS); \
-		if (dont_filter_melodic) bw_index = 0; \
-		else if (!cc_count--) { \
+		if (!cc_count--) { \
 		    cc_count = control_ratio - 1; \
 		    if (calc_bw_index(v)) { \
 			bw_index = vp->bw_index; \
@@ -159,6 +158,7 @@ static int dont_cspline = 0;
 			b1 = butterworth[bw_index][4]; \
 		    } \
 		} \
+		if (dont_filter_melodic) bw_index = 0; \
 		newsample = (v1 > MAX_DATAVAL)? MAX_DATAVAL: ((v1 < MIN_DATAVAL)? MIN_DATAVAL: (sample_t)v1); \
 		if (bw_index) { \
                     insamp = (float)newsample; \
@@ -329,16 +329,17 @@ static int calc_bw_index(int v)
   FLOAT_T mod_amount=voice[v].sample->modEnvToFilterFc;
   int32 freq = voice[v].sample->cutoff_freq;
 
+  if (update_modulation_signal(v)) return 0;
+
   if (mod_amount) {
-	if (update_modulation_signal(v)) mod_amount = 0;
-	else freq =
-	(int32)( ( (double)(voice[v].modulation_volume >> 22) * mod_amount * (double)freq ) / 255.0 );
+    freq =
+	(int32)( (double)freq*(1.0 + (mod_amount - 1.0) * (voice[v].modulation_volume>>22) / 255.0) );
 /*
 printf("v%d freq %d (was %d), modvol %d, mod_amount %f\n", v, (int)freq, (int)voice[v].sample->cutoff_freq,
 (int)voice[v].modulation_volume>>22,
 mod_amount);
 */
-	if (freq < 150) freq = 150;
+	if (freq < 100) freq = 100;
 	voice[v].bw_index = (freq+50) / 100;
 	return 1;
   }
@@ -582,7 +583,8 @@ static int vib_phase_to_inc_ptr(int phase)
 
 static int32 update_vibrato(Voice *vp, int sign)
 {
-  int32 depth;
+  int32 depth, freq=vp->frequency;
+  FLOAT_T mod_amount=vp->sample->modEnvToPitch;
   int phase, pb;
   double a;
 
@@ -626,12 +628,19 @@ static int32 update_vibrato(Voice *vp, int sign)
 	}
     }
 
+/* needs work -- try 078 whistle
+  if (mod_amount)
+   freq = (int32)( ( (double)(vp->modulation_volume >> 22) * mod_amount * (double)freq ) / 255.0 );
+*/
+  if (mod_amount)
+   freq = (int32)( (double)freq*(1.0 + (mod_amount - 1.0) * (vp->modulation_volume>>22) / 255.0) );
+
   pb=(int)((sine(vp->vibrato_phase *
 			(SINE_CYCLE_LENGTH/(2*VIBRATO_SAMPLE_INCREMENTS)))
 	    * (double)(depth) * VIBRATO_AMPLITUDE_TUNING));
 
   a = FRSCALE(((double)(vp->sample->sample_rate) *
-		  (double)(vp->frequency)) /
+		  (double)(freq)) /
 		 ((double)(vp->sample->root_freq) *
 		  (double)(play_mode->rate)),
 		 FRACTION_BITS);
@@ -1107,8 +1116,9 @@ void do_lowpass(Sample *sample, uint32 srate, sample_t *buf, uint32 count, int32
 	if (!cc) {
 	    if (mod_amount) {
 		if (update_modulation_signal(0)) mod_amount = 0;
-		else current_freq =
-		(int32)( ( (double)(voice[0].modulation_volume >> 22) * mod_amount * (double)freq ) / 255.0 );
+		else
+		current_freq = (int32)( (double)freq*(1.0 + (mod_amount - 1.0) *
+			 (voice[0].modulation_volume>>22) / 255.0) );
 	    }
 	    cc = control_ratio;
 	    findex = (current_freq+50) / 100;

@@ -1083,6 +1083,17 @@ voice[i].envelope_offset[j]);
 #endif
     }
 
+  if (voice[i].sample->keyToVolEnvHold) {
+	FLOAT_T rate_adjust;
+	rate_adjust = pow(2.0, (60 - voice[i].note) * voice[i].sample->keyToVolEnvHold / 1200.0);
+	voice[i].envelope_rate[HOLD] /= rate_adjust;
+  }
+  if (voice[i].sample->keyToVolEnvDecay) {
+	FLOAT_T rate_adjust;
+	rate_adjust = pow(2.0, (60 - voice[i].note) * voice[i].sample->keyToVolEnvHold / 1200.0);
+	voice[i].envelope_rate[DECAY] /= rate_adjust;
+  }
+
   voice[i].echo_delay=voice[i].envelope_rate[DELAY];
 
 #ifdef RATE_ADJUST_DEBUG

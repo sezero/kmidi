@@ -87,7 +87,7 @@ static int meterfudge = 0;
 enum midistatus{ KNONE, KPLAYING, KSTOPPED, KLOOPING, KFORWARD,
 		 KBACKWARD, KNEXT, KPREVIOUS,KPAUSED};
 
-midistatus status;
+midistatus status, last_status;
 
 KApplication * thisapp;
 KMidi *kmidi;
@@ -101,7 +101,7 @@ KMidi::KMidi( QWidget *parent, const char *name ) :
     randomplay = false;
     looping = false;
     driver_error = false;
-    status = KNONE;
+    last_status = status = KNONE;
     song_number = 1;
     current_voices = DEFAULT_VOICES;
     starting_up = true;
@@ -655,6 +655,17 @@ void KMidi::drawPanel()
 
     ix = WIDTH + WIDTH/2;
     iy += HEIGHT;
+
+    for (int i = 0; i < 17; i++) {
+        led[i] = new KLed(led_color, this);
+        led[i]->setLook(KLed::sunken);
+        led[i]->setShape(KLed::Rectangular);
+        led[i]->setGeometry(WIDTH/8 + i * WIDTH/4,iy+HEIGHT/6, WIDTH/6, HEIGHT/5);
+	led[i]->setColor(Qt::black);
+    }
+
+    iy += HEIGHT/2;
+
     regularheight = iy;
     meter = new MeterWidget ( this, "soundmeter" );
     meter->setBackgroundColor( background_color );
@@ -1429,6 +1440,8 @@ void KMidi::loadplaylist( int which ) {
 
 void KMidi::ReadPipe(){
 
+    static int last_buffer_state = 100;
+    static int last_various_flags = 0;
     int message;
 
     if(pipe_read_ready()){
@@ -1782,6 +1795,34 @@ void KMidi::ReadPipe(){
 	
 	    }
     }
+
+    if (status != last_status) {
+	QColor c;
+	switch (status) {
+	    case KNONE:		c = Qt::black; break;
+	    case KPLAYING:	c = Qt::green; break;
+	    case KSTOPPED:	c = Qt::red; break;
+	    case KLOOPING:	c = Qt::magenta; break;
+	    case KFORWARD:	c = Qt::cyan; break;
+	    case KBACKWARD:	c = Qt::darkCyan; break;
+	    case KNEXT:		c = Qt::blue; break;
+	    case KPREVIOUS:	c = Qt::darkBlue; break;
+	    case KPAUSED:	c = Qt::yellow; break;
+	    default:		c = led_color; break;
+	}
+	last_status = status;
+	led[0]->setColor(c);
+    }
+    if (Panel->buffer_state != last_buffer_state) {
+        led[1]->setColor( QColor(250 - 2*Panel->buffer_state, 150, 50 ) );
+	last_buffer_state = Panel->buffer_state;
+    }
+    if (Panel->various_flags != last_various_flags) {
+	last_various_flags = Panel->various_flags;
+	if (last_various_flags & 1) led[2]->setColor(Qt::blue);
+        else led[2]->setColor(Qt::black);
+    }
+
 }
 
 

@@ -659,11 +659,16 @@ sp->sample_rate, sp->low_freq, sp->high_freq, sp->root_freq);
 	}
       sp->modulation_rate[DELAY] = sp->modulation_offset[DELAY] = 0;
       sp->modEnvToFilterFc=0;
+      sp->modEnvToPitch=0;
       sp->resonance=0;
       sp->cutoff_freq=0;
       sp->reverberation=0;
       sp->chorusdepth=0;
       sp->exclusiveClass=0;
+      sp->keyToModEnvHold=0;
+      sp->keyToModEnvDecay=0;
+      sp->keyToVolEnvHold=0;
+      sp->keyToVolEnvDecay=0;
 
       if (!l->tremolo.freq || !l->tremolo.depth)
 	{

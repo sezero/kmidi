@@ -4,7 +4,7 @@
 #include <sys/sem.h>
 
 #define INT_CODE 214
-#define NQUEUE 30
+#define NQUEUE 60
 #define MAXDISPCHAN 32
 typedef struct {
 	int reset_panel;
@@ -24,6 +24,7 @@ typedef struct {
 	char currentpatchset;
 	/* Channel channel[MAXDISPCHAN]; */
 	int wait_reset;
+	int buffer_state, various_flags;
 } PanelInfo;
 
 

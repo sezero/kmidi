@@ -247,7 +247,7 @@ extern current_sample_count();
 static void ctl_current_time(int ct)
 {
 
-    int i,v;
+    int i,v, flags=0;
 #if defined(linux) || defined(__FreeBSD__)
     int centisecs, realct;
     realct = current_sample_count();
@@ -260,7 +260,12 @@ static void ctl_current_time(int ct)
 
     if (!ctl.trace_playing) 
 	return;
-           
+
+    Panel->buffer_state = output_buffer_full;
+    if (dont_cspline) flags |= 1;
+
+    Panel->various_flags = flags;
+ 
     v=0;
     i=voices;
     while (i--)
@@ -407,6 +412,8 @@ static void ctl_reset(void)
 		return;
 
 	Panel->wait_reset = 1;
+        Panel->buffer_state = 100;
+        Panel->various_flags = 0;
 
 #if 0
 	while(Panel->wait_reset)
@@ -437,7 +444,11 @@ static int ctl_open(int using_stdin, int using_stdout)
 {
 	int tcount = 10;
 	shm_alloc();
+
         Panel->currentpatchset = cfg_select;
+        Panel->buffer_state = 100;
+        Panel->various_flags = 0;
+
 	pipe_open();
 
 	/*	if (child_pid == 0)
