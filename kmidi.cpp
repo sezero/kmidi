@@ -197,7 +197,6 @@ KMidi::KMidi( QWidget *parent, const char *name )
     connect( timeSB, SIGNAL(sliderReleased()), SLOT(timeStart()));
     connect( timeSB, SIGNAL(sliderPressed()), SLOT(timeStop()));
     connect( aboutPB, SIGNAL(clicked()), SLOT(logoClicked()));
-    connect( configurebutton, SIGNAL(clicked()), SLOT(aboutClicked()));
     connect( shufflebutton, SIGNAL(clicked()), SLOT(randomClicked()));
     connect( infobutton, SIGNAL(clicked()), SLOT(infoslot()));
 
@@ -311,7 +310,6 @@ void KMidi::setToolTips()
 	QToolTip::add( nextPB, 		i18n("Next midi") );
 	QToolTip::add( prevPB, 		i18n("Previous midi") );
 	QToolTip::add( shufflebutton, 	i18n("Random play") );
-        QToolTip::add( configurebutton, i18n("Configure KMidi") );
 	QToolTip::add( ejectPB, 	i18n("Open playlist") );
 	QToolTip::add( infobutton, 	i18n("Show info window") );
 	QToolTip::add( shufflebutton, 	i18n("Random play") );
@@ -350,7 +348,6 @@ void KMidi::setToolTips()
 	QToolTip::remove( bwdPB);
 	QToolTip::remove( nextPB );
 	QToolTip::remove( prevPB );
-	QToolTip::remove( configurebutton );
 	QToolTip::remove( shufflebutton );
 	QToolTip::remove( ejectPB );
 	QToolTip::remove( shufflebutton );
@@ -673,11 +670,6 @@ void KMidi::drawPanel()
 				iy+ HEIGHT,SBARWIDTH/6 , HEIGHT, "F" );
     shufflebutton->setToggleButton( TRUE );
     what->add(shufflebutton, i18n("select the next song randomly"));
-
-    configurebutton = makeButton( WIDTH + 5*SBARWIDTH/6 ,
-				  iy+HEIGHT, SBARWIDTH/6 , HEIGHT, "S" );
-    what->add(configurebutton, i18n("open up or close<br>\nthe configuration window"));
-
 
     timeSB = new QSlider( 0, 100, 1,  0, QSlider::Horizontal,
 			 this, "tSlider" );
@@ -1380,7 +1372,6 @@ void KMidi::loadBitmaps() {
     playPB->setPixmap( playBmp );
     infobutton->setPixmap( infoBmp );
     shufflebutton->setPixmap( shuffleBmp );
-    configurebutton->setPixmap( optionsBmp );
     stopPB->setPixmap( stopBmp );
     prevPB->setPixmap( prevBmp );
     nextPB->setPixmap( nextBmp );

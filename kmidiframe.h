@@ -77,6 +77,7 @@ protected slots:
 	void		fixChorusLevelItems();
 	void		fixEchoLevelItems();
 	void		fixDetuneLevelItems();
+	void		doSettingsMenu(int);
 
 	//void		doVolumeMenuItem(int);
 	void		doVolumeCurve(int);
@@ -87,6 +88,7 @@ protected slots:
 private:
 	int		m_on_id, m_off_id, i_on_id, i_off_id;
 	QPopupMenu	*view_options;
+	QPopupMenu	*settings_menu;
 	QPopupMenu	*view_level;
 	QPopupMenu	*effects_menu;
 	QPopupMenu	*chorus_level;

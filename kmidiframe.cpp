@@ -322,6 +322,14 @@ KMidiFrame::KMidiFrame( const char *name ) :
                      "midi songs using Tuukka Toivonen's\n"
                      "TiMidity");
 
+    settings_menu = new QPopupMenu();
+    menuBar->insertItem( i18n("&Settings"), settings_menu);
+
+    settings_menu->insertItem("&Configure KMidi");
+
+    connect(settings_menu, SIGNAL(activated(int)),
+		    this, SLOT(doSettingsMenu(int)));
+
     QPopupMenu *about = helpMenu(aboutapp);
     menuBar->insertItem( i18n("&Help"), about);
 
@@ -632,6 +640,13 @@ void KMidiFrame::fixExpressionCurveItems() {
     expression_curve->setItemChecked( expression_curve->idAt(0), e_state == 0);
     expression_curve->setItemChecked( expression_curve->idAt(1), e_state == 1);
     expression_curve->setItemChecked( expression_curve->idAt(2), e_state == 2);
+}
+
+void KMidiFrame::doSettingsMenu(int id) {
+
+	if (id == settings_menu->idAt(0)) {
+		kmidi->aboutClicked();
+	}
 }
 
 #include "kmidiframe.moc"
