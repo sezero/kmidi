@@ -463,8 +463,11 @@ static sample_t *rs_plain(int v, uint32 *countptr)
       ofs += incr;
       if (ofs >= se + (overshoot << FRACTION_BITS))
 	{
-	  vp->status=VOICE_FREE;
- 	  ctl->note(v);
+	  if (!(vp->status&VOICE_FREE))
+	    {
+	      vp->status=VOICE_FREE;
+ 	      ctl->note(v);
+	    }
 	  *countptr-=count+1;
 	  break;
 	}
@@ -515,8 +518,11 @@ static sample_t *rs_loop(int v, Voice *vp, uint32 *countptr)
 	}
       if (ofs >= se + (overshoot << FRACTION_BITS))
 	{
-	  vp->status=VOICE_FREE;
- 	  ctl->note(v);
+	  if (!(vp->status&VOICE_FREE))
+	    {
+	      vp->status=VOICE_FREE;
+ 	      ctl->note(v);
+	    }
 	  *countptr-=count+1;
 	  break;
 	}
@@ -790,8 +796,11 @@ static sample_t *rs_vib_plain(int v, uint32 *countptr)
       ofs += incr;
       if (ofs >= se + (overshoot << FRACTION_BITS))
 	{
-	  vp->status=VOICE_FREE;
- 	  ctl->note(v);
+	  if (!(vp->status&VOICE_FREE))
+	    {
+	      vp->status=VOICE_FREE;
+ 	      ctl->note(v);
+	    }
 	  *countptr-=count+1;
 	  break;
 	}
@@ -851,8 +860,11 @@ static sample_t *rs_vib_loop(int v, Voice *vp, uint32 *countptr)
 	}
       if (ofs >= se + (overshoot << FRACTION_BITS))
 	{
-	  vp->status=VOICE_FREE;
- 	  ctl->note(v);
+	  if (!(vp->status&VOICE_FREE))
+	    {
+	      vp->status=VOICE_FREE;
+ 	      ctl->note(v);
+	    }
 	  *countptr-=count+1;
 	  break;
 	}
@@ -1132,8 +1144,11 @@ sample_t *resample_voice(int v, uint32 *countptr)
 	if(*countptr >= (vp->sample->data_length>>FRACTION_BITS) - ofs)
 	{
 	    /* Note finished. Free the voice. */
-	    vp->status = VOICE_FREE;
-	    ctl->note(v);
+	  if (!(vp->status&VOICE_FREE))
+	    {
+	      vp->status=VOICE_FREE;
+ 	      ctl->note(v);
+	    }
 
 	    /* Let the caller know how much data we had left */
 	    *countptr = (vp->sample->data_length>>FRACTION_BITS) - ofs;

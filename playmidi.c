@@ -839,7 +839,7 @@ printf(" -> delay %d\n", voice[w].echo_delay);
 		case 0: /* no effect */
 		  break;
 		case 1: /* hall */
-		  if (subtype) voice[w].echo_delay += 3 * milli;
+		  if (subtype) voice[w].echo_delay += 100 * milli;
 		  break;
 		case 2: /* room */
 		  voice[w].echo_delay /= 2;
@@ -936,14 +936,20 @@ fprintf(stderr,"REVERB_CLONE v%d vol=%f pan=%d reverb=%d delay=%dms\n", w, voice
 		case 0: /* no effect */
 		  break;
 		case 1: /* chorus */
-		  /* voice[w].orig_frequency += (voice[w].orig_frequency/128) * chorus; */
+		  if (chorus > 42) chorus = 42;    /* higher choruss detune notes too much */
+		  if(channel[ voice[w].channel ].pitchbend + chorus < 0x2000)
+	              voice[w].orig_frequency *= bend_fine[chorus];
+		  else voice[w].orig_frequency /= bend_fine[chorus];
 		  if (subtype) voice[w].vibrato_depth *= 2;
 		  break;
 		case 2: /* celeste */
 		  voice[w].orig_frequency += (voice[w].orig_frequency/128) * chorus;
 		  break;
 		case 3: /* flanger */
-		  voice[w].vibrato_sweep = chorus * 4;
+		  voice[w].vibrato_control_ratio = 10;
+		  voice[w].vibrato_depth = 100;
+		  voice[w].vibrato_sweep = 8;
+		  voice[w].echo_delay += 200 * milli;
 		  break;
 		case 4: /* symphonic : cf Children of the Night /128 bad, /1024 ok */
 		  voice[w].orig_frequency += (voice[w].orig_frequency/512) * chorus;
@@ -955,6 +961,12 @@ fprintf(stderr,"REVERB_CLONE v%d vol=%f pan=%d reverb=%d delay=%dms\n", w, voice
 	      default:
 		  break;
 	    }
+	}
+	else {
+	    if (chorus > 42) chorus = 42;    /* higher choruss detune notes too much */
+	    if(channel[ voice[w].channel ].pitchbend + chorus < 0x2000)
+                voice[w].orig_frequency *= bend_fine[chorus];
+	    else voice[w].orig_frequency /= bend_fine[chorus];
 	}
 #ifdef DEBUG_CLONE_NOTES
 fprintf(stderr,"CHORUS_CLONE v%d vol%f pan%d chorus%d\n", w, voice[w].volume, voice[w].panning, chorus);
@@ -1356,7 +1368,8 @@ fprintf(stderr,"NOT_CLONE v%d vol%f pan%d\n", i, voice[i].volume, voice[i].panni
 #endif
 
   if (reverb_options & OPT_STEREO_VOICE) clone_voice(ip, i, e, STEREO_CLONE, variationbank);
-  if (reverb_options & OPT_CHORUS_VOICE) clone_voice(ip, i, e, CHORUS_CLONE, variationbank);
+  if (reverb_options & OPT_CHORUS_VOICE || (XG_System_chorus_type >> 3) == 3)
+				         clone_voice(ip, i, e, CHORUS_CLONE, variationbank);
   if (reverb_options & OPT_REVERB_VOICE) clone_voice(ip, i, e, REVERB_CLONE, variationbank);
   ctl->note(i);
   played_notes++;
@@ -1734,7 +1747,7 @@ static void drop_sustain(int c)
 {
   int i=voices;
   while (i--)
-    if (voice[i].status==VOICE_SUSTAINED && voice[i].channel==c)
+    if ( (voice[i].status & VOICE_SUSTAINED) && voice[i].channel==c)
       finish_note(i);
 }
 #endif /* ADAGIO */
@@ -1758,6 +1771,7 @@ static void adjust_volume(int c)
       {
 	recompute_amp(i);
 	apply_envelope_to_amp(i);
+	ctl->note(i);
       }
 }
 

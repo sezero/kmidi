@@ -36,6 +36,8 @@ LogWindow::LogWindow(QWidget *parent, const char *name)
   text_window = new QMultiLineEdit(this,"logwindow");
   text_window->setFocusPolicy ( QWidget::NoFocus );
   text_window->setReadOnly( TRUE );
+  //text_window->setMaxLineLength( 24 );
+  text_window->setMaxLines( 100 ); // text_window->numRows() ??
 
   stringlist = new QStrList(TRUE); // deep copies
   stringlist->setAutoDelete(TRUE);
@@ -52,6 +54,7 @@ LogWindow::~LogWindow() {
 
 void LogWindow::updatewindow(){
 
+  static int line = 0, col = 0;
   timerset = false;
 
 
@@ -59,11 +62,10 @@ void LogWindow::updatewindow(){
   if (stringlist->count() != 0){
 
     text_window->setAutoUpdate(FALSE);
-    
+
     for(stringlist->first();stringlist->current();stringlist->next()){
       /* after a string starting with "~", don't start a new line --gl */
 	static int tildaflag = 0;
-	static int line = 0, col = 0;
 	int futuretilda, len;
 	char *s = stringlist->current();
 	if (*s == '~') {
@@ -77,17 +79,17 @@ void LogWindow::updatewindow(){
 	    col += len;
 	}
 	else {
-	    line++;
+	    if (line > 100) text_window->removeLine(0);
+	    else line++;
 	    text_window->insertLine(s,line);
 	    col = len;
 	}
 	tildaflag = futuretilda;
     }
-
     text_window->setAutoUpdate(TRUE);
 
-    text_window->setCursorPosition(text_window->numLines(),0,FALSE);
-
+    text_window->setCursorPosition(line+1,0,FALSE);
+    text_window->repaint();
 
     stringlist->clear();
 

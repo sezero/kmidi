@@ -1,3 +1,11 @@
+1999-10-31  Greg Lee  <lee@hawaii.edu>
+
+	* log.cpp: keep only 100 lines in the QMLE
+	* mix.c,resample.c: don't notify interface of
+	  finished notes twice
+	* playmidi.c: XG flanger (too fast?)
+	* kmidi.cpp,ctl.c: improve meter display
+
 1999-10-30  Greg Lee  <lee@hawaii.edu>
 
 	* ctl.c/kmidi.cpp: improve meter display (still no

@@ -270,7 +270,7 @@ static void ctl_current_time(int ct)
 #if defined(linux) || defined(__FreeBSD__) || defined(sun)
     int centisecs, realct;
     realct = current_sample_count();
-    if (realct < 0) realct = ct;
+    if (realct < 0) realct = 0;
     else realct += songoffset;
     centisecs = realct / (play_mode->rate/100);
 #else
@@ -297,85 +297,100 @@ static void ctl_current_time(int ct)
     pipe_int_write(v);
 }
 
-static int realcount[MAXDISPCHAN];
 
 static void ctl_channel_note(int ch, int note, int vel, int start)
 {
-	int slot;
+	int k, slot=-1, i=voices, v=0, totalvel=0, total_sustain=0;
+	FLOAT_T total_amp = 0, total_amp_s = 0;
+
+	if (start == -1) return;
+
 	ch &= 0x1f;
-	slot = Panel->cindex[ch];
-	Panel->notecount[slot][ch] = realcount[ch];
-	if (start != -1 && start > Panel->ctime[slot][ch]) {
-		int i = slot;
-		while (i < NQUEUE && Panel->ctime[i][ch] != -1) i++;
-		if (i == NQUEUE) {
-			i = 0;
-			while (i < NQUEUE && Panel->ctime[i][ch] != -1) i++;
-		}
-		if (i == NQUEUE) {
-			/* fprintf(stderr," D"); */
-			return;
-		}
-		Panel->cindex[ch] = slot = i;
-		Panel->ctime[slot][ch] = start;
+
+	if (slot == -1 && start > 10)
+	  for (k = 0; k < NQUEUE; k++)
+	    if (Panel->ctime[k][ch] >= start && Panel->ctime[k][ch] < start + 8) {
+		slot = k;
+		break;
+	    }
+
+	if (slot == -1)
+	  for (k = 0; k < NQUEUE; k++)
+	    if (Panel->ctime[k][ch] == -1) {
+		slot = k;
+		break;
+	    }
+
+	/* if (slot == -1) { fprintf(stderr,"D"); return; } */
+	if (slot == -1) slot = 0;
+
+
+	Panel->ctime[slot][ch] = start;
+
+	while (i--) if (!(voice[i].status&VOICE_FREE) && (voice[i].channel&0x1f) == ch) {
+		FLOAT_T amp;
+		if (voice[i].clone_type) continue;
+		amp = voice[i].left_amp + voice[i].right_amp;
+		v++;
+		if ( !(voice[i].status&(VOICE_ON|VOICE_SUSTAINED))) amp /= 2;
+		if ( (voice[i].sample->modes & MODES_SUSTAIN) &&
+		     (voice[i].status&(VOICE_ON|VOICE_SUSTAINED)) )
+		     total_amp_s += amp;
+		else total_amp += amp;
 	}
-	if (vel == 0) {
-		if (note == Panel->cnote[ch])
-			Panel->v_flags[slot][ch] = FLAG_NOTE_OFF;
-		Panel->cvel[ch] = 0;
-	} else if (vel > Panel->cvel[ch]) {
-		Panel->cvel[ch] = vel;
-		Panel->cnote[ch] = note;
-		Panel->ctotal[slot][ch] = vel * channel[ch].volume *
-			channel[ch].expression / (127*127);
-		Panel->v_flags[slot][ch] = FLAG_NOTE_ON;
+
+	if (v) {
+		totalvel = (int)( 370.0 * total_amp / v );
+		total_sustain = (int)( 370.0 * total_amp_s / v );
+		if (totalvel > 127) totalvel = 127;
+		if (total_sustain > 127) total_sustain = 127;
 	}
+
+	Panel->notecount[slot][ch] = v;
+
+	Panel->ctotal[slot][ch] = totalvel;
+	Panel->ctotal_sustain[slot][ch] = total_sustain;
+
 	if (channel[ch].kit) Panel->c_flags[ch] |= FLAG_PERCUSSION;
 }
 
 static void ctl_note(int v)
 {
 	int ch, note, vel, start;
-	int slot;
 
 	if (!ctl.trace_playing) 
 		return;
 
 	if (voice[v].clone_type != 0) return;
 
-	start = voice[v].starttime/(play_mode->rate/100);
+	/* start = voice[v].starttime/(play_mode->rate/100); */
+	start = (voice[v].starttime + (voice[v].sample_offset>>FRACTION_BITS)) /(play_mode->rate/100);
 	ch = voice[v].channel;
 	ch &= 0x1f;
 	if (ch < 0 || ch >= MAXCHAN) return;
-	slot = Panel->cindex[ch];
 
 	note = voice[v].note;
 	vel = voice[v].velocity;
+#if 0
 	switch(voice[v].status)
 	{
 	    case VOICE_DIE:
 	      vel /= 2;
 	      start = -1;
-	      /* if (Panel->notecount[slot][ch]) Panel->notecount[slot][ch]--; */
 	      break;
 	    case VOICE_FREE: 
 	      vel = 0;
-	      start = -1;
-	      /** if (Panel->notecount[slot][ch]) Panel->notecount[slot][ch]--; **/
-	      if (realcount[ch] > 0) realcount[ch]--;
+	      /* start = -1; */
 	      break;
 	    case VOICE_ON:
-	      /** Panel->notecount[slot][ch]++; **/
-	      realcount[ch]++;
 	      break;
 	    case VOICE_OFF:
-	      start = -1;
-	      /** vel = 0; **/
-	      /* if (Panel->notecount[slot][ch]) Panel->notecount[slot][ch]--; */
+	      /* start = -1; */
 	    case VOICE_SUSTAINED:
-	      start = -1;
+	      /* start = -1; */
 	      break;
 	}
+#endif
 	ctl_channel_note(ch, note, vel, start);
 }
 
@@ -439,18 +454,12 @@ static void ctl_reset(void)
 	if (!ctl.trace_playing)
 		return;
 
-	Panel->wait_reset = 1;
         Panel->buffer_state = 100;
         Panel->various_flags = 0;
 	Panel->reset_panel = 5;
 
-#if 0
-	while(Panel->wait_reset)
-	    /* VOLATILE_TOUCH(Panel->wait_reset)*/;
-#endif
 
 	for (i = 0; i < MAXDISPCHAN; i++) {
-		realcount[i] = 0;
 		ctl_program(i, channel[i].program);
 		ctl_volume(i, channel[i].volume);
 		ctl_expression(i, channel[i].expression);
@@ -1032,7 +1041,6 @@ static void shm_alloc(void)
 	}
 
 	Panel->reset_panel = 5;
-	Panel->wait_reset = 0;
 }
 
 static void shm_free(int sig)

@@ -1,10 +1,10 @@
 
 #include <sys/ipc.h>
 #include <sys/shm.h>
-#include <sys/sem.h>
+/* #include <sys/sem.h> */
 
-#define INT_CODE 214
-#define NQUEUE 60
+/* #define INT_CODE 214 */
+#define NQUEUE 800
 #define MAXDISPCHAN 32
 typedef struct {
 	int reset_panel;
@@ -13,17 +13,18 @@ typedef struct {
 	int32 last_time, cur_time;
 
 	char v_flags[NQUEUE][MAXDISPCHAN];
-	int16 cnote[MAXDISPCHAN];
-	int16 cvel[MAXDISPCHAN];
-	int16 ctotal[NQUEUE][MAXDISPCHAN];
-	int16 ctime[NQUEUE][MAXDISPCHAN];
+	uint8 cnote[MAXDISPCHAN];
+	uint8 cvel[MAXDISPCHAN];
+	uint8 ctotal[NQUEUE][MAXDISPCHAN];
+	uint8 ctotal_sustain[NQUEUE][MAXDISPCHAN];
+	int32 ctime[NQUEUE][MAXDISPCHAN];
 	int16 notecount[NQUEUE][MAXDISPCHAN];
 	int cindex[MAXDISPCHAN], mindex[MAXDISPCHAN];
 
 	char c_flags[MAXDISPCHAN];
 	char currentpatchset;
 	/* Channel channel[MAXDISPCHAN]; */
-	int wait_reset;
+	/* int wait_reset; */
 	int buffer_state, various_flags;
 } PanelInfo;
 

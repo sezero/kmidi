@@ -232,7 +232,6 @@ KMidi::KMidi( QWidget *parent, const char *name )
 
     redoplaylistbox();
     playlistbox->setCurrentItem(current_playlist_num);
-    flag_new_playlist = false;
 
     srandom(time(0L));
     adjustSize();
@@ -391,14 +390,13 @@ void MeterWidget::remeter()
 	QPen greenpen(led_color, 3);
 	QPen yellowpen(yellow, 3);
 	QPen erasepen(background_color, 3);
-	static int lastvol[MAXDISPCHAN], lastamp[MAXDISPCHAN], meterpainttime = 0;
+	static int lastvol[MAXDISPCHAN], lastamp[MAXDISPCHAN], last_sustain[MAXDISPCHAN], meterpainttime = 0;
 	int ch, x1, y1, slot, amplitude, notetime, chnotes;
 
 	if (currplaytime + meterfudge < meterpainttime || Panel->reset_panel == 10) {
 		erase();
 		for (ch = 0; ch < MAXDISPCHAN; ch++) {
-			lastvol[ch] = lastamp[ch] = 0;
-			//Panel->mindex[ch] = Panel->cindex[ch];
+			lastvol[ch] = lastamp[ch] = last_sustain[ch] = 0;
 			for (slot = 0; slot < NQUEUE; slot++)
 			    Panel->ctime[slot][ch] = -1;
 		}
@@ -415,90 +413,46 @@ void MeterWidget::remeter()
 		x1 = BAR_LM + (ch & 0x0f) * BAR_WID;
 		if (ch >= MAXDISPCHAN/2) x1 += BAR_WID / 2;
 		amplitude = -1;
-		slot = Panel->mindex[ch];
 		chnotes = 0;
 
-		while ( 1 ) {
+		for (slot = 0; slot < NQUEUE; slot++) {
 		  notetime = Panel->ctime[slot][ch];
-		  //if (notetime == -1 || notetime > meterpainttime) break;
 		  if (notetime != -1 && notetime <= meterpainttime) {
 		    if (chnotes < Panel->notecount[slot][ch])
 		        chnotes = Panel->notecount[slot][ch];
-		#if 0
-		    if (Panel->v_flags[slot][ch]) {
-			if (Panel->v_flags[slot][ch] == FLAG_NOTE_OFF) {
-				if (!chnotes) Panel->ctotal[slot][ch] -= DELTA_VEL;
-				if (Panel->ctotal[slot][ch] <= 0) {
-					Panel->ctotal[slot][ch] = 0;
-					Panel->v_flags[slot][ch] = 0;
-				}
-			} else {
-				Panel->v_flags[slot][ch] = 0;
-			}
-			if (amplitude < Panel->ctotal[slot][ch])
-			    amplitude = Panel->ctotal[slot][ch];
-		    }
-		#else
-			if (amplitude < Panel->ctotal[slot][ch])
-			    amplitude = Panel->ctotal[slot][ch];
-		#endif
-		#if 0
-		    if (!chnotes && amplitude > 0) {
-			amplitude -= 2*DELTA_VEL;
-			if (Panel->c_flags[ch] & FLAG_PERCUSSION)
-				amplitude -= 3*DELTA_VEL;
-			if (amplitude < 0) amplitude = 0;
-		    }
-		#endif
-		    if (chnotes && amplitude < 40) amplitude = 40;
+		    if (amplitude < Panel->ctotal[slot][ch])
+			amplitude = Panel->ctotal[slot][ch];
+		    last_sustain[ch] = Panel->ctotal_sustain[slot][ch];
 		    Panel->ctime[slot][ch] = -1;
 		  }
-		  slot++;
-		  if (slot == NQUEUE) slot = 0;
-		  if (slot == Panel->mindex[ch]) break;
-		} /* while */
+		} // for each slot
 
-		Panel->mindex[ch] = slot;
-		if (amplitude < 0 && lastvol[ch]) {
-			if (!chnotes) amplitude = lastvol[ch];
-			//else amplitude = lastamp[ch] - (3 - chnotes)*DELTA_VEL;
-			else if (Panel->c_flags[ch] & FLAG_PERCUSSION)
+
+		if (amplitude < 0 && lastamp[ch]) {
+			if (Panel->c_flags[ch] & FLAG_PERCUSSION)
 				amplitude = lastamp[ch] - 4*DELTA_VEL;
 			else amplitude = lastamp[ch] - DELTA_VEL;
 			if (amplitude < 0) amplitude = 0;
-			else if (amplitude > 127) amplitude = 127;
 		}
+
 		if (amplitude != -1) {
 			lastamp[ch] = amplitude;
+			amplitude += last_sustain[ch];
+			if (amplitude > 127) amplitude = 127;
 			y1 = (amplitude * BAR_HGT) / 127;
 			if (y1 > BAR_HGT) y1 = BAR_HGT;
 			if (y1 < lastvol[ch]) {
 				paint.setPen( erasepen );
 	    			paint.drawLine( x1, BAR_TM, x1, BAR_BOT - y1 );
-	    			//paint.drawLine( x1, 64 - lastvol[ch], x1, 64 - y1 );
 			}
 			else if (y1 > lastvol[ch]) {
 				if (Panel->c_flags[ch] & FLAG_PERCUSSION) paint.setPen( yellowpen );
 					else paint.setPen( greenpen );
 	    			paint.drawLine( x1, BAR_BOT - y1, x1, BAR_BOT );
-	    			//paint.drawLine( x1, 64 - y1, x1, 64 - lastvol[ch]);
 			}
 			lastvol[ch] = y1;
 		}
-#if 0
-		if (Panel->c_flags[i]) {
-			if (Panel->c_flags[i] & FLAG_PAN)
-				trace_panning(i, Panel->channel[i].panning);
-			if (Panel->c_flags[i] & FLAG_BANK)
-				trace_bank(i, Panel->channel[i].bank);
-			if (Panel->c_flags[i] & FLAG_PROG)
-				trace_prog(i, Panel->channel[i].program);
-			if (Panel->c_flags[i] & FLAG_SUST)
-				trace_sustain(i, Panel->channel[i].sustain);
-			Panel->c_flags[i] = 0;
-		}
-#endif
-	}
+	} // for each ch
 }
 
 void MeterWidget::paintEvent( QPaintEvent * )
@@ -828,7 +782,8 @@ void KMidi::plActivated( int index )
 {
     current_playlist_num = index;
     loadplaylist(index);
-    if (status == KPLAYING) flag_new_playlist = true;
+    if (status != KPLAYING) setSong(0);
+    else flag_new_playlist = true;
 }
  
 void KMidi::updateRChecks( int which )
@@ -933,8 +888,6 @@ void KMidi::redoplaybox()
 	playbox->insertItem(filenamestr);
 
     }
-    if (status != KPLAYING) setSong(0);
-    else flag_new_playlist = true;
 }
 
 void KMidi::redoplaylistbox()
@@ -1355,6 +1308,8 @@ void KMidi::ejectClicked(){
       playlistbox->setCurrentItem(current_playlist_num);
       //playPB->setOn( FALSE );
       redoplaybox();
+    if (status != KPLAYING) setSong(0);
+    else flag_new_playlist = true;
       if (status != KPLAYING) timer->start( 200, TRUE );  // single shot
     }
 
@@ -1523,7 +1478,6 @@ void KMidi::loadplaylist( int which ) {
 	f.close();
     }
     redoplaybox();
-    flag_new_playlist = false;
 
 }
 
@@ -1660,7 +1614,6 @@ void KMidi::ReadPipe(){
 		    loadplaylist(current_playlist_num);
 		}
     		else redoplaybox();
-		flag_new_playlist = false;
 
 		if(playlist->count() > 0){
 	
@@ -1994,12 +1947,12 @@ void KMidi::readconfig(){
 
     volume = config->readNumEntry("Volume", 40);
     current_voices = config->readNumEntry("Polyphony", DEFAULT_VOICES);
-    meterfudge = config->readNumEntry("MeterAdjust", 14);
+    meterfudge = config->readNumEntry("MeterAdjust", 0);
     tooltips = config->readBoolEntry("ToolTips", TRUE);
     current_playlist_num = config->readNumEntry("Playlist", 0);
     showmeterrequest = config->readBoolEntry("ShowMeter", TRUE);
     showinforequest = config->readBoolEntry("ShowInfo", TRUE);
-    infowindowheight = config->readNumEntry("InfoWindowHeight", 100);
+    infowindowheight = config->readNumEntry("InfoWindowHeight", 80);
     lpfilterrequest = config->readBoolEntry("Filter", FALSE);
     effectsrequest = config->readBoolEntry("Effects", TRUE);
 

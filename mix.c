@@ -48,10 +48,11 @@ int recompute_envelope(int v)
   if (stage>5)
     {
       /* Envelope ran out. */
-      int tmp=(voice[v].status&VOICE_DIE); /* Already displayed as dead */
-      voice[v].status = VOICE_FREE;
-      if(!tmp)
-	ctl->note(v);
+      if (!(voice[v].status & VOICE_FREE))
+	{
+          voice[v].status = VOICE_FREE;
+	  ctl->note(v);
+	}
       return 1;
     }
 
@@ -119,8 +120,11 @@ void apply_envelope_to_amp(int v)
       if ((voice[v].status & (VOICE_OFF | VOICE_DIE | VOICE_FREE | VOICE_SUSTAINED))
 	  && (la | ra) <= MIN_AMP_VALUE)
       {
-	  voice[v].status = VOICE_FREE;
-	  ctl->note(v);
+	  if (!(voice[v].status & VOICE_FREE))
+	    {
+	      voice[v].status = VOICE_FREE;
+	      ctl->note(v);
+	    }
 	  return 1;
       }
 #endif
@@ -144,8 +148,11 @@ void apply_envelope_to_amp(int v)
       if ( (voice[v].status & (VOICE_OFF | VOICE_DIE | VOICE_FREE | VOICE_SUSTAINED))
 	 && la <= MIN_AMP_VALUE)
       {
-	  voice[v].status = VOICE_FREE;
-	  ctl->note(v);
+	  if (!(voice[v].status & VOICE_FREE))
+	    {
+	      voice[v].status = VOICE_FREE;
+	      ctl->note(v);
+	    }
 	  return 1;
       }
 #endif
