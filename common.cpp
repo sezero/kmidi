@@ -56,6 +56,32 @@ static PathList *pathlist=0;
 #define R_OPEN_MODE O_RDONLY
 #endif
 
+static char * shell_quote(const char *s)
+{
+   char *result;
+   char *p;
+   p = result = malloc(strlen(s)*5+3);
+   *p++ = '\'';
+   while(*s)
+   {
+     if (*s == '\'')
+     {
+        *p++ = '\'';
+        *p++ = '"';
+        *p++ = *s++;
+        *p++ = '"';
+        *p++ = '\'';
+     }
+     else
+     {
+        *p++ = *s++;
+     }
+   }
+   *p++ = '\'';
+   *p = '\0';
+   return result;
+}
+
 /* Try to open a file for reading. If the filename ends in one of the 
    defined compressor extensions, pipe the file through the decompressor */
 static FILE *try_to_open(char *name, int decompress)
@@ -77,41 +103,23 @@ static FILE *try_to_open(char *name, int decompress)
     {
       int l,el;
       static const char *decompressor_list[] = DECOMPRESSOR_LIST, **dec;
-      char tmp[1024], tmp2[1024], *cp, *cp2;
+      char tmp[1024], *quoted_name;
       /* Check if it's a compressed file */ 
       l=strlen(name);
       for (dec=decompressor_list; *dec; dec+=2)
 	{
 	  el=strlen(*dec);
-	  if ((el>=l) || (strcmp(name+l-el, *dec)))
+	  if ((l > sizeof(tmp)-128) || (el>=l) || (strcmp(name+l-el, *dec)))
 	    continue;
 
 	  /* Yes. Close the file, open a pipe instead. */
 	  fclose(fp);
 
 	  /* Quote some special characters in the file name */
-	  cp=name;
-	  cp2=tmp2;
-	  while (*cp)
-	    {
-	      switch(*cp)
-		{
-		case '\'':
-		case '\\':
-		case ' ':
-		case '`':
-		case '!':
-		case '"':
-		case '&':
-		case ';':
-		  *cp2++='\\';
-		}
-	      *cp2++=*cp++;
-	    }
-	  *cp2=0;
-
-	  sprintf(tmp, *(dec+1), tmp2);
+          quoted_name = shell_quote(name);
+	  sprintf(tmp, *(dec+1), quoted_name);
 	  fp=popen(tmp, "r");
+          free(quoted_name);
 	  break;
 	}
     }
