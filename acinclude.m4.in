@@ -938,6 +938,100 @@ test "$motif_includes_result" = "none" && motif_includes_result="(none)"
 AC_MSG_RESULT(
   [libraries $motif_libraries_result, headers $motif_includes_result])
 ])dnl
+#------------------------------------------------------------------------
+# SC_PATH_TCLXCONFIG --
+#
+#	Locate the tclxConfig.sh file and perform a sanity check on
+#	the Tcl compile flags
+#
+# Arguments:
+#	none
+#
+# Results:
+#
+#	Adds the following arguments to configure:
+#		--with-tclx=...
+#
+#	Defines the following vars:
+#		TCLX_BIN_DIR	Full path to the directory containing
+#				the tclxConfig.sh file
+#------------------------------------------------------------------------
+
+AC_DEFUN(SC_PATH_TCLXCONFIG, [
+    #
+    # Ok, lets find the tclx configuration
+    # First, look for one uninstalled.
+    # the alternative search directory is invoked by --with-tclx
+    #
+
+    if test x"${no_tclx}" = x ; then
+	# we reset no_tclx in case something fails here
+	no_tclx=true
+	AC_ARG_WITH(tclx, [  --with-tclx             directory containing tclx configuration (tclxConfig.sh)], with_tclxconfig=${withval})
+	AC_MSG_CHECKING([for Tcl configuration])
+	AC_CACHE_VAL(ac_cv_c_tclxconfig,[
+
+	    # First check to see if --with-tclxconfig was specified.
+	    if test x"${with_tclxconfig}" != x ; then
+		if test -f "${with_tclxconfig}/tclxConfig.sh" ; then
+		    ac_cv_c_tclxconfig=`(cd ${with_tclxconfig}; pwd)`
+		else
+		    AC_MSG_ERROR([${with_tclxconfig} directory doesn't contain tclxConfig.sh])
+		fi
+	    fi
+
+	    # then check for a private Tcl installation
+	    if test x"${ac_cv_c_tclxconfig}" = x ; then
+		for i in \
+			../tcl \
+			`ls -dr ../tcl[[8-9]].[[0-9]]* 2>/dev/null` \
+			../../tcl \
+			`ls -dr ../../tcl[[8-9]].[[0-9]]* 2>/dev/null` \
+			../../../tcl \
+			`ls -dr ../../../tcl[[8-9]].[[0-9]]* 2>/dev/null` ; do
+		    if test -f "$i/unix/tclxConfig.sh" ; then
+			ac_cv_c_tclconfig=`(cd $i/unix; pwd)`
+			break
+		    fi
+		done
+	    fi
+
+	    # check in a few common install locations
+	    if test x"${ac_cv_c_tclxconfig}" = x ; then
+		for i in `ls -d ${prefix}/lib 2>/dev/null` \
+			`ls -d /usr/local/lib 2>/dev/null` ; do
+		    if test -f "$i/tclxConfig.sh" ; then
+			ac_cv_c_tclxconfig=`(cd $i; pwd)`
+			break
+		    fi
+		done
+	    fi
+
+	    # check in a few other private locations
+	    if test x"${ac_cv_c_tclxiconfig}" = x ; then
+		for i in \
+			${srcdir}/../tcl \
+			`ls -dr ${srcdir}/../tcl[[8-9]].[[0-9]]* 2>/dev/null` ; do
+		    if test -f "$i/unix/tclxConfig.sh" ; then
+		    ac_cv_c_tclxconfig=`(cd $i/unix; pwd)`
+		    break
+		fi
+		done
+	    fi
+	])
+
+	if test x"${ac_cv_c_tclxconfig}" = x ; then
+	    TCLX_BIN_DIR="# no Tcl configs found"
+	    AC_MSG_WARN(Can't find Tcl configuration definitions)
+	    exit 0
+	else
+	    no_tcl=
+	    TCLX_BIN_DIR=${ac_cv_c_tclxconfig}
+	    AC_MSG_RESULT(found $TCL_BIN_DIR/tclxConfig.sh)
+	fi
+    fi
+])
+
 AC_DEFUN(KMIDI_OPTIMIZE,
 [
 AM_CONDITIONAL(GXXOPTIMIZE, test x$ac_cv_prog_gxx$kde_use_debug_code = xyesno)
@@ -953,5 +1047,6 @@ AC_SUBST(EXTRADEFS)
 AC_SUBST(EXTRALIBS)
 AC_SUBST(CPPFLAGS)
 AC_SUBST(TCLFILES)
+AC_SUBST(TCLX_BIN_DIR)
 ])
 

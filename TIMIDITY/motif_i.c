@@ -52,8 +52,8 @@
 #include <unistd.h>
 #include <stdarg.h>
 
-/* extern "C" { */
-/*
+/* extern "C" {
+
 #ifndef NeedFunctionPrototypes
 #define NeedFunctionPrototypes
 #endif
@@ -92,6 +92,8 @@ XmStringCharSet char_set=XmSTRING_DEFAULT_CHARSET;
 Widget toplevel;
 
 Widget text;
+Widget text;
+Widget parenttext;
 static XmTextPosition wpr_position=0;
 
 Widget mainForm; 
@@ -586,7 +588,7 @@ void handle_input(XtPointer client_data, int *source, XtInputId *id)
 	    break;   
 	    
 	case CLOSE_MESSAGE : {
-	    printf("CLOSE_MESSAGE\n");
+	    /* printf("CLOSE_MESSAGE\n"); */
 	    exit(0);
 	}
 	    break;
@@ -612,7 +614,7 @@ void handle_input(XtPointer client_data, int *source, XtInputId *id)
 	}
 	    break;
 	default:    
-	    fprintf(stderr,"UNKNOW MOTIF MESSAGE %i\n",message);
+	    fprintf(stderr,"UNKNOWN MOTIF MESSAGE %i\n",message);
 	}
     
 }
@@ -758,7 +760,7 @@ void Launch_Motif_Process(int motif_pipe_number)
     /* create the toplevel shell */
     toplevel = XtAppInitialize(&context,"timidity",NULL,0,&argc,NULL,
 			       NULL,NULL,0);
-    
+
     /*******************/
     /* Main form       */
     /*******************/
@@ -807,6 +809,9 @@ void Launch_Motif_Process(int motif_pipe_number)
     wpr_position+= strlen("TIMIDIY RUNNING...\n");
     
     text=XmCreateScrolledText(mainForm,"text",al,ac);
+
+    parenttext=XtParent(text);
+
     XtManageChild(text);    
    
     /********************/ 
@@ -819,7 +824,8 @@ void Launch_Motif_Process(int motif_pipe_number)
     XtSetArg(al[ac], XmNbottomOffset, 20); ac++;
     XtSetArg(al[ac], XmNlabelType, XmSTRING); ac++;
     XtSetArg(al[ac], XmNtopAttachment, XmATTACH_WIDGET); ac++;
-    XtSetArg(al[ac], XmNtopWidget, text); ac++;
+    /* XtSetArg(al[ac], XmNtopWidget, text); ac++; */
+    XtSetArg(al[ac], XmNtopWidget, parenttext); ac++;
     XtSetArg(al[ac], XmNleftAttachment,XmATTACH_FORM); ac++;
     XtSetArg(al[ac], XmNtraversalOn, False); ac++;
     XtSetArg(al[ac], XmNhighlightThickness,0); ac++;
@@ -836,7 +842,8 @@ void Launch_Motif_Process(int motif_pipe_number)
     XtSetArg(al[ac], XmNbottomOffset, 20); ac++;
     XtSetArg(al[ac], XmNlabelType, XmSTRING); ac++;
     XtSetArg(al[ac], XmNtopAttachment, XmATTACH_WIDGET); ac++;
-    XtSetArg(al[ac], XmNtopWidget, text); ac++;
+    /* XtSetArg(al[ac], XmNtopWidget, text); ac++; */
+    XtSetArg(al[ac], XmNtopWidget, parenttext); ac++;
     XtSetArg(al[ac], XmNleftAttachment,XmATTACH_WIDGET); ac++;
     XtSetArg(al[ac], XmNleftWidget,file_headlbl); ac++;
     XtSetArg(al[ac], XmNtraversalOn, False); ac++;
@@ -858,7 +865,8 @@ void Launch_Motif_Process(int motif_pipe_number)
     XtSetArg(al[ac], XmNleftOffset, 10); ac++;
     XtSetArg(al[ac], XmNrightOffset, 10); ac++;
     XtSetArg(al[ac],XmNtopAttachment,XmATTACH_WIDGET); ac++;
-    XtSetArg(al[ac],XmNtopWidget,text); ac++;
+    /* XtSetArg(al[ac],XmNtopWidget,text); ac++; */
+    XtSetArg(al[ac],XmNtopWidget,parenttext); ac++;
     XtSetArg(al[ac],XmNrightAttachment,XmATTACH_FORM); ac++;
     /*
       XtSetArg(al[ac],XmNleftAttachment,XmATTACH_WIDGET); ac++;
@@ -942,7 +950,8 @@ void Launch_Motif_Process(int motif_pipe_number)
 	XtSetArg(al[ac], XmNtopOffset, 10); ac++;
 	XtSetArg(al[ac], XmNbottomOffset, 10); ac++;
 	XtSetArg(al[ac], XmNtopAttachment, XmATTACH_WIDGET); ac++;
-	XtSetArg(al[ac], XmNtopWidget, countForm); ac++;
+	/* XtSetArg(al[ac], XmNtopWidget, countForm); ac++; */
+	XtSetArg(al[ac], XmNtopWidget, countFrame); ac++;
 	XtSetArg(al[ac], XmNleftAttachment,XmATTACH_FORM); ac++;
 	XtSetArg(al[ac], XmNrightAttachment,XmATTACH_FORM); ac++;
 	XtSetArg(al[ac], XmNmaximum, 100); ac++;

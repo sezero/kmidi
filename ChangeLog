@@ -1,3 +1,8 @@
+2000-03-02  Greg Lee  <lee@hawaii.edu>
+
+	* fix motif "not child" error messages
+	* move tk and motif src to TIMIDITY dir
+
 2000-02-29  Greg Lee  <lee@hawaii.edu>
 
 	* fix motif & xaw hanging after next

@@ -514,6 +514,8 @@ CONFIG_INTERFACE(tcltk,TCLTK,k,
     KEEPLDFLAGS=$LDFLAGS
     KEEPLIBS=$LIBS
 
+    SC_PATH_TCLXCONFIG
+
     CPPFLAGS="$tcl_include_dir $tk_includes $CPPFLAGS"
     LDFLAGS="$tcl_libdir $tk_libdir $LDFLAGS"
 dnl    LIBS="$LIBS $lib_dl_opt"

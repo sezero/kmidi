@@ -57,14 +57,10 @@ ln -sf ../sun_a.cpp sun_a.c
 ln -sf ../tables.cpp tables.c
 ln -sf ../tables.h tables.h
 ln -sf ../timidity.cpp timidity.c
-ln -sf ../tk_c.cpp tk_c.c
 ln -sf ../version.h version.h
 ln -sf ../wav2pat.cpp wav2pat.c
 ln -sf ../wave_a.cpp wave_a.c
 ln -sf ../win_a.cpp win_a.c
-ln -sf ../xaw.h xaw.h
-ln -sf ../xaw_c.cpp xaw_c.c
-ln -sf ../xaw_i.cpp xaw_i.c
 ln -sf ../cfg.l cfg.l
 ln -sf ../BITMAPS BITMAPS
 
