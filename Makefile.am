@@ -53,7 +53,7 @@ noinst_HEADERS = kmidi.h  playlist.h bwlednum.h configdlg.h \
 	config.h common.h readmidi.h playmidi.h resample.h mix.h instrum.h \
 	tables.h controls.h output.h filter.h log.h version.h filepic.h \
 	cduppic.h folderpic.h sbk.h sflayer.h ctl.h effects.h \
-	midiapplication.h kmidiframe.h kmidifiledlg.h
+	midiapplication.h kmidiframe.h kmidifiledlg.h qttableview.h
 
 METASOURCES = AUTO
 
