@@ -280,7 +280,7 @@ void  PlaylistEdit::parse_fileinfo(QFileInfo* fi, MyListBoxItem* lbitem){
 
   QDate date = fi->lastModified().date();
 
-  QString monthname = date.monthName(date.month());
+  QString monthname = date.shortMonthName(date.month());
   lbitem->month = monthname;
 
   QTime time = fi->lastModified().time();
