@@ -19,7 +19,7 @@ LDADD = $(LIB_KFILE) $(LIBALIB) $(LIBAUDIO) $(LIBMME) $(EXTRALIBS) -lsoundserver
 # Where to install the patches, config files, and MIDI files.
 # If you change this, it's a good idea to recompile the binary,
 # or you'll need to invoke timidity with the -L option.
-TIMID_DIR = $(kde_datadir)/kmidi
+TIMID_DIR = $(kde_datadir)/kmidi/config
 
 
 bin_PROGRAMS = kmidi sf2cfg
@@ -54,7 +54,7 @@ noinst_HEADERS = kmidi.h  playlist.h bwlednum.h configdlg.h \
 
 METASOURCES = AUTO
 
-SUBDIRS = config bitmaps patch midis TIMIDITY BITMAPS
+SUBDIRS = config bitmaps midis TIMIDITY BITMAPS
 
 appsdir = $(kde_appsdir)/Multimedia
 apps_DATA = kmidi.desktop
@@ -73,13 +73,13 @@ cfg.cpp: cfg.l
 
 install-data-local:
 	$(mkinstalldirs) $(TIMID_DIR)/patch
-	if [ ! -f $(TIMID_DIR)/patch/sologrnd.pat ]; then $(INSTALL_DATA) $(srcdir)/patch/sologrnd.pat $(DESTDIR)$(TIMID_DIR)/patch ; fi
-	if [ ! -f $(TIMID_DIR)/patch/nylongt2.pat ]; then $(INSTALL_DATA) $(srcdir)/patch/nylongt2.pat $(DESTDIR)$(TIMID_DIR)/patch ; fi
-	if [ ! -f $(TIMID_DIR)/patch/kick2.pat ]; then $(INSTALL_DATA) $(srcdir)/patch/kick2.pat $(DESTDIR)$(TIMID_DIR)/patch ; fi
-	if [ ! -f $(TIMID_DIR)/patch/kick1.pat ]; then $(INSTALL_DATA) $(srcdir)/patch/kick1.pat $(DESTDIR)$(TIMID_DIR)/patch ; fi
-	if [ ! -f $(TIMID_DIR)/patch/hihatcl.pat ]; then $(INSTALL_DATA) $(srcdir)/patch/hihatcl.pat $(DESTDIR)$(TIMID_DIR)/patch ; fi
-	if [ ! -f $(TIMID_DIR)/patch/cymride1.pat ]; then $(INSTALL_DATA) $(srcdir)/patch/cymride1.pat $(DESTDIR)$(TIMID_DIR)/patch ; fi
-	if [ ! -f $(TIMID_DIR)/patch/acbass.pat ]; then $(INSTALL_DATA) $(srcdir)/patch/acbass.pat $(DESTDIR)$(TIMID_DIR)/patch ; fi
+	if [ ! -f $(TIMID_DIR)/patch/sologrnd.pat ]; then $(INSTALL_DATA) $(srcdir)/config/patch/sologrnd.pat $(DESTDIR)$(TIMID_DIR)/patch ; fi
+	if [ ! -f $(TIMID_DIR)/patch/nylongt2.pat ]; then $(INSTALL_DATA) $(srcdir)/config/patch/nylongt2.pat $(DESTDIR)$(TIMID_DIR)/patch ; fi
+	if [ ! -f $(TIMID_DIR)/patch/kick2.pat ]; then $(INSTALL_DATA) $(srcdir)/config/patch/kick2.pat $(DESTDIR)$(TIMID_DIR)/patch ; fi
+	if [ ! -f $(TIMID_DIR)/patch/kick1.pat ]; then $(INSTALL_DATA) $(srcdir)/config/patch/kick1.pat $(DESTDIR)$(TIMID_DIR)/patch ; fi
+	if [ ! -f $(TIMID_DIR)/patch/hihatcl.pat ]; then $(INSTALL_DATA) $(srcdir)/config/patch/hihatcl.pat $(DESTDIR)$(TIMID_DIR)/patch ; fi
+	if [ ! -f $(TIMID_DIR)/patch/cymride1.pat ]; then $(INSTALL_DATA) $(srcdir)/config/patch/cymride1.pat $(DESTDIR)$(TIMID_DIR)/patch ; fi
+	if [ ! -f $(TIMID_DIR)/patch/acbass.pat ]; then $(INSTALL_DATA) $(srcdir)/config/patch/acbass.pat $(DESTDIR)$(TIMID_DIR)/patch ; fi
 
 	@echo ""
 	@echo "Midis:"

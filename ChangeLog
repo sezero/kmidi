@@ -1,3 +1,8 @@
+2000-07-07  Greg Lee  <lee@hawaii.edu>
+
+	* Makefile.am, config.h: path for config file was wrong
+	* move patch dir down inside config dir
+
 Sat May 27 11:11:56 2000  Dirk Försterling  <milliByte@gmx.de>
 
 	* added font size calculation (fix 100dpi problem)

@@ -6,6 +6,8 @@ TIMID_DIR = $(kde_datadir)/kmidi/config
 
 EXTRA_DIST = $(CONFIG_FILES)
 
+SUBDIRS = patch
+
 install-data-local:
 	$(mkinstalldirs) $(TIMID_DIR)
 	@for i in $(CONFIG_FILES); do \
