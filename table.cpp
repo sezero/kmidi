@@ -13,6 +13,14 @@
 #include <qkeycode.h>
 #include <qprinter.h>
 
+#include "config.h"
+#include "instrum.h"
+#include "playmidi.h"
+#include "ctl.h"
+
+static const int NUMCOLS = 7;
+static const int NUMROWS = 16;
+
 /*
   Constructs a Table widget.
 */
@@ -24,16 +32,13 @@ Table::Table( int width, int height, QWidget *parent, const char *name )
     setAutoUpdate(true);
     setFocusPolicy( NoFocus );
     setBackgroundMode( PaletteBase );		// set widgets background
-    setNumCols( 5 );			// set number of col's in table
-    setNumRows( 16 );			// set number of rows in table
-    setCellHeight( height/16 );			// set height of cell in pixels
-    setTableFlags( //Tbl_vScrollBar |		// always vertical scroll bar
-		   //Tbl_hScrollBar |		// ditto for horizontal
-		   Tbl_clipCellPainting |	// avoid drawing outside cell
-		   Tbl_smoothScrolling);	// easier to see the scrolling
+    setNumCols( NUMCOLS );			// set number of col's in table
+    setNumRows( NUMROWS );			// set number of rows in table
+    setCellHeight( height/NUMROWS );			// set height of cell in pixels
+    setTableFlags( Tbl_clipCellPainting );	// avoid drawing outside cell
     resize( width, height );				// set default size in pixels
 
-    contents = new QString[ 16 * 5 ];	// make room for contents
+    contents = new QString[ NUMROWS * NUMCOLS ];	// make room for contents
 
     int n;
     for (n=0; n<16; n++) contents[indexOf( n, 0 )].setNum(n+1);
@@ -52,13 +57,15 @@ Table::~Table()
 
 int Table::cellWidth( int col )
 {
-   int leftover = width() - (20+30+80+80);
+   int leftover = width() - (20+100+27+27+27+40);
    switch (col) {
 	case 0: return 20;
-	case 1: return leftover;
-	case 2: return 30;
-	case 3: return 80;
-	case 4: return 80;
+	case 1: return 100;
+	case 2: return 27;
+	case 3: return 27;
+	case 4: return 27;
+	case 5: return 40;
+	case 6: return leftover;
    }
    return 0;
 }
@@ -68,8 +75,12 @@ void Table::clearChannels( void )
     for (int chan = 0; chan < 16; chan++) {
         contents[indexOf( chan, 1 )] = QString::null;
         contents[indexOf( chan, 2 )] = QString::null;
+        contents[indexOf( chan, 3 )] = QString::null;
+        contents[indexOf( chan, 4 )] = QString::null;
 	updateCell( chan, 1 );
 	updateCell( chan, 2 );
+	updateCell( chan, 3 );
+	updateCell( chan, 4 );
     }
 }
 
@@ -88,10 +99,16 @@ void Table::setVolume( int chan, int val )
 
 void Table::setExpression( int chan, int val )
 {
+    if (chan < 0 || chan > 15) return;
+    contents[indexOf( chan, 3 )].setNum(val);
+	updateCell( chan, 3 );
 }
 
 void Table::setPanning( int chan, int val )
 {
+    if (chan < 0 || chan > 15) return;
+    contents[indexOf( chan, 4 )].setNum(val);
+	updateCell( chan, 4 );
 }
 
 void Table::setPitchbend( int chan, int val )
@@ -141,8 +158,10 @@ void Table::paintCell( QPainter* p, int row, int col )
     p->drawLine( x2, 0, x2, y2 );		// draw vertical line on right
     p->drawLine( 0, y2, x2, y2 );		// draw horiz. line at bottom
 
-    if (!row) p->drawLine( 0,  1, x2,  1 );		// horiz. at top
-    if (!col) p->drawLine( 1,  0,  1, y2 );		// vert. on left
+    //if (!row) p->drawLine( 0,  1, x2,  1 );		// horiz. at top
+    //if (!col) p->drawLine( 1,  0,  1, y2 );		// vert. on left
+    if (!row) p->drawLine( 0,  0, x2,  0 );		// horiz. at top
+    if (!col) p->drawLine( 0,  0,  0, y2 );		// vert. on left
     /*
       Draw extra frame inside if this is the current cell.
     */
@@ -166,104 +185,6 @@ void Table::paintCell( QPainter* p, int row, int col )
     if (col==1) p->drawText( 3, 0, w, h, AlignLeft, contents[indexOf(row,col)] );
     else p->drawText( 0, 0, w, h, AlignCenter, contents[indexOf(row,col)] );
 }
-
-
-/*
-  Handles mouse press events for the Table widget.
-  The current cell marker is set to the cell the mouse is clicked in.
-*/
-
-//void Table::mousePressEvent( QMouseEvent* e )
-//{
-//    int oldRow = curRow;			// store previous current cell
-//    int oldCol = curCol;
-//    QPoint clickedPos = e->pos();		// extract pointer position
-//    curRow = findRow( clickedPos.y() );		// map to row; set current cell
-//    curCol = findCol( clickedPos.x() );		// map to col; set current cell
-//    if ( (curRow != oldRow) 			// if current cell has moved,
-//	 || (curCol != oldCol) ) {
-//	updateCell( oldRow, oldCol );		// erase previous marking
-//	updateCell( curRow, curCol );		// show new current cell
-//    }
-//}
-
-
-/*
-  Handles key press events for the Table widget.
-  Allows moving the current cell marker around with the arrow keys
-*/
-
-//void Table::keyPressEvent( QKeyEvent* e )
-//{
-//    int oldRow = curRow;			// store previous current cell
-//    int oldCol = curCol;
-//    switch( e->key() ) {			// Look at the key code
-//	case Key_Left:				// If 'left arrow'-key, 
-//	    if( curCol > 0 ) {			// and cr't not in leftmost col
-//		curCol--;     			// set cr't to next left column
-//		int edge = leftCell();		// find left edge
-//		if ( curCol < edge )		// if we have moved off  edge,
-//		    setLeftCell( edge - 1 );	// scroll view to rectify
-//	    }
-//	    break;
-//	case Key_Right:				// Correspondingly...
-//	    if( curCol < numCols()-1 ) {
-//		curCol++;
-//		int edge = lastColVisible();
-//		if ( curCol >= edge )
-//		    setLeftCell( leftCell() + 1 );
-//	    }
-//	    break;
-//	case Key_Up:
-//	    if( curRow > 0 ) {
-//		curRow--;
-//		int edge = topCell();
-//		if ( curRow < edge )
-//		    setTopCell( edge - 1 );
-//	    }
-//	    break;
-//	case Key_Down:
-//	    if( curRow < numRows()-1 ) {
-//		curRow++;
-//		int edge = lastRowVisible();
-//		if ( curRow >= edge )
-//		    setTopCell( topCell() + 1 );
-//	    }
-//	    break;
-//	default:				// If not an interesting key,
-//	    e->ignore();			// we don't accept the event
-//	    return;	
-//    }
-//    
-//    if ( (curRow != oldRow) 			// if current cell has moved,
-//	 || (curCol != oldCol)  ) {
-//	updateCell( oldRow, oldCol );		// erase previous marking
-//	updateCell( curRow, curCol );		// show new current cell
-//    }
-//}
-
-
-/*
-  Handles focus reception events for the Table widget.
-  Repaint only the current cell; to avoid flickering
-*/
-
-//void Table::focusInEvent( QFocusEvent* )
-//{
-//    updateCell( curRow, curCol );		// draw current cell
-//}    
-
-
-/*
-  Handles focus loss events for the Table widget.
-  Repaint only the current cell; to avoid flickering
-*/
-
-//void Table::focusOutEvent( QFocusEvent* )
-//{
-//    updateCell( curRow, curCol );		// draw current cell
-//}    
-
 
 /*
   Utility function for mapping from 2D table to 1D array

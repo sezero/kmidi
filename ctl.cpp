@@ -91,19 +91,6 @@ static int cmsg(int type, int verbosity_level, const char *fmt, ...);
 static void ctl_pass_playing_list(int number_of_files, char *list_of_files[]);
 static int ctl_blocking_read(int32 *valp);
 
-/*
-void 	pipe_printf(char *fmt, ...);
-void 	pipe_puts(char *str);
-int 	pipe_gets(char *str, int maxlen);
-*/
-
-/*
-extern int output_device_open;
-extern int cfg_select;
-extern int read_config_file(char *name);
-extern void clear_config(void);
-extern void effect_activate( int iSwitch );
-*/
 void pipe_int_write(int c);
 void pipe_int_read(int *c);
 void pipe_string_write(char *str);
@@ -113,31 +100,11 @@ void 	pipe_open(void);
 void	pipe_error(const char *st);
 int 	pipe_read_ready(void);
 
-/*
-static int AppInit(Tcl_Interp *interp);
-static int ExitAll(ClientData clientData, Tcl_Interp *interp,
-		       int argc, char *argv[]);
-static int TraceCreate(ClientData clientData, Tcl_Interp *interp,
-		       int argc, char *argv[]);
-static int TraceUpdate(ClientData clientData, Tcl_Interp *interp,
-		    int argc, char *argv[]);
-static int TraceReset(ClientData clientData, Tcl_Interp *interp,
-		    int argc, char *argv[]);
-static void trace_volume(int ch, int val);
-static void trace_panning(int ch, int val);
-static void trace_prog_init(int ch);
-static void trace_prog(int ch, int val);
-static void trace_bank(int ch, int val);
-static void trace_sustain(int ch, int val);
-*/
 
 static void get_child(int sig);
 static void shm_alloc(void);
 static void shm_free(int sig);
 
-/*
-static void start_panel(void);
-*/
 
 
 /**********************************************/
@@ -232,7 +199,6 @@ static int cmsg(int type, int verbosity_level, const char *fmt, ...)
 		}
 
 		/*		printf("WRITING=%s %d\n",local, strlen(local));*/
-/* here write current_event->time if type is CMSG_LYRIC */
 		pipe_string_write(local);
 
 	}
@@ -348,13 +314,18 @@ static void ctl_channel_note(int ch, /*int note, int vel,*/ int start)
 		if (total_sustain > 127) total_sustain = 127;
 	}
 
-	Panel->notecount[slot][ch] = v;
+	Panel->notecount[slot][ch] = (int16)v;
 
-	Panel->ctotal[slot][ch] = totalvel;
-	Panel->ctotal_sustain[slot][ch] = total_sustain;
+	Panel->ctotal[slot][ch] = (uint8)totalvel;
+	Panel->ctotal_sustain[slot][ch] = (uint8)total_sustain;
 
 	if (channel[ch].kit) Panel->c_flags[ch] |= FLAG_PERCUSSION;
-	else Panel->c_flags[ch] = 0;
+	else Panel->c_flags[ch] &= ~FLAG_PERCUSSION;
+
+	Panel->volume[slot][ch] = (uint8)channel[ch].volume;
+	Panel->sustain[slot][ch] = (uint8)channel[ch].sustain;
+	Panel->panning[slot][ch] = (uint8)channel[ch].panning;
+	Panel->expression[slot][ch] = (uint8)channel[ch].expression;
 }
 
 static void ctl_note(int v)
@@ -433,15 +404,10 @@ static void ctl_volume( int ch, int val )
 
 static void ctl_expression( int ch, int val )
 {
-#ifdef MISC_PANEL_UPDATE
 	if (!ctl.trace_playing)
 		return;
 	ch &= 0x1f;
-	/* Panel->channel[ch].expression = val; */
-	ctl_channel_note(ch, Panel->cnote[ch], Panel->cvel[ch], -1);
-#else
-	ch=val=0;
-#endif
+	ctl_channel_note(ch, current_event->time);
 }
 
 static void ctl_panning( int ch, int val )
@@ -500,7 +466,6 @@ static void ctl_reset(void)
 		ctl_pitch_bend(i, channel[i].pitchbend);
 		ctl_channel_note(i, Panel->cnote[i], 0, -1);
 	#endif
-		Panel->cindex[i] = 0;
 		for (j = 0; j < NQUEUE; j++) {
 			Panel->ctime[j][i] = -1;
 			Panel->notecount[j][i] = 0;

@@ -94,6 +94,7 @@ const char * whatsthis_image[] = {
 #include "playmidi.h"
 #include "constants.h"
 #include "ctl.h"
+#include "table.h"
 
 int pipe_read_ready();
 void pipe_int_write(int c);
@@ -128,6 +129,7 @@ extern int fixframesizecount;
 extern MidiApplication * thisapp;
 extern KMidiFrame *kmidiframe;
 KMidi *kmidi;
+Table		*channelwindow;
 
 KMidi::KMidi( QWidget *parent, const char *name )
     : QWidget( parent, name )
@@ -432,13 +434,22 @@ void MeterWidget::remeter()
 	QPen greenpen(led_color, 3);
 	QPen yellowpen(yellow, 3);
 	QPen erasepen(background_color, 3);
-	static int lastvol[MAXDISPCHAN], lastamp[MAXDISPCHAN], last_sustain[MAXDISPCHAN], meterpainttime = 0;
+	static int lastvol[MAXDISPCHAN],
+	 lastamp[MAXDISPCHAN],
+	 last_sustain[MAXDISPCHAN],
+	 last_expression[MAXDISPCHAN],
+	 last_panning[MAXDISPCHAN],
+	 meterpainttime = 0;
 	int ch, x1, y1, slot, amplitude, notetime, chnotes;
 
 	if (currplaytime + meterfudge < meterpainttime || Panel->reset_panel == 10) {
 		erase();
 		for (ch = 0; ch < MAXDISPCHAN; ch++) {
-			lastvol[ch] = lastamp[ch] = last_sustain[ch] = 0;
+			lastvol[ch] =
+			 lastamp[ch] =
+			 last_expression[ch] =
+			 last_panning[ch] =
+			 last_sustain[ch] = 0;
 			for (slot = 0; slot < NQUEUE; slot++)
 			    Panel->ctime[slot][ch] = -1;
 		}
@@ -458,6 +469,7 @@ void MeterWidget::remeter()
 		chnotes = 0;
 
 		for (slot = 0; slot < NQUEUE; slot++) {
+		  int tmp;
 		  notetime = Panel->ctime[slot][ch];
 		  if (notetime != -1 && notetime <= meterpainttime) {
 		    if (chnotes < Panel->notecount[slot][ch])
@@ -465,6 +477,16 @@ void MeterWidget::remeter()
 		    if (amplitude < Panel->ctotal[slot][ch])
 			amplitude = Panel->ctotal[slot][ch];
 		    last_sustain[ch] = Panel->ctotal_sustain[slot][ch];
+		    tmp = Panel->expression[slot][ch];
+		    if (last_expression[ch] != tmp) {
+		        last_expression[ch] = tmp;
+			channelwindow->setExpression(ch, tmp);
+		    }
+		    tmp = Panel->panning[slot][ch];
+		    if (tmp < 128 && last_panning[ch] != tmp) {
+		        last_panning[ch] = tmp;
+			channelwindow->setPanning(ch, tmp);
+		    }
 		    Panel->ctime[slot][ch] = -1;
 		  }
 		} // for each slot

@@ -13,13 +13,19 @@ typedef struct {
 	int32 last_time, cur_time;
 
 	char v_flags[NQUEUE][MAXDISPCHAN];
+/*
 	uint8 cnote[MAXDISPCHAN];
 	uint8 cvel[MAXDISPCHAN];
+*/
 	uint8 ctotal[NQUEUE][MAXDISPCHAN];
 	uint8 ctotal_sustain[NQUEUE][MAXDISPCHAN];
 	int32 ctime[NQUEUE][MAXDISPCHAN];
 	int16 notecount[NQUEUE][MAXDISPCHAN];
-	int cindex[MAXDISPCHAN], mindex[MAXDISPCHAN];
+
+	uint8 volume[NQUEUE][MAXDISPCHAN];
+	uint8 sustain[NQUEUE][MAXDISPCHAN];
+	uint8 panning[NQUEUE][MAXDISPCHAN];
+	uint8 expression[NQUEUE][MAXDISPCHAN];
 
 	char c_flags[MAXDISPCHAN];
 	char currentpatchset;

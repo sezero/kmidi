@@ -1059,8 +1059,7 @@ static void start_note(MidiEvent *e, int i)
 #endif
       if (channel[ch].program==SPECIAL_PROGRAM)
 	lp=default_instrument;
-      else if (!(lp=tonebank[banknum]->
-		 tone[channel[ch].program].layer))
+      else if (!(lp=tonebank[banknum]->tone[channel[ch].program].layer))
 	{
 	  if (!(lp=tonebank[0]->tone[channel[ch].program].layer))
 	    return; /* No instrument? Then we can't play. */
@@ -2518,14 +2517,18 @@ int play_midi(MidiEvent *eventlist, uint32 events, uint32 samples)
 		  /* Change drum set */
 		  /* if (channel[current_event->channel].kit==126)
 		  	channel[current_event->channel].bank=57;
-		  else */ channel[current_event->channel].bank=current_event->a;
+		  else */
+		  channel[current_event->channel].bank=current_event->a;
+	          ctl->program(current_event->channel, current_event->a,
+			channel[current_event->channel].name);
 		}
 	      else
 		{
 		  channel[current_event->channel].program=current_event->a;
+	          ctl->program(current_event->channel, current_event->a,
+      			tonebank[channel[current_event->channel].bank]->
+				tone[current_event->a].name);
 		}
-	      ctl->program(current_event->channel, current_event->a,
-			channel[current_event->channel].name);
 	      break;
 
 	    case ME_SUSTAIN:
