@@ -312,7 +312,6 @@ void KMidi::setToolTips()
 	QToolTip::add( shufflebutton, 	i18n("Random play") );
 	QToolTip::add( ejectPB, 	i18n("Open playlist") );
 	QToolTip::add( infobutton, 	i18n("Show info window") );
-	QToolTip::add( shufflebutton, 	i18n("Random play") );
 	QToolTip::add( volSB, 		i18n("Volume control") );
 	QToolTip::add( timeSB, 		i18n("Time control") );
 
@@ -350,7 +349,6 @@ void KMidi::setToolTips()
 	QToolTip::remove( prevPB );
 	QToolTip::remove( shufflebutton );
 	QToolTip::remove( ejectPB );
-	QToolTip::remove( shufflebutton );
 	QToolTip::remove( infobutton );
 	QToolTip::remove( volSB );
 	QToolTip::remove( timeSB );
