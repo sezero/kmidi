@@ -115,6 +115,8 @@ static int tr_lm, tr_nw;
 #define MAX_PNW 12
 static char patch_name[16][MAX_PNW];
 
+static char short_cfg_names[4][6];
+
 static int my_bg = COLOR_BLACK;
 
 static void set_color(WINDOW *win, chtype color)
@@ -166,6 +168,10 @@ static void re_init_screen(void)
     if(screen_bugfix)
 	return;
     screen_bugfix = 1;
+  wmove(dftwin, 1,3);
+  wprintw(dftwin, (char *)"patchset: %-20s interpolation: %-8s",
+	cfg_names[cfg_select]? cfg_names[cfg_select] : "?",
+	current_interpolation? ((current_interpolation==1)? "C-spline":"LaGrange") : "linear" );
     touchwin(dftwin);
     _ctl_refresh();
     if(msgwin)
@@ -407,7 +413,7 @@ static void ctl_panning(int ch, int val)
   wmove(dftwin, 8+ch, maxx-8);
   if (val != NO_PANNING && has_colors())
     {
-      if (val <= 60) set_color(dftwin, COLOR_BLUE);
+      if (val <= 60) set_color(dftwin, COLOR_CYAN);
       if (val >= 68) set_color(dftwin, COLOR_GREEN);
     }
   if (val==NO_PANNING)
@@ -506,8 +512,14 @@ static void draw_windows(void)
   waddstr(dftwin, "TiMidity v" TIMID_VERSION);
   wmove(dftwin, 0,maxx-52);
   waddstr(dftwin, "(C) 1995 Tuukka Toivonen <toivonen@clinet.fi>");
+/*
   wmove(dftwin, 1,0);
   waddstr(dftwin, "Press 'h' for help with keys, or 'q' to quit.");
+*/
+  wmove(dftwin, 1,3);
+  wprintw(dftwin, (char *)"patchset: %-20s interpolation: %-8s",
+	cfg_names[cfg_select]? cfg_names[cfg_select] : "?",
+	current_interpolation? ((current_interpolation==1)? "C-spline":"LaGrange") : "linear" );
   wmove(dftwin, 3,0);
   waddstr(dftwin, "File:");
   wmove(dftwin, 4,0);
@@ -565,6 +577,7 @@ static void draw_windows(void)
 
 static int ctl_open(int using_stdin, int using_stdout)
 {
+  int i;
 #ifdef CURSED_REDIR_HACK
   FILE *infp=stdin, *outfp=stdout;
   SCREEN *dftscr;
@@ -589,12 +602,14 @@ static int ctl_open(int using_stdin, int using_stdout)
       setvbuf(stdout, 0, _IOFBF, BUFSIZ);
     }
 
+  slk_init(3);
   dftscr=newterm(0, outfp, infp);
   if (!dftscr)
     return -1;
   oldscr=set_term(dftscr);
   /* dftwin=stdscr; */
 #else
+  slk_init(3);
   initscr();
 #endif
 
@@ -606,6 +621,8 @@ static int ctl_open(int using_stdin, int using_stdout)
   /*leaveok(stdscr, 1);*/
   idlok(stdscr, 1);
   keypad(stdscr, TRUE);
+
+
   if (has_colors())
     {
 	start_color();
@@ -624,6 +641,23 @@ static int ctl_open(int using_stdin, int using_stdout)
   else
     dftwin=newwin(6,maxx,0,0);
 
+  slk_set(1, "Help", 1);
+  slk_set(2, "Lnear", 1);
+  slk_set(3, "Cspln", 1);
+  slk_set(4, "Lgrng", 1);
+
+  for (i=0; i<4; i++)
+    {
+      if (cfg_names[i]) strncpy(short_cfg_names[i], cfg_names[i], 5);
+      else strcpy(short_cfg_names[i], "(nne)");
+      short_cfg_names[i][5] = '\0';
+      slk_set(i+5, short_cfg_names[i], 1);
+    }
+
+  slk_set(10, "Quit", 1);
+  if (opt_dry) slk_set(11, "Dry", 1);
+  else slk_set(11, "Wet", 1);
+  slk_refresh();
   draw_windows();
   
   return 0;
@@ -672,6 +706,7 @@ static int ctl_read(int32 *valp)
 	  return RC_CHANGE_VOLUME;
 	case 'q':
 	case KEY_END:
+	case KEY_F(10):
 	  return RC_QUIT;
 	case 'n':
 	case KEY_NPAGE:
@@ -701,11 +736,54 @@ static int ctl_read(int32 *valp)
 	  ctl_reset();
 	  return RC_NONE;
 #endif
+	case KEY_F(2):
+	  current_interpolation = 0;
+	  screen_bugfix = 0;
+	  return RC_NONE;
+	case KEY_F(3):
+	  current_interpolation = 1;
+	  screen_bugfix = 0;
+	  return RC_NONE;
+	case KEY_F(4):
+	  current_interpolation = 2;
+	  screen_bugfix = 0;
+	  return RC_NONE;
+	case KEY_F(5):
+	  cfg_select = 0;
+	  screen_bugfix = 0;
+	  return RC_PATCHCHANGE;
+	case KEY_F(6):
+	  cfg_select = 1;
+	  screen_bugfix = 0;
+	  return RC_PATCHCHANGE;
+	case KEY_F(7):
+	  cfg_select = 2;
+	  screen_bugfix = 0;
+	  return RC_PATCHCHANGE;
+	case KEY_F(8):
+	  cfg_select = 3;
+	  screen_bugfix = 0;
+	  return RC_PATCHCHANGE;
+	case KEY_F(11):
+	  if (!opt_dry)
+	    {
+		opt_dry = 1;
+		slk_set(11, "Dry", 1);
+	    }
+	  else
+	    {
+		opt_dry = 0;
+		slk_set(11, "Wet", 1);
+	    }
+	  slk_refresh();
+	  return RC_NONE;
+	case KEY_F(12):
+	  return RC_NONE;
 	  /* case ' ':
 	     return RC_TOGGLE_PAUSE; */
 	}
     }
-      re_init_screen();
+    re_init_screen();
 
   return RC_NONE;
 }

@@ -610,7 +610,7 @@ static int ctl_blocking_read(int32 *valp)
 		  ctl_reset();
 		  pausing = 0;
 		  return RC_STOP;
-		
+
 	      case MOTIF_PLAY_FILE:
 		  songoffset = 0;
 		  ctl_reset();
@@ -837,13 +837,13 @@ static void ctl_pass_playing_list(int number_of_files, const char *list_of_files
     Panel->currentpatchset = cfg_select;
 
     /* Pass the list to the interface */
-
+#if 0
     pipe_int_write(FILE_LIST_MESSAGE);
 
     pipe_int_write(number_of_files);
     for (i=0;i<number_of_files;i++)
 	pipe_string_write(list_of_files[i]);
-
+#endif
     /* Ask the interface for a filename to play -> begin to play automatically */
     pipe_int_write(NEXT_FILE_MESSAGE);
     

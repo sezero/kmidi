@@ -3119,6 +3119,15 @@ void dumb_pass_playing_list(int number_of_files, const char *list_of_files[])
 		if (i>0)
 		    i--;
 		break;
+
+	    case RC_PATCHCHANGE:
+	  	free_instruments();
+	  	end_soundfont();
+	  	clear_config();
+			/* what if read_config fails?? */
+          	if (read_config_file(current_config_file, 0))
+  		  ctl->cmsg(CMSG_ERROR, VERB_NORMAL, "Could not read patchset %d", cfg_select);
+		break;
 			
 	    default: /* An error or something */
 	    case RC_NEXT:

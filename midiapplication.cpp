@@ -101,9 +101,11 @@ bool MidiApplication::process(const QCString &fun, const QByteArray &data,
     return false;
   }
 }
+/*#define DO_IT_MYSELF*/
 
 int MidiApplication::newInstance(QValueList<QCString> params)
 {
+#ifndef DO_IT_MYSELF
     char mbuff[5];
     int newones = 0;
     QValueList<QCString>::Iterator it = params.begin();
@@ -124,16 +126,19 @@ int MidiApplication::newInstance(QValueList<QCString> params)
             QFile f(*it);
             if (!f.open( IO_ReadOnly )) continue;
             if (f.readBlock(mbuff, 4) != 4) {
+//printf("couldn't read 4 bytes\n");
 		f.close();
 		continue;
             }
             mbuff[4] = '\0';
             if (strcmp(mbuff, "MThd")) {
+//printf("is not midi file\n");
 		f.close();
 		continue;
             }
             f.close();
 
+	    file.setFile(*it);
 	    //kmidi->playlist->insert(0, *it);
 	    kmidi->playlist->append(file.absFilePath());
 	    newones++;
@@ -143,7 +148,7 @@ int MidiApplication::newInstance(QValueList<QCString> params)
 	    kmidi->restartPlaybox();
         }
     }
-
+#endif
     return 0;
 }
 

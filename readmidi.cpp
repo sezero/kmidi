@@ -149,18 +149,18 @@ static int32 getvl(void)
 
     /* Error */
     ctl->cmsg(CMSG_ERROR, VERB_NORMAL,
-	      "%s: Illegal Variable-length quantity format.",
+	      "\"%s\": Illegal Variable-length quantity format.",
 	      current_filename);
     return -2;
 
   eof:
     if(errno)
 	ctl->cmsg(CMSG_ERROR, VERB_NORMAL,
-		  "%s: read_midi_event: %s",
+		  "\"%s\": read_midi_event: %s",
 		  current_filename, strerror(errno));
     else
 	ctl->cmsg(CMSG_ERROR, VERB_NORMAL,
-		  "Warning: %s: Short midi file.",
+		  "Warning: \"%s\": Short midi file.",
 		  current_filename);
     return -1;
 }
@@ -520,11 +520,11 @@ static MidiEventList *read_midi_event(void)
 	{
 	    if(errno)
 		ctl->cmsg(CMSG_ERROR, VERB_NORMAL,
-			  "%s: read_midi_event: %s",
+			  "\"%s\": read_midi_event: %s",
 			  current_filename, strerror(errno));
 	    else
 		ctl->cmsg(CMSG_ERROR, VERB_NORMAL,
-			  "Warning: %s: Short midi file.",
+			  "Warning: \"%s\": Short midi file.",
 			  current_filename);
 	    return 0;
 	}
@@ -532,7 +532,7 @@ static MidiEventList *read_midi_event(void)
 #else
       if (fread(&me,1,1,fp)!=1)
 	{
-	  ctl->cmsg(CMSG_ERROR, VERB_NORMAL, "%s: read_midi_event: %s", 
+	  ctl->cmsg(CMSG_ERROR, VERB_NORMAL, "\"%s\": read_midi_event: %s", 
 	       current_filename, sys_errlist[errno]);
 	  return 0;
 	}
@@ -560,11 +560,11 @@ static MidiEventList *read_midi_event(void)
 	{
 	    if(errno)
 		ctl->cmsg(CMSG_ERROR, VERB_NORMAL,
-			  "%s: read_midi_event: %s",
+			  "\"%s\": read_midi_event: %s",
 			  current_filename, strerror(errno));
 	    else
 		ctl->cmsg(CMSG_ERROR, VERB_NORMAL,
-			  "Warning: %s: Short midi file.",
+			  "Warning: \"%s\": Short midi file.",
 			  current_filename);
 	    return 0;
 	}
@@ -595,7 +595,7 @@ static MidiEventList *read_midi_event(void)
 		    if(midi_port_number == EOF)
 		    {
 			    ctl->cmsg(CMSG_ERROR, VERB_NORMAL,
-				      "Warning: %s: Short midi file.",
+				      "Warning: \"%s\": Short midi file.",
 				      current_filename);
 			    return 0;
 		    }
@@ -617,11 +617,11 @@ static MidiEventList *read_midi_event(void)
 	{
 	    if(errno)
 		ctl->cmsg(CMSG_ERROR, VERB_NORMAL,
-			  "%s: read_midi_event: %s",
+			  "\"%s\": read_midi_event: %s",
 			  current_filename, strerror(errno));
 	    else
 		ctl->cmsg(CMSG_ERROR, VERB_NORMAL,
-			  "Warning: %s: Short midi file.",
+			  "Warning: \"%s\": Short midi file.",
 			  current_filename);
 	    return 0;
 	}
@@ -630,11 +630,11 @@ static MidiEventList *read_midi_event(void)
 	{
 	    if(errno)
 		ctl->cmsg(CMSG_ERROR, VERB_NORMAL,
-			  "%s: read_midi_event: %s",
+			  "\"%s\": read_midi_event: %s",
 			  current_filename, strerror(errno));
 	    else
 		ctl->cmsg(CMSG_ERROR, VERB_NORMAL,
-			  "Warning: %s: Short midi file.",
+			  "Warning: \"%s\": Short midi file.",
 			  current_filename);
 	    return 0;
 	}
@@ -643,11 +643,11 @@ static MidiEventList *read_midi_event(void)
 	{
 	    if(errno)
 		ctl->cmsg(CMSG_ERROR, VERB_NORMAL,
-			  "%s: read_midi_event: %s",
+			  "\"%s\": read_midi_event: %s",
 			  current_filename, strerror(errno));
 	    else
 		ctl->cmsg(CMSG_ERROR, VERB_NORMAL,
-			  "Warning: %s: Short midi file.",
+			  "Warning: \"%s\": Short midi file.",
 			  current_filename);
 	    return 0;
 	}
@@ -676,11 +676,11 @@ static MidiEventList *read_midi_event(void)
 	{
 	    if(errno)
 		ctl->cmsg(CMSG_ERROR, VERB_NORMAL,
-			  "%s: read_midi_event: %s",
+			  "\"%s\": read_midi_event: %s",
 			  current_filename, strerror(errno));
 	    else
 		ctl->cmsg(CMSG_ERROR, VERB_NORMAL,
-			  "Warning: %s: Short midi file.",
+			  "Warning: \"%s\": Short midi file.",
 			  current_filename);
 	    return 0;
 	}
@@ -698,11 +698,11 @@ static MidiEventList *read_midi_event(void)
 	{
 	    if(errno)
 		ctl->cmsg(CMSG_ERROR, VERB_NORMAL,
-			  "%s: read_midi_event: %s",
+			  "\"%s\": read_midi_event: %s",
 			  current_filename, strerror(errno));
 	    else
 		ctl->cmsg(CMSG_ERROR, VERB_NORMAL,
-			  "Warning: %s: Short midi file.",
+			  "Warning: \"%s\": Short midi file.",
 			  current_filename);
 	    return 0;
 	}
@@ -720,11 +720,11 @@ static MidiEventList *read_midi_event(void)
 	{
 	    if(errno)
 		ctl->cmsg(CMSG_ERROR, VERB_NORMAL,
-			  "%s: read_midi_event: %s",
+			  "\"%s\": read_midi_event: %s",
 			  current_filename, strerror(errno));
 	    else
 		ctl->cmsg(CMSG_ERROR, VERB_NORMAL,
-			  "Warning: %s: Short midi file.",
+			  "Warning: \"%s\": Short midi file.",
 			  current_filename);
 	    return 0;
 	}
@@ -741,11 +741,11 @@ static MidiEventList *read_midi_event(void)
 	{
 	    if(errno)
 		ctl->cmsg(CMSG_ERROR, VERB_NORMAL,
-			  "%s: read_midi_event: %s",
+			  "\"%s\": read_midi_event: %s",
 			  current_filename, strerror(errno));
 	    else
 		ctl->cmsg(CMSG_ERROR, VERB_NORMAL,
-			  "Warning: %s: Short midi file.",
+			  "Warning: \"%s\": Short midi file.",
 			  current_filename);
 	    return 0;
 	}
@@ -762,11 +762,11 @@ static MidiEventList *read_midi_event(void)
 	{
 	    if(errno)
 		ctl->cmsg(CMSG_ERROR, VERB_NORMAL,
-			  "%s: read_midi_event: %s",
+			  "\"%s\": read_midi_event: %s",
 			  current_filename, strerror(errno));
 	    else
 		ctl->cmsg(CMSG_ERROR, VERB_NORMAL,
-			  "Warning: %s: Short midi file.",
+			  "Warning: \"%s\": Short midi file.",
 			  current_filename);
 	    return 0;
 	}
@@ -927,11 +927,11 @@ ctl->cmsg(CMSG_INFO, VERB_NORMAL, "PHASER");
 	{
 	    if(errno)
 		ctl->cmsg(CMSG_ERROR, VERB_NORMAL,
-			  "%s: read_midi_event: %s",
+			  "\"%s\": read_midi_event: %s",
 			  current_filename, strerror(errno));
 	    else
 		ctl->cmsg(CMSG_ERROR, VERB_NORMAL,
-			  "Warning: %s: Short midi file.",
+			  "Warning: \"%s\": Short midi file.",
 			  current_filename);
 	    return 0;
 	}
@@ -985,14 +985,14 @@ static int read_track(int append)
   if ((fread(tmp,1,4,fp) != 4) || (fread(&len,4,1,fp) != 1))
     {
       ctl->cmsg(CMSG_ERROR, VERB_NORMAL,
-	   "%s: Can't read track header.", current_filename);
+	   "\"%s\": Can't read track header.", current_filename);
       return -1;
     }
   len=BE_LONG(len);
   if (memcmp(tmp, "MTrk", 4))
     {
       ctl->cmsg(CMSG_ERROR, VERB_NORMAL,
-	   "%s: Corrupt MIDI file.", current_filename);
+	   "\"%s\": Corrupt MIDI file.", current_filename);
       return -2;
     }
 
@@ -1401,19 +1401,19 @@ MidiEvent *read_midi_file(FILE *mfp, uint32 *count, uint32 *sp)
     {
       if (ferror(fp))
 	{
-	  ctl->cmsg(CMSG_ERROR, VERB_NORMAL, "%s: %s", current_filename, 
+	  ctl->cmsg(CMSG_ERROR, VERB_NORMAL, "\"%s\": %s", current_filename, 
 	       sys_errlist[errno]);
 	}
       else
 	ctl->cmsg(CMSG_ERROR, VERB_NORMAL, 
-	     "%s: Not a MIDI file!", current_filename);
+	     "\"%s\": Not a MIDI file!", current_filename);
       return 0;
     }
   len=BE_LONG(len);
   if (memcmp(tmp, "MThd", 4) || len < 6)
     {
       ctl->cmsg(CMSG_ERROR, VERB_NORMAL,
-	   "%s: Not a MIDI file!", current_filename);
+	   "\"%s\": Not a MIDI file!", current_filename);
       return 0;
     }
 
@@ -1421,36 +1421,36 @@ MidiEvent *read_midi_file(FILE *mfp, uint32 *count, uint32 *sp)
     {
       if (ferror(fp))
 	{
-	  ctl->cmsg(CMSG_ERROR, VERB_NORMAL, "%s: %s", current_filename, 
+	  ctl->cmsg(CMSG_ERROR, VERB_NORMAL, "\"%s\": %s", current_filename, 
 	       sys_errlist[errno]);
 	}
       else
 	ctl->cmsg(CMSG_ERROR, VERB_NORMAL, 
-	     "%s: Not a MIDI file!", current_filename);
+	     "\"%s\": Not a MIDI file!", current_filename);
       return 0;
     }
   if ( fread(&tracks, 2, 1, fp) != 1 )
     {
       if (ferror(fp))
 	{
-	  ctl->cmsg(CMSG_ERROR, VERB_NORMAL, "%s: %s", current_filename, 
+	  ctl->cmsg(CMSG_ERROR, VERB_NORMAL, "\"%s\": %s", current_filename, 
 	       sys_errlist[errno]);
 	}
       else
 	ctl->cmsg(CMSG_ERROR, VERB_NORMAL, 
-	     "%s: Not a MIDI file!", current_filename);
+	     "\"%s\": Not a MIDI file!", current_filename);
       return 0;
     }
   if ( fread(&divisions_tmp, 2, 1, fp) != 1 )
     {
       if (ferror(fp))
 	{
-	  ctl->cmsg(CMSG_ERROR, VERB_NORMAL, "%s: %s", current_filename, 
+	  ctl->cmsg(CMSG_ERROR, VERB_NORMAL, "\"%s\": %s", current_filename, 
 	       sys_errlist[errno]);
 	}
       else
 	ctl->cmsg(CMSG_ERROR, VERB_NORMAL, 
-	     "%s: Not a MIDI file!", current_filename);
+	     "\"%s\": Not a MIDI file!", current_filename);
       return 0;
     }
   /* fread(&divisions_tmp, 2, 1, fp); */
@@ -1476,7 +1476,7 @@ MidiEvent *read_midi_file(FILE *mfp, uint32 *count, uint32 *sp)
   if (format<0 || format >2)
     {
       ctl->cmsg(CMSG_ERROR, VERB_NORMAL, 
-	   "%s: Unknown MIDI file format %d", current_filename, format);
+	   "\"%s\": Unknown MIDI file format %d", current_filename, format);
       return 0;
     }
   ctl->cmsg(CMSG_INFO, VERB_VERBOSE, 

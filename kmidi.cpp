@@ -96,16 +96,6 @@ const char * whatsthis_image[] = {
 #include "ctl.h"
 #include "table.h"
 
-//int pipe_read_ready();
-//void pipe_int_write(int c);
-//void pipe_int_read(int *c);
-//void pipe_string_read(char *str);
-//void pipe_string_write(char *str);
-
-//extern PlayMode *play_mode;
-//extern int output_device_open;
-//extern int32 control_ratio;
-extern char *cfg_names[];
 
 static int currplaytime = 0;
 static int meterfudge = 0;
@@ -1131,7 +1121,7 @@ void KMidi::resetSong()
     flag_new_playlist = false;
     song_number = 0;
     if (!playlist->count()) {
-	redoplaybox();
+	//redoplaybox();
 	return;
     }
     playbox->setCurrentItem(0);
@@ -1152,7 +1142,9 @@ void KMidi::setSong( int number )
     }
     playbox->setCurrentItem(number);
     song_number = number + 1;
-	
+
+    if (playlist->at(song_number-1)[0] == '#') { stopClicked(); return; }
+
     fileName = playbox->text(number);
     if(output_device_open)
       updateUI();
@@ -1172,7 +1164,7 @@ void KMidi::setSong( int number )
 void KMidi::redoplaybox()
 {
     QString filenamestr;
-    int i, index;
+    int i, index, errindex;
     int last = playlist->count();
 
     playbox->clear();
@@ -1180,7 +1172,10 @@ void KMidi::redoplaybox()
     for (i = 0; i < last; i++) {
 
 	filenamestr = playlist->at(i);
+//This doesn't work -- the "#" is not there when playbox redone, for some reason.
+	errindex = filenamestr.find('#',0,TRUE);
 	index = filenamestr.findRev('/',-1,TRUE);
+	if (index == -1 && errindex == 0) index = 0;
 	if(index != -1)
 	    filenamestr = filenamestr.right(filenamestr.length() -index -1);
 	filenamestr = filenamestr.replace(QRegExp("_"), " ");
@@ -1189,8 +1184,8 @@ void KMidi::redoplaybox()
 	if(filenamestr.right(4) == QString(".mid") ||filenamestr.right(4) == QString(".MID"))
 	    filenamestr = filenamestr.left(filenamestr.length()-4);
 	}
+	if (errindex == 0) filenamestr.insert('#',0);
 	playbox->insertItem(filenamestr);
-
     }
 }
 
@@ -1421,6 +1416,7 @@ void KMidi::randomClicked(){
     int index = randomSong() - 1;
     song_number = index + 1;
     playbox->setCurrentItem(index);
+    if (playlist->at(index)[0] == '#') { stopClicked(); return; }
     pipe_int_write(MOTIF_PLAY_FILE);
     pipe_string_write(playlist->at(index));
 
@@ -1442,6 +1438,7 @@ void KMidi::randomPlay(){
     int index = randomSong() - 1;
     song_number = index + 1;
     playbox->setCurrentItem(index);
+    if (playlist->at(index)[0] == '#') { stopClicked(); return; }
     pipe_int_write(MOTIF_PLAY_FILE);
     pipe_string_write(playlist->at(index));
 
@@ -1484,6 +1481,7 @@ void KMidi::playClicked()
   if (index < 0) index = 0;
 
   if(((int)playlist->count()  > index) && (index >= 0)){
+    if (playlist->at(index)[0] == '#') { stopClicked(); return; }
     setLEDs("OO:OO");
     settletime = fastforward = fastrewind = nbvoice = currplaytime = 0;
     statusLA->setText(i18n("Playing"));
@@ -1528,6 +1526,7 @@ void KMidi::prevClicked(){
       song_number = playlist->count();
 
     playbox->setCurrentItem(song_number-1);
+    if (playlist->at(song_number-1)[0] == '#') { stopClicked(); return; }
     if(status == KPLAYING)
       setLEDs("OO:OO");
     settletime = fastforward = fastrewind = currplaytime = nbvoice = 0;
@@ -1576,6 +1575,7 @@ void KMidi::nextClicked(){
     if(song_number > (int)playlist->count())
       song_number = 1;
     playbox->setCurrentItem(song_number-1);
+    if (playlist->at(song_number-1)[0] == '#') { stopClicked(); return; }
 
     if(status == KPLAYING)
       setLEDs("OO:OO");
@@ -1680,6 +1680,7 @@ void KMidi::ejectClicked(){
 
 void KMidi::restartPlaybox(){
     redoplaybox();
+    if (starting_up) return;
     if (status != KPLAYING) setSong(0);
     else flag_new_playlist = true;
     if (status != KPLAYING) timer->start( 200, TRUE );  // single shot
@@ -1693,14 +1694,21 @@ void KMidi::acceptPlaylist(){
 }
 
 void KMidi::PlayMOD(){
-
+    int errcount = 0;
     // this method is called "from" ejectClicked once the timer has fired
     // this is done to allow the user interface to settle a bit
     // before playing the mod
 
     while (!errorlist->isEmpty()) {
+	  errcount++;
 	  KMessageBox::sorry(this, QString( errorlist->first() ) );
 	  errorlist->removeFirst();
+    }
+
+    if (errcount) {
+	redoplaybox();
+	stopClicked();
+	return;
     }
 
     if (status == KPLAYING) return;
@@ -1709,7 +1717,24 @@ void KMidi::PlayMOD(){
 	playClicked();
 }
 
-void KMidi::postError(const QString& s){
+void KMidi::postError(const QString& s) {
+//if the message contains a quoted substring, this is the
+//name of an unplayable file
+    if (s.contains( '\"', TRUE) == 2) {
+	QString unplayable;
+	int index = s.find('\"', 0, TRUE);
+	int sindex = s.findRev('\"', -1, TRUE);
+	unplayable = s.mid(index+1, sindex - index -1);
+
+	int i;
+        int last = playlist->count();
+	if (!unplayable.isEmpty()) for (i = 0; i < last; i++) {
+	    if (!QString::compare(unplayable, playlist->at(i))) {
+		//mark it
+		playlist->at(i)[0] = '#';
+	    }
+	}
+    }
     errorlist->append(s.latin1());
     if (!timer->isActive()) timer->start(200, TRUE);
 }
@@ -2047,20 +2072,27 @@ void KMidi::ReadPipe(){
 		if(number_of_files > 0 )
 		    playlist->clear();	
 
-		
+/*#define DO_IT_MYSELF*/
 		QFileInfo file;
-		have_commandline_midis = 0;
+		//have_commandline_midis = 0;
 
 		for (i=0;i<number_of_files;i++)
 		  {
 		    pipe_string_read(filename);
+#ifdef DO_IT_MYSELF
 		    file.setFile(filename);
 		    if( file.isReadable()){
 		//better check if it's a midi file
 		      playlist->append(file.absFilePath());
-		      have_commandline_midis = 1;
+#endif
+
+		      //have_commandline_midis = 1;
+
+#ifdef DO_IT_MYSELF
 		    }
-		    else postError( i18n("%1\nis not readable or doesn't exist.").arg(filename) );
+		    else postError( i18n("\"%1\"\nis not readable or doesn't exist.").arg(filename) );
+#endif
+
 		  }	
 		
 		if( !have_commandline_midis) {
@@ -2068,9 +2100,11 @@ void KMidi::ReadPipe(){
 		  /*or none of them was readable */
 		    loadplaylist(current_playlist_num);
 		}
+#ifdef DO_IT_MYSELF
     		else redoplaybox();
+#endif
 
-#if 0
+
 		if(playlist->count() > 0){
 	
 		    fileName = playlist->at(0);
@@ -2086,7 +2120,7 @@ void KMidi::ReadPipe(){
 		  volChanged(volume);
 		  emit play();
 		}
-#endif
+
 
 	    }
 	    break;
@@ -2115,6 +2149,9 @@ void KMidi::ReadPipe(){
 		    led[STATUS_LED]->setColor(Qt::red);
 		    last_status = KNONE;
 		    starting_up = false;
+		    if( !have_commandline_midis) {
+		        loadplaylist(current_playlist_num);
+		    }
 		    return;
 		}
 
@@ -2148,8 +2185,7 @@ void KMidi::ReadPipe(){
 		    {
 			song_number = 1;
 		    }
-	
-	
+
 		if (song_number > (int)playlist->count() )
 		    {
 			song_number = 1 ;
@@ -2455,6 +2491,7 @@ void KMidi::ReadPipe(){
 
 void KMidi::set_current_dir(const QString &dir) {
 
+#if 0
    if (!dir.isEmpty()){
     if ( !current_dir.setCurrent(dir)){
       QString str = i18n("Can not enter directory: %1\n").arg(dir);
@@ -2464,6 +2501,8 @@ void KMidi::set_current_dir(const QString &dir) {
    }
 
    current_dir  = QDir::current();
+#endif
+   current_dir = QDir(dir);
 }
 
 void KMidi::readconfig(){
