@@ -126,7 +126,7 @@ public:
 
 	QSlider		*volSB;
 	QWidget 	*backdrop;
-	QPushButton     *makeButton( int, int, int, int, const char * );
+	QPushButton     *makeButton( int, int, int, int, const QString & );
 
 	int		mixerFd;
         bool             StopRequested;
@@ -165,7 +165,7 @@ private:
 	void 		display_playmode();
 	int		randomSong();
 	void 		resetPos();
-	void 		setLEDs(QString );
+	void 		setLEDs(const QString &);
 	void		drawPanel();
 	void		cleanUp();
 	void		loadBitmaps();

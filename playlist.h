@@ -54,7 +54,7 @@ class MyListBoxItem : public QListBoxItem{
 
 public:
 
-  MyListBoxItem( const char *s, const QPixmap p )
+  MyListBoxItem( const QString &s, const QPixmap p )
     : QListBoxItem(), pm(p)
     { setText( s ); }
   
@@ -92,19 +92,19 @@ private slots:
   void saveasPlaylist();
   void help();
   void savePlaylist();
-  void savePlaylistbyName(QString name);
+  void savePlaylistbyName(const QString &name);
   void deletePlaylist();
   void removeEntry();
   void addEntry();
   void checkList();
   void local_file_selected(int index);
   void pannerHasChanged();
-  void loadPlaylist(QString name);
+  void loadPlaylist(const QString &name);
 
 
 protected:
     void parse_fileinfo(QFileInfo*, MyListBoxItem*);
-    void set_local_dir(QString dir);
+    void set_local_dir(const QString &dir);
 
 public:
     QString current_playlist;

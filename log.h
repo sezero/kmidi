@@ -46,7 +46,6 @@ public:
 
 bool rowYPos(int row, int& yPos);
 void newLine();
-void  insertChar(char c);
 };
 
 
@@ -58,8 +57,7 @@ public:
   LogWindow(QWidget *parent=0, const char *name=0);
   ~LogWindow();
 
-  void insertchar(char);
-  void insertStr(char*);
+  void insertStr(const QString &);
   void statusLabel(const char *);
   void clear();
 

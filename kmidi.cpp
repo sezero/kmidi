@@ -213,7 +213,7 @@ void KMidi::volChanged( int vol )
 
 
 
-QPushButton *KMidi::makeButton( int x, int y, int w, int h, const char *n )
+QPushButton *KMidi::makeButton( int x, int y, int w, int h, const QString &n )
 {
     QPushButton *pb = new QPushButton( n, this );
     pb->setGeometry( x, y, w, h );
@@ -423,10 +423,10 @@ void KMidi::loadBitmaps() {
 }
 
 
-void KMidi::setLEDs(QString symbols){
+void KMidi::setLEDs(const QString &symbols){
 
     for(int i=0;i<=4;i++){
-	trackTimeLED[i]->display(symbols.data()[i]);
+	trackTimeLED[i]->display(symbols[i]);
     }
 
 }
@@ -455,34 +455,34 @@ void KMidi::makedirs(){
   d = getHomeDir();
 
   d += "/.kde";
-  dir.setPath(d.data());
+  dir.setPath(d);
   if(!dir.exists()){
-    dir.mkdir(d.data());
+    dir.mkdir(d);
     chown(d.data(),getuid(),getgid());
     chmod(d.data(),S_IRUSR | S_IWUSR | S_IXUSR);
   }
 
   d += "/share";
-  dir.setPath(d.data());
+  dir.setPath(d);
   if(!dir.exists()){
-    dir.mkdir(d.data());
+    dir.mkdir(d);
     chown(d.data(),getuid(),getgid());
     chmod(d.data(),S_IRUSR | S_IWUSR | S_IXUSR);
   }
 
   d += "/apps";
-  dir.setPath(d.data());
+  dir.setPath(d);
   if(!dir.exists()){
-    dir.mkdir(d.data());
+    dir.mkdir(d);
     chown(d.data(),getuid(),getgid());
     chmod(d.data(),S_IRUSR | S_IWUSR | S_IXUSR);
   }
 
   d += "/kmidi" ;
 
-  dir.setPath(d.data());
+  dir.setPath(d);
   if(!dir.exists()){
-    dir.mkdir(d.data());
+    dir.mkdir(d);
     chown(d.data(),getuid(),getgid());
     chmod(d.data(),S_IRUSR | S_IWUSR | S_IXUSR);
   }
@@ -782,12 +782,12 @@ void KMidi::aboutClicked()
 		   "toivonen@clinet.fi\n"), KMIDIVERSION);
 
   label->setAlignment(AlignLeft|WordBreak|ExpandTabs);
-  label->setText(labelstring.data());
+  label->setText(labelstring);
 
   QString pixdir = thisapp->kde_datadir() + "/kmidi/pics/";
 
 
-  QPixmap pm((pixdir + "kmidilogo.xpm").data());
+  QPixmap pm(pixdir + "kmidilogo.xpm");
   QLabel *logo = new QLabel(box);
   logo->setPixmap(pm);
   logo->setGeometry(30, 50, pm.width(), pm.height());
@@ -888,16 +888,16 @@ void KMidi::loadplaylist(){
     QString home = QDir::homeDirPath();
     home = home + "/.kde/share/apps/kmidi";
 
-    QDir savedir(home.data());
+    QDir savedir(home);
 
     if(!savedir.exists()){
-	savedir.mkdir(home.data());
+	savedir.mkdir(home);
     }
 
     QString defaultlist;
     defaultlist = home + "/" + "default";
 
-    QFile f(defaultlist.data());
+    QFile f(defaultlist);
 
     f.open( IO_ReadWrite | IO_Translate);
 
@@ -914,9 +914,9 @@ void KMidi::loadplaylist(){
       tempstring = tempstring.stripWhiteSpace();
 
       if (!tempstring.isEmpty()){
-	file.setFile(tempstring.data());
+	file.setFile(tempstring);
 	if (file.isReadable())
-	  playlist->append(tempstring.data());
+	  playlist->append(tempstring);
 	}	
     }
 
@@ -1022,7 +1022,7 @@ void KMidi::ReadPipe(){
 		    else{
 		      QString string;
 		      string.sprintf(i18n("%s\nis not readable or doesn't exist."),filename);
-		      KMsgBox::message(NULL, i18n("KMidi Warning"), string.data(),
+		      KMsgBox::message(NULL, i18n("KMidi Warning"), string,
 				       KMsgBox::EXCLAMATION);
 
 		    }
@@ -1104,7 +1104,7 @@ void KMidi::ReadPipe(){
 			statusLA->setText(i18n("Ready"));
 			QString str;
 			str.sprintf(i18n("Song: --/%02d"),playlist->count());
-			song_count_label->setText(str.data() );
+			song_count_label->setText(str);
 			modlabel->setText("");
 			totaltimelabel->setText("--:--");
 			status = KSTOPPED;
@@ -1242,7 +1242,7 @@ void KMidi::ReadPipe(){
 		pipe_string_read(strmessage);
 		/*		printf("RECEIVED %s %d\n",strmessage,strlen(strmessage));*/
 
-		logwindow->insertStr(strmessage);
+		logwindow->insertStr(QString(strmessage));
 
 	    }
 	    break;
@@ -1282,11 +1282,11 @@ void KMidi::readconfig(){
 
     str = config->readEntry("Volume");
     if ( !str.isNull() )
-	volume = atoi(str.data());
+	volume = str.toInt();
 
     str = config->readEntry("ToolTips");
     if ( !str.isNull() )
-	tooltipsint =  atoi(str.data());
+	tooltipsint =  str.toInt();
 
     if (tooltipsint == 1)
 	tooltips = TRUE;
@@ -1295,7 +1295,7 @@ void KMidi::readconfig(){
 
     /*	str = config->readEntry("RandomPlay");
 	if ( !str.isNull() )
-	randomplayint =  atoi(str.data());
+	randomplayint =  str.toInt();
 
 	if (randomplayint == 1)
 	randomplay = TRUE;
@@ -1392,7 +1392,7 @@ void KMidi::display_playmode(){
 void KMidi::updateUI(){
 
   QString filenamestr;
-  filenamestr = fileName.data();
+  filenamestr = fileName;
 
   filenamestr = filenamestr.replace(QRegExp("_"), " ");
 
@@ -1402,7 +1402,7 @@ void KMidi::updateUI(){
   }
 
 
-    modlabel->setText(filenamestr.data());
+    modlabel->setText(filenamestr);
     QString songstr;
 
     if(playlist->count() >0)
@@ -1410,7 +1410,7 @@ void KMidi::updateUI(){
     else
 	songstr = i18n("Song: --/--");
 
-    song_count_label->setText( songstr.data() );
+    song_count_label->setText( songstr );
 
     display_playmode();
 

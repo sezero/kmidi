@@ -1,3 +1,7 @@
+1999-03-29  Harri Porten  <porten@kde.org>
+
+	* ported to Qt 2.0
+
 1998-11-04  Sam Maloney  <thufir@illogic.ml.org>
 
 	* There was a problem on my system, where kmidi would look for its

@@ -136,7 +136,7 @@ void MyListBoxItem::paint( QPainter *p ){
   else
     yPos = pm.height()/2 - fm.height()/2 + fm.ascent();
 
-  p->drawText( pm.width() + 5, yPos, filename.data() );
+  p->drawText( pm.width() + 5, yPos, filename );
 
 }
 
@@ -153,7 +153,7 @@ int MyListBoxItem::width(const QListBox *lb ) const{
 
   QFontMetrics fm = lb->fontMetrics();
 
-  QRect ref = fm.boundingRect(filename.data());
+  QRect ref = fm.boundingRect(filename);
   int ref1 = ref.width();
   return 6 + pm.width() + ref1;
 
@@ -206,14 +206,13 @@ void PlaylistDialog::local_file_selected(int index){
 
 
 
-void PlaylistDialog::set_local_dir(QString dir){
+void PlaylistDialog::set_local_dir(const QString &dir){
 
 
   if (!dir.isEmpty()){
-    if ( !cur_local_dir.setCurrent(dir.data())){
-      QString str;
-      str.sprintf(i18n("Can not enter directory: %s\n"),dir.data());
-      QMessageBox::message(i18n("Sorry"),str.data(),i18n("OK"));
+    if ( !cur_local_dir.setCurrent(dir)){
+      QString str = i18n("Can not enter directory: %1\n").arg(dir);
+      QMessageBox::message(i18n("Sorry"),str,i18n("OK"));
       return;
     }
   }
@@ -239,10 +238,10 @@ void PlaylistDialog::set_local_dir(QString dir){
 
       QString tmp = fi->fileName();
 
-      if (strcmp(tmp.data(),"..") == 0 ){
+      if (tmp == ".."){
 
 	MyListBoxItem* mylistboxitem1 = 
-	  new MyListBoxItem(fi->fileName().data(),kmidi->cdup_pixmap);
+	  new MyListBoxItem(fi->fileName(),kmidi->cdup_pixmap);
 
 	parse_fileinfo(fi,mylistboxitem1);
 
@@ -251,12 +250,12 @@ void PlaylistDialog::set_local_dir(QString dir){
 	cur_local_fileinfo.append(fi);
 
       }else{
-	if (strcmp(tmp.data(),".") == 0){
+	if (tmp == "."){
 
 	  // skip we don't want to see this.
 
 	}else{
-	  MyListBoxItem* mylistboxitem1 = new MyListBoxItem(fi->fileName().data()
+	  MyListBoxItem* mylistboxitem1 = new MyListBoxItem(fi->fileName()
 							,kmidi->folder_pixmap);
 	  parse_fileinfo(fi,mylistboxitem1);
 	  local_list->insertItem( mylistboxitem1 );
@@ -271,7 +270,7 @@ void PlaylistDialog::set_local_dir(QString dir){
     while ( fi ) {
       QString displayline;
 
-      MyListBoxItem* mylistboxitem2 = new MyListBoxItem(fi->fileName().data()
+      MyListBoxItem* mylistboxitem2 = new MyListBoxItem(fi->fileName()
 							,kmidi->file_pixmap);
       parse_fileinfo(fi,mylistboxitem2);
       local_list->insertItem( mylistboxitem2 );
@@ -380,7 +379,7 @@ void PlaylistDialog::savePlaylist(){
 
 }
 
-void PlaylistDialog::savePlaylistbyName(QString name){
+void PlaylistDialog::savePlaylistbyName(const QString &name){
 
 
   if(name.isEmpty())
@@ -389,15 +388,15 @@ void PlaylistDialog::savePlaylistbyName(QString name){
 
   QString home = QDir::homeDirPath();
   home = home + "/.kde/share/apps/kmidi";
-  QDir savedir(home.data());
+  QDir savedir(home);
 
   if(!savedir.exists()){
-    savedir.mkdir(home.data());
+    savedir.mkdir(home);
   }
 
   QString defaultlist;
   defaultlist = home + "/" + name;
-  QFile f(defaultlist.data());
+  QFile f(defaultlist);
 
   f.open( IO_ReadWrite | IO_Translate|IO_Truncate);
 
@@ -406,7 +405,7 @@ void PlaylistDialog::savePlaylistbyName(QString name){
   for (int i = 0; i < (int)listbox->count(); i++){
     tempstring = listbox->text(i);
     tempstring += '\n';
-    f.writeBlock(tempstring.data(),tempstring.length());
+    f.writeBlock(tempstring,tempstring.length());
   }
 
   f.close();
@@ -423,7 +422,7 @@ void PlaylistDialog::deletePlaylist(){
 
 }
 
-void PlaylistDialog::loadPlaylist(QString name){
+void PlaylistDialog::loadPlaylist(const QString &name){
 
      
   current_playlist = name;
@@ -431,16 +430,16 @@ void PlaylistDialog::loadPlaylist(QString name){
   QString home = QDir::homeDirPath();
   home = home + "/.kde/share/apps/kmidi";
   
-  QDir savedir(home.data());
+  QDir savedir(home);
 
   if(!savedir.exists()){
-    savedir.mkdir(home.data());
+    savedir.mkdir(home);
   }
 
  QString defaultlist;
  defaultlist = home + "/" + current_playlist;
   
- QFile f(defaultlist.data());
+ QFile f(defaultlist);
 
  f.open( IO_ReadWrite | IO_Translate);
 

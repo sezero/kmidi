@@ -33,10 +33,6 @@ myMultiEdit::myMultiEdit(QWidget *parent, const char *name)
 myMultiEdit::~myMultiEdit(){
 }
 
-void myMultiEdit::insertChar(char c){
-  QMultiLineEdit::insertChar( c);
-}
-
 void myMultiEdit::newLine(){
   QMultiLineEdit::newLine();
 }
@@ -153,10 +149,7 @@ void LogWindow::updatewindow(){
 
 }
 
-void LogWindow::insertStr(char* str){
-
-
-  QString string = str;
+void LogWindow::insertStr(const QString &string){
 
   if(string.find("Lyric:",0,TRUE) != -1)
     return;
@@ -175,7 +168,7 @@ void LogWindow::insertStr(char* str){
 
 
 
-  stringlist->append(string.data());
+  stringlist->append(string);
  
   if(!timerset){
     sltimer->start(10,TRUE); // sinlge shot TRUE
@@ -193,20 +186,6 @@ void LogWindow::clear(){
 
 }
 		  
-void LogWindow::insertchar(char c) {
-
-  QString stuff;
-
-  if(c == '\r' || c == '\n') {
-    if(c == '\n') {
-      text_window->newLine();
-    } 
-  }
-  else{
-    text_window->insertChar(c);
-  }
-}
-
 
 void LogWindow::statusLabel(const char* ) {
 
