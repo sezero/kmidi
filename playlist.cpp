@@ -372,22 +372,12 @@ void PlaylistDialog::savePlaylist(){
 
 }
 
-void PlaylistDialog::savePlaylistbyName(const QString &name){
-
-
+void PlaylistDialog::savePlaylistbyName(const QString &name) 
+{
   if(name.isEmpty())
     return;
 
-
-  QString home = KApplication::localkdedir();
-  QDir savedir(home);
-
-  if(!savedir.exists()){
-    savedir.mkdir(home);
-  }
-
-  QString defaultlist;
-  defaultlist = home + "/" + name;
+  QString defaultlist = locateLocal("appdata", name);
   QFile f(defaultlist);
 
   f.open( IO_ReadWrite | IO_Translate|IO_Truncate);
@@ -406,8 +396,6 @@ void PlaylistDialog::savePlaylistbyName(const QString &name){
 
 void PlaylistDialog::saveasPlaylist(){
 
-
-
 }
 
 void PlaylistDialog::deletePlaylist(){
@@ -418,20 +406,13 @@ void PlaylistDialog::loadPlaylist(const QString &name){
      
   current_playlist = name;
   
-  QString home = KApplication::localkdedir() + "/share/apps/kmidi";
+ QString defaultlist = locate("appdata", current_playlist);
+ if (defaultlist.isEmpty())
+    return;
 
-  QDir savedir(home);
-
-  if(!savedir.exists()){
-    savedir.mkdir(home);
-  }
-
- QString defaultlist;
- defaultlist = home + "/" + current_playlist;
-  
  QFile f(defaultlist);
 
- f.open( IO_ReadWrite | IO_Translate);
+ f.open( IO_ReadOnly | IO_Translate);
 
  char buffer[1024];
  QString tempstring;

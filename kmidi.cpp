@@ -58,6 +58,7 @@
 #include "constants.h"
 #include "output.h"
 #include <kiconloader.h>
+#include <kstddirs.h>
 #include <kglobal.h>
 
 extern "C" {
@@ -95,7 +96,6 @@ KMidi::KMidi( QWidget *parent, const char *name ) :
     song_number = 1;
     starting_up = true;
 
-    makedirs();
     readconfig();
     drawPanel();
     loadBitmaps();
@@ -436,61 +436,6 @@ void KMidi::setLEDs(const QString &symbols){
 
 }
 
-
-QString KMidi::getHomeDir() {
-
-  struct passwd *pwd;
-  pwd = getpwuid(getuid());
-
-  if(pwd == NULL)
-    return QString("/");
-
-  QString s = pwd->pw_dir;
-  if(s.right(1) != "/")
-    s += "/";
-  return s;
-
-}
-
-void KMidi::makedirs(){
-
-  QDir dir;
-  QString d;
-
-  d = KApplication::localkdedir();
-  dir.setPath(d);
-  if(!dir.exists()){
-    dir.mkdir(d);
-    chown(d.data(),getuid(),getgid());
-    chmod(d.data(),S_IRUSR | S_IWUSR | S_IXUSR);
-  }
-
-  d += "/share";
-  dir.setPath(d);
-  if(!dir.exists()){
-    dir.mkdir(d);
-    chown(d.data(),getuid(),getgid());
-    chmod(d.data(),S_IRUSR | S_IWUSR | S_IXUSR);
-  }
-
-  d += "/apps";
-  dir.setPath(d);
-  if(!dir.exists()){
-    dir.mkdir(d);
-    chown(d.data(),getuid(),getgid());
-    chmod(d.data(),S_IRUSR | S_IWUSR | S_IXUSR);
-  }
-
-  d += "/kmidi" ;
-
-  dir.setPath(d);
-  if(!dir.exists()){
-    dir.mkdir(d);
-    chown(d.data(),getuid(),getgid());
-    chmod(d.data(),S_IRUSR | S_IWUSR | S_IXUSR);
-  }
-
-}
 int KMidi::randomSong(){
 
     int j;
@@ -867,21 +812,13 @@ void KMidi::PlayCommandlineMods(){
 
 void KMidi::loadplaylist(){
 
-
-    QString home = KApplication::localkdedir() + "/share/apps/kmidi";
-
-    QDir savedir(home);
-
-    if(!savedir.exists()){
-	savedir.mkdir(home);
-    }
-
-    QString defaultlist;
-    defaultlist = home + "/" + "default";
+    QString defaultlist = locate( "appdata", "default");
+    if (defaultlist.isEmpty())
+        return;
 
     QFile f(defaultlist);
 
-    f.open( IO_ReadWrite | IO_Translate);
+    f.open( IO_ReadOnly | IO_Translate);
 
     char buffer[1024];
     QString tempstring;

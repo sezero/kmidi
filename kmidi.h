@@ -159,8 +159,6 @@ protected:
 	void closeEvent( QCloseEvent *e );  
 
 private:
-	QString		getHomeDir();
-	void		makedirs();
 	void 		display_playmode();
 	int		randomSong();
 	void 		resetPos();
