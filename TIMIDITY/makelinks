@@ -1,67 +1,67 @@
 #!/bin/sh
-ln -sf ../alsa_a.cpp alsa_a.c
-ln -sf ../arts_a.cpp arts_a.c
-ln -sf ../b_out.cpp b_out.c
-ln -sf ../bag.cpp bag.c
-ln -sf ../bsd20_a.cpp bsd20_a.c
-ln -sf ../celeste_e.cpp celeste_e.c
-ln -sf ../chorus_e.cpp chorus_e.c
-ln -sf ../common.cpp common.c
-ln -sf ../common.h common.h
-ln -sf ../config.h config.h
-ln -sf ../controls.cpp controls.c
-ln -sf ../controls.h controls.h
-ln -sf ../cfg.cpp cfg.c
-ln -sf ../cfg.l cfg.l
-ln -sf ../ctl.cpp ctl.c
-ln -sf ../ctl.h ctl.h
-ln -sf ../dec_a.cpp dec_a.c
-ln -sf ../dumb_c.cpp dumb_c.c
-ln -sf ../effects.cpp effects.c
-ln -sf ../effects.h effects.h
-ln -sf ../esd_a.cpp esd_a.c
-ln -sf ../fffload.cpp fffload.c
-ln -sf ../filter.cpp filter.c
-ln -sf ../filter.h filter.h
-ln -sf ../gentxt.cpp gentxt.c
-ln -sf ../getopt.cpp getopt.c
-ln -sf ../hpux_a.cpp hpux_a.c
-ln -sf ../hpux_d_a.cpp hpux_d_a.c
-ln -sf ../instrum.cpp instrum.c
-ln -sf ../instrum.h instrum.h
-ln -sf ../linux_a.cpp linux_a.c
-ln -sf ../linux_a2.cpp linux_a2.c
-ln -sf ../mix.cpp mix.c
-ln -sf ../mix.h mix.h
-ln -sf ../nas_a.cpp nas_a.c
-ln -sf ../ncurs_c.cpp ncurs_c.c
-ln -sf ../output.cpp output.c
-ln -sf ../output.h output.h
-ln -sf ../phaser_e.cpp phaser_e.c
-ln -sf ../playmidi.cpp playmidi.c
-ln -sf ../playmidi.h playmidi.h
-ln -sf ../raw_a.cpp raw_a.c
-ln -sf ../readmidi.cpp readmidi.c
-ln -sf ../readmidi.h readmidi.h
-ln -sf ../readsbk.cpp readsbk.c
-ln -sf ../resample.cpp resample.c
-ln -sf ../resample.h resample.h
-ln -sf ../resample_f.cpp resample_f.c
-ln -sf ../resample_l.cpp resample_l.c
-ln -sf ../reverb_e.cpp reverb_e.c
-ln -sf ../sbk.h sbk.h
-ln -sf ../sbktext.cpp sbktext.c
-ln -sf ../sf2cfg.cpp sf2cfg.c
-ln -sf ../sflayer.h sflayer.h
-ln -sf ../slang_c.cpp slang_c.c
-ln -sf ../sndfont.cpp sndfont.c
-ln -sf ../sun_a.cpp sun_a.c
-ln -sf ../tables.cpp tables.c
-ln -sf ../tables.h tables.h
-ln -sf ../timidity.cpp timidity.c
-ln -sf ../version.h version.h
-ln -sf ../wav2pat.cpp wav2pat.c
-ln -sf ../wave_a.cpp wave_a.c
-ln -sf ../cfg.l cfg.l
-ln -sf ../BITMAPS BITMAPS
+ln -f -s ../alsa_a.cpp alsa_a.c
+ln -f -s ../arts_a.cpp arts_a.c
+ln -f -s ../b_out.cpp b_out.c
+ln -f -s ../bag.cpp bag.c
+ln -f -s ../bsd20_a.cpp bsd20_a.c
+ln -f -s ../celeste_e.cpp celeste_e.c
+ln -f -s ../chorus_e.cpp chorus_e.c
+ln -f -s ../common.cpp common.c
+ln -f -s ../common.h common.h
+ln -f -s ../config.h config.h
+ln -f -s ../controls.cpp controls.c
+ln -f -s ../controls.h controls.h
+ln -f -s ../cfg.cpp cfg.c
+ln -f -s ../cfg.l cfg.l
+ln -f -s ../ctl.cpp ctl.c
+ln -f -s ../ctl.h ctl.h
+ln -f -s ../dec_a.cpp dec_a.c
+ln -f -s ../dumb_c.cpp dumb_c.c
+ln -f -s ../effects.cpp effects.c
+ln -f -s ../effects.h effects.h
+ln -f -s ../esd_a.cpp esd_a.c
+ln -f -s ../fffload.cpp fffload.c
+ln -f -s ../filter.cpp filter.c
+ln -f -s ../filter.h filter.h
+ln -f -s ../gentxt.cpp gentxt.c
+ln -f -s ../getopt.cpp getopt.c
+ln -f -s ../hpux_a.cpp hpux_a.c
+ln -f -s ../hpux_d_a.cpp hpux_d_a.c
+ln -f -s ../instrum.cpp instrum.c
+ln -f -s ../instrum.h instrum.h
+ln -f -s ../linux_a.cpp linux_a.c
+ln -f -s ../linux_a2.cpp linux_a2.c
+ln -f -s ../mix.cpp mix.c
+ln -f -s ../mix.h mix.h
+ln -f -s ../nas_a.cpp nas_a.c
+ln -f -s ../ncurs_c.cpp ncurs_c.c
+ln -f -s ../output.cpp output.c
+ln -f -s ../output.h output.h
+ln -f -s ../phaser_e.cpp phaser_e.c
+ln -f -s ../playmidi.cpp playmidi.c
+ln -f -s ../playmidi.h playmidi.h
+ln -f -s ../raw_a.cpp raw_a.c
+ln -f -s ../readmidi.cpp readmidi.c
+ln -f -s ../readmidi.h readmidi.h
+ln -f -s ../readsbk.cpp readsbk.c
+ln -f -s ../resample.cpp resample.c
+ln -f -s ../resample.h resample.h
+ln -f -s ../resample_f.cpp resample_f.c
+ln -f -s ../resample_l.cpp resample_l.c
+ln -f -s ../reverb_e.cpp reverb_e.c
+ln -f -s ../sbk.h sbk.h
+ln -f -s ../sbktext.cpp sbktext.c
+ln -f -s ../sf2cfg.cpp sf2cfg.c
+ln -f -s ../sflayer.h sflayer.h
+ln -f -s ../slang_c.cpp slang_c.c
+ln -f -s ../sndfont.cpp sndfont.c
+ln -f -s ../sun_a.cpp sun_a.c
+ln -f -s ../tables.cpp tables.c
+ln -f -s ../tables.h tables.h
+ln -f -s ../timidity.cpp timidity.c
+ln -f -s ../version.h version.h
+ln -f -s ../wav2pat.cpp wav2pat.c
+ln -f -s ../wave_a.cpp wave_a.c
+ln -f -s ../cfg.l cfg.l
+ln -f -s ../BITMAPS BITMAPS
 
