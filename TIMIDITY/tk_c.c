@@ -17,6 +17,7 @@
 #include <unistd.h>
 #include <stdarg.h>
 #include <string.h>
+#include <sys/errno.h>
 #include <sys/ioctl.h>
 #include <signal.h>
 #include <sys/ioctl.h>
