@@ -1,3 +1,8 @@
+1999-11-03  Greg Lee  <lee@hawaii.edu>
+
+	* disable lp filter and c-spline interpolation
+	  (except filter still works for drums when first loaded)
+
 1999-11-02  Greg Lee  <lee@hawaii.edu>
 
 	* kmidi.cpp: smooth song time display; stop

@@ -51,9 +51,28 @@ static int dont_cspline = 0;
 #define MIN_DATAVAL -32768
 #endif
 
-#define FILTER_INTERPOLATION
 
 #define OVERSHOOT_STEP 50
+
+#define ENVELOPE_PITCH_MODULATION
+
+#ifdef FILTER_INTERPOLATION
+#ifndef ENVELOPE_PITCH_MODULATION
+#define ENVELOPE_PITCH_MODULATION
+#endif
+#endif
+
+#if !defined(FILTER_INTERPOLATION) && defined(ENVELOPE_PITCH_MODULATION)
+#define CCVARS \
+	int cc_count=vp->modulation_counter;
+#define MODULATE_NONVIB_PITCH \
+		if (!cc_count--) { \
+		    cc_count = control_ratio - 1; \
+		    incr = calc_mod_freq(v, incr); \
+		}
+#define REMEMBER_CC_STATE \
+	vp->modulation_counter=cc_count;
+#endif
 
 #if defined(CSPLINE_INTERPOLATION)
 #ifndef FILTER_INTERPOLATION
@@ -125,7 +144,7 @@ static int dont_cspline = 0;
 			b0 = butterworth[bw_index][3]; \
 			b1 = butterworth[bw_index][4]; \
 		    } \
-		    incr = calc_mod_freq(vp, incr); \
+		    incr = calc_mod_freq(v, incr); \
 		} \
 		if (dont_filter_melodic) bw_index = 0; \
                 newsample = (sample_t)(v1 + ((int32)((v2-v1) * (ofs & FRACTION_MASK)) >> FRACTION_BITS)); \
@@ -163,7 +182,7 @@ static int dont_cspline = 0;
 			b0 = butterworth[bw_index][3]; \
 			b1 = butterworth[bw_index][4]; \
 		    } \
-		    incr = calc_mod_freq(vp, incr); \
+		    incr = calc_mod_freq(v, incr); \
 		} \
 		if (dont_filter_melodic) bw_index = 0; \
 		newsample = (v1 > MAX_DATAVAL)? MAX_DATAVAL: ((v1 < MIN_DATAVAL)? MIN_DATAVAL: (sample_t)v1); \
@@ -247,7 +266,7 @@ static int dont_cspline = 0;
 # define BUTTERWORTH_COEFFICIENTS \
 			overshoot = src[(se>>FRACTION_BITS)-1] / OVERSHOOT_STEP; \
 			if (overshoot < 0) overshoot = -overshoot;
-# define INTERPVARS     int32 overshoot;
+#  define INTERPVARS int32 v1, v2, overshoot=0;
 #   define RESAMPLATION \
 	if (ofs >= se) { \
 		int32 delta = (ofs - se)>>FRACTION_BITS ; \
@@ -259,7 +278,6 @@ static int dont_cspline = 0;
         }else  v2 = (int32)src[(ofs>>FRACTION_BITS)+1]; \
 	*dest++ = (sample_t)(v1 + ((int32)((v2-v1) * (ofs & FRACTION_MASK)) >> FRACTION_BITS));
 # endif
-#  define INTERPVARS int32 v1, v2, overshoot=0;
 #else
 /* Earplugs recommended for maximum listening enjoyment */
 #  define RESAMPLATION \
@@ -275,6 +293,7 @@ static sample_t *vib_resample_voice(int, uint32 *, int);
 static sample_t *normal_resample_voice(int, uint32 *, int);
 
 
+#ifdef FILTER_INTERPOLATION
 static void update_lfo(int v)
 {
   FLOAT_T depth=voice[v].modLfoToFilterFc;
@@ -297,6 +316,7 @@ static void update_lfo(int v)
 
   voice[v].lfo_volume = depth;
 }
+#endif
 
 /* Returns 1 if envelope runs out */
 int recompute_modulation(int v)
@@ -375,6 +395,7 @@ static int update_modulation_signal(int v)
   return 0;
 }
 
+#ifdef FILTER_INTERPOLATION
 static int calc_bw_index(int v)
 {
   FLOAT_T mod_amount=voice[v].modEnvToFilterFc;
@@ -410,25 +431,31 @@ mod_amount);
   voice[v].bw_index = 1 + (freq+50) / 100;
   return 0;
 }
+#endif
 
+#if defined(FILTER_INTERPOLATION) || defined(ENVELOPE_PITCH_MODULATION)
 /* modulation_volume has been set by above routine */
-static int32 calc_mod_freq(Voice *vp, int32 incr)
+static int32 calc_mod_freq(int v, int32 incr)
 {
   FLOAT_T mod_amount;
   int32 freq;
   /* already done in update_vibrato ? */
-  if (vp->vibrato_control_ratio) return incr;
-  if ((mod_amount=vp->sample->modEnvToPitch)<0.02) return incr;
+  if (voice[v].vibrato_control_ratio) return incr;
+#ifndef FILTER_INTERPOLATION
+  if (update_modulation_signal(v)) return incr;
+#endif
+  if ((mod_amount=voice[v].sample->modEnvToPitch)<0.02) return incr;
   if (incr < 0) return incr;
-  freq = vp->frequency;
-  freq = (int32)( (double)freq*(1.0 + (mod_amount - 1.0) * (vp->modulation_volume>>22) / 255.0) );
+  freq = voice[v].frequency;
+  freq = (int32)( (double)freq*(1.0 + (mod_amount - 1.0) * (voice[v].modulation_volume>>22) / 255.0) );
 
-  return FRSCALE(((double)(vp->sample->sample_rate) *
+  return FRSCALE(((double)(voice[v].sample->sample_rate) *
 		  (double)(freq)) /
-		 ((double)(vp->sample->root_freq) *
+		 ((double)(voice[v].sample->root_freq) *
 		  (double)(play_mode->rate)),
 		 FRACTION_BITS);
 }
+#endif
 /*************** resampling with fixed increment *****************/
 
 static sample_t *rs_plain(int v, uint32 *countptr)
@@ -437,6 +464,9 @@ static sample_t *rs_plain(int v, uint32 *countptr)
   Voice
     *vp=&voice[v];
   INTERPVARS
+  #ifdef CCVARS
+  CCVARS
+  #endif
   sample_t
     *dest=resample_buffer+resample_buffer_offset,
     *src=vp->sample->data;
@@ -445,8 +475,8 @@ static sample_t *rs_plain(int v, uint32 *countptr)
     incr=vp->sample_increment,
 #if defined(LAGRANGE_INTERPOLATION) || defined(CSPLINE_INTERPOLATION)
     ls=0,
-#endif /* LAGRANGE_INTERPOLATION */
     le=vp->sample->data_length,
+#endif /* LAGRANGE_INTERPOLATION */
     se=vp->sample->data_length;
   uint32
     count=*countptr;
@@ -460,6 +490,9 @@ static sample_t *rs_plain(int v, uint32 *countptr)
     while (count--)
     {
       RESAMPLATION;
+      #ifdef MODULATE_NONVIB_PITCH
+      MODULATE_NONVIB_PITCH
+      #endif
       ofs += incr;
       if (ofs >= se + (overshoot << FRACTION_BITS))
 	{
@@ -477,6 +510,9 @@ static sample_t *rs_plain(int v, uint32 *countptr)
 #ifdef REMEMBER_FILTER_STATE
 REMEMBER_FILTER_STATE
 #endif
+#ifdef REMEMBER_CC_STATE
+REMEMBER_CC_STATE
+#endif
   return resample_buffer+resample_buffer_offset;
 }
 
@@ -484,6 +520,9 @@ static sample_t *rs_loop(int v, Voice *vp, uint32 *countptr)
 {
   /* Play sample until end-of-loop, skip back and continue. */
   INTERPVARS
+  #ifdef CCVARS
+  CCVARS
+  #endif
   int32
     ofs=vp->sample_offset,
     incr=vp->sample_increment,
@@ -506,6 +545,9 @@ static sample_t *rs_loop(int v, Voice *vp, uint32 *countptr)
   while (count--)
     {
       RESAMPLATION;
+      #ifdef MODULATE_NONVIB_PITCH
+      MODULATE_NONVIB_PITCH
+      #endif
       ofs += incr;
       if (ofs>=le)
 	{
@@ -531,6 +573,9 @@ static sample_t *rs_loop(int v, Voice *vp, uint32 *countptr)
   vp->sample_offset=ofs; /* Update offset */
 #ifdef REMEMBER_FILTER_STATE
 REMEMBER_FILTER_STATE
+#endif
+#ifdef REMEMBER_CC_STATE
+REMEMBER_CC_STATE
 #endif
   return resample_buffer+resample_buffer_offset;
 }
@@ -679,7 +724,9 @@ static int vib_phase_to_inc_ptr(int phase)
 static int32 update_vibrato(Voice *vp, int sign)
 {
   int32 depth, freq=vp->frequency;
+#ifdef ENVELOPE_PITCH_MODULATION
   FLOAT_T mod_amount=vp->sample->modEnvToPitch;
+#endif
   int phase, pb;
   double a;
 
@@ -723,8 +770,14 @@ static int32 update_vibrato(Voice *vp, int sign)
 	}
     }
 
+#ifdef ENVELOPE_PITCH_MODULATION
+#ifndef FILTER_INTERPOLATION
+  if (update_modulation_signal(0)) mod_amount = 0;
+  else
+#endif
   if (mod_amount>0.02)
    freq = (int32)( (double)freq*(1.0 + (mod_amount - 1.0) * (vp->modulation_volume>>22) / 255.0) );
+#endif
 
   pb=(int)((sine(vp->vibrato_phase *
 			(SINE_CYCLE_LENGTH/(2*VIBRATO_SAMPLE_INCREMENTS)))
@@ -767,8 +820,8 @@ static sample_t *rs_vib_plain(int v, uint32 *countptr)
   int32
 #if defined(LAGRANGE_INTERPOLATION) || defined(CSPLINE_INTERPOLATION)
     ls=0,
-#endif /* LAGRANGE_INTERPOLATION */
     le=vp->sample->data_length,
+#endif /* LAGRANGE_INTERPOLATION */
     se=vp->sample->data_length,
     ofs=vp->sample_offset,
     incr=vp->sample_increment;

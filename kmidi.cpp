@@ -88,6 +88,8 @@ enum midistatus{ KNONE, KPLAYING, KSTOPPED, KLOOPING, KFORWARD,
 static midistatus status, last_status;
 static int nbvoice = 0;
 
+//QFont default_font("Helvetica", 10, QFont::Bold);
+
 KApplication * thisapp;
 KMidiFrame *kmidiframe;
 KMidi *kmidi;
@@ -691,9 +693,6 @@ void KMidi::drawPanel()
 
     regularsize = QSize (totalwidth, regularheight);
     setFixedWidth(totalwidth);
-// can't seem to stop shrinkage anymore
-    //setMinimumWidth(totalwidth);
-    //setMinimumSize(regularsize);
 
     // Choose patch set
     ix = 0;
@@ -713,7 +712,7 @@ void KMidi::drawPanel()
     iy += HEIGHT;
     playbox = new QComboBox( FALSE, this, "song" );
     playbox->setGeometry(ix, iy, WIDTH + WIDTH/2, HEIGHT);
-    playbox->setFont( QFont( "helvetica", 10, QFont::Normal) );
+    //playbox->setFont( QFont( "helvetica", 10, QFont::Normal) );
     connect( playbox, SIGNAL(activated(int)), SLOT(setSong(int)) );
     playbox->hide();
 
@@ -721,7 +720,7 @@ void KMidi::drawPanel()
 
     playlistbox = new QComboBox( FALSE, this, "_playlists" );
     playlistbox->setGeometry(ix, iy, WIDTH + WIDTH/2, HEIGHT);
-    playlistbox->setFont( QFont( "helvetica", 10, QFont::Normal) );
+    //playlistbox->setFont( QFont( "helvetica", 10, QFont::Normal) );
     connect( playlistbox, SIGNAL( activated( int ) ), this, SLOT( plActivated( int ) ) );
     playlistbox->hide();
 
@@ -748,14 +747,14 @@ void KMidi::drawPanel()
     iy += HEIGHT;
     effectbutton = makeButton( ix,          iy, WIDTH/2, HEIGHT, "eff" );
     effectbutton->setToggleButton( TRUE );
-    effectbutton->setFont( QFont( "helvetica", 10, QFont::Normal) );
+    effectbutton->setFont( QFont( "helvetica", 10, QFont::Bold) );
     connect( effectbutton, SIGNAL(toggled(bool)), SLOT(setEffects(bool)) );
     effectbutton->hide();
 
     voicespin = new QSpinBox( 1, MAX_VOICES, 1, this, "_spinv" );
     voicespin->setValue(current_voices);
     voicespin->setGeometry( ix +WIDTH/2, iy, WIDTH/2, HEIGHT );
-    voicespin->setFont( QFont( "helvetica", 10, QFont::Normal) );
+    voicespin->setFont( QFont( "helvetica", 10, QFont::Bold) );
     connect( voicespin, SIGNAL( valueChanged(int) ),
 	     SLOT( voicesChanged(int) ) );
     voicespin->hide();
@@ -767,12 +766,12 @@ void KMidi::drawPanel()
     meterspin->setGeometry( ix, iy, WIDTH/2, HEIGHT );
     connect( meterspin, SIGNAL( valueChanged(int) ),
 	     SLOT( meterfudgeChanged(int) ) );
-    meterspin->setFont( QFont( "helvetica", 10, QFont::Normal) );
+    meterspin->setFont( QFont( "helvetica", 10, QFont::Bold) );
     meterspin->hide();
 
     filterbutton = makeButton( ix +WIDTH/2,     iy, WIDTH/2,   HEIGHT, "filt" );
     filterbutton->setToggleButton( TRUE );
-    filterbutton->setFont( QFont( "helvetica", 10, QFont::Normal) );
+    filterbutton->setFont( QFont( "helvetica", 10, QFont::Bold) );
     connect( filterbutton, SIGNAL(toggled(bool)), SLOT(setFilter(bool)) );
     filterbutton->hide();
 }
@@ -2180,9 +2179,12 @@ extern "C" {
 	KWM::setWmCommand(kmidiframe->winId(),"_kmidiframe");
 	//thisapp->setTopWidget(kmidi);
 	//kmidi->setCaption(kapp->makeStdCaption( i18n("Midi Player") ));
-	kmidiframe->setCaption( i18n("Midi Player") );
+	///kmidiframe->setCaption( i18n("Midi Player") );
 	// it's hard to drag the window around with no bar
 	//KWM::setDecoration(kmidi->winId(), KWM::tinyDecoration);
+	//kmidiframe->setFontPropagation( QWidget::AllChildren );
+        //thisapp->setFont(default_font, TRUE);
+        //kmidiframe->setFont(default_font, TRUE);
 	kmidiframe->show();
 	thisapp->exec();
 

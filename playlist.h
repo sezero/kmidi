@@ -141,7 +141,7 @@ private:
     QLineEdit* newEdit;
     int *playlist_ptr;
     QFrame* snpopup;
-    QPopupMenu *savenew;
+    //QPopupMenu *savenew;
     QPopupMenu *view;
 
 };

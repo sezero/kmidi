@@ -622,7 +622,8 @@ static int ctl_blocking_read(int32 *valp)
 	      case MOTIF_FILTER:
 		  pipe_int_read(&arg);
 		  *valp= arg;
-		  command_cutoff_allowed = arg;
+		  /*command_cutoff_allowed = arg;*/
+		  dont_filter_drums = arg;
 		  if (!pausing) return RC_NONE;
 		  break;
 

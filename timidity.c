@@ -62,7 +62,7 @@ extern int init_effect() ;
 int have_commandline_midis = 0;
 int output_device_open = 1;
 #endif /* KMIDI */
-#ifdef tplus
+#ifdef tplusdontuse
 extern int opt_portamento;
 #endif
 
@@ -902,7 +902,7 @@ int main(int argc, char **argv)
 #ifdef CHANNEL_EFFECT
 		case 'E':  effect_activate( 1 ); break ;
 #endif /* CHANNEL_EFFECT */
-#ifdef tplus
+#ifdef tplusdontuse
 		case 'm':  opt_portamento = 0; break ;
 #endif
 

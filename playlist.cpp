@@ -45,6 +45,7 @@ char fontrefstring1[]="012345678901234567890";
 char fontrefstring2[]="01234567890";
 char fontrefstring3[]="00  00:00";
 
+
 extern KApplication *thisapp;
 extern KMidi *kmidi;
 
@@ -60,16 +61,17 @@ PlaylistEdit::PlaylistEdit(const char *name, QStrList *playlist,
 
   QPopupMenu *file = new QPopupMenu;
 
-  savenew = new QPopupMenu;
+  //savenew = new QPopupMenu;
   CHECK_PTR( file );
 
-  savenew->insertItem( i18n("New Playlist"), this, SLOT( editNewPlaylist() ) );
+  //savenew->insertItem( i18n("New Playlist"), this, SLOT( editNewPlaylist() ) );
 
   snpopup = new QFrame( this ,0, WType_Popup);
   snpopup->setFrameStyle( QFrame::PopupPanel|QFrame::Raised );
   snpopup->resize(170,75);
 
   newEdit = new QLineEdit( snpopup, "_editnew" );
+
   QLabel *labsavename = new QLabel(snpopup);
   labsavename->setText("enter new name");
   newEdit->setGeometry(10,10, 150, 30);
@@ -78,7 +80,8 @@ PlaylistEdit::PlaylistEdit(const char *name, QStrList *playlist,
   newEdit->setFocus();
 
   file->insertItem( i18n("Save"), this, SLOT(saveIt()));
-  file->insertItem( i18n("Save as ..."), savenew);
+  //file->insertItem( i18n("Save as ..."), savenew);
+  file->insertItem( i18n("Save as ..."), this, SLOT( editNewPlaylist() ));
   file->insertItem( i18n("Append"), this, SLOT(appendIt()));
   file->insertItem( i18n("Delete"), this, SLOT(removeIt()));
   file->insertItem( i18n("OK"), this, SLOT(checkList()));
@@ -540,27 +543,8 @@ void PlaylistEdit::checkList(){
 }
 
 
-
-//void PlaylistEdit::resizeEvent(QResizeEvent *e){
-//
-//  int w = (e->size()).width() ;
-//  int h = (e->size()).height();
-  
-  //vpanner->setGeometry( BORDER_WIDTH, menu->height() + BORDER_WIDTH ,
- // 	       w - 2*BORDER_WIDTH, h - 37 -  menu->height());
-
-  //cancelButton->setGeometry(BORDER_WIDTH +2 ,h -28,70,25);  
-  //okButton->setGeometry(BORDER_WIDTH + 70 + 7 ,h - 28 ,70,25);  
-  //filterButton->setGeometry(BORDER_WIDTH + 70 + 7 + 70 + 7,h - 28, 70,25);
-
-  //removeButton->setGeometry(w - 70 -70 - 10 - BORDER_WIDTH ,h - 28, 70,25);
-  //addButton->setGeometry(w - 73 - BORDER_WIDTH  ,h - 28,70,25);
-
-//} 
-
-
 void PlaylistEdit::editNewPlaylist(){
-    snpopup->move( mapToGlobal( plistbox->geometry().topLeft() ) );
+    snpopup->move( QCursor::pos() );
     snpopup->show();
 }
 

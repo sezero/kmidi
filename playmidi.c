@@ -86,15 +86,17 @@ static unsigned max_polyphony = 0;
 #endif
 
 #ifdef tplus
+#if 0
 int opt_realtime_playing = 0;
 int opt_modulation_wheel = 1;
 int opt_portamento = 1;
 int opt_channel_pressure = 1;
 int opt_overlap_voice_allow = 1;
+#endif
 int dont_cspline=0;
 #endif
 int dont_filter_melodic=1;
-int dont_filter_drums=0;
+int dont_filter_drums=1;
 int dont_chorus=0;
 int dont_reverb=0;
 static int voice_reserve=0;
@@ -348,10 +350,12 @@ void recompute_freq(int v)
     return;
 
 #ifdef tplus
+#if 0
   if(!opt_modulation_wheel)
       voice[v].modulation_wheel = 0;
   if(!opt_portamento)
       voice[v].porta_control_ratio = 0;
+#endif
   voice[v].vibrato_control_ratio = voice[v].orig_vibrato_control_ratio;
  
   if(voice[v].modulation_wheel > 0)
@@ -1709,8 +1713,10 @@ static void adjust_pressure(MidiEvent *e)
 #ifdef tplus
 static void adjust_channel_pressure(MidiEvent *e)
 {
+#if 0
     if(opt_channel_pressure)
     {
+#endif
 	int i=voices;
 	int ch, pressure;
 
@@ -1723,7 +1729,9 @@ static void adjust_channel_pressure(MidiEvent *e)
 		recompute_amp(i);
 		apply_envelope_to_amp(i);
 	    }
+#if 0
     }
+#endif
 }
 #endif
 
