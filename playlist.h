@@ -123,7 +123,7 @@ private:
     bool starting_up;
     bool showmidisonly;
     QDir cur_local_dir;
-    QList<QFileInfo> cur_local_fileinfo;
+    QPtrList<QFileInfo> cur_local_fileinfo;
     QListBox *local_list;
     QSplitter *hpanner, *vpanner;
     QLabel *statusbar;
