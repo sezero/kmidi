@@ -1,4 +1,5 @@
 /*
+	$Id$
 
     TiMidity -- Experimental MIDI to WAVE converter
     Copyright (C) 1995 Tuukka Toivonen <toivonen@clinet.fi>
@@ -84,13 +85,13 @@ static void free_instrument(Instrument *ip)
   for (i=0; i<ip->samples; i++)
     {
       sp=&(ip->sample[i]);
-      free(sp->data);
+      if (sp->data) free(sp->data);
     }
   free(ip->sample);
   for (i=0; i<ip->right_samples; i++)
     {
       sp=&(ip->right_sample[i]);
-      free(sp->data);
+      if (sp->data) free(sp->data);
     }
   if (ip->right_sample)
     free(ip->right_sample);
@@ -243,7 +244,7 @@ static Instrument *load_instrument(char *name, int font_type, int percussion,
 #ifdef ADAGIO
   int newmode;
   extern Instrument *load_fff_patch(int, int, int, int);
-  extern Instrument *load_sbk_patch(int, int, int, int, int, int, int);
+  extern Instrument *load_sbk_patch(int, int, int, int, int, int);
   extern int next_wave_prog;
 
   if (gm_num >= 0) {
@@ -252,18 +253,14 @@ static Instrument *load_instrument(char *name, int font_type, int percussion,
   }
 #else
   extern Instrument *load_fff_patch(char *, int, int, int, int, int, int, int, int, int);
-  extern Instrument *load_sbk_patch(int, char *, int, int, int, int, int, int, int, int, int, int, int);
+  extern Instrument *load_sbk_patch(char *, int, int, int, int, int, int, int, int, int, int, int);
 
   if (gm_num >= 0) {
       if (font_type == FONT_FFF && (ip = load_fff_patch(name, gm_num, bank, percussion,
 			   panning, amp, note_to_use,
 			   strip_loop, strip_envelope,
 			   strip_tail))) return(ip);
-	/* Substitute next if sbk fonts are not to require bank and preset
-	   declarations -- also undefine STRICT_FONT_DECL in sndfont.c. --gl
-	 */
-      /*if ((!bank || font_type == FONT_SBK) && (ip = load_sbk_patch(0, name, gm_num, bank, percussion,*/
-      if (font_type == FONT_SBK && (ip = load_sbk_patch(0, name, gm_num, bank, percussion,
+      if (font_type == FONT_SBK && (ip = load_sbk_patch(name, gm_num, bank, percussion,
 			   panning, amp, note_to_use,
 			   strip_loop, strip_envelope,
 			   strip_tail, brightness, harmoniccontent))) return(ip);
@@ -296,14 +293,6 @@ static Instrument *load_instrument(char *name, int font_type, int percussion,
   
   if (noluck)
     {
-    #ifndef ADAGIO
-      if (gm_num >= 0) {
-  	if (font_type == FONT_SBK && (ip = load_sbk_patch(1, name, gm_num, bank, percussion,
-			   panning, amp, note_to_use,
-			   strip_loop, strip_envelope,
-			   strip_tail, brightness, harmoniccontent))) return(ip);
-      }
-    #endif
       ctl->cmsg(CMSG_ERROR, VERB_NORMAL, 
 		"Instrument `%s' can't be found.", name);
     #ifdef ADAGIO
@@ -559,7 +548,7 @@ static Instrument *load_instrument(char *name, int font_type, int percussion,
 	sp->attenuation = 0;
 #ifdef ADAGIO
 
-        for (j = 0; j < 6; j++) {
+        for (j = ATTACK; j < DELAY; j++) {
 	    if (gus_voice[tpgm].keep & USEENV_FLAG) {
 		tmp[6+j] = gus_voice[tpgm].envelope_offset[j];
 		tmp[j] = gus_voice[tpgm].envelope_rate[j];
@@ -608,13 +597,14 @@ static Instrument *load_instrument(char *name, int font_type, int percussion,
 	  }
 ******debug*********/
 
-      for (j=0; j<6; j++)
+      for (j=ATTACK; j<DELAY; j++)
 	{
 	  sp->envelope_rate[j]=
 	    (j<3)? convert_envelope_rate_attack(tmp[j], 11) : convert_envelope_rate(tmp[j]);
 	  sp->envelope_offset[j]= 
 	    convert_envelope_offset(tmp[6+j]);
 	}
+      sp->envelope_rate[DELAY] = sp->envelope_offset[DELAY] = 0;
 
       /* Then read the sample data */
       sp->data = safe_malloc(sp->data_length);
