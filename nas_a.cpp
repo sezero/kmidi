@@ -43,6 +43,8 @@
 
 #ifdef ORIG_TIMPP
 #include "timidity.h"
+#else
+#include "config.h"
 #endif
 #include "common.h"
 #include "output.h"
@@ -76,9 +78,10 @@ static int ioctldevaudio(int request, void *arg);
 static int acntl(int request, void *arg);
 #else
 static void output_data(int32 *buf, uint32 count);
-static int driver_output_data(int32 *buf, uint32 count);
+static int driver_output_data(unsigned char *buf, uint32 count);
 static void flush_output(void);
 static void purge_output(void);
+static int output_count(uint32 ct);
 #endif
 
 #ifdef ORIG_TIMPP
@@ -257,9 +260,13 @@ static int opendevaudio(void)
   int i;
 
   /* Only supported PE_16BIT|PE_SIGNED yet */
+#ifdef ORIG_TIMPP
   dpm.encoding = validate_encoding(dpm.encoding,
 				   PE_16BIT|PE_SIGNED,
 				   PE_BYTESWAP|PE_ULAW|PE_ALAW);
+#else
+  dpm.encoding = PE_16BIT|PE_SIGNED;
+#endif
  
   if (!(fd.aud = AuOpenServer((char*)0, 0, NULL, 0, NULL, NULL))) return -1;
   fd.capacity = 0;
@@ -309,7 +316,7 @@ static void closedevaudio(void)
 #ifdef ORIG_TIMPP
 static int writedevaudio(char *buf, int32 len)
 #else
-static int driver_output_data(char *buf, uint32 count)
+static int driver_output_data(unsigned char *buf, uint32 count)
 #endif
 {
   int done = 0;
@@ -317,6 +324,7 @@ static int driver_output_data(char *buf, uint32 count)
   int len = (int)count;
 #endif
 
+/* fprintf(stderr,"DOD: write count=%d\n", count); */
   while ((fd.used+(len-done))>fd.capacity)
   {
     int stillFits=fd.capacity-fd.used;
@@ -324,11 +332,14 @@ static int driver_output_data(char *buf, uint32 count)
     memcpy(fd.data+fd.used,buf+done,stillFits);
     done+=stillFits;
     fd.used+=stillFits;
+/* fprintf(stderr,"DOD: cap=%d stillFits=%d done=%d\n", fd.capacity, stillFits, done); */
     syncdevaudio();
   }
+
   memcpy(fd.data+fd.used,buf+done,len-done);
   fd.used+=(len-done);
   output_counter += len;
+/* fprintf(stderr,"DOD: return len=%d\n", len); */
   return len;
 }
 

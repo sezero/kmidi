@@ -20,7 +20,7 @@
    Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
  */
-
+#if defined(KMIDI) || defined(IA_GTK)
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -1228,3 +1228,4 @@ static void shm_free(int sig)
 		exit(0);
 }
 
+#endif

@@ -61,7 +61,7 @@ static int output_data(char *buf, int32 nbytes);
 static int acntl(int request, void *arg);
 #else
 static int output_data(char *buf, uint32 count);
-static int driver_output_data(char *buf, uint32 count);
+static int driver_output_data(unsigned char *buf, uint32 count);
 static void flush_output(void);
 static void purge_output(void);
 static int output_count(uint32 ct);
@@ -172,7 +172,7 @@ static int output_data(char *buf, int32 nbytes)
 }
 #else
 
-static int driver_output_data(char *buf, uint32 count) {
+static int driver_output_data(unsigned char *buf, uint32 count) {
   return snd_pcm_write(handle, buf, count);
 }
 

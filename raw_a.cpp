@@ -50,7 +50,7 @@
 static int open_output(void); /* 0=success, 1=warning, -1=fatal error */
 static void close_output(void);
 static void output_data(int32 *buf, uint32 count);
-static int driver_output_data(int32 *buf, uint32 count);
+static int driver_output_data(unsigned char *buf, uint32 count);
 static void flush_output(void);
 static void purge_output(void);
 static int output_count(uint32 ct);
@@ -106,7 +106,7 @@ static int output_count(uint32 ct)
   return (int)ct;
 }
 
-static int driver_output_data(int32 *buf, uint32 count)
+static int driver_output_data(unsigned char *buf, uint32 count)
 {
   return count;
 }

@@ -199,6 +199,7 @@ if test "x$au_enable_sun" = xyes; then
       if test -f /usr/demo/SOUND/libaudio.a; then
 	CPPFLAGS="$CPPFLAGS -I/usr/demo/SOUND/multimedia"
 	EXTRALIBS="$EXTRALIBS /usr/demo/SOUND/libaudio.a"
+	EXTRATLIBS="$EXTRATLIBS /usr/demo/SOUND/libaudio.a"
 	AC_MSG_RESULT(yes)
       else
 	AC_MSG_RESULT(Notice: libaudio.a is not found [(ignore)])
@@ -208,6 +209,7 @@ if test "x$au_enable_sun" = xyes; then
       if test -f /usr/demo/SOUND/lib/libaudio.a; then
 	CPPFLAGS="$CPPFLAGS -I/usr/demo/SOUND/include"
 	EXTRALIBS="$EXTRALIBS /usr/demo/SOUND/lib/libaudio.a"
+	EXTRATLIBS="$EXTRATLIBS /usr/demo/SOUND/lib/libaudio.a"
 	AC_MSG_RESULT(yes)
       else
 	AC_MSG_RESULT(Notice: libaudio.a is not found [(ignore)])
@@ -246,6 +248,7 @@ if test "x$au_enable_irix" = xyes; then
     *) AC_MSG_WARN(may not work on $target) ;;
   esac
   EXTRALIBS="$EXTRALIBS -laudio"
+  EXTRATLIBS="$EXTRATLIBS -laudio"
 else
   AC_MSG_RESULT(no)
 fi
@@ -259,6 +262,7 @@ if test "x$au_enable_mme" = xyes; then
   EXTRADEFS="$EXTRADEFS -DAU_DEC -DAU_AUDRIV"
   CPPFLAGS="$CPPFLAGS -I/usr/include/mme -I/usr/opt/MME210/include"
   EXTRALIBS="$EXTRALIBS -L/usr/opt/MME220/lib -lmme"
+  EXTRATLIBS="$EXTRATLIBS -L/usr/opt/MME220/lib -lmme"
 else
   AC_MSG_RESULT(no)
 fi
@@ -291,6 +295,7 @@ if test "x$au_enable_alsa" = xyes; then
     AC_MSG_RESULT(ALSA: Enabled)
     EXTRADEFS="$EXTRADEFS -DAU_ALSA"
     EXTRALIBS="$EXTRALIBS $ALSA_LIBS"
+    EXTRATLIBS="$EXTRATLIBS $ALSA_LIBS"
     EXTRACT_CPPFLAGS(CPPFLAGS,CFLAGS,$ALSA_CFLAGS)
     LIBS="$LIBS $ALSA_LIBS"
   fi
@@ -310,43 +315,45 @@ if test "x$au_enable_alib" = xyes; then
   fi
   if test -d /opt/audio/lib; then
     EXTRALIBS="$EXTRALIBS -L/opt/audio/lib"
+    EXTRATLIBS="$EXTRATLIBS -L/opt/audio/lib"
   fi
   EXTRALIBS="$EXTRALIBS -lAlib"
+  EXTRATLIBS="$EXTRATLIBS -lAlib"
 else
   AC_MSG_RESULT(no)
 fi
 
 AC_MSG_CHECKING(enable_audio=nas)
 if test "x$au_enable_nas" = xyes; then
-  if test "x$with_x" != xyes; then
-    AC_MSG_ERROR(nas: --with-x option must be specified)
-  fi
-  EXTRADEFS="$EXTRADEFS -DAU_NAS"
 
   dnl -laudio conflicts another audio library,
   dnl so I specify NAS library with absolete path.
 
   if test "x$with_nas_library" != x; then
     AC_MSG_RESULT($with_nas_library);
-    EXTRALIBS="$EXTRALIBS $with_nas_library"
+    EXTRALIBS="$EXTRALIBS $with_nas_library -lX11"
+    EXTRATLIBS="$EXTRATLIBS $with_nas_library -lX11"
   else
     AC_MSG_RESULT()
+    LIBS="-L/usr/X11R6/lib -lX11"
     MY_SEARCH_LIBS(AuOpenServer,
-	[$x_libraries/libaudio.a \
+	[/usr/X11R6/lib/libaudio.a \
 	/usr/lib/libaudio.so \
 	/usr/lib/libaudio.a ],
 	[ AC_MSG_RESULT(NAS: $timidity_cv_search_AuOpenServer)
-	  EXTRALIBS="$EXTRALIBS $timidity_cv_search_AuOpenServer"],
+          EXTRADEFS="$EXTRADEFS -DAU_NAS"
+	  EXTRALIBS="$EXTRALIBS $timidity_cv_search_AuOpenServer"
+	  EXTRATLIBS="$EXTRALIBS $timidity_cv_search_AuOpenServer"],
 	[AC_MSG_WARN(NAS library is not found.)])
   fi
   test "x$with_nas_includes" != x && CPPFLAGS="$CPPFLAGS -I$with_nas_includes"
-  lib_xt_opt=-lXt
-  if test "x$have_xext" = xyes; then
-    lib_xext_opt=-lXext
-  fi
-  if test "x$have_xprelibs" = xyes; then
-    lib_xprelibs_opt='-lSM -lICE'
-  fi
+dnl  lib_xt_opt=-lXt
+dnl  if test "x$have_xext" = xyes; then
+dnl    lib_xext_opt=-lXext
+dnl  fi
+dnl  if test "x$have_xprelibs" = xyes; then
+dnl    lib_xprelibs_opt='-lSM -lICE'
+dnl  fi
 else
   AC_MSG_RESULT(no)
 fi
