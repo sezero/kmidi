@@ -35,7 +35,8 @@
 #include <errno.h>
 
 #include <sys/ioctl.h> 
-#include "../config.h"
+/* #include "../config.h" */
+#include "config.h"
 
 #ifdef HAVE_SYS_AUDIOIO_H
  #include <sys/audioio.h>
@@ -46,7 +47,6 @@
 #include <malloc.h>
 #endif
 
-#include "config.h"
 #include "output.h"
 #include "controls.h"
 
@@ -89,7 +89,7 @@ static audio_info_t auinfo;
 static int open_output(void)
 {
   int fd, warnings=0;
-  extern int ioctl();
+  /* extern int ioctl(); */
 
   /* Open the audio device */
 
@@ -251,14 +251,14 @@ static int open_output(void)
 
 static int output_count(uint32 ct)
 {
-  extern int ioctl();
+  /* extern int ioctl(); */
   if (ioctl(dpm.fd, AUDIO_GETINFO, &auinfo)<0) return (int)ct;
   return auinfo.play.samples;
 }
 
 static int driver_output_data(unsigned char *buf, uint32 count)
 {
-  return write(fd,buf,ccount);
+  return write(dpm.fd,buf,count);
 }
 
 static void output_data(int32 *buf, uint32 count)
