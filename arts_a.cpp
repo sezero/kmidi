@@ -127,7 +127,34 @@ static void purge_output(void)
 
 static int open_output(void) /* 0=success, 1=warning, -1=fatal error */
 {
+  int sample_width, channels, rate;
+
   if (arts_init() < 0) return -1;
-  stream = arts_play_stream(44100,2,16,"artsctest");
+
+  /* They can't mean these */
+  dpm.encoding &= ~(PE_ULAW|PE_BYTESWAP);
+
+  /* Set sample width to whichever the user wants. */
+
+  sample_width=(dpm.encoding & PE_16BIT) ? LE_LONG(16) : LE_LONG(8);
+
+  if (dpm.encoding & PE_16BIT)
+    dpm.encoding |= PE_SIGNED;
+  else
+    dpm.encoding &= ~PE_SIGNED;
+
+
+  /* Try stereo or mono, whichever the user wants. */
+
+  channels=(dpm.encoding & PE_MONO) ? 1 : 2;
+
+  /* Set the sample rate */
+  
+  rate=dpm.rate;
+
+  stream = arts_play_stream(rate, channels, sample_width, "artsctest");
+
+  arts_stream_set (stream, ARTS_P_BLOCKING, 0);
+
   return 0;
 }

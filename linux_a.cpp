@@ -69,7 +69,7 @@ PlayMode dpm = {
   -1,
   {0}, /* default: get all the buffer fragments you can */
 #ifdef LINUX_SECOND_DEVICE
-  "Linux dsp device", 'D',
+  "Linux 2nd dsp device", 'D',
   "/dev/dsp1",
 #else
   "Linux dsp device", 'd',
