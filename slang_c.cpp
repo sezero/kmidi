@@ -73,9 +73,9 @@
  * For the set_color pairs (so called 'objects')
  * see the ctl_open()
  */
-#define SLsmg_normal()                        SLsmg_set_color(20)
-#define SLsmg_bold()                  SLsmg_set_color(21)
-#define SLsmg_reverse()                       SLsmg_set_color(22)
+#define SLsmg_normal()                  SLsmg_set_color(20)
+#define SLsmg_bold()           		SLsmg_set_color(21)
+#define SLsmg_reverse()                 SLsmg_set_color(22)
 
 static void ctl_refresh(void);
 static void ctl_help_mode(void);
@@ -129,10 +129,13 @@ typedef struct {
   uint8 status, channel, note, velocity, voices;
   uint32 time;
 } OldVoice;
-#define MAX_OLD_NOTES 200
+#define MAX_OLD_NOTES 500
 static OldVoice old_note[MAX_OLD_NOTES];
 static int leading_pointer=0, trailing_pointer=0;
 
+static int tr_lm, tr_nw;
+#define MAX_PNW 12
+static char patch_name[16][MAX_PNW];
 
 static void _ctl_refresh(void)
 {
@@ -165,9 +168,9 @@ static void ctl_refresh(void)
        ctl_current_time(0);
        ctl_note_display();
        SLsmg_gotorc(4,48);
-       SLsmg_bold();
+       /*SLsmg_bold();*/
        SLsmg_printf(NCCC"%2d", current_voices);
-       SLsmg_normal();
+       /*SLsmg_normal();*/
        _ctl_refresh();
     }
 }
@@ -203,7 +206,7 @@ static void ctl_help_mode(void)
       SLsmg_write_string(
             NCCC"v=Softer    f=Skip forward   "
             "p=Previous file  q=Quit program");
-        SLsmg_normal();
+      SLsmg_normal();
       _ctl_refresh();
     }
 }
@@ -222,6 +225,7 @@ static void ctl_total_time(uint32 tt)
 
   songoffset = 0;
   current_centiseconds = 0;
+  for (secs=0; secs<16; secs++) patch_name[secs][0] = '\0';
 }
 
 static void ctl_master_volume(int mv)
@@ -298,20 +302,28 @@ static void ctl_note(int v)
 
 }
 
+#define LOW_CLIP 32
+#define HIGH_CLIP 59
+
 static void ctl_note_display(void)
 {
-  int xl;
   int v = trailing_pointer;
   uint32 then;
+
+  if (tr_nw < 10) return;
 
   then = old_note[v].time;
 
   while (then <= current_centiseconds && v != leading_pointer)
     {
-	  xl=old_note[v].note%(SLtt_Screen_Cols-24);
-	  SLsmg_gotorc(8+(old_note[v].channel&0x0f),xl+3);
-	  switch(old_note[v].status)
-	    {
+  	int xl, new_note;
+	new_note = old_note[v].note - LOW_CLIP;
+	if (new_note < 0) new_note = 0;
+	if (new_note > HIGH_CLIP) new_note = HIGH_CLIP;
+	xl = (new_note * tr_nw) / (HIGH_CLIP+1);
+	SLsmg_gotorc(8+(old_note[v].channel&0x0f), xl + tr_lm);
+	switch(old_note[v].status)
+	  {
 	    case VOICE_DIE:
 	      SLsmg_write_char(',');
 	      break;
@@ -319,7 +331,7 @@ static void ctl_note_display(void)
 	      SLsmg_write_char('.');
 	      break;
 	    case VOICE_ON:
-	        SLsmg_bold();
+	      SLsmg_bold();
 	      SLsmg_write_char('0'+(10*old_note[v].velocity)/128); 
 	      SLsmg_normal();
 	      break;
@@ -327,25 +339,42 @@ static void ctl_note_display(void)
 	    case VOICE_SUSTAINED:
 	      SLsmg_write_char('0'+(10*old_note[v].velocity)/128);
 	      break;
-	    }
-	  current_voices = old_note[v].voices;
-	  v++;
-	  if (v == MAX_OLD_NOTES) v = 0;
-	  then = old_note[v].time;
+	  }
+	current_voices = old_note[v].voices;
+	v++;
+	if (v == MAX_OLD_NOTES) v = 0;
+	then = old_note[v].time;
     }
   trailing_pointer = v;
 }
 
 static void ctl_program(int ch, int val, const char *name)
 {
+  int realch = ch;
   if (!ctl.trace_playing) 
     return;
-  SLsmg_gotorc(8+ch, SLtt_Screen_Cols-20);
-  if (ISDRUMCHANNEL(ch))
+  ch &= 0x0f;
+
+  if (name && realch<16)
     {
-        SLsmg_bold();
+      strncpy(patch_name[ch], name, MAX_PNW);
+      patch_name[ch][MAX_PNW-1] = '\0';
+    }
+  if (tr_lm > 3)
+    {
+      SLsmg_gotorc(8+ch, 3);
+      if (patch_name[ch][0])
+        SLsmg_printf(NCCC"%-12s", patch_name[ch]);
+      else SLsmg_write_string(NCCC"            ");
+    }
+
+
+  SLsmg_gotorc(8+ch, SLtt_Screen_Cols-20);
+  if (channel[ch].kit)
+    {
+      SLsmg_bold();
       SLsmg_printf(NCCC"%03d", val);
-        SLsmg_normal();
+      SLsmg_normal();
     }
   else
     SLsmg_printf(NCCC"%03d", val);
@@ -425,9 +454,9 @@ static void ctl_reset(void)
     return;
   for (i=0; i<16; i++)
     {
-      SLsmg_gotorc(8+i, 3);
-      for (j=0; j<SLtt_Screen_Cols-24; j++)
-      SLsmg_write_char('.');
+      SLsmg_gotorc(8+i, tr_lm);
+      if (tr_nw >= 10)
+        for (j=0; j<tr_nw; j++) SLsmg_write_char('.');
       ctl_program(i, channel[i].program, channel[i].name);
       ctl_volume(i, channel[i].volume);
       ctl_expression(i, channel[i].expression);
@@ -475,6 +504,15 @@ static int ctl_open(int using_stdin, int using_stdout)
     SLtt_Screen_Rows = save_lines;
       SLtt_Screen_Cols = save_cols;
   }
+
+  tr_lm = 3;
+  tr_nw = SLtt_Screen_Cols - 25;
+  if (tr_nw > MAX_PNW + 1 + 20)
+    {
+	tr_nw -= MAX_PNW + 1;
+	tr_lm += MAX_PNW + 1;
+    }
+
   SLang_init_tty(7, 0, 0);
   SLsmg_init_smg();
   SLtt_set_color (20, NCCC"Normal", NCCC"lightgray", NCCC"black");
@@ -654,21 +692,21 @@ static int cmsg(int type, int verbosity_level, const char *fmt, ...)
         break;
 
       case CMSG_WARNING:
-      SLsmg_bold();
+        SLsmg_bold();
         vsprintf(p, fmt, ap);
         SLsmg_write_string(p);
 	msg_col += strlen(p);
-      SLsmg_normal();
+        SLsmg_normal();
         _ctl_refresh();
         break;
         
       case CMSG_ERROR:
       case CMSG_FATAL:
-      SLsmg_bold();
+        SLsmg_bold();
         vsprintf(p, fmt, ap);
         SLsmg_write_string(p);
 	msg_col += strlen(p);
-      SLsmg_normal();
+        SLsmg_normal();
         _ctl_refresh();
         if (type==CMSG_FATAL)
           sleep(2);

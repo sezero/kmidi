@@ -95,6 +95,7 @@ ControlMode ctl=
 static int ctl_helpmode=0;
 static int maxy, maxx;
 static int save_master_volume;
+static int save_total_time;
 static char save_file_name[50];
 static int screen_bugfix = 0;
 static uint32 current_centiseconds = 0;
@@ -106,9 +107,38 @@ typedef struct {
   uint8 status, channel, note, velocity, voices;
   uint32 time;
 } OldVoice;
-#define MAX_OLD_NOTES 200
+#define MAX_OLD_NOTES 500
 static OldVoice old_note[MAX_OLD_NOTES];
 static int leading_pointer=0, trailing_pointer=0;
+
+static int tr_lm, tr_nw;
+#define MAX_PNW 12
+static char patch_name[16][MAX_PNW];
+
+static int my_bg = COLOR_BLACK;
+
+static void set_color(WINDOW *win, chtype color)
+{
+	if (has_colors()) {
+		static bool *pairs;
+		int n = (color + 1);
+		if (pairs == 0)
+			pairs = (bool *)calloc(COLORS+1, sizeof(bool));
+		if (!pairs[n]) {
+			init_pair(n, color, my_bg);
+			pairs[n] = TRUE;
+		}
+		wattroff(win, A_COLOR);
+		wattron(win, COLOR_PAIR(n));
+	}
+}
+
+static void unset_color(WINDOW *win)
+{
+	if (has_colors())
+		wattrset(win, COLOR_PAIR(0));
+}
+
 
 static WINDOW *dftwin=0, *msgwin=0;
 
@@ -124,11 +154,9 @@ static void ctl_refresh(void)
     {
        ctl_current_time(0);
        ctl_note_display();
-  wmove(dftwin, 4,48);
-  wprintw(dftwin, (char *)"%2d", current_voices);
-  wattroff(dftwin, A_BOLD);
+       wmove(dftwin, 4,48);
+       wprintw(dftwin, (char *)"%2d", current_voices);
     }
-  /*if (ctl.trace_playing)*/
     _ctl_refresh();
 }
 
@@ -173,6 +201,7 @@ static void ctl_help_mode(void)
       waddstr(helpwin, 
 	      "v/Down=Softer  f/Right=Skip forward  "
 	      "p/Prev=Previous file  q/End=Quit program");
+      wattroff(helpwin, A_REVERSE);
       wrefresh(helpwin);
     }
 }
@@ -180,6 +209,7 @@ static void ctl_help_mode(void)
 static void ctl_total_time(uint32 tt)
 {
   int mins, secs=(int)tt/play_mode->rate;
+  save_total_time = tt;
   mins=secs/60;
   secs-=mins*60;
 
@@ -191,6 +221,7 @@ static void ctl_total_time(uint32 tt)
 
   songoffset = 0;
   current_centiseconds = 0;
+  for (secs=0; secs<16; secs++) patch_name[secs][0] = '\0';
 }
 
 static void ctl_master_volume(int mv)
@@ -198,7 +229,7 @@ static void ctl_master_volume(int mv)
   save_master_volume = mv;
   wmove(dftwin, 4,maxx-5);
   wattron(dftwin, A_BOLD);
-  wprintw(dftwin, (char *)"%03d %%", mv);
+  wprintw(dftwin, (char *)"%3d%%", mv);
   wattroff(dftwin, A_BOLD);
   _ctl_refresh();
 }
@@ -217,7 +248,6 @@ static void ctl_file_name(char *name)
 
 static void ctl_current_time(uint32 ct)
 {
-  /*int i,v;*/
   int centisecs, realct;
   int mins, secs;
 
@@ -234,19 +264,11 @@ static void ctl_current_time(uint32 ct)
   mins=secs/60;
   secs-=mins*60;
   wmove(dftwin, 4,6);
-  wattron(dftwin, A_BOLD);
+  if (has_colors()) set_color(dftwin, COLOR_GREEN);
+  else wattron(dftwin, A_BOLD);
   wprintw(dftwin, (char *)"%3d:%02d", mins, secs);
-/*
-  v=0;
-  i=voices;
-  while (i--)
-    if (voice[i].status!=VOICE_FREE) v++;
-*/
-/*
-  wmove(dftwin, 4,48);
-  wprintw(dftwin, (char *)"%2d", v);
-  wattroff(dftwin, A_BOLD);
-*/
+  if (has_colors()) unset_color(dftwin);
+  else wattroff(dftwin, A_BOLD);
   _ctl_refresh();
 }
 
@@ -272,55 +294,88 @@ static void ctl_note(int v)
 
 }
 
+#define LOW_CLIP 32
+#define HIGH_CLIP 59
+
 static void ctl_note_display(void)
 {
-  int xl;
   int v = trailing_pointer;
   uint32 then;
+
+  if (tr_nw < 10) return;
 
   then = old_note[v].time;
 
   while (then <= current_centiseconds && v != leading_pointer)
     {
-	  xl=old_note[v].note%(maxx-24);
-	  wmove(dftwin, 8+(old_note[v].channel & 0x0f),xl+3);
-	  switch(old_note[v].status)
-	    {
+  	int xl, new_note;
+	new_note = old_note[v].note - LOW_CLIP;
+	if (new_note < 0) new_note = 0;
+	if (new_note > HIGH_CLIP) new_note = HIGH_CLIP;
+	xl = (new_note * tr_nw) / (HIGH_CLIP+1);
+	wmove(dftwin, 8+(old_note[v].channel & 0x0f),xl + tr_lm);
+	switch(old_note[v].status)
+	  {
 	    case VOICE_DIE:
-	      waddch(dftwin, ',');
+	      waddch(dftwin, ACS_CKBOARD);
 	      break;
 	    case VOICE_FREE: 
-	      waddch(dftwin, '.');
+	      waddch(dftwin, ACS_BULLET);
 	      break;
 	    case VOICE_ON:
-	      wattron(dftwin, A_BOLD);
+	      if (has_colors())
+		{
+		  if (channel[old_note[v].channel].kit) set_color(dftwin, COLOR_YELLOW);
+		  else set_color(dftwin, COLOR_RED);
+		}
+	      else wattron(dftwin, A_BOLD);
 	      waddch(dftwin, '0'+(10*old_note[v].velocity)/128); 
-	      wattroff(dftwin, A_BOLD);
+	      if (has_colors())	unset_color(dftwin);
+	      else wattroff(dftwin, A_BOLD);
 	      break;
 	    case VOICE_OFF:
 	    case VOICE_SUSTAINED:
+	      if (has_colors()) set_color(dftwin, COLOR_GREEN);
 	      waddch(dftwin, '0'+(10*old_note[v].velocity)/128);
+	      if (has_colors()) unset_color(dftwin);
 	      break;
-	    }
-	  current_voices = old_note[v].voices;
-	  v++;
-	  if (v == MAX_OLD_NOTES) v = 0;
-	  then = old_note[v].time;
+	  }
+	current_voices = old_note[v].voices;
+	v++;
+	if (v == MAX_OLD_NOTES) v = 0;
+	then = old_note[v].time;
     }
   trailing_pointer = v;
 }
 
 static void ctl_program(int ch, int val, const char *name)
 {
+  int realch = ch;
   if (!ctl.trace_playing) 
     return;
   ch &= 0x0f;
-  wmove(dftwin, 8+ch, maxx-20);
-  if (ISDRUMCHANNEL(ch))
+
+  if (name && realch<16)
     {
-      wattron(dftwin, A_BOLD);
+      strncpy(patch_name[ch], name, MAX_PNW);
+      patch_name[ch][MAX_PNW-1] = '\0';
+    }
+  if (tr_lm > 3)
+    {
+      wmove(dftwin, 8+ch, 3);
+      if (patch_name[ch][0])
+        wprintw(dftwin, (char *)"%-12s", patch_name[ch]);
+      else waddstr(dftwin, "            ");
+    }
+
+  wmove(dftwin, 8+ch, maxx-20);
+  if (channel[ch].kit)
+    {
+      if (has_colors()) set_color(dftwin, COLOR_YELLOW);
+      else wattron(dftwin, A_BOLD);
       wprintw(dftwin, (char *)"%03d", val);
-      wattroff(dftwin, A_BOLD);
+      if (has_colors()) unset_color(dftwin);
+      else wattroff(dftwin, A_BOLD);
     }
   else
     wprintw(dftwin, (char *)"%03d", val);
@@ -350,6 +405,11 @@ static void ctl_panning(int ch, int val)
     return;
   ch &= 0x0f;
   wmove(dftwin, 8+ch, maxx-8);
+  if (val != NO_PANNING && has_colors())
+    {
+      if (val <= 60) set_color(dftwin, COLOR_BLUE);
+      if (val >= 68) set_color(dftwin, COLOR_GREEN);
+    }
   if (val==NO_PANNING)
     waddstr(dftwin, "   ");
   else if (val<5)
@@ -369,6 +429,10 @@ static void ctl_panning(int ch, int val)
 	}
       else waddch(dftwin, '+');
       wprintw(dftwin, (char *)"%02d", val);
+    }
+  if (val != NO_PANNING && has_colors())
+    {
+      unset_color(dftwin);
     }
 }
 
@@ -398,12 +462,13 @@ static void ctl_reset(void)
   int i,j;
   if (!ctl.trace_playing) 
     return;
+
   for (i=0; i<16; i++)
     {
-      wmove(dftwin, 8+i, 3);
-      for (j=0; j<maxx-24; j++)
-	waddch(dftwin, '.');
-      ctl_program(i, channel[i].program, channel[i].name);
+      wmove(dftwin, 8+i, tr_lm);
+      if (tr_nw >= 10)
+        for (j=0; j<tr_nw; j++) waddch(dftwin, ACS_BULLET);
+      ctl_program(i, channel[i].program, 0);
       ctl_volume(i, channel[i].volume);
       ctl_expression(i, channel[i].expression);
       ctl_panning(i, channel[i].panning);
@@ -429,6 +494,13 @@ static SCREEN *oldscr;
 static void draw_windows(void)
 {
   int i;
+  tr_lm = 3;
+  tr_nw = maxx - 25;
+  if (tr_nw > MAX_PNW + 1 + 20)
+    {
+	tr_nw -= MAX_PNW + 1;
+	tr_lm += MAX_PNW + 1;
+    }
   werase(dftwin);
   wmove(dftwin, 0,0);
   waddstr(dftwin, "TiMidity v" TIMID_VERSION);
@@ -454,10 +526,11 @@ static void draw_windows(void)
   wmove(dftwin, 4,maxx-20);
   waddstr(dftwin, "Master volume:");
   if (save_master_volume) ctl_master_volume(save_master_volume);
+  if (save_total_time) ctl_total_time(save_total_time);
   if (save_file_name[0]) ctl_file_name(save_file_name);
   wmove(dftwin, 5,0);
   for (i=0; i<maxx; i++)
-    waddch(dftwin, '_');
+    waddch(dftwin, ACS_HLINE);
   if (ctl.trace_playing)
     {
       wmove(dftwin, 6,0);
@@ -466,7 +539,7 @@ static void draw_windows(void)
       waddstr(dftwin, "Prg Vol Exp Pan S B");
       wmove(dftwin, 7,0);
       for (i=0; i<maxx; i++)
-	waddch(dftwin, '-');
+	waddch(dftwin, ACS_HLINE);
       for (i=0; i<16; i++)
 	{
 	  wmove(dftwin, 8+i, 0);
@@ -533,6 +606,15 @@ static int ctl_open(int using_stdin, int using_stdout)
   /*leaveok(stdscr, 1);*/
   idlok(stdscr, 1);
   keypad(stdscr, TRUE);
+  if (has_colors())
+    {
+	start_color();
+#ifdef HAVE_USE_DEFAULT_COLORS
+	if (use_default_colors() == OK)
+	    my_bg = -1;
+#endif
+    }
+
   curs_set(0);
   getmaxyx(stdscr,maxy,maxx);
   ctl.opened=1;
@@ -551,8 +633,10 @@ static void ctl_close(void)
 {
   if (ctl.opened)
     {
-      endwin();
-      ctl.opened=0;
+	refresh();
+	endwin();
+	curs_set(1);
+	ctl.opened=0;
     }
 }
 
@@ -654,9 +738,11 @@ static int cmsg(int type, int verbosity_level, const char *fmt, ...)
 	case CMSG_FATAL:
 	  wmove(dftwin, 2,0);
 	  wclrtoeol(dftwin);
-	  wattron(dftwin, A_REVERSE);
+	  if (has_colors()) set_color(dftwin, COLOR_YELLOW);
+	  else wattron(dftwin, A_REVERSE);
 	  vwprintw(dftwin, (char *)fmt, ap);
-	  wattroff(dftwin, A_REVERSE);
+	  if (has_colors()) unset_color(dftwin);
+	  else wattroff(dftwin, A_REVERSE);
 	  _ctl_refresh();
 	  if (type==CMSG_WARNING)
 	    sleep(1); /* Don't you just _HATE_ it when programs do this... */
@@ -678,17 +764,21 @@ static int cmsg(int type, int verbosity_level, const char *fmt, ...)
 	  break;
 
 	case CMSG_WARNING:
-	  wattron(msgwin, A_BOLD);
+	  if (has_colors()) set_color(msgwin, COLOR_YELLOW);
+	  else wattron(msgwin, A_BOLD);
 	  vwprintw(msgwin, (char *)fmt, ap);
-	  wattroff(msgwin, A_BOLD);
+	  if (has_colors()) unset_color(msgwin);
+	  else wattroff(msgwin, A_BOLD);
 	  waddch(msgwin, '\n');
 	  break;
 	  
 	case CMSG_ERROR:
 	case CMSG_FATAL:
-	  wattron(msgwin, A_REVERSE);
+	  if (has_colors()) set_color(msgwin, COLOR_RED);
+	  else wattron(msgwin, A_REVERSE);
 	  vwprintw(msgwin, (char *)fmt, ap);
-	  wattroff(msgwin, A_REVERSE);
+	  if (has_colors()) unset_color(msgwin);
+	  else wattroff(msgwin, A_REVERSE);
 	  waddch(msgwin, '\n');
 	  if (type==CMSG_FATAL)
 	    {

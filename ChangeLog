@@ -2,6 +2,8 @@
 
 	* handle ncurses window resizing
 	* sync ncurses and slang trace display
+	* patch names for ncurses and slang
+	* color for ncurses
 
 2000-01-16  Greg Lee  <lee@hawaii.edu>
 
@@ -19,7 +21,7 @@
 
 2000-01-10  Greg Lee  <lee@hawaii.edu>
 
-	* fix timidity-only compile of xaw and motif if
+	* fix timidity-only compile of xaw and motif i-f
 	* open-file dialog not modal
 
 2000-01-05  Greg Lee  <lee@hawaii.edu>
