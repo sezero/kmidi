@@ -339,7 +339,7 @@ KMidiFrame::KMidiFrame( const char *name ) :
                      "TiMidity");
 
     QPopupMenu *about = helpMenu(aboutapp);
-    menuBar->insertItem( i18n("About"), about);
+    menuBar->insertItem( i18n("&Help"), about);
 
     setMenu(menuBar);
 

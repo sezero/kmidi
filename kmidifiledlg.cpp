@@ -41,8 +41,10 @@ KMidiFileDlg::KMidiFileDlg(const QString& dirName, const QString& filter,
 	    SLOT(noteFile(const QString&)));
     connect(this,SIGNAL(cancelClicked()),
 	    SLOT(closeFbox()));
-    setButtonOKText(i18n("Play"));
-    setButtonCancelText(i18n("Close"));
+    //setButtonOKText(i18n("Play"));
+    okButton()->setText(i18n("Play"));
+    //setButtonCancelText(i18n("Close"));
+    cancelButton()->setText(i18n("Close"));
 }
 
 void KMidiFileDlg::playFile(const QString& fname)
@@ -67,7 +69,7 @@ void KMidiFileDlg::playFile(const QString& fname)
 
 void KMidiFileDlg::noteFile(const QString& fname)
 {
-    fprintf(stderr, "You selected %s\n", fname.ascii());
+//    fprintf(stderr, "You selected %s\n", fname.ascii());
 
     hlfile = fname;
 }
