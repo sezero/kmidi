@@ -32,6 +32,9 @@
 #include <sys/ioctl.h>
 #include <sys/types.h>
 #include <sys/wait.h>
+#ifdef HAVE_SYS_SEM_H
+#include <sys/sem.h>
+#endif
 #ifdef _SCO_DS
 #include <sys/socket.h>
 #endif
