@@ -230,7 +230,6 @@ private:
 	void		cleanUp();
 	void		loadBitmaps();
 	void		initMixer( const char *mixer = "/dev/mixer" );
-	void 		playtime();
 	void 	        playthemod(QString );
         void		resizeEvent(QResizeEvent *e);
 	void 		redoplaybox();
@@ -260,15 +259,13 @@ public slots:
 	void 		setColors();
 	void		playClicked();
 	void		stopClicked();
-	void 		slowdownslot();
-	void 		speedupslot();
+	void 		infoslot();
 	void		prevClicked();
 	void		nextClicked();
 	void		fwdClicked();
 	void		bwdClicked();
 	void		quitClicked();
 	void		replayClicked();
-	void 		cdMode();
 	void		ejectClicked();
 	void		aboutClicked();
 	void		logoClicked();

@@ -100,7 +100,7 @@ KMidi::KMidi( const char *name ) :
     KTMainWindow( name )
 {
 
-    //setView(kmidi,TRUE);
+    setView(kmidi,TRUE);
     playlistdlg = NULL;
     randomplay = false;
     looping = false;
@@ -170,7 +170,7 @@ KMidi::KMidi( const char *name ) :
     connect( aboutPB, SIGNAL(clicked()), SLOT(logoClicked()));
     connect( configurebutton, SIGNAL(clicked()), SLOT(aboutClicked()));
     connect( shufflebutton, SIGNAL(clicked()), SLOT(randomClicked()));
-    connect( infobutton, SIGNAL(clicked()), SLOT(speedupslot()));
+    connect( infobutton, SIGNAL(clicked()), SLOT(infoslot()));
 
     connect(this,SIGNAL(play()),this,SLOT(playClicked()));
 
@@ -699,7 +699,9 @@ void KMidi::drawPanel()
 
     regularsize = QSize (totalwidth, regularheight);
     setFixedWidth(totalwidth);
-    setMinimumSize(regularsize);
+// can't seem to stop shrinkage anymore
+    //setMinimumWidth(totalwidth);
+    //setMinimumSize(regularsize);
 
     // Choose patch set
     ix = 0;
@@ -714,12 +716,14 @@ void KMidi::drawPanel()
 	else patchbox->insertItem( "(none)" );
     patchbox->setCurrentItem(Panel->currentpatchset);
     connect( patchbox, SIGNAL(activated(int)), SLOT(setPatch(int)) );
+    patchbox->hide();
  
     iy += HEIGHT;
     playbox = new QComboBox( FALSE, this, "song" );
     playbox->setGeometry(ix, iy, WIDTH + WIDTH/2, HEIGHT);
     playbox->setFont( QFont( "helvetica", 10, QFont::Normal) );
     connect( playbox, SIGNAL(activated(int)), SLOT(setSong(int)) );
+    playbox->hide();
 
     iy += HEIGHT;
 
@@ -727,6 +731,7 @@ void KMidi::drawPanel()
     playlistbox->setGeometry(ix, iy, WIDTH + WIDTH/2, HEIGHT);
     playlistbox->setFont( QFont( "helvetica", 10, QFont::Normal) );
     connect( playlistbox, SIGNAL( activated( int ) ), this, SLOT( plActivated( int ) ) );
+    playlistbox->hide();
 
 
     iy = regularheight;
@@ -746,21 +751,22 @@ void KMidi::drawPanel()
     rcb3->setNoChange();
     rcb4->setNoChange();
     connect( rchecks, SIGNAL(clicked(int)), SLOT(updateRChecks(int)) );
+    rchecks->hide();
 
     iy += HEIGHT;
     effectbutton = makeButton( ix,          iy, WIDTH/2, HEIGHT, "eff" );
     effectbutton->setToggleButton( TRUE );
     effectbutton->setFont( QFont( "helvetica", 10, QFont::Normal) );
     connect( effectbutton, SIGNAL(toggled(bool)), SLOT(setEffects(bool)) );
-
-
+    effectbutton->hide();
 
     voicespin = new QSpinBox( 1, MAX_VOICES, 1, this, "_spinv" );
     voicespin->setValue(current_voices);
     voicespin->setGeometry( ix +WIDTH/2, iy, WIDTH/2, HEIGHT );
+    voicespin->setFont( QFont( "helvetica", 10, QFont::Normal) );
     connect( voicespin, SIGNAL( valueChanged(int) ),
 	     SLOT( voicesChanged(int) ) );
-    voicespin->setFont( QFont( "helvetica", 10, QFont::Normal) );
+    voicespin->hide();
 
     iy += HEIGHT;
 
@@ -770,11 +776,13 @@ void KMidi::drawPanel()
     connect( meterspin, SIGNAL( valueChanged(int) ),
 	     SLOT( meterfudgeChanged(int) ) );
     meterspin->setFont( QFont( "helvetica", 10, QFont::Normal) );
+    meterspin->hide();
 
     filterbutton = makeButton( ix +WIDTH/2,     iy, WIDTH/2,   HEIGHT, "filt" );
     filterbutton->setToggleButton( TRUE );
     filterbutton->setFont( QFont( "helvetica", 10, QFont::Normal) );
     connect( filterbutton, SIGNAL(toggled(bool)), SLOT(setFilter(bool)) );
+    filterbutton->hide();
 }
  
 void KMidi::plActivated( int index )
@@ -955,8 +963,8 @@ void KMidi::logoClicked(){
     meterspin->show();
     filterbutton->show();
     if (logwindow->isVisible()) {
-        resize( extendedsize.width(), extendedsize.height() + logwindow->height() );
 	logwindow->move(0, extendedsize.height());
+        resize( extendedsize.width(), extendedsize.height() + logwindow->height() );
     }
     else resize( extendedsize );
 }
@@ -1149,13 +1157,8 @@ void KMidi::prevClicked(){
     status = KPLAYING;
 }
 
-void KMidi::slowdownslot(){
 
-
-
-}
-
-void KMidi::speedupslot(){
+void KMidi::infoslot(){
 
     if(!logwindow)
 	return;
@@ -1166,30 +1169,19 @@ void KMidi::speedupslot(){
 	else resize( regularsize );
 	return;
     }
-    if (logwindow->height() < 80) logwindow->resize(extendedsize.width(), 80);
+
+    if (logwindow->height() < 40) logwindow->resize(extendedsize.width(), 40);
     if (meter->isVisible()) {
-	logwindow->move(0, extendedsize.height());
-	logwindow->show();
         resize( extendedsize.width(), extendedsize.height() + logwindow->height() );
 	return;
     }
 
-    patchbox->hide();
-    playbox->hide();
-    playlistbox->hide();
-    rchecks->hide();
-    effectbutton->hide();
-    voicespin->hide();
-    meterspin->hide();
-    filterbutton->hide();
-
     logwindow->move(0, regularsize.height());
     logwindow->show();
-    resize( regularsize.width(), regularsize.height() + logwindow->height() ); //FIX
+    resize( regularsize.width(), regularsize.height() + logwindow->height() );
 }
 
 void KMidi::nextClicked(){
-
 
     if(playlist->count() == 0)
 	return;
@@ -1418,7 +1410,7 @@ void KMidi::PlayCommandlineMods(){
   volChanged(volume);
   //  readtimer->start(10);
   if (showmeterrequest) logoClicked();
-  if (showinforequest) speedupslot();
+  if (showinforequest) infoslot();
   if (lpfilterrequest) filterbutton->setOn(TRUE);
   if (effectsrequest) effectbutton->setOn(TRUE);
 
@@ -2096,31 +2088,16 @@ void KMidi::resizeEvent(QResizeEvent *e){
     int h = (e->size()).height();
     int lwheight;
 
-    //if (meter->isVisible()) lwheight = h - extendedsize.height();
-    //else lwheight = h - regularsize.height();
-    //if (lwheight > 0 && logwindow->isVisible()) logwindow->resize(extendedsize.width(), lwheight);
-
-
-    if (h > extendedsize.height() - 10 && !meter->isVisible() && !logwindow->isVisible()) {
-	patchbox->show();
-	playbox->show();
-	playlistbox->show();
-	rchecks->show();
-	effectbutton->show();
-	voicespin->show();
-	meterspin->show();
-	filterbutton->show();
-	meter->show();
-    }
-
     if (meter->isVisible()) lwheight = h - extendedsize.height();
     else lwheight = h - regularsize.height();
 
-    if (h > extendedsize.height() /*+ logwindow->height()*/ - 10 && meter->isVisible() && !logwindow->isVisible()) {
+    if (lwheight > 10 && !logwindow->isVisible()) {
         logwindow->resize(extendedsize.width(), lwheight);
+	if (meter->isVisible()) logwindow->move(0, extendedsize.height());
+	else  logwindow->move(0, regularsize.height());
 	logwindow->show();
+	return;
     }
-    else if (lwheight > 0 && logwindow->isVisible()) logwindow->resize(extendedsize.width(), lwheight);
 
     if (h < regularsize.height() + 10) {
 	if (logwindow->isVisible()) logwindow->hide();
@@ -2135,18 +2112,14 @@ void KMidi::resizeEvent(QResizeEvent *e){
 	    meterspin->hide();
 	    filterbutton->hide();
 	}
+	return;
     }
-    else if (h < extendedsize.height() + 10 && meter->isVisible() && logwindow->isVisible()) {
+
+    if (h < extendedsize.height() + 10 && meter->isVisible() && logwindow->isVisible()) {
 	logwindow->hide();
+	return;
     }
-}
-
-void KMidi::cdMode(){
-
-}
-
-void KMidi::playtime(){
-
+    if (lwheight > 0 && logwindow->isVisible()) logwindow->resize(extendedsize.width(), lwheight);
 
 }
 
