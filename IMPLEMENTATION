@@ -58,7 +58,7 @@ TiMidity can handle midi files meant to play on up to four synthesizers, keeping
 separate the four sets of 16 channels for each synth.  However, in the midi file,
 the synths have to be selected using port commands (in either Roland-GS or
 Yamaha-XG sysex dumps).  Some midi files intended for multiple synths don't have
-port commands.
+port commands.  (The info window shows port commands when present.)
 
 The KMidi display of channel activity is limited to two sets of 16 channels.
 
@@ -111,9 +111,8 @@ have 48 megs ram and 196 megs cache).  Setting this to a lower value means that
 more patches have to be reloaded from patch files as you play through a list of midi
 songs, which slows things up.  If you're ram rich, you can set it to "no limit".
 
-After playing each midi file, KMidi will report on how much memory is currently
-occupied by patches, provided you've clicked on the verbose option for the rightmost
-checkbox on the lower panel.
+After playing each midi file, KMidi will report in the info window on how much memory
+is currently occupied by patches.
 
 If you don't have much ram or cache memory, setting a low maximum for patch memory
 might not prevent KMidi from crashing your system.  So be careful using big soundfonts.

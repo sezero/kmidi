@@ -1,6 +1,8 @@
 1999-11-07  Greg Lee  <lee@hawaii.edu>
 
 	* max mem for patches now configurable
+	* readmidi.c: fix XG initialization bug
+	* kmidi.cpp: checkboxes on lower panel configurable
 
 1999-11-06  Greg Lee  <lee@hawaii.edu>
 

@@ -861,11 +861,11 @@ void KMidi::updateRChecks( int which )
 	    check_states = stereo_state = (int)rcb1->state();
 	    break;
 	case 1:
-		// reverb voice
+		// echo voice
 	    check_states = reverb_state = (int)rcb2->state();
 	    break;
 	case 2:
-		// chorus voice
+		// detune voice
 	    check_states = chorus_state = (int)rcb3->state();
 	    break;
 	case 3:
@@ -1520,6 +1520,23 @@ void KMidi::PlayCommandlineMods(){
 	ich[interpolationrequest]->setChecked( TRUE );
 	updateIChecks(interpolationrequest);
   }
+  if (stereo_state != 1) {
+	rcb1->setChecked( (stereo_state==2) );
+	updateRChecks(0);
+  }
+  if (reverb_state != 1) {
+	rcb2->setChecked( (reverb_state==2) );
+	updateRChecks(1);
+  }
+  if (chorus_state != 1) {
+	rcb3->setChecked( (chorus_state==2) );
+	updateRChecks(2);
+  }
+  if (verbosity_state != 1) {
+	rcb4->setChecked( (verbosity_state==2) );
+	updateRChecks(3);
+  }
+
   Panel->max_patch_megs = max_patch_megs;
 
 }
@@ -2099,6 +2116,10 @@ void KMidi::readconfig(){
     effectsrequest = config->readBoolEntry("Effects", TRUE);
     interpolationrequest = config->readNumEntry("Interpolation", 2);
     max_patch_megs = config->readNumEntry("MegsOfPatches", 60);
+    stereo_state = config->readNumEntry("StereoNotes", 1);
+    reverb_state = config->readNumEntry("EchoNotes", 1);
+    chorus_state = config->readNumEntry("DetuneNotes", 1);
+    verbosity_state = config->readNumEntry("Verbosity", 1);
 
     QColor defaultback = black;
     QColor defaultled = QColor(107,227,88);
@@ -2135,6 +2156,10 @@ void KMidi::writeconfig(){
     config->writeEntry("Effects", effectbutton->isOn());
     config->writeEntry("Interpolation", interpolationrequest);
     config->writeEntry("MegsOfPatches", max_patch_megs);
+    config->writeEntry("StereoNotes", stereo_state);
+    config->writeEntry("EchoNotes", reverb_state);
+    config->writeEntry("DetuneNotes", chorus_state);
+    config->writeEntry("Verbosity", verbosity_state);
     config->sync();
 }
 

@@ -1096,7 +1096,7 @@ MidiEvent *read_midi_file(FILE *mfp, uint32 *count, uint32 *sp)
   free_metatext();
   GM_System_On=GS_System_On=XG_System_On=0;
   vol_table = def_vol_table;
-  XG_System_reverb_type=XG_System_chorus_type=XG_System_variation_type=-1;
+  XG_System_reverb_type=XG_System_chorus_type=XG_System_variation_type=0;
   memset(&drumvolume,-1,sizeof(drumvolume));
   memset(&drumchorusdepth,-1,sizeof(drumchorusdepth));
   memset(&drumreverberation,-1,sizeof(drumreverberation));

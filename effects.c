@@ -391,7 +391,7 @@ static void reset_XG_effect_info() {
 
 	if (XG_System_chorus_type >= 0) {
 	    /* int subtype = XG_System_chorus_type & 0x07; */
-	    int chtype = XG_System_chorus_type >> 3;
+	    int chtype = 0x0f & (XG_System_chorus_type >> 3);
 	    switch (chtype) {
 		case 0: /* no effect */
 		  break;

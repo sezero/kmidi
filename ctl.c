@@ -548,7 +548,6 @@ static void ctl_close(void)
 
 static int ctl_blocking_read(int32 *valp)
 {
-  /* extern int reverb_options; */
   int command;
   int new_volume;
   int new_centiseconds;
