@@ -669,6 +669,9 @@ sp->sample_rate, sp->low_freq, sp->high_freq, sp->root_freq);
       sp->keyToModEnvDecay=0;
       sp->keyToVolEnvHold=0;
       sp->keyToVolEnvDecay=0;
+	sp->lfo_sweep_increment = 0;
+	sp->lfo_phase_increment = 0;
+	sp->modLfoToFilterFc = 0;
 
       if (!l->tremolo.freq || !l->tremolo.depth)
 	{

@@ -96,6 +96,7 @@ static int32 calc_sustain(Layer *lay, SFInfo *sf, int banknum, int preset);
 static int32 calc_modulation_sustain(Layer *lay, SFInfo *sf, int banknum, int preset);
 #ifndef SF_SUPPRESS_TREMOLO
 static void convert_tremolo(Layer *lay, SFInfo *sf, SampleList *sp);
+static void convert_lfo(Layer *lay, SFInfo *sf, SampleList *sp);
 #endif
 #ifndef SF_SUPPRESS_VIBRATO
 static void convert_vibrato(Layer *lay, SFInfo *sf, SampleList *sp);
@@ -1283,7 +1284,7 @@ fprintf(stderr, "preset %d, root_freq %ld\n", preset, sp->v.root_freq);
 	if (lay->set[SF_sampleFlags]) sampleFlags = lay->val[SF_sampleFlags];
 	else sampleFlags = 0;
 
-	/* arbitrary adjustments */
+	/* arbitrary adjustments (look at sustain of vol envelope? ) */
 	if (banknum != 128) {
 		if (program >= 16 && program <= 23) sampleFlags = 3;
 		else if (program >= 40 && program <= 43) sampleFlags = 3;
@@ -1373,6 +1374,12 @@ fprintf(stderr, "preset %d, root_freq %ld\n", preset, sp->v.root_freq);
 	sp->v.tremolo_depth = 0;
 #ifndef SF_SUPPRESS_TREMOLO
 	convert_tremolo(lay, sf, sp);
+#endif
+	sp->v.lfo_sweep_increment = 0;
+	sp->v.lfo_phase_increment = 0;
+	sp->v.modLfoToFilterFc = 0;
+#ifndef SF_SUPPRESS_TREMOLO
+	convert_lfo(lay, sf, sp);
 #endif
 	sp->v.vibrato_sweep_increment = 0;
 	sp->v.vibrato_control_ratio = 0;
@@ -1512,7 +1519,7 @@ static void convert_volume_envelope(Layer *lay, SFInfo *sf, SampleList *sp, int 
 	/* int milli = play_mode->rate/1000; */
 #ifdef EXAMINE_SOME_ENVELOPES
 	static int no_shown = 0;
-no_shown = banknum==0 && (preset >= 50 && preset <= 56);
+no_shown = banknum==0 && (preset == 11 || preset == 64);
 if (no_shown) {
 printf("PRESET %d\n",preset);
 	printf("sustainEnv2 %d delayEnv2 %d attackEnv2 %d holdEnv2 %d decayEnv2 %d releaseEnv2 %d\n",
@@ -1559,6 +1566,8 @@ printf("PRESET %d\n",preset);
 	sp->v.envelope_offset[RELEASEC] = to_offset(ENV_BOTTOM);
 	sp->v.envelope_rate[RELEASEC] = to_offset(200);
 
+	if (delay > 5) delay = 0;
+
 	sp->v.envelope_rate[DELAY] = (int32)( (delay*play_mode->rate) / 1000 );
 
 	sp->v.modes |= MODES_ENVELOPE;
@@ -1594,7 +1603,7 @@ static void convert_modulation_envelope(Layer *lay, SFInfo *sf, SampleList *sp, 
 	int32 volume = 255;
 #ifdef EXAMINE_SOME_ENVELOPES
 	static int no_shown = 0;
-no_shown = banknum==0 && (preset >= 50 && preset <= 56);
+no_shown = banknum==0 && (preset == 11 || preset == 64);
 if (no_shown) {
 printf("PRESET %d\n",preset);
 	printf("sustainEnv1 %d delayEnv1 %d attackEnv1 %d holdEnv1 %d decayEnv1 %d releaseEnv1 %d\n",
@@ -1771,42 +1780,88 @@ static int32 calc_modulation_sustain(Layer *lay, SFInfo *sf, int banknum, int pr
 
 static void convert_tremolo(Layer *lay, SFInfo *sf, SampleList *sp)
 {
-	extern int32 convert_tremolo_rate(uint8 rate);
 	int32 level, freq;
 
 	if (!lay->set[SF_lfo1ToVolume])
 		return;
 
 	level = lay->val[SF_lfo1ToVolume];
+	if (!level) return;
+#if 0
+printf("(lev=%d", (int)level);
+#endif
+
+	if (level < 0) level = -level;
+
 	if (sf->version == 1)
 		level = (120 * level) / 64;  /* to centibel */
-	/* centibel to linear */
-	/*sp->v.tremolo_depth = TO_LINEAR(level);*/
+	/* else level = TO_VOLUME((double)level); */
+	else level = 255 - (uint8)(255 * (1.0 - (level) / (1200.0 * log10(2.0))));
 
-	if (level < 0) sp->v.tremolo_depth = -level;
-	else if (level < 20) sp->v.tremolo_depth = 20;
-	else sp->v.tremolo_depth = level;
+	sp->v.tremolo_depth = level;
 
 	/* frequency in mHz */
 	if (! lay->set[SF_freqLfo1]) {
 		if (sf->version == 1)
 			freq = TO_MHZ(-725);
 		else
-			freq = 0;
+			freq = 8;
 	} else {
 		freq = lay->val[SF_freqLfo1];
+#if 0
+printf(" freq=%d)", (int)freq);
+#endif
 		if (freq > 0 && sf->version == 1)
 			freq = (int)(3986.0 * log10((double)freq) - 7925.0);
-		freq = TO_MHZ(freq);
+		else freq = TO_HZ(freq);
 	}
-	/* convert mHz to sine table increment; 1024<<rate_shift=1wave */
-	/*sp->v.tremolo_phase_increment = (freq * 1024) << RATE_SHIFT;*/
 
-	freq /= 40;
-	if (freq < 5) return;
+#if 0
+printf(" depth=%d freq=%d\n", (int)level, (int)freq);
+#endif
+	if (freq < 1) freq = 1;
+	freq *= 20;
 	if (freq > 255) freq = 255;
+
 	sp->v.tremolo_phase_increment = convert_tremolo_rate((uint8)freq);
-	sp->v.tremolo_sweep_increment = 41;
+	sp->v.tremolo_sweep_increment = convert_tremolo_sweep((uint8)(freq/5));
+}
+
+
+static void convert_lfo(Layer *lay, SFInfo *sf, SampleList *sp)
+{
+	int32 freq=0, level;
+
+	if (sf->version == 1) return;
+
+	if (!lay->set[SF_lfo1ToFilterFc])
+		return;
+
+	level = lay->val[SF_lfo1ToFilterFc];
+	if (!level) return;
+#if 0
+printf("(lev=%d", (int)level);
+#endif
+	sp->v.modLfoToFilterFc = pow(2.0, ((FLOAT_T)level/1200.0));
+
+	/* frequency in mHz */
+	if (lay->set[SF_freqLfo1]) freq = lay->val[SF_freqLfo1];
+
+#if 0
+printf(" freq=%d)", (int)freq);
+#endif
+	if (!freq) freq = 8;
+	else freq = TO_HZ(freq);
+
+#if 0
+printf(" depth=%f freq=%d\n", sp->modLfoToFilterFc, (int)freq);
+#endif
+	if (freq < 1) freq = 1;
+	freq *= 20;
+	if (freq > 255) freq = 255;
+
+	sp->v.lfo_phase_increment = convert_tremolo_rate((uint8)freq);
+	sp->v.lfo_sweep_increment = convert_tremolo_sweep((uint8)(freq/5));
 }
 #endif
 
@@ -1824,22 +1879,25 @@ static void convert_vibrato(Layer *lay, SFInfo *sf, SampleList *sp)
 	if (lay->set[SF_lfo2ToPitch]) {
 		shift = lay->set[SF_lfo2ToPitch];
 		if (lay->set[SF_freqLfo2]) freq = lay->val[SF_freqLfo2];
+#if 0
+printf("modLfo=%d freq=%d",(int)shift, (int)freq);
+#endif
 		if (lay->set[SF_delayLfo2]) delay = (int32)to_msec(lay, sf, SF_delayLfo2);
 	}
 	else if (lay->set[SF_lfo1ToPitch]) {
 		shift = lay->set[SF_lfo1ToPitch];
 		if (lay->set[SF_freqLfo1]) freq = lay->val[SF_freqLfo1];
+#if 0
+printf("vibLfo=%d freq=%d",(int)shift, (int)freq);
+#endif
 		if (lay->set[SF_delayLfo1]) delay = (int32)to_msec(lay, sf, SF_delayLfo1);
 	}
-#if 0
 	else if (lay->set[SF_freqLfo2]) {
 		freq = lay->val[SF_freqLfo2];
-		shift = 9;
+		shift = 1;
 	}
-#endif
 
 	if (!shift) return;
-	/* if (!freq) return; */
 
 	/* pitch shift in cents (= 1/100 semitone) */
 	if (sf->version == 1)
@@ -1849,7 +1907,7 @@ static void convert_vibrato(Layer *lay, SFInfo *sf, SampleList *sp)
 	/*sp->v.vibrato_depth = (int8)((int32)shift * 256 / 400);*/
 	/** sp->v.vibrato_depth = shift * 400 / 64; **/
 
-	sp->v.vibrato_depth = 127.0 * pow(2.0, ((FLOAT_T)shift/1200.0)) * VIBRATO_RATE_TUNING;
+	sp->v.vibrato_depth = (int32)(pow(2.0, ((FLOAT_T)shift/1200.0)) * VIBRATO_RATE_TUNING);
 	/* frequency in mHz */
 	if (!freq) {
 		if (sf->version == 1)
@@ -1858,15 +1916,29 @@ static void convert_vibrato(Layer *lay, SFInfo *sf, SampleList *sp)
 			freq = 8;
 	} else {
 		if (sf->version == 1)
-			freq = (int)(3986.0 * log10((double)freq) - 7925.0);
+			freq = (int32)(3986.0 * log10((double)freq) - 7925.0);
 		else freq = TO_HZ(freq);
 	}
+	if (freq < 1) freq = 1;
+
+	freq *= 20;
+	if (freq > 255) freq = 255;
+
+	sp->v.vibrato_control_ratio = convert_vibrato_rate((uint8)freq);
+
 	/* convert mHz to control ratio */
+#if 0
 	sp->v.vibrato_control_ratio = freq *
 		(VIBRATO_RATE_TUNING * play_mode->rate) /
 		(2 * CONTROLS_PER_SECOND * VIBRATO_SAMPLE_INCREMENTS);
+#endif
 
-	sp->v.vibrato_sweep_increment = 74;
+#if 0
+printf(" f=%d depth=%d (shift %d)\n", (int)freq, (int)sp->v.vibrato_depth, (int)shift);
+#endif
+	/* sp->v.vibrato_sweep_increment = 74; */
+	sp->v.vibrato_sweep_increment = convert_vibrato_sweep((uint8)(freq/5),
+		sp->v.vibrato_control_ratio);
 }
 #endif
 
@@ -1894,7 +1966,7 @@ static void calc_cutoff(Layer *lay, SFInfo *sf, SampleList *sp)
 	if (lay->set[SF_env1ToPitch]) {
 		sp->v.modEnvToPitch = pow(2.0, ((FLOAT_T)lay->val[SF_env1ToPitch]/1200.0));
 	}
-	else sp->v.modEnvToFilterFc = 0;
+	else sp->v.modEnvToPitch = 0;
 
 	sp->cutoff_freq = TO_HZ(val);
 

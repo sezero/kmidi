@@ -35,10 +35,11 @@ typedef struct {
     modulation_rate[7], modulation_offset[7];
   FLOAT_T
     volume, resonance,
-    modEnvToFilterFc, modEnvToPitch;
+    modEnvToFilterFc, modEnvToPitch, modLfoToFilterFc;
   sample_t *data;
   int32 
     tremolo_sweep_increment, tremolo_phase_increment, 
+    lfo_sweep_increment, lfo_phase_increment, 
     vibrato_sweep_increment, vibrato_control_ratio,
     cutoff_freq;
   uint8
@@ -138,5 +139,10 @@ extern int load_missing_instruments(void);
 extern void free_instruments(void);
 extern void end_soundfont(void);
 extern int set_default_instrument(char *name);
+
+extern int32 convert_tremolo_sweep(uint8 sweep);
+extern int32 convert_vibrato_sweep(uint8 sweep, int32 vib_control_ratio);
+extern int32 convert_tremolo_rate(uint8 rate);
+extern int32 convert_vibrato_rate(uint8 rate);
 
 extern void init_soundfont(char *fname, int oldbank, int newbank);

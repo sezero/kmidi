@@ -128,20 +128,22 @@ typedef struct {
   int32
     envelope_target, modulation_target;
   uint32
-    tremolo_sweep, tremolo_sweep_position,
-    tremolo_phase,
+    tremolo_sweep, tremolo_sweep_position, tremolo_phase,
+    lfo_sweep, lfo_sweep_position, lfo_phase,
     vibrato_sweep, vibrato_sweep_position, vibrato_depth,
     echo_delay, starttime;
   int32
     sample_increment,
     envelope_increment,
     modulation_increment,
-    tremolo_phase_increment;
+    tremolo_phase_increment,
+    lfo_phase_increment;
   
   final_volume_t left_mix, right_mix;
 
   FLOAT_T
-    left_amp, right_amp, tremolo_volume;
+    left_amp, right_amp, tremolo_volume, lfo_volume,
+    modEnvToFilterFc, modLfoToFilterFc;
   float
     current_x0, current_x1, current_y0, current_y1;
   int32

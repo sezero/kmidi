@@ -725,6 +725,12 @@ static void clone_voice(Instrument *ip, int v, MidiEvent *e, uint8 clone_type, i
   voice[w].tremolo_sweep_position = voice[v].tremolo_sweep_position;
   voice[w].tremolo_phase = voice[v].tremolo_phase;
   voice[w].tremolo_phase_increment = voice[w].sample->tremolo_phase_increment;
+  voice[w].lfo_sweep = voice[w].sample->lfo_sweep_increment;
+  voice[w].lfo_sweep_position = voice[v].lfo_sweep_position;
+  voice[w].lfo_phase = voice[v].lfo_phase;
+  voice[w].lfo_phase_increment = voice[w].sample->lfo_phase_increment;
+  voice[w].modLfoToFilterFc=voice[w].sample->modLfoToFilterFc;
+  voice[w].modEnvToFilterFc=voice[w].sample->modEnvToFilterFc;
   voice[w].vibrato_sweep = voice[w].sample->vibrato_sweep_increment;
   voice[w].vibrato_sweep_position = voice[v].vibrato_sweep_position;
   voice[w].left_mix = voice[v].left_mix;
@@ -732,6 +738,7 @@ static void clone_voice(Instrument *ip, int v, MidiEvent *e, uint8 clone_type, i
   voice[w].left_amp = voice[v].left_amp;
   voice[w].right_amp = voice[v].right_amp;
   voice[w].tremolo_volume = voice[v].tremolo_volume;
+  voice[w].lfo_volume = voice[v].lfo_volume;
   for (k = 0; k < VIBRATO_SAMPLE_INCREMENTS; k++)
     voice[w].vibrato_sample_increment[k] =
       voice[v].vibrato_sample_increment[k];
@@ -773,9 +780,10 @@ static void clone_voice(Instrument *ip, int v, MidiEvent *e, uint8 clone_type, i
 	/**voice[w].velocity = (voice[w].velocity * reverb) / 256;**/
 	/*voice[w].echo_delay = 50 * (play_mode->rate/1000);*/
 	/**voice[w].echo_delay += (reverb>>2) * milli;**/
-	voice[w].echo_delay += (reverb>>4) * milli;
+
+	if ( reverb>>4 > 30) voice[w].echo_delay += 30 * milli;
+	else voice[w].echo_delay += (reverb>>4) * milli;
 /* 500, 250, 100, 50 too long; 25 pretty good */
-	if (voice[w].echo_delay > 30*milli) voice[w].echo_delay = 30*milli;
 	voice[w].envelope_rate[3] /= 2;
 	if (XG_System_reverb_type >= 0) {
 	    int subtype = XG_System_reverb_type & 0x07;
@@ -898,7 +906,9 @@ static void clone_voice(Instrument *ip, int v, MidiEvent *e, uint8 clone_type, i
       voice[w].control_counter=0;
       voice[w].modulation_counter=0;
       recompute_envelope(w);
-      voice[w].bw_index = (voice[w].sample->cutoff_freq+50) / 100;
+      if (voice[w].sample->cutoff_freq)
+      	voice[w].bw_index = 1 + (voice[w].sample->cutoff_freq+50) / 100;
+      else voice[w].bw_index = 0;
       recompute_modulation(w);
       apply_envelope_to_amp(w);
     }
@@ -1011,6 +1021,13 @@ static void start_note(MidiEvent *e, int i)
   voice[i].tremolo_sweep=voice[i].sample->tremolo_sweep_increment;
   voice[i].tremolo_sweep_position=0;
 
+  voice[i].lfo_phase=0;
+  voice[i].lfo_phase_increment=voice[i].sample->lfo_phase_increment;
+  voice[i].lfo_sweep=voice[i].sample->lfo_sweep_increment;
+  voice[i].lfo_sweep_position=0;
+  voice[i].modLfoToFilterFc=voice[i].sample->modLfoToFilterFc;
+  voice[i].modEnvToFilterFc=voice[i].sample->modEnvToFilterFc;
+
   voice[i].vibrato_sweep=voice[i].sample->vibrato_sweep_increment;
   voice[i].vibrato_depth=voice[i].sample->vibrato_depth;
   voice[i].vibrato_sweep_position=0;
@@ -1043,19 +1060,39 @@ static void start_note(MidiEvent *e, int i)
 		decaytime = 64-32;
 		break;
 	case 16:
-		brightness = 64+32;
+		brightness = 64+16;
 		break;
 	case 17:
-		brightness = 64+48;
+		brightness = 64+32;
 		break;
 	case 18:
-		brightness = 64-32;
+		brightness = 64-16;
 		break;
 	case 19:
-		brightness = 64-48;
+		brightness = 64-32;
 		break;
 	case 20:
-		harmoniccontent = 64+32;
+		harmoniccontent = 64+16;
+		break;
+	case 24:
+		voice[i].modEnvToFilterFc=2.0;
+      		voice[i].sample->cutoff_freq = 800;
+		break;
+	case 25:
+		voice[i].modEnvToFilterFc=-2.0;
+      		voice[i].sample->cutoff_freq = 800;
+		break;
+	case 27:
+		voice[i].modLfoToFilterFc=2.0;
+		voice[i].lfo_phase_increment=109;
+		voice[i].lfo_sweep=122;
+      		voice[i].sample->cutoff_freq = 800;
+		break;
+	case 28:
+		voice[i].modLfoToFilterFc=-2.0;
+		voice[i].lfo_phase_increment=109;
+		voice[i].lfo_sweep=122;
+      		voice[i].sample->cutoff_freq = 800;
 		break;
 	default:
 		break;
@@ -1227,7 +1264,9 @@ printf("(new rel time = %ld)\n",
       voice[i].modulation_stage=ATTACK;
       voice[i].modulation_volume=0;
       voice[i].modulation_counter=0;
-      voice[i].bw_index = (voice[i].sample->cutoff_freq+50) / 100;
+      if (voice[i].sample->cutoff_freq)
+      	voice[i].bw_index = 1 + (voice[i].sample->cutoff_freq+50) / 100;
+      else voice[i].bw_index = 0;
       recompute_envelope(i);
       recompute_modulation(i);
       apply_envelope_to_amp(i);

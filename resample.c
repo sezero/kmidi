@@ -53,7 +53,7 @@ static int dont_cspline = 0;
 
 #define FILTER_INTERPOLATION
 
-#define PATCH_OVERSHOOT (40<<FRACTION_BITS)
+#define PATCH_OVERSHOOT (10<<FRACTION_BITS)
 
 #if defined(CSPLINE_INTERPOLATION)
 #ifndef FILTER_INTERPOLATION
@@ -120,6 +120,7 @@ static int dont_cspline = 0;
 			b0 = butterworth[bw_index][3]; \
 			b1 = butterworth[bw_index][4]; \
 		    } \
+		    incr = calc_mod_freq(vp, incr); \
 		} \
 		if (dont_filter_melodic) bw_index = 0; \
                 newsample = (sample_t)(v1 + ((int32)((v2-v1) * (ofs & FRACTION_MASK)) >> FRACTION_BITS)); \
@@ -157,6 +158,7 @@ static int dont_cspline = 0;
 			b0 = butterworth[bw_index][3]; \
 			b1 = butterworth[bw_index][4]; \
 		    } \
+		    incr = calc_mod_freq(vp, incr); \
 		} \
 		if (dont_filter_melodic) bw_index = 0; \
 		newsample = (v1 > MAX_DATAVAL)? MAX_DATAVAL: ((v1 < MIN_DATAVAL)? MIN_DATAVAL: (sample_t)v1); \
@@ -254,10 +256,34 @@ static int dont_cspline = 0;
 #endif
 
 
-static sample_t resample_buffer[AUDIO_BUFFER_SIZE];
+static sample_t resample_buffer[AUDIO_BUFFER_SIZE+100];
 static uint32 resample_buffer_offset;
 static sample_t *vib_resample_voice(int, uint32 *, int);
 static sample_t *normal_resample_voice(int, uint32 *, int);
+
+
+static void update_lfo(int v)
+{
+  FLOAT_T depth=voice[v].modLfoToFilterFc;
+
+  if (voice[v].lfo_sweep)
+    {
+      /* Update sweep position */
+
+      voice[v].lfo_sweep_position += voice[v].lfo_sweep;
+      if (voice[v].lfo_sweep_position>=(1<<SWEEP_SHIFT))
+	voice[v].lfo_sweep=0; /* Swept to max amplitude */
+      else
+	{
+	  /* Need to adjust depth */
+	  depth *= (FLOAT_T)voice[v].lfo_sweep_position / (FLOAT_T)(1<<SWEEP_SHIFT);
+	}
+    }
+
+  voice[v].lfo_phase += voice[v].lfo_phase_increment;
+
+  voice[v].lfo_volume = depth;
+}
 
 /* Returns 1 if envelope runs out */
 int recompute_modulation(int v)
@@ -269,6 +295,7 @@ int recompute_modulation(int v)
   if (stage>5)
     {
       /* Envelope ran out. */
+      voice[v].modulation_increment = 0;
       return 1;
     }
 
@@ -326,27 +353,56 @@ static int update_modulation_signal(int v)
 
 static int calc_bw_index(int v)
 {
-  FLOAT_T mod_amount=voice[v].sample->modEnvToFilterFc;
+  FLOAT_T mod_amount=voice[v].modEnvToFilterFc;
   int32 freq = voice[v].sample->cutoff_freq;
+  int ix;
 
-  if (update_modulation_signal(v)) return 0;
+  if (voice[v].lfo_phase_increment) update_lfo(v);
+
+  if (!voice[v].lfo_phase_increment && update_modulation_signal(v)) return 0;
+
+  if (voice[v].lfo_volume) {
+	if (mod_amount) mod_amount *= voice[v].lfo_volume;
+	else mod_amount = voice[v].lfo_volume;
+  }
 
   if (mod_amount) {
-    freq =
+    if (voice[v].modulation_volume)
+       freq =
 	(int32)( (double)freq*(1.0 + (mod_amount - 1.0) * (voice[v].modulation_volume>>22) / 255.0) );
+    else freq = (int32)( (double)freq*mod_amount );
 /*
 printf("v%d freq %d (was %d), modvol %d, mod_amount %f\n", v, (int)freq, (int)voice[v].sample->cutoff_freq,
 (int)voice[v].modulation_volume>>22,
 mod_amount);
 */
-	if (freq < 100) freq = 100;
-	voice[v].bw_index = (freq+50) / 100;
+	ix = 1 + (freq+50) / 100;
+	if (ix > 100) ix = 100;
+	voice[v].bw_index = ix;
 	return 1;
   }
-  voice[v].bw_index = (freq+50) / 100;
+  voice[v].bw_index = 1 + (freq+50) / 100;
   return 0;
 }
 
+/* modulation_volume has been set by above routine */
+static int32 calc_mod_freq(Voice *vp, int32 incr)
+{
+  FLOAT_T mod_amount;
+  int32 freq;
+  /* already done in update_vibrato ? */
+  if (vp->vibrato_control_ratio) return incr;
+  if (!(mod_amount=vp->sample->modEnvToPitch)) return incr;
+  if (incr < 0) return incr;
+  freq = vp->frequency;
+  freq = (int32)( (double)freq*(1.0 + (mod_amount - 1.0) * (vp->modulation_volume>>22) / 255.0) );
+
+  return FRSCALE(((double)(vp->sample->sample_rate) *
+		  (double)(freq)) /
+		 ((double)(vp->sample->root_freq) *
+		  (double)(play_mode->rate)),
+		 FRACTION_BITS);
+}
 /*************** resampling with fixed increment *****************/
 
 static sample_t *rs_plain(int v, uint32 *countptr)
@@ -628,10 +684,6 @@ static int32 update_vibrato(Voice *vp, int sign)
 	}
     }
 
-/* needs work -- try 078 whistle
-  if (mod_amount)
-   freq = (int32)( ( (double)(vp->modulation_volume >> 22) * mod_amount * (double)freq ) / 255.0 );
-*/
   if (mod_amount)
    freq = (int32)( (double)freq*(1.0 + (mod_amount - 1.0) * (vp->modulation_volume>>22) / 255.0) );
 
@@ -1121,8 +1173,8 @@ void do_lowpass(Sample *sample, uint32 srate, sample_t *buf, uint32 count, int32
 			 (voice[0].modulation_volume>>22) / 255.0) );
 	    }
 	    cc = control_ratio;
-	    findex = (current_freq+50) / 100;
-	    if (findex > 99) findex = 99;
+	    findex = 1 + (current_freq+50) / 100;
+	    if (findex > 100) findex = 100;
 	    a0 = butterworth[findex][0];
 	    a1 = butterworth[findex][1];
 	    a2 = butterworth[findex][2];

@@ -43,7 +43,7 @@ extern FLOAT_T bend_coarse[];
 #ifdef tplus
 extern FLOAT_T midi_time_table[], midi_time_table2[];
 #endif
-extern float butterworth[100][5];
+extern float butterworth[101][5];
 extern uint8 *_l2u; /* 13-bit PCM to 8-bit u-law */
 extern uint8 _l2u_[]; /* used in LOOKUP_HACK */
 #ifdef LOOKUP_HACK

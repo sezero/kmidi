@@ -1,6 +1,13 @@
+1999-10-17  Greg Lee  <lee@hawaii.edu>
+
+	* implement lfo freq modulation
+
 1999-10-16  Greg Lee  <lee@hawaii.edu>
 
-	* kmidi.cpp: move leds higher
+	* kmidi.cpp: move leds higher; fix meter sync
+	* sndfont.c: revise vibrato/tremolo calculation;
+	  fix long delays (e.g. soprano sax)
+	* resample.c: modulate pitch except for drums
 
 1999-10-15  Greg Lee  <lee@hawaii.edu>
 

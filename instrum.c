@@ -170,6 +170,14 @@ int32 convert_envelope_offset(uint8 offset)
   if (!sweep)
     return 0;
 
+#if 0
+printf("tremolo sweep %d -> %d\n",
+(int)sweep,
+    ((control_ratio * SWEEP_TUNING) << SWEEP_SHIFT) /
+      (play_mode->rate * sweep)
+);
+#endif
+
   return
     ((control_ratio * SWEEP_TUNING) << SWEEP_SHIFT) /
       (play_mode->rate * sweep);
@@ -180,6 +188,13 @@ int32 convert_envelope_offset(uint8 offset)
   if (!sweep)
     return 0;
 
+#if 0
+printf("vibrato sweep %d (vcr %d) -> %d\n",
+(int)sweep, (int)vib_control_ratio,
+    (int) (FRSCALE((double) (vib_control_ratio) * SWEEP_TUNING, SWEEP_SHIFT)
+	     / (double)(play_mode->rate * sweep))
+);
+#endif
   return
     (int32) (FRSCALE((double) (vib_control_ratio) * SWEEP_TUNING, SWEEP_SHIFT)
 	     / (double)(play_mode->rate * sweep));
@@ -192,6 +207,13 @@ int32 convert_envelope_offset(uint8 offset)
 
  int32 convert_tremolo_rate(uint8 rate)
 {
+#if 0
+printf("tremolo rate %d -> %d\n",
+(int)rate,
+    ((SINE_CYCLE_LENGTH * control_ratio * rate) << RATE_SHIFT) /
+      (TREMOLO_RATE_TUNING * play_mode->rate)
+);
+#endif
   return
     ((SINE_CYCLE_LENGTH * control_ratio * rate) << RATE_SHIFT) /
       (TREMOLO_RATE_TUNING * play_mode->rate);
@@ -199,6 +221,13 @@ int32 convert_envelope_offset(uint8 offset)
 
  int32 convert_vibrato_rate(uint8 rate)
 {
+#if 0
+printf("vibrato rate %d -> %d\n",
+(int)rate,
+    (VIBRATO_RATE_TUNING * play_mode->rate) / 
+      (rate * 2 * VIBRATO_SAMPLE_INCREMENTS)
+);
+#endif
   /* Return a suitable vibrato_control_ratio value */
   return
     (VIBRATO_RATE_TUNING * play_mode->rate) / 
@@ -310,7 +339,9 @@ static InstrumentLayer *load_instrument(char *name, int font_type, int percussio
     }
       
   /*ctl->cmsg(CMSG_INFO, VERB_NOISY, "Loading instrument %s", current_filename); */
-  ctl->cmsg(CMSG_INFO, VERB_NOISY, "%s%s", percussion? "   " : "", name);
+  ctl->cmsg(CMSG_INFO, VERB_NOISY, "%s%s[%d,%d]", percussion? "   " : "", name,
+	(percussion)? note_to_use : gm_num, bank);
+
 
   /* Read some headers and do cursory sanity checks. There are loads
      of magic offsets. This could be rewritten... */
@@ -627,12 +658,15 @@ static InstrumentLayer *load_instrument(char *name, int font_type, int percussio
 
       for (j=ATTACK; j<DELAY; j++)
 	{
-	  sp->modulation_rate[j]=0;
-	  sp->modulation_offset[j]=0;
+	  sp->modulation_rate[j]=sp->envelope_rate[j];
+	  sp->modulation_offset[j]=sp->envelope_offset[j];
 	}
       sp->modulation_rate[DELAY] = sp->modulation_offset[DELAY] = 0;
       sp->modEnvToFilterFc=0;
       sp->modEnvToPitch=0;
+	sp->lfo_sweep_increment = 0;
+	sp->lfo_phase_increment = 0;
+	sp->modLfoToFilterFc = 0;
 
 #ifdef EXAMINE_SOME_ENVELOPES
 if (percussion /* && (gm_num >= 42 && gm_num <= 51) */) {
