@@ -107,14 +107,14 @@ KMidiFrame::KMidiFrame( const char *name ) :
 	view_level->setWhatsThis(101, i18n("The info window shows<br>\n"
 				"all displayable midi<br>\n"
 				"messages.") );
-        view_level->insertItem( i18n("Loading msgs") , 102);
+        view_level->insertItem( i18n("Loading Msgs") , 102);
 	view_level->setWhatsThis(102, i18n("Also shows new instruments<br>\n"
 				"being loaded for playing<br>\n"
 				"the next song.") );
-        view_level->insertItem( i18n("debug 1") , 103);
+        view_level->insertItem( i18n("Debug 1") , 103);
 	view_level->setWhatsThis(103, i18n("Also shows instrument<br>\n"
 				"volume computation.") );
-        view_level->insertItem( i18n("debug 2") , 104);
+        view_level->insertItem( i18n("Debug 2") , 104);
 	view_level->setWhatsThis(104, i18n("Shows lots of additional<br>\n"
 				"information (probably not useful).") );
     connect( view_level, SIGNAL(activated(int)), this, SLOT(doViewInfoLevel(int)) );
