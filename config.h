@@ -156,6 +156,15 @@ typedef float FLOAT_T;
    without it sound quality is very poor. */
 #define LINEAR_INTERPOLATION
 
+
+/* These option enable a multi-point interpolation in resampling.
+   Defining CSPLINE_INTERPOLATION cause 4-point interpolation by cubic
+   spline curve.  Defining LAGRANGE_INTERPOLATION cause 4-point
+   interpolation by Lagrange method. (Taken from TiMidity++) */
+/* #define CSPLINE_INTERPOLATION */
+/* #define LAGRANGE_INTERPOLATION */
+
+
 /* This is an experimental kludge that needs to be done right, but if
    you've got an 8-bit sound card, or cheap multimedia speakers hooked
    to your 16-bit output device, you should definitely give it a try.
@@ -181,8 +190,8 @@ typedef float FLOAT_T;
    a sample is 1048576 samples (2 megabytes in memory). The GUS gets
    by with just 9 bits and a little help from its friends...
    "The GUS does not SUCK!!!" -- a happy user :) */
-/*#define FRACTION_BITS 12*/
-#define FRACTION_BITS 14
+#define FRACTION_BITS 12
+/*#define FRACTION_BITS 14*/
 
 /* For some reason the sample volume is always set to maximum in all
    patch files. Define this for a crude adjustment that may help
