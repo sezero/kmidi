@@ -26,6 +26,9 @@
 
 #ifdef KMIDI
 #include "../config.h"
+#ifndef HAVE_STRING_H
+#define NO_STRING_H
+#endif
 #else
 #if (defined(SUN) && defined(SYSV)) || defined(__WIN32__)
 #else
