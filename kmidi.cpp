@@ -2391,7 +2391,7 @@ void KMidi::readconfig(){
     config=KApplication::kApplication()->config();
     config->setGroup("KMidi");
 
-    QString str = config->readEntry("Directory");
+    QString str = config->readPathEntry("Directory");
     if ( !str.isNull() ) set_current_dir(str);
     else set_current_dir(QString(""));
 
@@ -2438,11 +2438,8 @@ void KMidi::writeconfig(){
 
     config->setGroup("KMidi");
 
-    //config->writeEntry("Directory", current_dir.filePath("."));
-    if(tooltips)
-	config->writeEntry("ToolTips", 1);
-    else
-	config->writeEntry("ToolTips", 0);
+    //config->writePathEntry("Directory", current_dir.filePath("."));
+    config->writeEntry("ToolTips", tooltips);
 
     config->writeEntry("Volume", volume);
     config->writeEntry("Polyphony", current_voices);

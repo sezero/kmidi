@@ -171,7 +171,7 @@ PlaylistEdit::PlaylistEdit(const char *name, QStringList *playlist,
   QString str;
   KConfig *config = thisapp->config();
   config->setGroup("KMidi");
-  str = config->readEntry("Directory");
+  str = config->readPathEntry("Directory");
   if ( !str.isNull() ) set_local_dir(str);
   else set_local_dir(QString(""));
 
@@ -420,7 +420,7 @@ void PlaylistEdit::set_local_dir(const QString &dir){
    cur_local_dir  = QDir::current();
    KConfig *config = thisapp->config();
    config->setGroup("KMidi");
-   config->writeEntry("Directory", cur_local_dir.filePath("."));
+   config->writePathEntry("Directory", cur_local_dir.filePath("."));
    //config->sync();
 
    cur_local_dir.setSorting( cur_local_dir.sorting() | QDir::DirsFirst );
