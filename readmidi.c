@@ -1,4 +1,5 @@
 /*
+	$Id$
 
     TiMidity -- Experimental MIDI to WAVE converter
     Copyright (C) 1995 Tuukka Toivonen <toivonen@clinet.fi>
@@ -154,7 +155,8 @@ static int metatext(int type, int leng, char *mess)
 		}
 	    }
 	    else {
-		meta_string[n] = (isprint(c) || isspace(c)) ? c : '.';
+		/*meta_string[n] = (isprint(c) || isspace(c)) ? c : '.';*/
+		meta_string[n] = ((c > 0x7f) || isprint(c) || isspace(c)) ? c : '.';
 		if (c == '\012' || c == '\015') continued_flag = 1;
 		if (c == '\015') meta_string[n] = '\012';
 	    }
@@ -181,7 +183,7 @@ static int metatext(int type, int leng, char *mess)
     else return 0;
 }
 
-static int sysex(int32 len)
+static int sysex(int32 len, uint8 *syschan, uint8 *sysa, uint8 *sysb)
 {
   unsigned char *s=safe_malloc(len);
   int id, model, port, adhi, adlo, cd, dta, dtb, dtc;
@@ -199,11 +201,15 @@ static int sysex(int32 len)
       free(s);
       return 0;
     }
+  *syschan=adlo;
   if (id==0x7f && len==7 && port==0x7f && model==0x04 && adhi==0x01)
     {
       ctl->cmsg(CMSG_TEXT, VERB_DEBUG, "Master Volume %d", s[4]+(s[5]<<7));
       free(s);
-      return s[4]+(s[5]<<7);
+      *sysa = s[4];
+      *sysb = s[5];
+      return ME_MASTERVOLUME;
+      /** return s[4]+(s[5]<<7); **/
     }
   if (len<8) { free(s); return 0; }
   port &=0x0f;
@@ -242,12 +248,43 @@ static int sysex(int32 len)
 	 }
 	else if (adhi == 8 && cd <= 40)
 	 {
+	    *sysa = dta & 0x7f;
 	    switch (cd)
 	      {
-		case 8:
+		case 0x01: /* bank select MSB */
+		  return ME_TONE_KIT;
+		  break;
+		case 0x02: /* bank select LSB */
+		  return ME_TONE_BANK;
+		  break;
+		case 0x03: /* program number */
+	      		/** MIDIEVENT(at, ME_PROGRAM, lastchan, a, 0); **/
+		  return ME_PROGRAM;
+		  break;
+		case 0x08: /*  */
 		  channel[adlo&0x0f].transpose = (char)(dta-64);
       	    	  ctl->cmsg(CMSG_TEXT, VERB_DEBUG, "transpose channel %d by %d",
 			(adlo&0x0f)+1, dta-64);
+		  break;
+		case 0x0b: /* volume */
+		  return ME_MAINVOLUME;
+		  break;
+		case 0x0e: /* pan */
+		  return ME_PAN;
+		  break;
+		case 0x12: /* chorus send */
+		  return ME_CHORUSDEPTH;
+		  break;
+		case 0x13: /* reverb send */
+		  return ME_REVERBERATION;
+		  break;
+		case 0x14: /* variation send */
+		  break;
+		case 0x18: /* filter cutoff */
+		  return ME_BRIGHTNESS;
+		  break;
+		case 0x19: /* filter resonance */
+		  return ME_HARMONICCONTENT;
 		  break;
 		default: break;
 	      }
@@ -362,11 +399,13 @@ static MidiEventList *read_midi_event(void)
       if(me==0xF0 || me == 0xF7) /* SysEx event */
 	{
 	  int32 sret;
+	  uint8 sysa=0, sysb=0, syschan=0;
 	  len=getvl();
-	  sret=sysex(len);
+	  sret=sysex(len, &syschan, &sysa, &sysb);
 	  if (sret)
 	   {
-	     MIDIEVENT(at, ME_MASTERVOLUME, 0, sret&0x7f, sret>>7);
+	     /** MIDIEVENT(at, ME_MASTERVOLUME, 0, sret&0x7f, sret>>7); **/
+	     MIDIEVENT(at, sret, syschan, sysa, sysb);
 	   }
 	}
       else if(me==0xFF) /* Meta event */
@@ -432,6 +471,12 @@ static MidiEventList *read_midi_event(void)
 		int control=255;
 		switch(a)
 		  {
+#ifdef tplus
+		  case 1: control=ME_MODULATION_WHEEL; break;
+		  case 5: control=ME_PORTAMENTO_TIME_MSB; break;
+		  case 37: control=ME_PORTAMENTO_TIME_LSB; break;
+		  case 65: control=ME_PORTAMENTO; break;
+#endif
 		  case 7: control=ME_MAINVOLUME; break;
 		  case 10: control=ME_PAN; break;
 		  case 11: control=ME_EXPRESSION; break;
@@ -442,6 +487,12 @@ static MidiEventList *read_midi_event(void)
 		  case 74: control=ME_BRIGHTNESS; break;
 		  case 91: control=ME_REVERBERATION; break;
 		  case 93: control=ME_CHORUSDEPTH; break;
+#ifdef CHANNEL_EFFECT
+		  case 94: control=ME_CELESTE; break;
+ctl->cmsg(CMSG_INFO, VERB_NORMAL, "CELESTE");
+		  case 95: control=ME_PHASER; break;
+ctl->cmsg(CMSG_INFO, VERB_NORMAL, "PHASER");
+#endif
 		  case 120: control=ME_ALL_SOUNDS_OFF; break;
 		  case 121: control=ME_RESET_CONTROLLERS; break;
 		  case 123: control=ME_ALL_NOTES_OFF; break;
@@ -470,11 +521,11 @@ static MidiEventList *read_midi_event(void)
 		      {
 			if (rpn_msb[lastchan]==1) switch (rpn_lsb[lastchan])
 			 {
-			/*
-			   case 0x08: vibrato rate
-			   case 0x09: vibrato depth
-			   case 0x0a: vibrato delay
-			*/
+#ifdef tplus
+			   case 0x08: control=ME_VIBRATO_RATE; break;
+			   case 0x09: control=ME_VIBRATO_DEPTH; break;
+			   case 0x0a: control=ME_VIBRATO_DELAY; break;
+#endif
 			   case 0x20: control=ME_BRIGHTNESS; break;
 			   case 0x21: control=ME_HARMONICCONTENT; break;
 			/*
@@ -516,6 +567,10 @@ static MidiEventList *read_midi_event(void)
 		      case 0x0000: /* Pitch bend sensitivity */
 			control=ME_PITCH_SENS;
 			break;
+#ifdef tplus
+		      case 0x0001: control=ME_FINE_TUNING; break;
+		      case 0x0002: control=ME_COARSE_TUNING; break;
+#endif
 
 		      case 0x7F7F: /* RPN reset */
 			/* reset pitch bend sensitivity to 2 */
