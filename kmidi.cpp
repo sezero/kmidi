@@ -1003,10 +1003,9 @@ void KMidi::ReadPipe(){
 		      have_commandline_midis = true;
 		    }
 		    else{
-		      QString string;
-		      string = i18n("%1\nis not readable or doesn't exist.").arg(filename);
-		      KMsgBox::message(NULL, i18n("KMidi Warning"), string,
-				       KMsgBox::EXCLAMATION);
+		      QString string = i18n("%1\nis not readable or doesn't exist.").arg(filename);
+		      QMessageBox::warning(0, i18n("KMidi Warning"), string,
+				       i18n("OK"));
 
 		    }
 		  }	

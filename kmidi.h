@@ -62,7 +62,6 @@
 #include <sys/ioctl.h>
 
 #include <kapp.h>
-#include <kmsgbox.h>
 
 #define PLAYLIST_WIDTH  550
 #define PLAYLIST_HEIGHT 440

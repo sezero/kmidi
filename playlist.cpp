@@ -24,6 +24,7 @@
 
 #include <stdio.h>
 
+#include <qpanner.h>
 #include <qtextstream.h>
 
 #include <klocale.h>
