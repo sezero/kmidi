@@ -41,7 +41,7 @@ kmidi_SOURCES = kmidi.cpp  playlist.cpp bwlednum.cpp configdlg.cpp log.cpp \
 	b_out.cpp fffload.cpp \
 	effects.cpp reverb_e.cpp chorus_e.cpp phaser_e.cpp celeste_e.cpp \
 	resample_l.cpp resample_f.cpp midiapplication.cpp kmidiframe.cpp \
-	kmidifiledlg.cpp qttableview.cpp
+	kmidifiledlg.cpp qttableview.cpp configclass.cpp
 kmidi_LDADD = $(LIB_KFILE) $(LIBALIB) $(LIBAUDIO) $(LIBMME) $(EXTRALIBS)
 kmidi_LDFLAGS = $(all_libraries) $(ARTSFLAGS) $(KDE_RPATH)
 
@@ -54,7 +54,8 @@ noinst_HEADERS = kmidi.h  playlist.h bwlednum.h configdlg.h \
 	config.h common.h readmidi.h playmidi.h resample.h mix.h instrum.h \
 	tables.h controls.h output.h filter.h log.h version.h filepic.h \
 	cduppic.h folderpic.h sbk.h sflayer.h ctl.h effects.h \
-	midiapplication.h kmidiframe.h kmidifiledlg.h qttableview.h
+	midiapplication.h kmidiframe.h kmidifiledlg.h qttableview.h \
+	configclass.h
 
 METASOURCES = AUTO
 
