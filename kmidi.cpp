@@ -119,6 +119,16 @@ KMidi::KMidi( QWidget *parent, const char *name ) :
     setToolTips();
 
     playlist = new QStrList(TRUE);
+    listplaylists = new QStrList(TRUE);
+    //current_playlist_num = 0;
+
+    QStringList listf = KGlobal::dirs()->findAllResources("appdata", "*.plist");
+
+    for ( QStringList::Iterator it = listf.begin(); it != listf.end(); ++it ) {
+	    //listplaylists->append( *it );
+	    listplaylists->inSort( *it );
+    }
+
 
     if ( !folder_pixmap.loadFromData(folder_bmp_data, folder_bmp_len) )
 	KMessageBox::error(this, i18n("Error"), i18n("Could not load folder.bmp"));
@@ -135,6 +145,7 @@ KMidi::KMidi( QWidget *parent, const char *name ) :
     logwindow = new LogWindow(NULL,"logwindow");
     logwindow->hide();
     configdlg = new ConfigDlg(this,&config, "_configdlg");
+    //playlistdlg = new PlaylistDialog( NULL , "_pldlg", playlist, &current_playlist_num, listplaylists);
 
     connect( timer, SIGNAL(timeout()),this, SLOT(PlayCommandlineMods()) );
     timer->start( 100, FALSE );
@@ -158,6 +169,9 @@ KMidi::KMidi( QWidget *parent, const char *name ) :
     connect(thisapp,SIGNAL(kdisplayPaletteChanged()),this,SLOT(setColors()));
     connect(this,SIGNAL(play()),this,SLOT(playClicked()));
 
+    redoplaylistbox();
+    playlistbox->setCurrentItem(current_playlist_num);
+
     srandom(time(0L));
     adjustSize();
     setMinimumSize( regularsize );
@@ -165,7 +179,6 @@ KMidi::KMidi( QWidget *parent, const char *name ) :
 
     resize( regularsize );
 
-    //setFixedSize(this->width(),this->height());
     setAcceptDrops(TRUE);
 }
 
@@ -173,9 +186,29 @@ void KMidi::dropEvent( QDropEvent * e )
 {
 
     QStringList files;
+    int newones = 0;
+    char mbuff[5];
     if ( QUrlDrag::decodeLocalFiles( e, files ) ) {
-	for (QStringList::Iterator i=files.begin(); i!=files.end(); ++i)
+	for (QStringList::Iterator i=files.begin(); i!=files.end(); ++i) {
+
+            QFile f(*i);
+            if (!f.open( IO_ReadOnly )) continue;
+            if (f.readBlock(mbuff, 4) != 4) {
+		f.close();
+		continue;
+            }
+            mbuff[4] = '\0';
+            if (strcmp(mbuff, "MThd")) {
+		f.close();
+		continue;
+            }
+            f.close();
+
 	    playlist->insert(0, *i);
+	    newones++;
+	}
+    }
+    if (newones) {
         redoplaybox();
 	setSong(0);
     }
@@ -216,8 +249,7 @@ void KMidi::setToolTips()
 
 	QToolTip::add( patchbox,	i18n("Select Patch Set") );
 	QToolTip::add( playbox,		i18n("Select Song") );
-	QToolTip::add( lbuttonc,	i18n("unnassigned") );
-	QToolTip::add( lbuttond,	i18n("unnassigned") );
+	QToolTip::add( playlistbox,	i18n("Select Playlist") );
 	QToolTip::add( meterspin,	i18n("Sync Meter") );
 	QToolTip::add( rcb1,		i18n("Stereo Voice: norm/xtra/off") );
 	QToolTip::add( rcb2,		i18n("Reverb: norm/xtra/off") );
@@ -247,8 +279,7 @@ void KMidi::setToolTips()
 
 	QToolTip::remove( patchbox );
 	QToolTip::remove( playbox );
-	QToolTip::remove( lbuttonc );
-	QToolTip::remove( lbuttond );
+	QToolTip::remove( playlistbox );
 	QToolTip::remove( meterspin );
 	QToolTip::remove( rcb1 );
 	QToolTip::remove( rcb2 );
@@ -411,12 +442,8 @@ void MeterWidget::paintEvent( QPaintEvent * )
 MeterWidget::MeterWidget( QDialog *parent, const char *name )
     : QWidget( parent, name )
 {
-    //setBackgroundColor( background_color );
-
     metertimer = new QTimer( this );
     connect( metertimer, SIGNAL(timeout()), SLOT(remeter()) );
-    //metertimer->start( 100, FALSE );
-    //metertimer->start( 50, FALSE );
     metertimer->start( 80, FALSE );
 }
 
@@ -644,26 +671,15 @@ void KMidi::drawPanel()
     connect( playbox, SIGNAL(activated(int)), SLOT(setSong(int)) );
 
     iy += HEIGHT;
-    lbuttonc = makeButton( ix,          iy, WIDTH/2, HEIGHT, "" );
-    lbuttonc->setFont( QFont( "helvetica", 10, QFont::Normal) );
-    lbuttond = makeButton( ix +WIDTH/2, iy, WIDTH/2, HEIGHT, "" );
-    lbuttond->setFont( QFont( "helvetica", 10, QFont::Normal) );
 
-    //lbuttone = makeButton( ix +WIDTH,   iy, WIDTH/2, HEIGHT, "" );
-    //lbuttone->setFont( QFont( "helvetica", 10, QFont::Normal) );
+    playlistbox = new QComboBox( FALSE, this, "_playlists" );
+    playlistbox->setGeometry(ix, iy, WIDTH + WIDTH/2, HEIGHT);
+    playlistbox->setFont( QFont( "helvetica", 10, QFont::Normal) );
+    connect( playlistbox, SIGNAL( activated( int ) ), this, SLOT( plActivated( int ) ) );
 
-    meterspin = new QSpinBox( 0, 99, 1, this, "_spinm" );
-    meterspin->setValue(meterfudge);
-    meterspin->setGeometry( ix +WIDTH, iy, WIDTH/2, HEIGHT );
-    connect( meterspin, SIGNAL( valueChanged(int) ),
-	     SLOT( meterfudgeChanged(int) ) );
-    meterspin->setFont( QFont( "helvetica", 10, QFont::Normal) );
 
     iy = regularheight;
     ix = WIDTH + SBARWIDTH;
-    //rbuttona = makeButton( ix,          iy, WIDTH,   HEIGHT, "R_A" );
-    //rbuttona->setFont( QFont( "helvetica", 10, QFont::Normal) );
-    // Create a button group to contain all buttons
     rchecks = new QHButtonGroup( this );
     rchecks->setGeometry(ix, iy, WIDTH, HEIGHT);
     rcb1 = new QCheckBox(rchecks);
@@ -696,10 +712,23 @@ void KMidi::drawPanel()
     voicespin->setFont( QFont( "helvetica", 10, QFont::Normal) );
 
     iy += HEIGHT;
-    rbuttond = makeButton( ix,          iy, WIDTH,   HEIGHT, "" );
+
+    meterspin = new QSpinBox( 0, 99, 1, this, "_spinm" );
+    meterspin->setValue(meterfudge);
+    meterspin->setGeometry( ix, iy, WIDTH/2, HEIGHT );
+    connect( meterspin, SIGNAL( valueChanged(int) ),
+	     SLOT( meterfudgeChanged(int) ) );
+    meterspin->setFont( QFont( "helvetica", 10, QFont::Normal) );
+
+    rbuttond = makeButton( ix +WIDTH/2,     iy, WIDTH/2,   HEIGHT, "" );
     rbuttond->setFont( QFont( "helvetica", 10, QFont::Normal) );
 }
-
+ 
+void KMidi::plActivated( int index )
+{
+    current_playlist_num = index;
+    loadplaylist(index);
+}
  
 void KMidi::updateRChecks( int which )
 {
@@ -800,6 +829,31 @@ void KMidi::redoplaybox()
 	    filenamestr = filenamestr.left(filenamestr.length()-4);
 	}
 	playbox->insertItem(filenamestr);
+
+    }
+}
+
+void KMidi::redoplaylistbox()
+{
+    QString filenamestr;
+    int i, index;
+    int last = listplaylists->count();
+
+    playlistbox->clear();
+
+    for (i = 0; i < last; i++) {
+
+	filenamestr = listplaylists->at(i);
+	index = filenamestr.findRev('/',-1,TRUE);
+	if(index != -1)
+	    filenamestr = filenamestr.right(filenamestr.length() -index -1);
+	filenamestr = filenamestr.replace(QRegExp("_"), " ");
+
+	if(filenamestr.length() > 6){
+	if(filenamestr.right(6) == QString(".plist"))
+	    filenamestr = filenamestr.left(filenamestr.length()-6);
+	}
+	playlistbox->insertItem(filenamestr);
 
     }
 }
@@ -1116,18 +1170,21 @@ void KMidi::ejectClicked(){
 	return;*/
 
     if(!playlistdlg)
-	playlistdlg = new PlaylistDialog( NULL , "Compose Play List",playlist);
+	playlistdlg = new PlaylistDialog( NULL , "_pldlg", playlist, &current_playlist_num, listplaylists);
+    else playlistdlg->redoLists();
+    //playlistdlg->redoLists();
 
     if(playlistdlg->exec()){
-
       updateUI();
       status = KSTOPPED;
+      redoplaylistbox();
+      playlistbox->setCurrentItem(current_playlist_num);
+      //plActivated( current_playlist_num );
       patchbox->setEnabled( TRUE );
       playPB->setOn( FALSE );
       timer->start( 200, TRUE );  // single shot
+      redoplaybox();
     }
-
-    redoplaybox();
 
 }
 
@@ -1230,16 +1287,35 @@ void KMidi::PlayCommandlineMods(){
 
 }
 
-void KMidi::loadplaylist(){
+void KMidi::loadplaylist( int which ) {
 
-    QString defaultlist = locate( "appdata", "default");
+    QString s;
+    if (!listplaylists->count()) s = "default.plist";
+    else {
+        s = listplaylists->at(which);
+        int i = s.findRev('/',-1,TRUE);
+        if(i != -1) s = s.right(s.length() -i -1);
+    }
+    QString defaultlist = locate( "appdata", s);
+
+    playlist->clear();
 
     if (defaultlist.isEmpty()) {
+	defaultlist = locateLocal("appdata", "default.plist");
+	QFile f(defaultlist);
+	f.open( IO_ReadWrite | IO_Translate|IO_Truncate);
+	QString tempstring;
+
 	QStringList list = KGlobal::dirs()->findAllResources("appdata", "*.mid");
 
 	for ( QStringList::Iterator it = list.begin(); it != list.end(); ++it ) {
+	    tempstring = *it;
 	    playlist->append( *it );
+	    tempstring += '\n';
+	    f.writeBlock(tempstring,tempstring.length());
         }
+	f.close();
+	listplaylists->inSort(defaultlist);
     }
     else {
 	QFile f(defaultlist);
@@ -1321,7 +1397,7 @@ void KMidi::ReadPipe(){
 		int vol;
 	
 		pipe_int_read(&vol);
-		volume = vol*100/255;
+		//volume = vol*100/255;
 
 	    }
 	    break;
@@ -1380,7 +1456,7 @@ void KMidi::ReadPipe(){
 		if( !have_commandline_midis) {
 		  /*don't have cmd line midis to play*/
 		  /*or none of them was readable */
-		    loadplaylist();
+		    loadplaylist(current_playlist_num);
 		}
 
     		redoplaybox();
@@ -1647,6 +1723,7 @@ void KMidi::readconfig(){
     current_voices = config->readNumEntry("Polyphony", DEFAULT_VOICES);
     meterfudge = config->readNumEntry("MeterAdjust", 14);
     tooltipsint = config->readNumEntry("ToolTips", 1);
+    current_playlist_num = config->readNumEntry("Playlist", 0);
 
     if (tooltipsint == 1)
 	tooltips = TRUE;
@@ -1696,6 +1773,7 @@ void KMidi::writeconfig(){
     config->writeEntry("BackColor",background_color);
     config->writeEntry("LEDColor",led_color);
     config->writeEntry("MeterAdjust",meterfudge);
+    config->writeEntry("Playlist",current_playlist_num);
     config->sync();
 }
 

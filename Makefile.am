@@ -43,7 +43,7 @@ apps_DATA = kmidi.desktop
 kde_icon_DATA = kmidi.xpm
 
 picsdir = $(kde_datadir)/kmidi/pics
-pics_DATA = kmidilogo.xpm
+pics_DATA = kmidilogo.png
 
 EXTRA_DIST = $(apps_DATA) $(kde_icon_DATA) $(pics_DATA) kmidi-mini.xpm
 

@@ -1,3 +1,7 @@
+1999-08-27  Greg Lee  <lee@hawaii.edu>
+
+	* kmidi.cpp: check dropped file is readable midi file
+
 1999-08-26  Greg Lee  <lee@hawaii.edu>
 
 	* config.h: up controls/sec, FRACTINT, MAX_VOICES

@@ -42,10 +42,13 @@
 #include <qpopupmenu.h>
 #include <qkeycode.h>
 #include <qmenubar.h> 
+#include <qlineedit.h> 
+#include <qframe.h> 
 
 #include "kmidi.h"
 
 class QSplitter;
+class QFrame;
 
 class MyListBoxItem : public QListBoxItem{
 
@@ -76,7 +79,8 @@ class PlaylistDialog : public QDialog {
 Q_OBJECT
 
 public:
-       PlaylistDialog(QWidget *parent=0, const char *name = 0,QStrList *playlist = 0);
+       PlaylistDialog(QWidget *parent=0, const char *name=0, QStrList *playlist = 0,
+	int *current_playlist_ptr=0, QStrList *listplaylists = 0);
        ~PlaylistDialog();
 
 private:
@@ -86,6 +90,7 @@ private slots:
 
   void openPlaylist();
   void newPlaylist();
+  void editNewPlaylist();
   void saveasPlaylist();
   void help();
   void savePlaylist();
@@ -97,14 +102,19 @@ private slots:
   void checkList();
   void local_file_selected(int index);
   void loadPlaylist(const QString &name);
-
+  void readPlaylist(int index);
+  void selectPlaylist(int index);
+  void saveIt();
+  void removeIt();
 
 protected:
     void parse_fileinfo(QFileInfo*, MyListBoxItem*);
     void set_local_dir(const QString &dir);
+    void redoplist();
 
 public:
     QString current_playlist;
+    void redoLists();
 
 private:
 
@@ -113,18 +123,23 @@ private:
     QDir cur_local_dir;
     QList<QFileInfo> cur_local_fileinfo;
     QListBox *local_list;
-    QSplitter *panner;
+    QSplitter *hpanner, *vpanner;
     QLabel *statusbar;
 
     QMenuBar *menu;    
     QListBox* listbox;
+    QListBox* plistbox;
     QPushButton* filterButton;
     QPushButton* addButton;
     QPushButton* okButton;
     QPushButton* removeButton;
     QPushButton* cancelButton;
     QStrList*  songlist;
-
+    QStrList*  listsonglist;
+    QLineEdit* newEdit;
+    int *playlist_ptr;
+    QFrame* snpopup;
+    QPopupMenu *savenew;
 
 };
 

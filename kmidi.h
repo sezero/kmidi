@@ -128,10 +128,7 @@ public:
 
 	QComboBox	*patchbox;
 	QComboBox	*playbox;
-	QPushButton 	*lbuttonc;
-	QPushButton 	*lbuttond;
-	//QPushButton 	*lbuttone;
-	//QPushButton 	*rbuttona;
+	QComboBox	*playlistbox;
 	QHButtonGroup	*rchecks;
 	QCheckBox	*rcb1;
 	QCheckBox	*rcb2;
@@ -195,6 +192,8 @@ public:
 
 	QString		fileName;
 	QStrList	*playlist;
+	int		current_playlist_num;
+	QStrList	*listplaylists;
 
 	LogWindow 	*logwindow;
 	ConfigDlg       *configdlg;
@@ -217,6 +216,7 @@ private:
 	void 	        playthemod(QString );
         void		resizeEvent(QResizeEvent *e);
 	void 		redoplaybox();
+	void 		redoplaylistbox();
 
 
 public:
@@ -229,7 +229,7 @@ signals:
 
 public slots:
 
-	void 		loadplaylist();
+	void 		loadplaylist(int);
 	void 		randomPlay();
 	void 		updateUI();
         void 		randomClicked();
@@ -261,8 +261,9 @@ public slots:
 	void		voicesChanged( int );
 	void		meterfudgeChanged( int );
 	void		updateRChecks( int );
-    void dropEvent( QDropEvent * );
-    void dragEnterEvent( QDragEnterEvent *e );
+	void		dropEvent( QDropEvent * );
+	void		dragEnterEvent( QDragEnterEvent *e );
+	void		plActivated( int );
 };
 
 

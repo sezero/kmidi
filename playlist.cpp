@@ -48,15 +48,31 @@ char fontrefstring3[]="00  00:00";
 extern KApplication *thisapp;
 extern KMidi *kmidi;
 
-PlaylistDialog::PlaylistDialog(QWidget *parent, const char *name,QStrList *playlist)
+PlaylistDialog::PlaylistDialog(QWidget *parent, const char *name, QStrList *playlist,
+	int *current_playlist_ptr, QStrList *listplaylists)
   : QDialog(parent, name,TRUE){
 
   setCaption(i18n("Compose Play List"));
 
   starting_up = true;
   QPopupMenu *file = new QPopupMenu;
+  savenew = new QPopupMenu;
   CHECK_PTR( file );
 
+  savenew->insertItem( i18n("New Playlist"), this, SLOT( editNewPlaylist() ) );
+
+  snpopup = new QFrame( this ,0, WType_Popup);
+  snpopup->setFrameStyle( QFrame::PopupPanel|QFrame::Raised );
+  snpopup->resize(150,100);
+  newEdit = new QLineEdit( snpopup, "_editnew" );
+  connect( newEdit, SIGNAL( returnPressed() ), this, SLOT( newPlaylist() ) );
+  newEdit->setGeometry(10,10, 130, 30);
+  newEdit->setFocus();
+
+
+  file->insertItem( i18n("Save"), this, SLOT(saveIt()));
+  file->insertItem( i18n("Save as ..."), savenew);
+  file->insertItem( i18n("Remove"), this, SLOT(removeIt()));
   file->insertItem( i18n("Quit"), this, SLOT(reject()));
   
   QPopupMenu *edit = new QPopupMenu;
@@ -74,13 +90,16 @@ PlaylistDialog::PlaylistDialog(QWidget *parent, const char *name,QStrList *playl
   menu->insertItem( i18n("&Edit"), edit );
   menu->insertSeparator();
   menu->insertItem( i18n("&Help"), help );
-  
-  panner = new QSplitter(Horizontal, this, "_panner");
-  listbox = new QListBox(panner,"listbox",0); 
-  panner->moveToLast(listbox);
 
-  connect(listbox, SIGNAL(selected(int)), this, 
-	    SLOT(removeEntry()));
+  vpanner = new QSplitter(Vertical, this, "_panner");
+  hpanner = new QSplitter(Horizontal, vpanner, "_panner");
+  vpanner->setOpaqueResize( TRUE );
+  hpanner->setOpaqueResize( TRUE );
+
+  listbox = new QListBox(hpanner,"listbox",0); 
+  hpanner->moveToLast(listbox);
+
+  connect(listbox, SIGNAL(selected(int)), this, SLOT(removeEntry()));
 
   filterButton = new QPushButton(this,"filterButton");
   filterButton->setText(i18n("Filter"));
@@ -105,12 +124,17 @@ PlaylistDialog::PlaylistDialog(QWidget *parent, const char *name,QStrList *playl
   okButton->setText(i18n("OK"));
   connect(okButton,SIGNAL(clicked()),this,SLOT(checkList()));
 
-  local_list = new QListBox(panner, "local_list",0);
-  panner->moveToFirst(local_list);
+  local_list = new QListBox(hpanner, "local_list",0);
+  hpanner->moveToFirst(local_list);
+
+  playlist_ptr = current_playlist_ptr;
+  plistbox = new QListBox(vpanner,"listbox",0); 
+  connect(plistbox, SIGNAL(selected(int)), this, SLOT(readPlaylist(int)));
+  connect(plistbox, SIGNAL(highlighted(int)), this, SLOT(selectPlaylist(int)));
 
   QValueList<int> size;
   size << 30 << 70;
-  panner->setSizes(size);
+  hpanner->setSizes(size);
 
   local_list->insertItem("Local Directory", -1);
   connect(local_list, SIGNAL(selected(int )), this, SLOT(local_file_selected(int )));
@@ -125,15 +149,10 @@ PlaylistDialog::PlaylistDialog(QWidget *parent, const char *name,QStrList *playl
   this->resize(PLAYLIST_WIDTH,PLAYLIST_HEIGHT);
 
   songlist = playlist;
-  if (songlist)
-    listbox->insertStrList(songlist,-1);
+  listsonglist = listplaylists;
 
-  if (listbox->count() == 0)
-    loadPlaylist("default");
+  redoLists();
   
-  current_playlist = "default";
-
-//fprintf(stderr, "old dir [%s]\n", savelastdir);
 };
 
 
@@ -141,7 +160,6 @@ PlaylistDialog::~PlaylistDialog(){
   
 
 };
-
 
 
 void MyListBoxItem::paint( QPainter *p ){
@@ -180,7 +198,22 @@ int MyListBoxItem::width(const QListBox *lb ) const{
 
 }	  
 
+void PlaylistDialog::redoLists() {
 
+  plistbox->setCurrentItem(*playlist_ptr);
+  listbox->clear();
+  listbox->insertStrList(songlist,-1);
+  redoplist();
+
+  if (plistbox->count() >= *playlist_ptr) {
+    current_playlist = plistbox->text((uint) *playlist_ptr);
+    current_playlist += ".plist";
+  }
+  else current_playlist = "default.plist";
+
+  if (listbox->count() == 0)
+    loadPlaylist(current_playlist);
+}
 
 void  PlaylistDialog::parse_fileinfo(QFileInfo* fi, MyListBoxItem* lbitem){
   
@@ -225,6 +258,75 @@ void PlaylistDialog::local_file_selected(int index){
   
 }
 
+
+void PlaylistDialog::redoplist()
+{
+    QString filenamestr;
+    int i, index;
+    int last = listsonglist->count();
+
+    plistbox->clear();
+
+    for (i = 0; i < last; i++) {
+
+	filenamestr = listsonglist->at(i);
+	index = filenamestr.findRev('/',-1,TRUE);
+	if(index != -1)
+	    filenamestr = filenamestr.right(filenamestr.length() -index -1);
+	filenamestr = filenamestr.replace(QRegExp("_"), " ");
+
+	if(filenamestr.length() > 6){
+	if(filenamestr.right(6) == QString(".plist"))
+	    filenamestr = filenamestr.left(filenamestr.length()-6);
+	}
+	plistbox->insertItem(filenamestr);
+
+    }
+}
+
+void PlaylistDialog::saveIt()
+{
+  int i;
+  if ( (i=plistbox->currentItem()) < 0) return;
+  QString name = plistbox->text((uint) i);
+  name += ".plist";
+  savePlaylistbyName(name);
+
+}
+
+void PlaylistDialog::removeIt()
+{
+  int i;
+  if ( (i=plistbox->currentItem()) < 0) return;
+  QString name = plistbox->text((uint) i);
+  name += ".plist";
+  QString path = locateLocal("appdata", name);
+  QFile f(path);
+  if (f.remove()) {
+    listsonglist->remove(i);
+    redoLists();
+  }
+}
+
+
+void PlaylistDialog::readPlaylist(int index){
+
+  *playlist_ptr = index;
+  QString name = plistbox->text((uint) index);
+  name += ".plist";
+  listbox->clear();
+  loadPlaylist( name );
+
+}
+
+void PlaylistDialog::selectPlaylist(int index){
+
+  *playlist_ptr = index;
+  QString name = plistbox->text((uint) index);
+  name += ".plist";
+  current_playlist = name;
+
+}
 
 
 void PlaylistDialog::set_local_dir(const QString &dir){
@@ -373,7 +475,7 @@ void PlaylistDialog::checkList(){
     }
   }
 
-  savePlaylist();
+  //savePlaylist();
   accept();
 }
 
@@ -384,7 +486,7 @@ void PlaylistDialog::resizeEvent(QResizeEvent *e){
   int w = (e->size()).width() ;
   int h = (e->size()).height();
   
-  panner->setGeometry( BORDER_WIDTH, menu->height() + BORDER_WIDTH ,
+  vpanner->setGeometry( BORDER_WIDTH, menu->height() + BORDER_WIDTH ,
   	       w - 2*BORDER_WIDTH, h - 37 -  menu->height());
 
   cancelButton->setGeometry(BORDER_WIDTH +2 ,h -28,70,25);  
@@ -397,8 +499,24 @@ void PlaylistDialog::resizeEvent(QResizeEvent *e){
 } 
 
 
-void PlaylistDialog::newPlaylist(){
+void PlaylistDialog::editNewPlaylist(){
+    snpopup->move( mapToGlobal( savenew->geometry().bottomLeft() ) );
+    snpopup->show();
+    //newEdit->setFocus();
+}
 
+void PlaylistDialog::newPlaylist(){
+	QString plf = newEdit->text();
+	snpopup->hide();
+	newEdit->clear();
+	plf += ".plist";
+        QString path = locateLocal("appdata", plf);
+	listsonglist->inSort(path);
+	*playlist_ptr = listsonglist->find(path);
+	//*playlist_ptr = listsonglist->count();
+	savePlaylistbyName(plf);
+	redoLists();
+//fprintf(stderr, "new [%s]\n", plf.data());
 }
 
 void PlaylistDialog::openPlaylist(){
@@ -457,9 +575,9 @@ void PlaylistDialog::loadPlaylist(const QString &name){
  QString tempstring;
 
  while(!f.atEnd()){
-   tempstring = tempstring.stripWhiteSpace();
-   if (!tempstring.isEmpty())
-      listbox->insertItem(tempstring,-1);
+   //tempstring = tempstring.stripWhiteSpace();
+   //if (!tempstring.isEmpty())
+   //   listbox->insertItem(tempstring,-1);
    buffer[0] = (char) 0;
    f.readLine(buffer,511);
    //printf("Found:%s\n",buffer);

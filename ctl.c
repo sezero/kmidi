@@ -425,7 +425,7 @@ static void ctl_reset(void)
 /***********************************************************************/
 static int ctl_open(int using_stdin, int using_stdout)
 {
-
+	int tcount = 10;
 	shm_alloc();
 	pipe_open();
 
@@ -438,6 +438,12 @@ static int ctl_open(int using_stdin, int using_stdout)
 
 	ctl.opened=1;
 
+	while (!pipe_read_ready() && tcount) {
+	    sleep(1);
+	    tcount--;
+	    if (!tcount)
+		fprintf(stderr,"Internal error: no pipe open.\n");
+	} 
 	return 0;
 }
 
