@@ -12,6 +12,7 @@ ln -sf ../config.h config.h
 ln -sf ../controls.cpp controls.c
 ln -sf ../controls.h controls.h
 ln -sf ../cfg.cpp cfg.c
+ln -sf ../cfg.l cfg.l
 ln -sf ../ctl.cpp ctl.c
 ln -sf ../ctl.h ctl.h
 ln -sf ../dec_a.cpp dec_a.c
@@ -61,7 +62,6 @@ ln -sf ../timidity.cpp timidity.c
 ln -sf ../version.h version.h
 ln -sf ../wav2pat.cpp wav2pat.c
 ln -sf ../wave_a.cpp wave_a.c
-ln -sf ../win_a.cpp win_a.c
 ln -sf ../cfg.l cfg.l
 ln -sf ../BITMAPS BITMAPS
 

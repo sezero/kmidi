@@ -41,9 +41,9 @@ timidity_SOURCES = timidity.c common.c readmidi.c playmidi.c resample.c mix.c in
 noinst_HEADERS = config.h common.h readmidi.h playmidi.h resample.h mix.h instrum.h \
         tables.h controls.h output.h filter.h motif.h xaw.h ctl.h
 
-cfg.c: cfg.l
-	rm -f cfg.c
-	flex -t -B $(srcdir)/cfg.l >cfg.c
+#cfg.c:
+#	rm -f cfg.c
+#	flex -t -B $(srcdir)/cfg.l >cfg.c
 
 timidity.c:
-	./makelinks
+	(cd $(srcdir); ./makelinks)
