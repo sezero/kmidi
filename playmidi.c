@@ -90,8 +90,10 @@ int opt_modulation_wheel = 1;
 int opt_portamento = 1;
 int opt_channel_pressure = 1;
 int opt_overlap_voice_allow = 1;
-int reduce_quality_flag=0;
+int dont_cspline=0;
 #endif
+int dont_filter=0;
+static int voice_reserve=0;
 
 #ifndef ADAGIO
 Channel channel[MAXCHAN];
@@ -589,13 +591,17 @@ static int current_polyphony = 0;
 static int vc_alloc(int j)
 {
   int i=voices; 
+  int vc_count = 0, vc_ret = -1;
 
   while (i--)
     {
       if (i == j) continue;
-      if (voice[i].status == VOICE_FREE) return i;
+      if (voice[i].status == VOICE_FREE) {
+	vc_ret = i;
+	vc_count++;
+      }
     }
-
+  if (vc_count > voice_reserve) return vc_ret;
   return -1;
 }
 
@@ -661,12 +667,12 @@ static void clone_voice(Instrument *ip, int v, MidiEvent *e, uint8 clone_type)
   if (clone_type == REVERB_CLONE) {
 	 if ( (reverb_options & OPT_REVERB_EXTRA) && reverb < 90)
 		reverb = 90;
-	 if (reverb < 8 || reduce_quality_flag) return;
+	 if (reverb < 8 || dont_cspline) return;
   }
   if (clone_type == CHORUS_CLONE) {
 	 if ( (reverb_options & OPT_CHORUS_EXTRA) && chorus < 40)
 		chorus = 40;
-	 if (chorus < 4 || reduce_quality_flag) return;
+	 if (chorus < 4 || dont_cspline) return;
   }
 
   if (!voice[v].right_sample) {
@@ -1040,8 +1046,8 @@ printf("(new rel time = %ld)\n",
   if (drumpan != NO_PANNING)
     voice[i].panning=drumpan;
 /* for now, ... */
-  /*if (voice[i].right_sample) voice[i].panning = voice[i].sample->panning;*/
-  if (voice[i].right_sample) voice[i].panning = 0;
+  if (voice[i].right_sample) voice[i].panning = voice[i].sample->panning;
+  /*if (voice[i].right_sample) voice[i].panning = 0; */
 
 #ifdef tplus
   if(channel[e->channel].portamento && !channel[e->channel].porta_control_ratio)
@@ -1068,6 +1074,32 @@ printf("(new rel time = %ld)\n",
   /* What "cnt"? if(cnt == 0) 
       channel[e->channel].last_note_fine = voice[i].note * 256; */
 #endif
+
+  if (voice[i].sample->sample_rate)
+  {
+     int brightness = channel[e->channel].brightness;
+     int harmoniccontent = channel[e->channel].harmoniccontent;
+
+		if (brightness >= 0 && brightness != 64) {
+			int32 fq = voice[i].sample->cutoff_freq;
+			if (brightness > 64) {
+				if (!fq || fq > 8000) fq = 0;
+				else fq += (brightness - 64) * (fq / 80);
+			}
+			else {
+				if (!fq) fq = 6400 + (brightness - 64) * 80;
+				else fq += (brightness - 64) * (fq / 80);
+			}
+			if (fq && fq < 349) fq = 349;
+			else if (fq > 19912) fq = 19912;
+			voice[i].sample->cutoff_freq = fq;
+
+		}
+		if (harmoniccontent >= 0 && harmoniccontent != 64) {
+			voice[i].sample->resonance = harmoniccontent / 256.0;
+		}
+  }
+
 
   if (reverb_options & OPT_STEREO_EXTRA) {
     int pan = voice[i].panning;
@@ -1133,17 +1165,49 @@ static void kill_note(int i)
   ctl->note(i);
 }
 
+static void check_quality()
+{
+#ifdef QUALITY_DEBUG
+  static int debug_count = 0;
+#endif
+  int obf = output_buffer_full;
+
+#ifdef QUALITY_DEBUG
+if (!debug_count) {
+	if (dont_cspline) fprintf(stderr,"[%d-%d]", output_buffer_full, current_polyphony);
+	else fprintf(stderr,"{%d-%d}", output_buffer_full, current_polyphony);
+	debug_count = 50;
+}
+debug_count--;
+#endif
+
+  if (obf < 1) voice_reserve = voices / 2;
+  else if (obf < 10) voice_reserve = voices / 3;
+  else if (obf < 20) voice_reserve = voices / 4;
+  else if (obf < 30) voice_reserve = voices / 5;
+  else if (obf < 40) voice_reserve = voices / 6;
+  else voice_reserve = 0;
+
+  if (obf < 10) dont_cspline = 1;
+  else if (obf > 60) dont_cspline = 0;
+
+/*
+  if (obf < 20) dont_filter = 1;
+  else if (obf > 80) dont_filter = 0;
+*/
+
+}
+
 /* Only one instance of a note can be playing on a single channel. */
 static void note_on(MidiEvent *e)
 {
   int i=voices, lowest=-1; 
   int32 lv=0x7FFFFFFF, v;
 
+  check_quality();
+
   current_polyphony = 0;
 
-  reduce_quality_flag = (output_buffer_full < 1);
-
-  if (!reduce_quality_flag)
   while (i--)
     {
       if (voice[i].status == VOICE_FREE)
@@ -1151,8 +1215,11 @@ static void note_on(MidiEvent *e)
 	else current_polyphony++;
     }
 
+  if (voices - current_polyphony <= voice_reserve)
+    lowest = -1;
+
 #ifdef tplus
-  /* reduce_quality_flag = (current_polyphony > voices / 2); */
+  /* dont_cspline = (current_polyphony > voices / 2); */
 #endif
 
 #ifdef ADAGIO
@@ -1713,7 +1780,6 @@ static int apply_controls(void)
       case RC_PATCHCHANGE:
       case RC_CHANGE_VOICES:
 #endif
-        play_mode->flush_output();
 	play_mode->purge_output();
 	return rc;
 	
@@ -1830,6 +1896,11 @@ static int compute_data(uint32 count)
     {
       do_compute_data(AUDIO_BUFFER_SIZE-buffered_count);
       count -= AUDIO_BUFFER_SIZE-buffered_count;
+#if 0
+if (dont_cspline)
+fprintf(stderr,"R");
+else fprintf(stderr,"z");
+#endif
       play_mode->output_data(common_buffer, AUDIO_BUFFER_SIZE);
       buffer_pointer=common_buffer;
       buffered_count=0;
@@ -2679,8 +2750,9 @@ int play_midi_file(char *fn)
 
   load_missing_instruments();
 #ifdef tplus
-  reduce_quality_flag = 0;
+  dont_cspline = 0;
 #endif
+  dont_filter = 0;
   rc=play_midi(event, events, samples);
   if (free_instruments_afterwards)
       free_instruments();

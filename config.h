@@ -159,7 +159,7 @@ typedef float FLOAT_T;
    Defining CSPLINE_INTERPOLATION cause 4-point interpolation by cubic
    spline curve.  Defining LAGRANGE_INTERPOLATION cause 4-point
    interpolation by Lagrange method. (Taken from TiMidity++) */
-/* #define CSPLINE_INTERPOLATION */
+#define CSPLINE_INTERPOLATION
 /* #define LAGRANGE_INTERPOLATION */
 
 

@@ -40,7 +40,7 @@
 #include "resample.h"
 
 #ifndef tplus
-static int reduce_quality_flag = 0;
+static int dont_cspline = 0;
 #endif
 
 #if defined(CSPLINE_INTERPOLATION)
@@ -48,7 +48,7 @@ static int reduce_quality_flag = 0;
 # define RESAMPLATION \
         v1 = (int32)src[(ofs>>FRACTION_BITS)]; \
         v2 = (int32)src[(ofs>>FRACTION_BITS)+1]; \
-	if(reduce_quality_flag || \
+	if(dont_cspline || \
 	   ((ofs-(1L<<FRACTION_BITS))<ls)||((ofs+(2L<<FRACTION_BITS))>le)){ \
                 *dest++ = (sample_t)(v1 + (((v2-v1) * (ofs & FRACTION_MASK)) >> FRACTION_BITS)); \
 	}else{ \
@@ -73,7 +73,7 @@ static int reduce_quality_flag = 0;
 # define RESAMPLATION \
         v1 = (int32)src[(ofs>>FRACTION_BITS)]; \
         v2 = (int32)src[(ofs>>FRACTION_BITS)+1]; \
-	if(reduce_quality_flag || \
+	if(dont_cspline || \
 	   ((ofs-(1L<<FRACTION_BITS))<ls)||((ofs+(2L<<FRACTION_BITS))>le)){ \
                 *dest++ = (sample_t)(v1 + (((v2-v1) * (ofs & FRACTION_MASK)) >> FRACTION_BITS)); \
 	}else{ \
@@ -809,7 +809,7 @@ static sample_t *normal_resample_voice(int v, uint32 *countptr, int mode)
     return rs_bidir(vp, *countptr);
 }
 
-sample_t *resample_voice(int v, uint32 *countptr)
+sample_t *real_resample_voice(int v, uint32 *countptr)
 {
     Voice *vp=&voice[v];
     int mode;
@@ -859,6 +859,100 @@ sample_t *resample_voice(int v, uint32 *countptr)
 	return vib_resample_voice(v, countptr, mode);
 
     return normal_resample_voice(v, countptr, mode);
+}
+
+#ifdef LOOKUP_HACK
+#define MAX_DATAVAL 127
+#define MIN_DATAVAL -128
+#else
+#define MAX_DATAVAL 32767
+#define MIN_DATAVAL -32768
+#endif
+
+static void do_nlowpass(uint32 srate, sample_t *buf, uint32 count, int32 freq, FLOAT_T resonance)
+{
+	double A, B, C;
+	sample_t pv1, pv2;
+	int32 i;
+
+	if (freq > srate * 2) {
+		ctl->cmsg(CMSG_ERROR, VERB_NORMAL,
+			  "Lowpass: center must be < data rate*2");
+		return;
+	}
+	A = 2.0 * M_PI * freq * 2.5 / srate;
+	B = exp(-A / srate);
+/* 900-1500 clips
+	A *= 0.8;
+	B *= 0.8;
+*/
+	C = 0;
+
+	/* */
+	if (resonance) {
+		double a, b, c;
+		int32 width;
+		width = freq / 5;
+		c = exp(-2.0 * M_PI * width / srate);
+		b = -4.0 * c / (1+c) * cos(2.0 * M_PI * freq / srate);
+		a = sqrt(1 - b * b / (4 * c)) * (1 - c);
+		b = -b; c = -c;
+
+		A += a * resonance;
+		B += b;
+		C = c;
+	}
+	/* */
+
+/* some clipping w. 0.30, 0.25, 0.20, 0.15 */
+#if 0
+/* no reduction: 150-1500 clips  */
+	A *= 0.10;
+	B *= 0.10;
+	C *= 0.10;
+#endif
+/* 0-66 clips
+	A *= 0.30;
+	B *= 0.30;
+	C *= 0.30;
+*/
+/* no clips */
+	A *= 0.25;
+	B *= 0.25;
+	C *= 0.25;
+
+	pv1 = 0;
+	pv2 = 0;
+	for (i = 0; i < count; i++) {
+		sample_t l = *buf;
+		double d = A * l + B * pv1 + C * pv2;
+		if (d > MAX_DATAVAL) {
+			output_clips++;
+			d = MAX_DATAVAL;
+		}
+		else if (d < MIN_DATAVAL) {
+			output_clips++;
+			d = MIN_DATAVAL;
+		}
+		pv2 = pv1;
+		pv1 = *buf++ = (sample_t)d;
+	}
+}
+
+sample_t *resample_voice(int v, uint32 *countptr)
+{
+    Voice *vp=&voice[v];
+    sample_t *rs;
+
+    rs = real_resample_voice(v, countptr);
+    if(!(vp->sample->sample_rate) ||
+	 !vp->sample->cutoff_freq ||
+	 (dont_filter && !vp->sample->note_to_use) ) return rs;
+
+    do_nlowpass(vp->sample->sample_rate, rs, *countptr,
+	vp->sample->cutoff_freq, vp->sample->resonance);
+
+    return rs;
 }
 
 void pre_resample(Sample * sp)

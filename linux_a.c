@@ -69,6 +69,7 @@ PlayMode dpm = {
   purge_output  
 };
 
+static int total_bytes;
 
 /*************************************************************************/
 /* We currently only honor the PE_MONO bit, the sample rate, and the
@@ -79,6 +80,10 @@ PlayMode dpm = {
 static int open_output(void)
 {
   int fd, tmp, i, warnings=0;
+#ifdef SNDCTL_DSP_GETOSPACE
+    audio_buf_info info;
+#endif /* SNDCTL_DSP_GETOSPACE */
+
   
   /* Open the audio device */
   fd=open(dpm.name, O_RDWR | O_NDELAY);
@@ -194,26 +199,60 @@ static int open_output(void)
       warnings=1;
     }
 #endif
-/**
-#ifdef ADAGIO
-#ifndef NO_DEV_SEQUENCER
-#ifdef SNDCTL_DSP_SETSYNCRO
-  if (!no_dev_sequencer) ioctl(fd, SNDCTL_DSP_SETSYNCRO, 0);
+
+#ifdef SNDCTL_DSP_GETOSPACE
+    if(ioctl(fd, SNDCTL_DSP_GETOSPACE, &info) != -1)
+	total_bytes = info.fragstotal * info.fragsize;
+    else
+#endif /* SNDCTL_DSP_GETOSPACE */
+	total_bytes = -1; /* Unknown */
+#if 0
+      ctl->cmsg(CMSG_WARNING, VERB_NORMAL, 
+		"%d bytes of buffer space available", total_bytes);
 #endif
-#endif
-#endif
-**/
+
   dpm.fd=fd;
-  
+
   return warnings;
 }
+
+/*
+#ifdef SNDCTL_DSP_GETODELAY
+      case PM_REQ_GETFILLED:
+	if(total_bytes <= 0 || ioctl(dpm.fd, SNDCTL_DSP_GETODELAY, &i) == -1)
+	    return -1;
+	if(!(dpm.encoding & PE_MONO)) i >>= 1;
+	if(dpm.encoding & PE_16BIT) i >>= 1;
+#endif
+*/
+
 int current_sample_count()
 {
+#ifndef SNDCTL_DSP_GETODELAY
+#ifdef SNDCTL_DSP_GETOPTR
   count_info auinfo;
+#endif
+#endif
+  int samples = -1;
+#ifdef SNDCTL_DSP_GETODELAY
+  int samples_queued, samples_sent;
+  extern int b_out_count();
 
-  if (ioctl(dpm.fd, SNDCTL_DSP_GETOPTR, &auinfo)<0) return -1;
-  if (dpm.encoding & PE_MONO) return auinfo.bytes;
-  return auinfo.bytes / 2;
+  if (ioctl(dpm.fd, SNDCTL_DSP_GETODELAY, &samples_queued) == -1)
+	samples_queued = 0;
+  samples_sent = b_out_count();
+  samples = samples_sent - samples_queued;
+  if (!(dpm.encoding & PE_MONO)) samples >>= 1;
+  if (dpm.encoding & PE_16BIT) samples >>= 1;
+#else
+#ifdef SNDCTL_DSP_GETOPTR
+  if (ioctl(dpm.fd, SNDCTL_DSP_GETOPTR, &auinfo)<0) return samples;
+  samples = auinfo.bytes;
+  if (!(dpm.encoding & PE_MONO)) samples >>= 1;
+  if (dpm.encoding & PE_16BIT) samples >>= 1;
+#endif
+#endif
+  return samples;
 }
 
 static void output_data(int32 *buf, int32 count)
@@ -279,6 +318,7 @@ static void flush_output(void)
 
 static void purge_output(void)
 {
+  b_out(dpm.fd, 0, -1);
   ioctl(dpm.fd, SNDCTL_DSP_RESET);
 }
 

@@ -1,3 +1,12 @@
+1999-10-01  Greg Lee  <lee@hawaii.edu>
+
+	* linux_a.c,b_out.c: fix purge_output, redo
+	  get_outcount for meter sync
+	* resample.c: low pass filter
+	* playmidi.c: implement midi brightness, harmonics;
+	  voice reduction
+	* config.h: cspline interpolation
+
 1999-09-30  Greg Lee  <lee@hawaii.edu>
 
 	* kmidi.cpp: percussion decays faster on meter

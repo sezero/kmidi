@@ -176,7 +176,7 @@ void antialiasing(Sample *sp, int32 output_rate )
     float freq_cut;  /* cutoff frequency [0..1.0] FREQ_CUT/SAMP_FREQ*/
  
 
-    ctl->cmsg(CMSG_INFO, VERB_NOISY, "Antialiasing: Fsample=%iKHz",
+    ctl->cmsg(CMSG_INFO, VERB_DEBUG, "Antialiasing: Fsample=%iKHz",
 	      sp->sample_rate);
  
     /* No oversampling  */
@@ -184,7 +184,7 @@ void antialiasing(Sample *sp, int32 output_rate )
 	return;
     
     freq_cut= (float) output_rate / (float) sp->sample_rate;
-    ctl->cmsg(CMSG_INFO, VERB_NOISY, "Antialiasing: cutoff=%f%%",
+    ctl->cmsg(CMSG_INFO, VERB_DEBUG, "Antialiasing: cutoff=%f%%",
 	      freq_cut*100.);
 
     designfir(fir_coef,freq_cut);
