@@ -194,7 +194,7 @@ protected:
 	queue< DataPacket<mcopbyte>* > wqueue;
 public:
 	//Sender(FILE *input) : pfile(input), waiting(false)
-	Sender(int infildes) : pfd(input), waiting(false)
+	Sender(int infildes) : pfd(infildes), waiting(false)
 	{
 		//pfd = fileno(pfile);
 		pfd = infildes;
