@@ -24,7 +24,7 @@
 
 #include <stdio.h>
 
-#include <qpanner.h>
+#include <qsplitter.h>
 #include <qtextstream.h>
 
 #include <klocale.h>
@@ -73,10 +73,9 @@ PlaylistDialog::PlaylistDialog(QWidget *parent, const char *name,QStrList *playl
   menu->insertSeparator();
   menu->insertItem( i18n("&Help"), help );
   
-  panner = new KPanner(this, "_panner", KPanner::O_VERTICAL, 30);
-
-  connect(panner, SIGNAL(positionChanged()), this, SLOT(pannerHasChanged()));
-  listbox = new QListBox(panner->child1(),"listbox",0); 
+  panner = new QSplitter(Horizontal, this, "_panner");
+  listbox = new QListBox(panner,"listbox",0); 
+  panner->moveToLast(listbox);
 
   connect(listbox, SIGNAL(selected(int)), this, 
 	    SLOT(removeEntry()));
@@ -97,9 +96,12 @@ PlaylistDialog::PlaylistDialog(QWidget *parent, const char *name,QStrList *playl
   okButton->setText(i18n("OK"));
   connect(okButton,SIGNAL(clicked()),this,SLOT(checkList()));
 
-  local_list = new QListBox(panner->child0(), "local_list",0);
-  //local_list = new QListBox(this, "local_list",0);
+  local_list = new QListBox(panner, "local_list",0);
+  panner->moveToFirst(local_list);
 
+  QValueList<int> size;
+  size << 30 << 70;
+  panner->setSizes(size);
 
   local_list->insertItem("Local Directory", -1);
   connect(local_list, SIGNAL(selected(int )), this, SLOT(local_file_selected(int )));
@@ -298,15 +300,6 @@ void PlaylistDialog::set_local_dir(const QString &dir){
   //  printf("Current Dir Path: %s\n",QDir::currentDirPath().data());
 }
 
-void PlaylistDialog::pannerHasChanged(){
-
-  //    resizeEvent(0);
-  local_list->resize( panner->child0()->width(), panner->child0()->height());  
-  listbox->resize( panner->child1()->width(), panner->child1()->height());
-
-}
-
-
 void PlaylistDialog::addEntry(){
 
   //  printf("File:%s\n",cur_local_fileinfo.at(local_list->currentItem())->filePath());
@@ -356,11 +349,6 @@ void PlaylistDialog::resizeEvent(QResizeEvent *e){
   
   panner->setGeometry( BORDER_WIDTH, menu->height() + BORDER_WIDTH ,
   	       w - 2*BORDER_WIDTH, h - 37 -  menu->height());
-
-  panner->setSeparator(panner->getSeparator());
-
-  local_list->resize( panner->child0()->width(), panner->child0()->height());  
-  listbox->resize( panner->child1()->width(), panner->child1()->height());
 
   okButton->setGeometry(BORDER_WIDTH + 70 + 7 ,h - 28 ,70,25);  
   removeButton->setGeometry(w - 70 -70 - 10 - BORDER_WIDTH ,h - 28, 70,25);

@@ -57,6 +57,8 @@
 #include "playlist.h"
 #include "constants.h"
 #include "output.h"
+#include <kiconloader.h>
+#include <kglobal.h>
 
 extern "C" {
 
@@ -768,10 +770,7 @@ void KMidi::aboutClicked()
   label->setAlignment(AlignLeft|WordBreak|ExpandTabs);
   label->setText(labelstring);
 
-  QString pixdir = thisapp->kde_datadir() + "/kmidi/pics/";
-
-
-  QPixmap pm(pixdir + "kmidilogo.xpm");
+  QPixmap pm = ICON("kmidilogo.xpm");
   QLabel *logo = new QLabel(box);
   logo->setPixmap(pm);
   logo->setGeometry(30, 50, pm.width(), pm.height());

@@ -44,11 +44,9 @@
 #include <qkeycode.h>
 #include <qmenubar.h> 
 
-#include <kpanner.h>
-
 #include "kmidi.h"
 
-
+class QSplitter;
 
 class MyListBoxItem : public QListBoxItem{
 
@@ -98,7 +96,6 @@ private slots:
   void addEntry();
   void checkList();
   void local_file_selected(int index);
-  void pannerHasChanged();
   void loadPlaylist(const QString &name);
 
 
@@ -115,7 +112,7 @@ private:
     QDir cur_local_dir;
     QList<QFileInfo> cur_local_fileinfo;
     QListBox *local_list;
-    KPanner *panner;
+    QSplitter *panner;
     QLabel *statusbar;
 
     QMenuBar *menu;    
