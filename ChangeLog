@@ -1,3 +1,13 @@
+2000-01-16  Greg Lee  <lee@hawaii.edu>
+
+	* during loading stop when user says don't
+	  play this file
+	* be more careful not to exceed max patch memory
+	* fix ncurses screen blanking bug
+	* fix bug causing some soundfonts to be read more
+	  than once
+	* report missing patches by general-midi name
+
 2000-01-12  Greg Lee  <lee@hawaii.edu>
 
 	* look ahead to estimate needed polyphony

@@ -1007,6 +1007,8 @@ static void start_note(MidiEvent *e, int i)
   int brightness = channel[ch].brightness;
   int harmoniccontent = channel[ch].harmoniccontent;
 
+  if (check_for_rc()) return;
+
   if (channel[ch].sfx) banknum=channel[ch].sfx;
   else banknum=channel[ch].bank;
 
@@ -3049,6 +3051,7 @@ int play_midi_file(const char *fn)
   MidiEvent *event;
   uint32 events, samples;
   int rc;
+  int32 val;
   FILE *fp;
 
   ctl->cmsg(CMSG_INFO, VERB_VERBOSE, "MIDI file: %s", fn);
@@ -3078,6 +3081,7 @@ int play_midi_file(const char *fn)
   ctl->master_volume(amplification);
 
   load_missing_instruments();
+  if (check_for_rc()) return ctl->read(&val);
 #ifdef tplus
   dont_cspline = 0;
 #endif

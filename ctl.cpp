@@ -810,6 +810,13 @@ static int ctl_read(int32 *valp)
 {
 	int num;
 
+	if (last_rc_command)
+	  {
+		*valp = last_rc_arg;
+		num = last_rc_command;
+		last_rc_command = 0;
+		return num;
+	  }
 	/* We don't wan't to lock on reading  */
 	num=pipe_read_ready(); 
 

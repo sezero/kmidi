@@ -348,6 +348,7 @@ static InstrumentLayer *load_instrument(const char *name, int font_type, int per
   }
 #endif
 
+  if (check_for_rc()) return 0;
   if (!name) return 0;
 
   /* Open patch file */
@@ -970,6 +971,7 @@ static int fill_bank(int b)
   for (i=0; i<MAX_TONE_VOICES; i++)
   #endif /* ADAGIO */
     {
+      if (check_for_rc()) return 0;
       #ifdef ADAGIO
       dr = (bank->tone[i].gm_num - 128);
       if (dr < 0) dr = 0;
@@ -978,8 +980,14 @@ static int fill_bank(int b)
 	{
 	  if (!(bank->tone[i].name))
 	    {
-	      ctl->cmsg(CMSG_WARNING, (b!=0) ? VERB_VERBOSE : VERB_NORMAL,
-		   "No patch for %s %d, program %d",
+	      const char *s;
+	      if (dr) s = gm_voice[i+128].vname;
+	      else s = gm_voice[i].vname;
+	      if (s) ctl->cmsg(CMSG_WARNING, (b!=0) ? VERB_VERBOSE : VERB_NORMAL,
+		   "No patch for %s %d, %s.",
+		   (dr)? "drumset" : "bank", b, s);
+	      else ctl->cmsg(CMSG_WARNING, (b!=0) ? VERB_VERBOSE : VERB_NORMAL,
+		   "No patch for %s %d, program %d.",
 		   (dr)? "drumset" : "bank", b, i);
 	      if (b!=0)
 		{
@@ -1054,6 +1062,22 @@ ctl->cmsg(CMSG_ERROR, VERB_NORMAL,
 "+mem %d (added %d)", current_patch_memory, bank->tone[i].layer->size);
 #endif
 		purge_as_required();
+		if (current_patch_memory > max_patch_memory) {
+	      		ctl->cmsg(CMSG_ERROR, VERB_NORMAL, 
+		   		"Not enough memory to load instrument %s (%s %d, program %d)",
+		   		bank->tone[i].name,
+		   		(dr)? "drum set" : "tone bank", b, i);
+	      		errors++;
+	    		free_layer(bank->tone[i].layer);
+	    		bank->tone[i].layer=0;
+	    		bank->tone[i].last_used=-1;
+		}
+  	        if (check_for_rc()) {
+	    		free_layer(bank->tone[i].layer);
+	    		bank->tone[i].layer=0;
+	    		bank->tone[i].last_used=-1;
+			return 0;
+		}
 	    }
 
 	} /* if MAGIC ... */
@@ -1103,6 +1127,7 @@ ctl->cmsg(CMSG_ERROR, VERB_NORMAL,
 #endif
   while (i--)
     {
+      if (check_for_rc()) return errors;
       if (tonebank[i])
 	errors+=fill_bank(0,i);
       if (drumset[i])

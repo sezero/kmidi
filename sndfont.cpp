@@ -82,6 +82,7 @@ typedef struct SFInsts {
 	int32 samplepos, samplesize;
 #ifdef READ_WHOLE_SF_FILE
 	unsigned char *contents;
+	int size_of_contents;
 #endif
 	InstList *instlist;
 } SFInsts;
@@ -169,39 +170,43 @@ static unsigned char *read_whole_sf() {
 #endif
 #endif
     if (stat(current_filename, &info)) {
-	/* fprintf(stderr,"can't stat\n"); */
+	ctl->cmsg(CMSG_ERROR, VERB_NORMAL, "Can't find file `%s'.", current_filename);
     	return 0;
     }
 /* check here if size less than what we are allowed */
-    if (info.st_size + current_patch_memory > max_patch_memory)
+    if (info.st_size + current_patch_memory > max_patch_memory) {
+	ctl->cmsg(CMSG_ERROR, VERB_NORMAL, "File `%s' at %d bytes is too big to read all at once.",
+		 current_filename, info.st_size);
+	ctl->cmsg(CMSG_ERROR, VERB_NORMAL, "  (I will try to read it one patch at a time.)");
 	return 0;
-	/* fprintf(stderr,"room enough\n"); */
+    }
 
 #ifdef USE_POSIX_MAPPED_FILES
     sf_contents = (unsigned char *)mmap(0, info.st_size,  PROT_READ,
 	 MAP_SHARED, current_filedescriptor, 0);
 
     if (sf_contents == (unsigned char *)(-1)) {
-	/* fprintf(stderr,"couldn't mmap\n"); */
+	ctl->cmsg(CMSG_INFO, VERB_NOISY, "Couldn't mmap `%s'.", current_filename);
     	return 0;
     }
 #else
     sf_contents = (unsigned char *)malloc(info.st_size);
 
     if (!sf_contents) {
-	/* fprintf(stderr,"couldn't malloc\n"); */
+	ctl->cmsg(CMSG_ERROR, VERB_NORMAL, "Couldn't get memory for entire file `%s'.", current_filename);
+	ctl->cmsg(CMSG_ERROR, VERB_NORMAL, "  (I will try to read it one patch at a time.)");
     	return 0;
     }
     rewind(fd);
     if (!fread(sf_contents, info.st_size, 1, fd)) {
-	/* fprintf(stderr,"couldn't read\n"); */
+	ctl->cmsg(CMSG_ERROR, VERB_NORMAL, "Couldn't read `%s'.", current_filename);
     	free(sf_contents);
     	return 0;
     }
 #endif
     sf_size_of_contents = info.st_size;
     current_patch_memory += info.st_size;
-	/* fprintf(stderr,"OK -- read %d\n", sf_size_of_contents); */
+    ctl->cmsg(CMSG_INFO, VERB_NOISY, "File `%s' required %d bytes of memory.", current_filename, sf_size_of_contents);
     return sf_contents;
 #endif
 }
@@ -221,6 +226,7 @@ void init_soundfont(char *fname, int oldbank, int newbank, int level)
 	InstList *ip;
 #ifdef READ_WHOLE_SF_FILE
 	unsigned char *sf_contents = 0;
+	int whole_sf_already_read = 0;
 #endif
 
 	ctl->cmsg(CMSG_INFO, VERB_NOISY, "init soundfont `%s'", fname);
@@ -229,6 +235,9 @@ void init_soundfont(char *fname, int oldbank, int newbank, int level)
 	for (i = 0; i < last_sf_index; i++) if (sfrec[i].fname && !strcmp(sfrec[i].fname, fname)) {
 		current_sf_index = i;
 		rewind(sfrec[i].fd);
+#ifdef READ_WHOLE_SF_FILE
+		whole_sf_already_read = 1;
+#endif
 		break;
 	}
 
@@ -281,11 +290,19 @@ void init_soundfont(char *fname, int oldbank, int newbank, int level)
 
 
 #ifdef READ_WHOLE_SF_FILE
+	if (whole_sf_already_read) {
+		sf_contents = sfrec[current_sf_index].contents;
+		sf_size_of_contents = sfrec[current_sf_index].size_of_contents;
+	}
+	else
 #ifndef USE_POSIX_MAPPED_FILES
 	sf_contents = read_whole_sf(sfrec[current_sf_index].fd);
 #else
 	sf_contents = read_whole_sf();
 #endif
+	sfrec[current_sf_index].contents = sf_contents;
+	sfrec[current_sf_index].size_of_contents = sf_size_of_contents;
+
 	for (ip = sfrec[current_sf_index].instlist; ip; ip = ip->next) {
 	    if (!ip->already_loaded) {
 		ip->contents = sf_contents;
@@ -492,6 +509,10 @@ InstrumentLayer *load_sbk_patch(const char *name, int gm_num, int bank, int perc
 		lp->instrument = inst;
 		lp->next = nlp;
 	}
+
+    	lp->size = patch_memory;
+	if (check_for_rc()) return lp;
+	if (patch_memory + current_patch_memory > max_patch_memory) return lp;
 
     } /* while (not_done) */
 

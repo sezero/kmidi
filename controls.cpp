@@ -24,6 +24,37 @@
 #include "config.h"
 #include "controls.h"
 
+int last_rc_command = 0;
+int last_rc_arg = 0;
+
+int check_for_rc(void) {
+  int rc = last_rc_command;
+  int32 val;
+
+  if (!rc)
+    {
+	rc = ctl->read(&val);
+	last_rc_command = rc;
+	last_rc_arg = val;
+    }
+
+  switch (rc)
+    {
+      case RC_QUIT: /* [] */
+      case RC_LOAD_FILE:	  
+      case RC_NEXT: /* >>| */
+      case RC_REALLY_PREVIOUS: /* |<< */
+#ifdef KMIDI
+      case RC_PATCHCHANGE:
+      case RC_CHANGE_VOICES:
+      case RC_STOP:
+#endif
+	return rc;
+      default:
+	return 0;
+    }
+}
+
 #ifdef KMIDI
   extern ControlMode kmidi_control_mode;
 # ifndef DEFAULT_CONTROL_MODE

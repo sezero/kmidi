@@ -87,6 +87,8 @@ ControlMode ctl=
 /* static int in_foreground=1; */
 static int ctl_helpmode=0;
 
+static int songoffset = 0;
+
 static WINDOW *dftwin=0, *msgwin=0;
 
 static void _ctl_refresh(void)
@@ -99,6 +101,22 @@ static void ctl_refresh(void)
 {
   if (ctl.trace_playing)
     _ctl_refresh();
+}
+
+/* This is taken from TiMidity++. */
+static void re_init_screen(void)
+{
+    static int screen_bugfix = 0;
+    if(screen_bugfix)
+	return;
+    screen_bugfix = 1;
+    touchwin(dftwin);
+    _ctl_refresh();
+    if(msgwin)
+    {
+	touchwin(msgwin);
+	wrefresh(msgwin);
+    }
 }
 
 static void ctl_help_mode(void)
@@ -139,7 +157,7 @@ static void ctl_total_time(uint32 tt)
 
   wmove(dftwin, 4,6+6+3);
   wattron(dftwin, A_BOLD);
-  wprintw(dftwin, "%3d:%02d", mins, secs);
+  wprintw(dftwin, (char *)"%3d:%02d", mins, secs);
   wattroff(dftwin, A_BOLD);
   _ctl_refresh();
 }
@@ -148,7 +166,7 @@ static void ctl_master_volume(int mv)
 {
   wmove(dftwin, 4,COLS-5);
   wattron(dftwin, A_BOLD);
-  wprintw(dftwin, "%03d %%", mv);
+  wprintw(dftwin, (char *)"%03d %%", mv);
   wattroff(dftwin, A_BOLD);
   _ctl_refresh();
 }
@@ -166,21 +184,30 @@ static void ctl_file_name(char *name)
 static void ctl_current_time(uint32 ct)
 {
   int i,v;
-  int mins, secs=(int)ct/play_mode->rate;
+  int centisecs, realct;
+  int mins, secs;
+
+
   if (!ctl.trace_playing) 
     return;
 
+  realct = current_sample_count(ct);
+  if (realct < 0) realct = 0;
+  else realct += songoffset;
+  centisecs = realct / (play_mode->rate/100);
+
+  secs=centisecs/100;
   mins=secs/60;
   secs-=mins*60;
   wmove(dftwin, 4,6);
   wattron(dftwin, A_BOLD);
-  wprintw(dftwin, "%3d:%02d", mins, secs);
+  wprintw(dftwin, (char *)"%3d:%02d", mins, secs);
   v=0;
   i=voices;
   while (i--)
     if (voice[i].status!=VOICE_FREE) v++;
   wmove(dftwin, 4,48);
-  wprintw(dftwin, "%2d", v);
+  wprintw(dftwin, (char *)"%2d", v);
   wattroff(dftwin, A_BOLD);
   _ctl_refresh();
 }
@@ -221,11 +248,11 @@ static void ctl_program(int ch, int val, const char *name)
   if (ISDRUMCHANNEL(ch))
     {
       wattron(dftwin, A_BOLD);
-      wprintw(dftwin, "%03d", val);
+      wprintw(dftwin, (char *)"%03d", val);
       wattroff(dftwin, A_BOLD);
     }
   else
-    wprintw(dftwin, "%03d", val);
+    wprintw(dftwin, (char *)"%03d", val);
 }
 
 static void ctl_volume(int ch, int val)
@@ -234,7 +261,7 @@ static void ctl_volume(int ch, int val)
     return;
   ch &= 0x0f;
   wmove(dftwin, 8+ch, COLS-16);
-  wprintw(dftwin, "%3d", (val*100)/127);
+  wprintw(dftwin, (char *)"%3d", (val*100)/127);
 }
 
 static void ctl_expression(int ch, int val)
@@ -243,7 +270,7 @@ static void ctl_expression(int ch, int val)
     return;
   ch &= 0x0f;
   wmove(dftwin, 8+ch, COLS-12);
-  wprintw(dftwin, "%3d", (val*100)/127);
+  wprintw(dftwin, (char *)"%3d", (val*100)/127);
 }
 
 static void ctl_panning(int ch, int val)
@@ -270,7 +297,7 @@ static void ctl_panning(int ch, int val)
 	  val=-val;
 	}
       else waddch(dftwin, '+');
-      wprintw(dftwin, "%02d", val);
+      wprintw(dftwin, (char *)"%02d", val);
     }
 }
 
@@ -317,7 +344,7 @@ static void ctl_reset(void)
 
 /***********************************************************************/
 
-/* #define CURSED_REDIR_HACK */
+/*#define CURSED_REDIR_HACK*/
 
 #ifdef CURSED_REDIR_HACK
 static SCREEN *oldscr;
@@ -364,6 +391,7 @@ static int ctl_open(int using_stdin, int using_stdout)
   nonl();
   nodelay(stdscr, 1);
   scrollok(stdscr, 0);
+  /*leaveok(stdscr, 1);*/
   idlok(stdscr, 1);
   keypad(stdscr, TRUE);
   ctl.opened=1;
@@ -389,7 +417,7 @@ static int ctl_open(int using_stdin, int using_stdout)
       wmove(dftwin, 4,6+6+1);
       waddch(dftwin, '/');
       wmove(dftwin, 4,40);
-      wprintw(dftwin, "Voices:    / %d", voices);
+      wprintw(dftwin, (char *)"Voices:    / %d", voices);
     }
   else
     {
@@ -412,14 +440,15 @@ static int ctl_open(int using_stdin, int using_stdout)
       for (i=0; i<16; i++)
 	{
 	  wmove(dftwin, 8+i, 0);
-	  wprintw(dftwin, "%02d", i+1);
+	  wprintw(dftwin, (char *)"%02d", i+1);
 	}
     }
   else
     {
-      msgwin=newwin(LINES-6,COLS,6,0);
+      msgwin=newwin(LINES-6-1,COLS,6,0);
       werase(msgwin);
-      scrollok(msgwin, 1);
+      scrollok(msgwin, TRUE);
+      /*leaveok(msgwin, TRUE);*/
       wrefresh(msgwin);
     }
   _ctl_refresh();
@@ -439,8 +468,17 @@ static void ctl_close(void)
 static int ctl_read(int32 *valp)
 {
   int c;
+  if (last_rc_command)
+    {
+	*valp = last_rc_arg;
+	c = last_rc_command;
+	last_rc_command = 0;
+	return c;
+    }
   while ((c=getch())!=ERR)
     {
+      re_init_screen();
+
       switch(c)
 	{
 	case 'h':
@@ -472,16 +510,20 @@ static int ctl_read(int32 *valp)
 
 	case 'f':
 	case KEY_RIGHT:
+	 songoffset +=
 	  *valp=play_mode->rate;
 	  return RC_FORWARD;
 	case 'b':
 	case KEY_LEFT:
+	 songoffset -=
 	  *valp=play_mode->rate;
 	  return RC_BACK;
 	  /* case ' ':
 	     return RC_TOGGLE_PAUSE; */
 	}
     }
+      re_init_screen();
+
   return RC_NONE;
 }
 
@@ -514,7 +556,7 @@ static int cmsg(int type, int verbosity_level, const char *fmt, ...)
 	  wmove(dftwin, 2,0);
 	  wclrtoeol(dftwin);
 	  wattron(dftwin, A_REVERSE);
-	  vwprintw(dftwin, fmt, ap);
+	  vwprintw(dftwin, (char *)fmt, ap);
 	  wattroff(dftwin, A_REVERSE);
 	  _ctl_refresh();
 	  if (type==CMSG_WARNING)
@@ -532,26 +574,23 @@ static int cmsg(int type, int verbosity_level, const char *fmt, ...)
       switch(type)
 	{
 	default:
-	  vwprintw(msgwin, fmt, ap);
-	  if (flagnl) wprintw(msgwin, "\n");
-	  wrefresh(msgwin);
+	  vwprintw(msgwin, (char *)fmt, ap);
+	  if (flagnl) waddch(msgwin, '\n');
 	  break;
 
 	case CMSG_WARNING:
 	  wattron(msgwin, A_BOLD);
-	  vwprintw(msgwin, fmt, ap);
-	  wprintw(msgwin, "\n");
+	  vwprintw(msgwin, (char *)fmt, ap);
 	  wattroff(msgwin, A_BOLD);
-	  wrefresh(msgwin);
+	  waddch(msgwin, '\n');
 	  break;
 	  
 	case CMSG_ERROR:
 	case CMSG_FATAL:
 	  wattron(msgwin, A_REVERSE);
-	  vwprintw(msgwin, fmt, ap);
-	  wprintw(msgwin, "\n");
+	  vwprintw(msgwin, (char *)fmt, ap);
 	  wattroff(msgwin, A_REVERSE);
-	  wrefresh(msgwin);
+	  waddch(msgwin, '\n');
 	  if (type==CMSG_FATAL)
 	    sleep(2);
 	  break;
@@ -559,6 +598,7 @@ static int cmsg(int type, int verbosity_level, const char *fmt, ...)
     }
 
   va_end(ap);
+  if (!ctl.trace_playing) wrefresh(msgwin);
   return 0;
 }
 

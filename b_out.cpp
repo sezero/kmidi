@@ -21,7 +21,11 @@
 
 #include <malloc.h>
 #include "config.h"
+#include "common.h"
+#include "instrum.h"
+#include "playmidi.h"
 #include "output.h"
+#include "controls.h"
 
 #define PRESUMED_FULLNESS 20
 
@@ -108,6 +112,7 @@ void b_out(int fd, int *buf, int ocount)
 
   if (!starting_up)
   while (bbcount) {
+    if (check_for_rc()) return;
     if (outchunk && bbcount >= outchunk)
         ret = WRITEDRIVER(fd, bbuf + bboffset, outchunk);
     else if (flushing)
@@ -121,7 +126,12 @@ void b_out(int fd, int *buf, int ocount)
 	    }
 	/* fprintf(stderr, "BLOCK %d ", bbcount); */
 	    if (ucount && bboffset + bbcount + ucount <= BB_SIZE && !flushing) break;
-	    usleep(250);
+	    ctl->refresh();
+#ifdef HAVE_USLEEP
+	    usleep(100);
+#else
+	    sleep(1);
+#endif
 	}
 	else {
 	    perror("error writing to dsp device");

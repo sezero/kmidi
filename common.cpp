@@ -237,6 +237,7 @@ void *safe_malloc(size_t count)
     #else
     exit(10);
     #endif
+  return 0;
 }
 
 /* This adds a directory to the path list */

@@ -91,4 +91,7 @@ typedef struct {
   
 } ControlMode;
 
+extern int last_rc_command;
+extern int last_rc_arg;
 extern ControlMode *ctl_list[], *ctl; 
+extern int check_for_rc(void);
