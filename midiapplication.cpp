@@ -81,7 +81,7 @@ static KCmdLineOptions options[] =
    { "i <letter>", I18N_NOOP("Select user interface (letter=d(umb)/n(curses)/s(lang))."), 0 },
    { "B <n>", I18N_NOOP("Set number of buffer fragments."), 0 },
    { "+[file(s)]", I18N_NOOP("MIDI file(s) to play."), 0 },
-   { 0, 0, 0 } // End of options.
+   KCmdLineLastOption // End of options.
 };
 
 MidiApplication::MidiApplication()
