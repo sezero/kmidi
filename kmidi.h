@@ -67,6 +67,7 @@
 #include <sys/ioctl.h>
 
 #include <kapp.h>
+#include <ktmainwindow.h>
 #include <kled.h>
 
 #define PLAYLIST_WIDTH  550
@@ -76,6 +77,7 @@
 
 #include "configdlg.h"
 #include "log.h"
+#include "docking.h"
 
 class PlaylistDialog;
 class ConfigDlg;
@@ -87,7 +89,7 @@ class MeterWidget : public QWidget
 {
 	Q_OBJECT
 public:
-    MeterWidget( QDialog *parent=0, const char *name=0 );
+    MeterWidget( KTMainWindow *parent=0, const char *name=0 );
    ~MeterWidget();
     QTimer     *metertimer;
     QColor	led_color;
@@ -101,14 +103,13 @@ private:
 };
 
 
-class KMidi : public QDialog {
+class KMidi : public KTMainWindow {
 
 	Q_OBJECT
 public:
 
 	~KMidi();
 	
-	// Buttons
 
 	QPushButton	*playPB;
 	QPushButton	*stopPB;
@@ -171,6 +172,9 @@ public:
 	QWidget 	*backdrop;
 	QPushButton     *makeButton( int, int, int, int, const QString & );
 
+	bool		docking;
+	bool		autodock;
+
 	int		mixerFd;
         bool            StopRequested;
 	bool 		loop;
@@ -214,7 +218,8 @@ public:
 	KConfig 	*config;
 
 protected:
-	void closeEvent( QCloseEvent *e );  
+	void		closeEvent( QCloseEvent *e );  
+	bool		event( QEvent *e );
 
 private:
 	void 		display_playmode();
@@ -234,7 +239,7 @@ private:
 
 public:
 
-	KMidi( QWidget *parent = 0, const char *name = 0 );
+	KMidi( const char *name = 0 );
 
 
 signals:	

@@ -1,3 +1,8 @@
+1999-10-27  Greg Lee  <lee@hawaii.edu>
+
+	* made kmidi a KTMainWindow
+	* stole docking routine from kscd
+
 1999-10-26  Greg Lee  <lee@hawaii.edu>
 
 	* playmidi.c: longer echo delays

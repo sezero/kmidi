@@ -59,7 +59,6 @@
 #include "playmidi.h"
 #include "constants.h"
 #include "ctl.h"
-//#include <kiconloader.h>
 #include <kstddirs.h>
 #include <kglobal.h>
 #include <kwm.h>
@@ -93,14 +92,24 @@ KApplication * thisapp;
 KMidi *kmidi;
 int pipenumber;
 
-KMidi::KMidi( QWidget *parent, const char *name ) :
-    QDialog( parent, name )
+DockWidget*     dock_widget;
+bool dockinginprogress = 0;
+bool quitPending = 0;
+
+KMidi::KMidi( const char *name ) :
+    KTMainWindow( name )
 {
 
+    //setView(kmidi,TRUE);
     playlistdlg = NULL;
     randomplay = false;
     looping = false;
     driver_error = false;
+    docking = true;
+    //autodock = false;
+    autodock = true;
+    dockinginprogress = false;
+    quitPending = false;
     last_status = status = KNONE;
     song_number = 1;
     current_voices = DEFAULT_VOICES;
@@ -122,12 +131,10 @@ KMidi::KMidi( QWidget *parent, const char *name ) :
 
     playlist = new QStrList(TRUE);
     listplaylists = new QStrList(TRUE);
-    //current_playlist_num = 0;
 
     QStringList listf = KGlobal::dirs()->findAllResources("appdata", "*.plist");
 
     for ( QStringList::Iterator it = listf.begin(); it != listf.end(); ++it ) {
-	    //listplaylists->append( *it );
 	    listplaylists->inSort( *it );
     }
 
@@ -146,7 +153,6 @@ KMidi::KMidi( QWidget *parent, const char *name ) :
 
 
     configdlg = new ConfigDlg(this,&config, "_configdlg");
-    //playlistdlg = new PlaylistDialog( NULL , "_pldlg", playlist, &current_playlist_num, listplaylists);
 
     connect( timer, SIGNAL(timeout()),this, SLOT(PlayCommandlineMods()) );
     timer->start( 100, FALSE );
@@ -161,17 +167,20 @@ KMidi::KMidi( QWidget *parent, const char *name ) :
     connect( replayPB, SIGNAL(clicked()), SLOT(replayClicked()) );
     connect( ejectPB, SIGNAL(clicked()), SLOT(ejectClicked()) );
     connect( volSB, SIGNAL(valueChanged(int)), SLOT(volChanged(int)));
-    //connect( aboutPB, SIGNAL(clicked()), SLOT(aboutClicked()));
     connect( aboutPB, SIGNAL(clicked()), SLOT(logoClicked()));
     connect( configurebutton, SIGNAL(clicked()), SLOT(aboutClicked()));
     connect( shufflebutton, SIGNAL(clicked()), SLOT(randomClicked()));
     connect( infobutton, SIGNAL(clicked()), SLOT(speedupslot()));
 
-    //connect(thisapp,SIGNAL(kdisplayPaletteChanged()),this,SLOT(setColors()));
     connect(this,SIGNAL(play()),this,SLOT(playClicked()));
 
     redoplaylistbox();
     playlistbox->setCurrentItem(current_playlist_num);
+
+    dock_widget = new DockWidget("dockw");
+        if(docking){
+        dock_widget->dock();
+    }
 
     srandom(time(0L));
     adjustSize();
@@ -181,6 +190,23 @@ KMidi::KMidi( QWidget *parent, const char *name ) :
 
     setAcceptDrops(TRUE);
 
+}
+
+
+bool KMidi::event( QEvent *e ){
+    if(e->type() == QEvent::Hide && autodock && docking){
+        if(dockinginprogress || quitPending)
+            return(FALSE);
+        sleep(1); // give kwm some time..... ugly I know.
+        if (!KWM::isIconified(winId())) // maybe we are just on another desktop
+            return FALSE;
+        dock_widget->setToggled(true);
+        // a trick to remove the window from the taskbar (Matthias)
+        recreate(0, 0, QPoint(x(), y()), FALSE);
+        kapp->setTopWidget( this );
+        return TRUE;
+    }
+    return QWidget::event(e);
 }
 
 void KMidi::dropEvent( QDropEvent * e )
@@ -235,7 +261,6 @@ void KMidi::setToolTips()
 	QToolTip::add( playPB, 		i18n("Play/Pause") );
 	QToolTip::add( stopPB, 		i18n("Stop") );
 	QToolTip::add( replayPB, 	i18n("Loop Song") );
-	//	QToolTip::add( songListCB, 	i18n("Track Selection") );
 	QToolTip::add( fwdPB, 		i18n("15 Secs Forward") );
 	QToolTip::add( bwdPB, 		i18n("15 Secs Backward") );
 	QToolTip::add( nextPB, 		i18n("Next Midi") );
@@ -265,7 +290,6 @@ void KMidi::setToolTips()
 	QToolTip::remove( playPB);
 	QToolTip::remove( stopPB);
 	QToolTip::remove( replayPB);
-	//	QToolTip::remove( songListCB);
 	QToolTip::remove( fwdPB );
 	QToolTip::remove( bwdPB);
 	QToolTip::remove( nextPB );
@@ -312,27 +336,6 @@ void KMidi::volChanged( int vol )
     //  mp_volume = vol*255/100;
 
 }
-
-/*
-#define MAX_MIDI_CHANNELS	16
-#define INT_CODE 214
-
-typedef struct {
-	int reset_panel;
-	int multi_part;
-
-	int32 last_time, cur_time;
-
-	char v_flags[MAX_MIDI_CHANNELS];
-	int16 cnote[MAX_MIDI_CHANNELS];
-	int16 cvel[MAX_MIDI_CHANNELS];
-	int16 ctotal[MAX_MIDI_CHANNELS];
-
-	char c_flags[MAX_MIDI_CHANNELS];
-	Channel channel[MAX_MIDI_CHANNELS];
-} PanelInfo;
-extern PanelInfo *Panel;
-*/
 
 
 
@@ -464,7 +467,7 @@ void MeterWidget::paintEvent( QPaintEvent * )
 	remeter();
 }
 
-MeterWidget::MeterWidget( QDialog *parent, const char *name )
+MeterWidget::MeterWidget( KTMainWindow *parent, const char *name )
     : QWidget( parent, name )
 {
     metertimer = new QTimer( this );
@@ -498,7 +501,7 @@ void KMidi::drawPanel()
     int SBARWIDTH = 220; //140
     int totalwidth, regularheight, extendedheight;
 
-    setCaption( i18n("kmidi") );
+    //setCaption( i18n("kmidi") );
     aboutPB = makeButton( ix, iy, WIDTH, 2 * HEIGHT, "About" );
     iy += 2 * HEIGHT;
 
@@ -695,6 +698,8 @@ void KMidi::drawPanel()
     logwindow->hide();
 
     regularsize = QSize (totalwidth, regularheight);
+    setFixedWidth(totalwidth);
+    setMinimumSize(regularsize);
 
     // Choose patch set
     ix = 0;
@@ -708,7 +713,6 @@ void KMidi::drawPanel()
 	if (cfg_names[sx]) patchbox->insertItem( cfg_names[sx] );
 	else patchbox->insertItem( "(none)" );
     patchbox->setCurrentItem(Panel->currentpatchset);
-    //patchbox->setEnabled( FALSE );
     connect( patchbox, SIGNAL(activated(int)), SLOT(setPatch(int)) );
  
     iy += HEIGHT;
@@ -1016,8 +1020,6 @@ void KMidi::randomClicked(){
         return;
     }
 
-    //looping = FALSE;
-    ///if(randomplay == TRUE){
     if (!shufflebutton->isOn()) {
 	randomplay = FALSE;
 	looplabel->setText("");
@@ -1077,7 +1079,6 @@ void KMidi::playClicked()
   int index;
   index = song_number -1;
 
-  //patchbox->setEnabled( FALSE );
 
   if(status == KPLAYING){
     status = KPAUSED;
@@ -1165,6 +1166,7 @@ void KMidi::speedupslot(){
 	else resize( regularsize );
 	return;
     }
+    if (logwindow->height() < 80) logwindow->resize(extendedsize.width(), 80);
     if (meter->isVisible()) {
 	logwindow->move(0, extendedsize.height());
 	logwindow->show();
@@ -1234,6 +1236,7 @@ void KMidi::bwdClicked(){
 
 void KMidi::quitClicked(){
 
+    quitPending = true;
     setLEDs("--:--");
     statusLA->setText("");
 
@@ -1249,6 +1252,30 @@ void KMidi::quitClicked(){
 
 }
 
+//void KMidi::closeEvent( QCloseEvent *e ){
+//
+//    e->ignore();
+//    quitClicked();
+//}
+
+void KMidi::closeEvent( QCloseEvent *e ){
+
+    quitPending = true;
+    setLEDs("--:--");
+    statusLA->setText("");
+
+    writeconfig();
+    pipe_int_write(MOTIF_QUIT);
+
+    if(output_device_open == 0){
+      thisapp->processEvents();
+      thisapp->flushX();
+      usleep(100000);
+      thisapp->quit();
+    }
+    e->accept();
+}
+
 void KMidi::replayClicked(){
 
     if(status != KPLAYING)
@@ -1257,7 +1284,6 @@ void KMidi::replayClicked(){
     last_status = KNONE;
 
     if (replayPB->isOn()) {
-    //if(looping == false){
 	looping = true;
 	randomplay = false;
         shufflebutton->setOn( FALSE );
@@ -1282,15 +1308,12 @@ void KMidi::ejectClicked(){
     if(!playlistdlg)
 	playlistdlg = new PlaylistDialog( NULL , "_pldlg", playlist, &current_playlist_num, listplaylists);
     else playlistdlg->redoLists();
-    //playlistdlg->redoLists();
 
     if(playlistdlg->exec()){
       updateUI();
       status = KSTOPPED;
       redoplaylistbox();
       playlistbox->setCurrentItem(current_playlist_num);
-      //plActivated( current_playlist_num );
-      //patchbox->setEnabled( TRUE );
       playPB->setOn( FALSE );
       timer->start( 200, TRUE );  // single shot
       redoplaybox();
@@ -1939,17 +1962,7 @@ void KMidi::readconfig(){
     lpfilterrequest = config->readBoolEntry("Filter", FALSE);
     effectsrequest = config->readBoolEntry("Effects", TRUE);
 
-    /*	str = config->readEntry("RandomPlay");
-	if ( !str.isNull() )
-	randomplayint =  str.toInt();
-
-	if (randomplayint == 1)
-	randomplay = TRUE;
-	else
-	randomplay = FALSE;*/
-
     QColor defaultback = black;
-    //QColor defaultled = QColor(226,224,255);
     QColor defaultled = QColor(107,227,88);
 
     background_color = config->readColorEntry("BackColor",&defaultback);	
@@ -1970,12 +1983,6 @@ void KMidi::writeconfig(){
 	config->writeEntry("ToolTips", 1);
     else
 	config->writeEntry("ToolTips", 0);
-
-    /*	if(randomplay)
-	config->writeEntry("RandomPlay", 1);
-	else
-	config->writeEntry("RandomPlay", 0);
-	*/
 
     config->writeEntry("Volume", volume);
     config->writeEntry("Polyphony", current_voices);
@@ -2089,13 +2096,12 @@ void KMidi::resizeEvent(QResizeEvent *e){
     int h = (e->size()).height();
     int lwheight;
 
-    if (meter->isVisible()) lwheight = h - extendedsize.height();
-    else lwheight = h - regularsize.height();
-    if (lwheight > 0 && logwindow->isVisible()) logwindow->resize(extendedsize.width(), lwheight);
+    //if (meter->isVisible()) lwheight = h - extendedsize.height();
+    //else lwheight = h - regularsize.height();
+    //if (lwheight > 0 && logwindow->isVisible()) logwindow->resize(extendedsize.width(), lwheight);
 
 
     if (h > extendedsize.height() - 10 && !meter->isVisible() && !logwindow->isVisible()) {
-	meter->show();
 	patchbox->show();
 	playbox->show();
 	playlistbox->show();
@@ -2104,10 +2110,17 @@ void KMidi::resizeEvent(QResizeEvent *e){
 	voicespin->show();
 	meterspin->show();
 	filterbutton->show();
+	meter->show();
     }
-    if (h > extendedsize.height() + logwindow->height() - 10 && meter->isVisible() && !logwindow->isVisible()) {
+
+    if (meter->isVisible()) lwheight = h - extendedsize.height();
+    else lwheight = h - regularsize.height();
+
+    if (h > extendedsize.height() /*+ logwindow->height()*/ - 10 && meter->isVisible() && !logwindow->isVisible()) {
+        logwindow->resize(extendedsize.width(), lwheight);
 	logwindow->show();
     }
+    else if (lwheight > 0 && logwindow->isVisible()) logwindow->resize(extendedsize.width(), lwheight);
 
     if (h < regularsize.height() + 10) {
 	if (logwindow->isVisible()) logwindow->hide();
@@ -2123,7 +2136,7 @@ void KMidi::resizeEvent(QResizeEvent *e){
 	    filterbutton->hide();
 	}
     }
-    if (h < extendedsize.height() + 10 && meter->isVisible() && logwindow->isVisible()) {
+    else if (h < extendedsize.height() + 10 && meter->isVisible() && logwindow->isVisible()) {
 	logwindow->hide();
     }
 }
@@ -2139,18 +2152,13 @@ void KMidi::playtime(){
 
 
 
-void KMidi::closeEvent( QCloseEvent *e ){
-
-    e->ignore();
-    quitClicked();
-}
-
 #include "kmidi.moc"
 
 extern "C" {
 
     void createKApplication(int *argc, char **argv){
-	thisapp = new KApplication(*argc, argv, "kmidi");
+	//thisapp = new KApplication(*argc, argv, "kmidi");
+	thisapp = new KApplication(*argc, argv);
     }
     
     int Launch_KMidi_Process(int _pipenumber){
@@ -2160,8 +2168,10 @@ extern "C" {
 	kmidi = new KMidi;
        	/* thisapp->enableSessionManagement(true); */
 	KWM::setWmCommand(kmidi->winId(),"kmidi");
-	thisapp->setTopWidget(kmidi);
-	kmidi->setCaption(kapp->caption());
+	//thisapp->setTopWidget(kmidi);
+	//kmidi->setCaption(kapp->makeStdCaption( i18n("Midi Player") ));
+	kmidi->setCaption( i18n("Midi Player") );
+	// it's hard to drag the window around with no bar
 	//KWM::setDecoration(kmidi->winId(), KWM::tinyDecoration);
 	kmidi->show();
 	thisapp->exec();

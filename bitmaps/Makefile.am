@@ -1,1 +1,1 @@
-EXTRA_DIST = *.bmp *.xbm *.xpm
+EXTRA_DIST = *.bmp *.xbm *.xpm *.png

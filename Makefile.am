@@ -22,19 +22,21 @@ TIMID_DIR = $(kde_datadir)/kmidi/config
 
 bin_PROGRAMS = kmidi
 
-kmidi_SOURCES = kmidi.cpp  playlist.cpp bwlednum.cpp configdlg.cpp log.cpp\
+kmidi_SOURCES = kmidi.cpp  playlist.cpp bwlednum.cpp configdlg.cpp log.cpp \
+	docking.cpp \
 	timidity.c common.c readmidi.c playmidi.c resample.c mix.c instrum.c \
 	tables.c controls.c output.c filter.c wave_a.c raw_a.c dumb_c.c \
 	sndfont.c readsbk.c linux_a.c ctl.c dec_a.c sun_a.c hpux_a.c \
 	b_out.c fffload.c \
 	effects.c reverb_e.c chorus_e.c phaser_e.c celeste_e.c
 
-noinst_HEADERS = kmidi.h  playlist.h bwlednum.h configdlg.h\
+noinst_HEADERS = kmidi.h  playlist.h bwlednum.h configdlg.h \
+	docking.h \
 	config.h common.h readmidi.h playmidi.h resample.h mix.h instrum.h \
 	tables.h controls.h output.h filter.h log.h version.h filepic.h \
 	cduppic.h constants.h folderpic.h sbk.h sflayer.h ctl.h effects.h
 
-METASOURCES = kmidi.moc  playlist.moc bwlednum.moc configdlg.moc log.moc
+METASOURCES = kmidi.moc  playlist.moc bwlednum.moc configdlg.moc log.moc docking.moc
 
 SUBDIRS = config bitmaps patch midis
 
@@ -44,7 +46,7 @@ apps_DATA = kmidi.desktop
 KDE_ICON = kmidi
 
 picsdir = $(kde_datadir)/kmidi/pics
-pics_DATA = kmidilogo.png
+pics_DATA = kmidilogo.png mini-kmidi.png
 
 EXTRA_DIST = $(apps_DATA) $(pics_DATA) 
 
