@@ -79,7 +79,7 @@
 #include "log.h"
 #include "docking.h"
 
-class PlaylistDialog;
+class PlaylistEdit;
 class ConfigDlg;
 //
 // MeterWidget - draws meter
@@ -236,7 +236,7 @@ public:
 
 	LogWindow 	*logwindow;
 	ConfigDlg       *configdlg;
-	PlaylistDialog  *playlistdlg;
+	PlaylistEdit    *playlistdlg;
 	KConfig 	*config;
 
 private:
@@ -298,6 +298,7 @@ public slots:
 	void		updateRChecks( int );
 	void		dropEvent( QDropEvent * );
 	void		plActivated( int );
+	void		acceptPlaylist();
 };
 
 

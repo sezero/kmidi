@@ -26,7 +26,7 @@
 
 #include <qdatetime.h> 
 #include <qlineedit.h>
-#include <qdialog.h>
+//#include <qdialog.h>
 #include <qwidget.h>
 #include <qlabel.h>
 #include <qstrlist.h> 
@@ -41,9 +41,10 @@
 #include <qapplication.h>    
 #include <qpopupmenu.h>
 #include <qkeycode.h>
-#include <qmenubar.h> 
-#include <qlineedit.h> 
+#include <kmenubar.h> 
+//#include <qlineedit.h> 
 #include <qframe.h> 
+#include <ktmainwindow.h>
 
 #include "kmidi.h"
 
@@ -74,17 +75,17 @@ public:
 };
 
 
-class PlaylistDialog : public QDialog {
+class PlaylistEdit : public KTMainWindow {
 
 Q_OBJECT
 
 public:
-       PlaylistDialog(QWidget *parent=0, const char *name=0, QStrList *playlist = 0,
+       PlaylistEdit(const char *name=0, QStrList *playlist = 0,
 	int *current_playlist_ptr=0, QStrList *listplaylists = 0);
-       ~PlaylistDialog();
+       ~PlaylistEdit();
 
-private:
-      void resizeEvent(QResizeEvent *e);
+//private:
+// void resizeEvent(QResizeEvent *e);
 
 private slots:
 
@@ -111,6 +112,7 @@ protected:
     void set_local_dir(const QString &dir);
     void redoplist();
     void redoDisplay();
+    void closeEvent( QCloseEvent *e );  
 
 public:
     QString current_playlist;
@@ -126,20 +128,21 @@ private:
     QSplitter *hpanner, *vpanner;
     QLabel *statusbar;
 
-    QMenuBar *menu;    
+    KMenuBar *menu;    
     QListBox* listbox;
     QListBox* plistbox;
-    QPushButton* filterButton;
-    QPushButton* addButton;
-    QPushButton* okButton;
-    QPushButton* removeButton;
-    QPushButton* cancelButton;
+    //QPushButton* filterButton;
+    //QPushButton* addButton;
+    //QPushButton* okButton;
+    //QPushButton* removeButton;
+    //QPushButton* cancelButton;
     QStrList*  songlist;
     QStrList*  listsonglist;
     QLineEdit* newEdit;
     int *playlist_ptr;
     QFrame* snpopup;
     QPopupMenu *savenew;
+    QPopupMenu *view;
 
 };
 

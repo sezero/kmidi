@@ -91,6 +91,7 @@ static int nbvoice = 0;
 KApplication * thisapp;
 KMidiFrame *kmidiframe;
 KMidi *kmidi;
+
 int pipenumber;
 
 DockWidget*     dock_widget;
@@ -116,7 +117,6 @@ KMidiFrame::KMidiFrame( const char *name ) :
 }
 
 KMidiFrame::~KMidiFrame(){
-
 }
 
 
@@ -278,7 +278,6 @@ void KMidi::dropEvent( QDropEvent * e )
 
 
 KMidi::~KMidi(){
-
 }
 
 void KMidi::setToolTips()
@@ -1133,8 +1132,8 @@ void KMidi::playClicked()
 
 void KMidi::stopClicked()
 {
-     //Panel->reset_panel = 10;
      looping = false;
+     if (flag_new_playlist) setSong(0);
      flag_new_playlist = false;
      replayPB->setOn( FALSE );
      randomplay = false;
@@ -1300,21 +1299,31 @@ void KMidi::ejectClicked(){
 	return;*/
 
     if(!playlistdlg)
-	playlistdlg = new PlaylistDialog( NULL , "_pldlg", playlist, &current_playlist_num, listplaylists);
+	playlistdlg = new PlaylistEdit("_pldlg", playlist, &current_playlist_num, listplaylists);
     else playlistdlg->redoLists();
 
-    if(playlistdlg->exec()){
+    playlistdlg->show();
+
+    //if(playlistdlg->exec()){
+      //updateUI();
+      //redoplaylistbox();
+      //playlistbox->setCurrentItem(current_playlist_num);
+      //redoplaybox();
+      //if (status != KPLAYING) setSong(0);
+      //else flag_new_playlist = true;
+      //if (status != KPLAYING) timer->start( 200, TRUE );  // single shot
+    //}
+
+}
+
+void KMidi::acceptPlaylist(){
       updateUI();
-      //status = KSTOPPED;
       redoplaylistbox();
       playlistbox->setCurrentItem(current_playlist_num);
-      //playPB->setOn( FALSE );
       redoplaybox();
-    if (status != KPLAYING) setSong(0);
-    else flag_new_playlist = true;
+      if (status != KPLAYING) setSong(0);
+      else flag_new_playlist = true;
       if (status != KPLAYING) timer->start( 200, TRUE );  // single shot
-    }
-
 }
 
 void KMidi::PlayMOD(){
@@ -1860,6 +1869,29 @@ void KMidi::ReadPipe(){
 		fprintf(stderr,"Kmidi: unknown message %i\n",message);
 	
 	    }
+    }
+    else if (status == KPLAYING && currplaytime) {
+		int cseconds;
+		int  sec,seconds, minutes;
+		char local_string[20];
+
+		cseconds = currplaytime - 1;
+		sec=seconds=cseconds/100;
+	
+		/* To avoid blinking */
+		if (sec!=last_sec)
+		    {
+			minutes=seconds/60;
+			seconds-=minutes*60;
+		
+			sprintf(local_string,"%02d:%02d",
+				minutes, seconds);
+			//		    printf("GUI CURTIME %s\n",local_string);	
+			setLEDs(local_string);
+	
+		    }
+
+		last_sec=sec;
     }
 
     if (status != last_status) {

@@ -1,3 +1,9 @@
+1999-11-02  Greg Lee  <lee@hawaii.edu>
+
+	* kmidi.cpp: smooth song time display; stop
+	  button positions first song in new playlist
+	* playlist.cpp: now a KTMainWindow
+
 1999-11-01  Greg Lee  <lee@hawaii.edu>
 
 	* b_out.c: disable filling of entire buffer
