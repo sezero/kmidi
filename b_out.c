@@ -106,7 +106,7 @@ void b_out(int fd, int *buf, int ocount)
 	    }
 	/* fprintf(stderr, "BLOCK %d ", bbcount); */
 	    if (ocount && bboffset + bbcount + ocount <= BB_SIZE && !flushing) break;
-	    sleep(1);
+	    usleep(250);
 	}
 	else {
 	    perror("error writing to dsp device");
@@ -119,9 +119,12 @@ void b_out(int fd, int *buf, int ocount)
     }
     else {
 	if (!ret && bboffset + bbcount + ocount <= BB_SIZE && !flushing) break;
-	out_count += ret;
-	bboffset += ret;
-	bbcount -= ret;
+	if (!ret) usleep(250);
+	else {
+	    out_count += ret;
+	    bboffset += ret;
+	    bbcount -= ret;
+	}
 	/* fprintf(stderr, "[%d:%d:f=%d/%d]\n", bbcount, ocount, output_buffer_full, BB_SIZE); */
 	if (!bbcount) bboffset = 0;
 	else if (bbcount < 0 || bboffset + bbcount > BB_SIZE) {

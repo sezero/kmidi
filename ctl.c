@@ -290,7 +290,7 @@ static void ctl_channel_note(int ch, int note, int vel, int start)
 			while (i < NQUEUE && Panel->ctime[i][ch] != -1) i++;
 		}
 		if (i == NQUEUE) {
-			/*fprintf(stderr," D");*/
+			/* fprintf(stderr," D"); */
 			return;
 		}
 		Panel->cindex[ch] = slot = i;
@@ -414,6 +414,7 @@ static void ctl_reset(void)
 	Panel->wait_reset = 1;
         Panel->buffer_state = 100;
         Panel->various_flags = 0;
+	Panel->reset_panel = 5;
 
 #if 0
 	while(Panel->wait_reset)
@@ -429,7 +430,7 @@ static void ctl_reset(void)
 		ctl_pitch_bend(i, channel[i].pitchbend);
 		ctl_channel_note(i, Panel->cnote[i], 0, -1);
 		Panel->cindex[i] = 0;
-		Panel->mindex[i] = 0;
+		/* Panel->mindex[i] = 0; */
 		for (j = 0; j < NQUEUE; j++) {
 			Panel->ctime[j][i] = -1;
 			Panel->notecount[j][i] = 0;
@@ -511,10 +512,7 @@ static int ctl_blocking_read(int32 *valp)
 		      change_in_volume = *valp= new_volume - amplification ;
 		      return RC_CHANGE_VOLUME;
 		  }
-		  else {
-		      amplification=new_volume;
-		      pipe_int_read(&command);
-		  }
+		  amplification=new_volume;
 		  break;
 		  
 	      case MOTIF_CHANGE_LOCATOR:
@@ -561,16 +559,13 @@ static int ctl_blocking_read(int32 *valp)
 		  pipe_int_read(&arg);
 		  cfg_select = arg;
 	/* fprintf(stderr,"ctl_blocking_read set #%d\n", cfg_select); */
-		  if (!pausing) return RC_PATCHCHANGE;
-		  pipe_int_read(&command);
-		  break;
+		  return RC_PATCHCHANGE;
 
 	      case MOTIF_EFFECTS:
 		  pipe_int_read(&arg);
 		  *valp= arg;
 		  effect_activate(arg);
 		  if (!pausing) return RC_NONE;
-		  pipe_int_read(&command);
 		  break;
 
 	      case MOTIF_FILTER:
@@ -578,7 +573,6 @@ static int ctl_blocking_read(int32 *valp)
 		  *valp= arg;
 		  command_cutoff_allowed = arg;
 		  if (!pausing) return RC_NONE;
-		  pipe_int_read(&command);
 		  break;
 
 	      case MOTIF_CHANGE_VOICES:
@@ -617,7 +611,6 @@ static int ctl_blocking_read(int32 *valp)
 			break;
 		  }
 		  if (!pausing) return RC_NONE;
-		  pipe_int_read(&command);
 		  break;
 
 	      case TRY_OPEN_DEVICE:
@@ -627,18 +620,14 @@ static int ctl_blocking_read(int32 *valp)
 	  
 	  if (command==MOTIF_PAUSE)
 	      {
-		  ctl_reset();
 		  if (pausing) {
 		      pausing = 0;
 		      return RC_NONE; /* Resume where we stopped */
 		  }
+		  ctl_reset();
 		  pausing = 1;
-		  pipe_int_read(&command); /* Blocking reading => Sleep ! */
-		  if (command==MOTIF_PAUSE) {
-		      pausing = 0;
-		      return RC_NONE; /* Resume where we stopped */
-		  }
 	      }
+	  if (pausing) pipe_int_read(&command);
 	  else 
 	      {
 		  fprintf(stderr,"UNKNOWN RC_MESSAGE %i\n",command);
@@ -1009,7 +998,7 @@ static void shm_alloc(void)
 		exit(1);
 	}
 
-	Panel->reset_panel = 0;
+	Panel->reset_panel = 5;
 	Panel->wait_reset = 0;
 }
 

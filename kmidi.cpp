@@ -64,6 +64,7 @@
 //#include <kiconloader.h>
 #include <kstddirs.h>
 #include <kglobal.h>
+#include <kwm.h>
 
 
 extern "C" {
@@ -87,7 +88,8 @@ static int meterfudge = 0;
 enum midistatus{ KNONE, KPLAYING, KSTOPPED, KLOOPING, KFORWARD,
 		 KBACKWARD, KNEXT, KPREVIOUS,KPAUSED};
 
-midistatus status, last_status;
+static midistatus status;
+static int nbvoice = 0;
 
 KApplication * thisapp;
 KMidi *kmidi;
@@ -101,7 +103,7 @@ KMidi::KMidi( QWidget *parent, const char *name ) :
     randomplay = false;
     looping = false;
     driver_error = false;
-    last_status = status = KNONE;
+    status = KNONE;
     song_number = 1;
     current_voices = DEFAULT_VOICES;
     starting_up = true;
@@ -364,7 +366,7 @@ void MeterWidget::remeter()
 	static int lastvol[MAXDISPCHAN], lastamp[MAXDISPCHAN], meterpainttime = 0;
 	int ch, x1, y1, slot, amplitude, notetime, chnotes;
 
-	if (currplaytime + meterfudge < meterpainttime || Panel->reset_panel) {
+	if (currplaytime + meterfudge < meterpainttime || Panel->reset_panel == 10) {
 		erase();
 		for (ch = 0; ch < MAXDISPCHAN; ch++) {
 			lastvol[ch] = lastamp[ch] = 0;
@@ -372,9 +374,14 @@ void MeterWidget::remeter()
 			for (slot = 0; slot < NQUEUE; slot++)
 			    Panel->ctime[slot][ch] = -1;
 		}
-		Panel->reset_panel = 0;
+		Panel->reset_panel = 9;
 	}
 	meterpainttime = currplaytime + meterfudge;
+
+	if (Panel->reset_panel) {
+		Panel->reset_panel--;
+		return;
+	}
 
 	for (ch = 0; ch < MAXDISPCHAN; ch++) {
 		x1 = BAR_LM + (ch & 0x0f) * BAR_WID;
@@ -383,8 +390,9 @@ void MeterWidget::remeter()
 		slot = Panel->mindex[ch];
 		chnotes = Panel->notecount[slot][ch];
 		while ( 1 ) {
-		    notetime = Panel->ctime[slot][ch];
-		    if (notetime == -1 || notetime > meterpainttime) break;
+		  notetime = Panel->ctime[slot][ch];
+		  //if (notetime == -1 || notetime > meterpainttime) break;
+		  if (notetime != -1 && notetime <= meterpainttime) {
 		    if (Panel->v_flags[slot][ch]) {
 			if (Panel->v_flags[slot][ch] == FLAG_NOTE_OFF) {
 				if (!chnotes) Panel->ctotal[slot][ch] -= DELTA_VEL;
@@ -406,9 +414,10 @@ void MeterWidget::remeter()
 			if (amplitude < 0) amplitude = 0;
 		    }
 		    Panel->ctime[slot][ch] = -1;
-		    slot++;
-		    if (slot == NQUEUE) slot = 0;
-		    if (slot == Panel->mindex[ch]) break;
+		  }
+		  slot++;
+		  if (slot == NQUEUE) slot = 0;
+		  if (slot == Panel->mindex[ch]) break;
 		}
 		Panel->mindex[ch] = slot;
 		if (amplitude < 0 && lastvol[ch]) {
@@ -494,14 +503,16 @@ void KMidi::drawPanel()
 
     setCaption( i18n("kmidi") );
     aboutPB = makeButton( ix, iy, WIDTH, 2 * HEIGHT, "About" );
+    iy += 2 * HEIGHT;
 
     ix = 0;
-    iy += 2 * HEIGHT;
     ejectPB = makeButton( ix, iy, WIDTH/2, HEIGHT, "Eject" );
     infobutton = makeButton( ix +WIDTH/2, iy, WIDTH/2, HEIGHT, "info" );
-
-
     iy += HEIGHT;
+
+    //leds here
+    iy += HEIGHT/2;
+
     quitPB = makeButton( ix, iy, WIDTH, HEIGHT, "Quit" );
 
     ix += WIDTH;
@@ -521,9 +532,9 @@ void KMidi::drawPanel()
 	
     QString zeros("--:--");
     setLEDs(zeros);
+    iy += 2 * HEIGHT;
 
     ix = WIDTH;
-    iy += 2 * HEIGHT;
     statusLA = new QLabel( this );
     statusLA->setGeometry( WIDTH -25 +2*SBARWIDTH/3, 6, 44, 15 );
     statusLA->setFont( QFont( "Helvetica", 10, QFont::Bold ) );
@@ -557,6 +568,8 @@ void KMidi::drawPanel()
     propertiesLA->setText("");
 
     ix += SBARWIDTH/2;
+    //leds here
+    iy += HEIGHT/2;
 
     shufflebutton = makeButton( WIDTH + 2*SBARWIDTH/3 ,
 				iy+ HEIGHT,SBARWIDTH/6 , HEIGHT, "F" );
@@ -568,7 +581,7 @@ void KMidi::drawPanel()
 
     lowerBar = new QPushButton(this);
     lowerBar->setGeometry( WIDTH ,
-			   7*HEIGHT/2, 2*SBARWIDTH/3 -1, HEIGHT/2 +1 );
+			   7*HEIGHT/2 + HEIGHT/2, 2*SBARWIDTH/3 -1, HEIGHT/2 +1 );
 
     ix = WIDTH ;
     iy += HEIGHT;
@@ -621,7 +634,7 @@ void KMidi::drawPanel()
 	
     volSB = new QSlider( 0, 100, 5,  volume, QSlider::Horizontal,
 			 this, "Slider" );
-    volSB->setGeometry( WIDTH , 3*HEIGHT, 2*SBARWIDTH/3, HEIGHT /2 );
+    volSB->setGeometry( WIDTH , 3*HEIGHT + HEIGHT/2, 2*SBARWIDTH/3, HEIGHT /2 );
 
     iy = 0;
     ix = WIDTH + SBARWIDTH;
@@ -647,6 +660,9 @@ void KMidi::drawPanel()
 
     ix = WIDTH + SBARWIDTH;
     iy += HEIGHT;
+    //leds here
+    iy += HEIGHT/2;
+
     prevPB = makeButton( ix, iy, WIDTH/2 , HEIGHT, i18n("Prev") );
 
     ix += WIDTH/2 ;
@@ -660,13 +676,12 @@ void KMidi::drawPanel()
         led[i] = new KLed(led_color, this);
         led[i]->setLook(KLed::sunken);
         led[i]->setShape(KLed::Rectangular);
-        led[i]->setGeometry(WIDTH/8 + i * WIDTH/4,iy+HEIGHT/6, WIDTH/6, HEIGHT/5);
+        led[i]->setGeometry(WIDTH/8 + i * WIDTH/4,3*HEIGHT+HEIGHT/6, WIDTH/6, HEIGHT/5);
 	led[i]->setColor(Qt::black);
     }
 
-    iy += HEIGHT/2;
-
     regularheight = iy;
+
     meter = new MeterWidget ( this, "soundmeter" );
     meter->setBackgroundColor( background_color );
     meter->led_color = led_color;
@@ -696,7 +711,7 @@ void KMidi::drawPanel()
 	if (cfg_names[sx]) patchbox->insertItem( cfg_names[sx] );
 	else patchbox->insertItem( "(none)" );
     patchbox->setCurrentItem(Panel->currentpatchset);
-    patchbox->setEnabled( FALSE );
+    //patchbox->setEnabled( FALSE );
     connect( patchbox, SIGNAL(activated(int)), SLOT(setPatch(int)) );
  
     iy += HEIGHT;
@@ -814,8 +829,8 @@ void KMidi::voicesChanged( int newvoices )
 void KMidi::setPatch( int index )
 {
     if (!cfg_names[index]) return;
-    if (status != KSTOPPED) return;
     if (index == Panel->currentpatchset) return;
+    if (status != KSTOPPED) stopClicked();
 
     pipe_int_write(  MOTIF_PATCHSET );
     pipe_int_write( index );
@@ -1061,7 +1076,7 @@ void KMidi::playClicked()
   int index;
   index = song_number -1;
 
-  patchbox->setEnabled( FALSE );
+  //patchbox->setEnabled( FALSE );
 
   if(status == KPLAYING){
     status = KPAUSED;
@@ -1100,14 +1115,13 @@ void KMidi::stopClicked()
      replayPB->setOn( FALSE );
      randomplay = false;
      shufflebutton->setOn( FALSE );
-     //pipe_int_write(MOTIF_PAUSE);
      if (status != KPAUSED && status != KSTOPPED) pipe_int_write(MOTIF_PAUSE);
      status = KSTOPPED;
-     patchbox->setEnabled( TRUE );
      playPB->setOn( FALSE );
      statusLA->setText(i18n("Ready"));
      looplabel->setText("");
      setLEDs("00:00");
+     nbvoice = 0;
 }
 
 
@@ -1122,6 +1136,7 @@ void KMidi::prevClicked(){
     playbox->setCurrentItem(song_number-1);
     if(status == KPLAYING)
       setLEDs("OO:OO");
+    currplaytime = nbvoice = 0;
 
     playPB->setOn( TRUE );
     statusLA->setText(i18n("Playing"));
@@ -1181,6 +1196,7 @@ void KMidi::nextClicked(){
 
     if(status == KPLAYING)
       setLEDs("OO:OO");
+    currplaytime = nbvoice = 0;
 
     playPB->setOn( TRUE );
     statusLA->setText(i18n("Playing"));
@@ -1266,7 +1282,7 @@ void KMidi::ejectClicked(){
       redoplaylistbox();
       playlistbox->setCurrentItem(current_playlist_num);
       //plActivated( current_playlist_num );
-      patchbox->setEnabled( TRUE );
+      //patchbox->setEnabled( TRUE );
       playPB->setOn( FALSE );
       timer->start( 200, TRUE );  // single shot
       redoplaybox();
@@ -1299,7 +1315,7 @@ void KMidi::aboutClicked()
 	meter->background_color = background_color;
 	if (old_background_color != background_color) {
 	    meter->setBackgroundColor(background_color);
-	    Panel->reset_panel = 1;
+	    Panel->reset_panel = 10;
 	}
 	tooltips = configdlg->getData()->tooltips;
 	setColors();
@@ -1366,7 +1382,7 @@ void KMidi::PlayCommandlineMods(){
   thisapp->flushX();
 
   //status = KSTOPPED; // is this right? --gl
-  patchbox->setEnabled( TRUE );
+  //patchbox->setEnabled( TRUE );
   statusLA->setText(i18n("Ready"));
   volChanged(volume);
   //  readtimer->start(10);
@@ -1442,7 +1458,11 @@ void KMidi::ReadPipe(){
 
     static int last_buffer_state = 100;
     static int last_various_flags = 0;
+    static int last_nbvoice=0;
+    static midistatus last_status = KNONE;
     int message;
+
+    if (status == KPLAYING && currplaytime) currplaytime++;
 
     if(pipe_read_ready()){
 
@@ -1588,6 +1608,7 @@ void KMidi::ReadPipe(){
 			    !XmToggleButtonGetState(auto_next_option))
 			    return;
 			    */
+		nbvoice = 0;
 
 		if(starting_up){
 		    starting_up = false;
@@ -1635,7 +1656,7 @@ void KMidi::ReadPipe(){
 			modlabel->setText("");
 			totaltimelabel->setText("--:--");
 			playPB->setOn( FALSE );
-      			patchbox->setEnabled( TRUE );
+      			//patchbox->setEnabled( TRUE );
 			status = KSTOPPED;
 			return;
 		    }
@@ -1652,7 +1673,6 @@ void KMidi::ReadPipe(){
 	    case CURTIME_MESSAGE : {
 		int cseconds;
 		int  sec,seconds, minutes;
-		int nbvoice;
 		char local_string[20];
 
 		/*		printf("RECEIVED: CURTIME_MESSAGE\n");*/
@@ -1810,6 +1830,7 @@ void KMidi::ReadPipe(){
 	    case KPAUSED:	c = Qt::yellow; break;
 	    default:		c = led_color; break;
 	}
+	if (status != KPLAYING) nbvoice = 0;
 	last_status = status;
 	led[0]->setColor(c);
     }
@@ -1821,6 +1842,22 @@ void KMidi::ReadPipe(){
 	last_various_flags = Panel->various_flags;
 	if (last_various_flags & 1) led[2]->setColor(Qt::blue);
         else led[2]->setColor(Qt::black);
+    }
+    if (nbvoice != last_nbvoice) {
+	int quant = current_voices / 6;
+	if (nbvoice && !(last_nbvoice)) led[16]->setColor(Qt::cyan);
+	if (!nbvoice && last_nbvoice) led[16]->setColor(Qt::black);
+	if (nbvoice > quant && !(last_nbvoice > quant)) led[15]->setColor(Qt::cyan);
+	if (nbvoice < quant && !(last_nbvoice < quant)) led[15]->setColor(Qt::black);
+	if (nbvoice > 2*quant && !(last_nbvoice > 2*quant)) led[14]->setColor(Qt::cyan);
+	if (nbvoice < 2*quant && !(last_nbvoice < 2*quant)) led[14]->setColor(Qt::black);
+	if (nbvoice > 3*quant && !(last_nbvoice > 3*quant)) led[13]->setColor(Qt::cyan);
+	if (nbvoice < 3*quant && !(last_nbvoice < 3*quant)) led[13]->setColor(Qt::black);
+	if (nbvoice > 4*quant && !(last_nbvoice > 4*quant)) led[12]->setColor(Qt::cyan);
+	if (nbvoice < 4*quant && !(last_nbvoice < 4*quant)) led[12]->setColor(Qt::black);
+	if (nbvoice > 5*quant && !(last_nbvoice > 5*quant)) led[11]->setColor(Qt::cyan);
+	if (nbvoice < 5*quant && !(last_nbvoice < 5*quant)) led[11]->setColor(Qt::black);
+	last_nbvoice = nbvoice;
     }
 
 }
@@ -2065,9 +2102,10 @@ extern "C" {
 
 	kmidi = new KMidi;
        	/* thisapp->enableSessionManagement(true); */
-	/* thisapp->setWmCommand("kmidi"); */
+	KWM::setWmCommand(kmidi->winId(),"kmidi");
 	thisapp->setTopWidget(kmidi);
 	kmidi->setCaption(kapp->caption());
+	//KWM::setDecoration(kmidi->winId(), KWM::tinyDecoration);
 	kmidi->show();
 	thisapp->exec();
 

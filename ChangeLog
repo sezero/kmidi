@@ -1,3 +1,7 @@
+1999-10-16  Greg Lee  <lee@hawaii.edu>
+
+	* kmidi.cpp: move leds higher
+
 1999-10-15  Greg Lee  <lee@hawaii.edu>
 
 	* sndfont.c/playmidi.c: implement pitch effect
