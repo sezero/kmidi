@@ -196,20 +196,34 @@ KMidiFrame::KMidiFrame( const char *name ) :
     menuBar->insertItem( i18n("Reverb"), reverb_options );
     connect( reverb_options, SIGNAL(activated(int)), this, SLOT(doReverbMenuItem(int)) );
     connect( reverb_options, SIGNAL(aboutToShow()), this, SLOT(fixReverbItems()) );
-	reverb_options->insertItem(  i18n("No echo"), 120 );
-	reverb_options->insertItem(  i18n("Normal echo") , 121);
+	reverb_options->insertItem(  i18n("Dry"), 119 );
     reverb_level = new QPopupMenu();
     CHECK_PTR( reverb_level );
     reverb_level->setCheckable( TRUE );
     reverb_options->insertSeparator();
-    reverb_options->insertItem( i18n("Global reverb"), reverb_level);
-        reverb_level->insertItem( i18n("none") , 130);
-        reverb_level->insertItem( i18n("midi level  32") , 131);
-        reverb_level->insertItem( i18n("midi level  64") , 132);
-        reverb_level->insertItem( i18n("midi level  96") , 133);
-        reverb_level->insertItem( i18n("midi level 127") , 134);
+    reverb_options->insertItem( i18n("Reverb level"), reverb_level);
+        reverb_level->insertItem( i18n("default") , 160);
+        reverb_level->insertItem( i18n("midi level  32") , 161);
+        reverb_level->insertItem( i18n("midi level  64") , 162);
+        reverb_level->insertItem( i18n("midi level  96") , 163);
+        reverb_level->insertItem( i18n("midi level 127") , 164);
     connect( reverb_level, SIGNAL(activated(int)), this, SLOT(doReverbLevel(int)) );
     connect( reverb_level, SIGNAL(aboutToShow()), this, SLOT(fixReverbLevelItems()) );
+    reverb_options->insertSeparator();
+	reverb_options->insertItem(  i18n("No echo"), 120 );
+	reverb_options->insertItem(  i18n("Normal echo") , 121);
+    echo_level = new QPopupMenu();
+    CHECK_PTR( echo_level );
+    echo_level->setCheckable( TRUE );
+    reverb_options->insertSeparator();
+    reverb_options->insertItem( i18n("Echo level"), echo_level);
+        echo_level->insertItem( i18n("default") , 130);
+        echo_level->insertItem( i18n("midi level  32") , 131);
+        echo_level->insertItem( i18n("midi level  64") , 132);
+        echo_level->insertItem( i18n("midi level  96") , 133);
+        echo_level->insertItem( i18n("midi level 127") , 134);
+    connect( echo_level, SIGNAL(activated(int)), this, SLOT(doEchoLevel(int)) );
+    connect( echo_level, SIGNAL(aboutToShow()), this, SLOT(fixEchoLevelItems()) );
 
 
     chorus_options = new QPopupMenu();
@@ -218,20 +232,32 @@ KMidiFrame::KMidiFrame( const char *name ) :
     menuBar->insertItem( i18n("Chorus"), chorus_options );
     connect( chorus_options, SIGNAL(activated(int)), this, SLOT(doChorusMenuItem(int)) );
     connect( chorus_options, SIGNAL(aboutToShow()), this, SLOT(fixChorusItems()) );
-	chorus_options->insertItem(  i18n("No detune"), 140 );
-	chorus_options->insertItem(  i18n("Normal detune") , 141);
     chorus_level = new QPopupMenu();
     CHECK_PTR( chorus_level );
     chorus_level->setCheckable( TRUE );
-    chorus_options->insertSeparator();
-    chorus_options->insertItem( i18n("Global chorus"), chorus_level);
-        chorus_level->insertItem( i18n("none") , 150);
-        chorus_level->insertItem( i18n("midi level  32") , 151);
-        chorus_level->insertItem( i18n("midi level  64") , 152);
-        chorus_level->insertItem( i18n("midi level  96") , 153);
-        chorus_level->insertItem( i18n("midi level 127") , 154);
+    chorus_options->insertItem( i18n("Chorus level"), chorus_level);
+        chorus_level->insertItem( i18n("default") , 170);
+        chorus_level->insertItem( i18n("midi level  32") , 171);
+        chorus_level->insertItem( i18n("midi level  64") , 172);
+        chorus_level->insertItem( i18n("midi level  96") , 173);
+        chorus_level->insertItem( i18n("midi level 127") , 174);
     connect( chorus_level, SIGNAL(activated(int)), this, SLOT(doChorusLevel(int)) );
     connect( chorus_level, SIGNAL(aboutToShow()), this, SLOT(fixChorusLevelItems()) );
+    chorus_options->insertSeparator();
+	chorus_options->insertItem(  i18n("No detune"), 140 );
+	chorus_options->insertItem(  i18n("Normal detune") , 141);
+    detune_level = new QPopupMenu();
+    CHECK_PTR( detune_level );
+    detune_level->setCheckable( TRUE );
+    chorus_options->insertSeparator();
+    chorus_options->insertItem( i18n("Detune level"), detune_level);
+        detune_level->insertItem( i18n("default") , 150);
+        detune_level->insertItem( i18n("midi level  32") , 151);
+        detune_level->insertItem( i18n("midi level  64") , 152);
+        detune_level->insertItem( i18n("midi level  96") , 153);
+        detune_level->insertItem( i18n("midi level 127") , 154);
+    connect( detune_level, SIGNAL(activated(int)), this, SLOT(doDetuneLevel(int)) );
+    connect( detune_level, SIGNAL(aboutToShow()), this, SLOT(fixDetuneLevelItems()) );
 
 
     menuBar->insertSeparator();
@@ -374,64 +400,85 @@ void KMidiFrame::fixStereoItems() {
     stereo_options->setItemChecked( 112, kmidi->stereo_state == 2);
 }
 void KMidiFrame::doReverbMenuItem(int id) {
-    if (id >= 120 && id <= 121 && (id-120 != kmidi->reverb_state) ) {
+    if (id == 119) kmidi->setDry(!kmidi->dry_state);
+    else if (id >= 120 && id <= 121 && (id-120 != kmidi->echo_state) ) {
 	if (id == 120) kmidi->rcb2->setChecked(false);
 	else if (id == 121) kmidi->rcb2->setNoChange();
 	kmidi->updateRChecks(1);
     }
 }
 void KMidiFrame::fixReverbItems() {
-    reverb_options->setItemChecked( 120, kmidi->reverb_state == 0);
-    reverb_options->setItemChecked( 121, kmidi->reverb_state == 1);
+    reverb_options->setItemChecked( 119, kmidi->dry_state);
+    reverb_options->setItemChecked( 120, kmidi->echo_state == 0);
+    reverb_options->setItemChecked( 121, kmidi->echo_state == 1);
 }
 void KMidiFrame::doReverbLevel(int id) {
-    if (id == 130 && kmidi->reverb_state >= 2) {
+    kmidi->setReverb(id - 160);
+}
+void KMidiFrame::doEchoLevel(int id) {
+    if (id == 130 && kmidi->echo_state >= 2) {
 	//kmidi->rcb2->setChecked(false);
 	kmidi->rcb2->setNoChange();
 	kmidi->updateRChecks(1);
     }
-    else if (kmidi->reverb_state != id-129) {
+    else if (kmidi->echo_state != id-129) {
 	kmidi->rcb2->setChecked(true);
-	kmidi->reverb_state = id-129;
+	kmidi->echo_state = id-129;
 	kmidi->updateRChecks(1);
     }
 }
+void KMidiFrame::fixEchoLevelItems() {
+    echo_level->setItemChecked( 130, kmidi->echo_state < 2);
+    echo_level->setItemChecked( 131, kmidi->echo_state == 2);
+    echo_level->setItemChecked( 132, kmidi->echo_state == 3);
+    echo_level->setItemChecked( 133, kmidi->echo_state == 4);
+    echo_level->setItemChecked( 134, kmidi->echo_state == 5);
+}
 void KMidiFrame::fixReverbLevelItems() {
-    reverb_level->setItemChecked( 130, kmidi->reverb_state < 2);
-    reverb_level->setItemChecked( 131, kmidi->reverb_state == 2);
-    reverb_level->setItemChecked( 132, kmidi->reverb_state == 3);
-    reverb_level->setItemChecked( 133, kmidi->reverb_state == 4);
-    reverb_level->setItemChecked( 134, kmidi->reverb_state == 5);
+    reverb_level->setItemChecked( 160, kmidi->reverb_state == 0);
+    reverb_level->setItemChecked( 161, kmidi->reverb_state == 1);
+    reverb_level->setItemChecked( 162, kmidi->reverb_state == 2);
+    reverb_level->setItemChecked( 163, kmidi->reverb_state == 3);
+    reverb_level->setItemChecked( 164, kmidi->reverb_state == 4);
 }
 void KMidiFrame::doChorusMenuItem(int id) {
-    if (id >= 140 && id <= 141 && (id-140 != kmidi->chorus_state) ) {
+    if (id >= 140 && id <= 141 && (id-140 != kmidi->detune_state) ) {
 	if (id == 140) kmidi->rcb3->setChecked(false);
 	else if (id == 141) kmidi->rcb3->setNoChange();
 	kmidi->updateRChecks(2);
     }
 }
 void KMidiFrame::fixChorusItems() {
-    chorus_options->setItemChecked( 140, kmidi->chorus_state == 0);
-    chorus_options->setItemChecked( 141, kmidi->chorus_state == 1);
+    chorus_options->setItemChecked( 140, kmidi->detune_state == 0);
+    chorus_options->setItemChecked( 141, kmidi->detune_state == 1);
 }
 void KMidiFrame::doChorusLevel(int id) {
-    if (id == 150 && kmidi->chorus_state >= 2) {
-	//kmidi->rcb3->setChecked(false);
+    kmidi->setChorus(id - 170);
+}
+void KMidiFrame::doDetuneLevel(int id) {
+    if (id == 150 && kmidi->detune_state >= 2) {
 	kmidi->rcb3->setNoChange();
 	kmidi->updateRChecks(2);
     }
-    else if (kmidi->chorus_state != id-149) {
+    else if (kmidi->detune_state != id-149) {
 	kmidi->rcb3->setChecked(true);
-	kmidi->chorus_state = id-149;
+	kmidi->detune_state = id-149;
 	kmidi->updateRChecks(2);
     }
 }
 void KMidiFrame::fixChorusLevelItems() {
-    chorus_level->setItemChecked( 150, kmidi->chorus_state < 2);
-    chorus_level->setItemChecked( 151, kmidi->chorus_state == 2);
-    chorus_level->setItemChecked( 152, kmidi->chorus_state == 3);
-    chorus_level->setItemChecked( 153, kmidi->chorus_state == 4);
-    chorus_level->setItemChecked( 154, kmidi->chorus_state == 5);
+    chorus_level->setItemChecked( 170, kmidi->chorus_state == 0);
+    chorus_level->setItemChecked( 171, kmidi->chorus_state == 1);
+    chorus_level->setItemChecked( 172, kmidi->chorus_state == 2);
+    chorus_level->setItemChecked( 173, kmidi->chorus_state == 3);
+    chorus_level->setItemChecked( 174, kmidi->chorus_state == 4);
+}
+void KMidiFrame::fixDetuneLevelItems() {
+    detune_level->setItemChecked( 150, kmidi->detune_state < 2);
+    detune_level->setItemChecked( 151, kmidi->detune_state == 2);
+    detune_level->setItemChecked( 152, kmidi->detune_state == 3);
+    detune_level->setItemChecked( 153, kmidi->detune_state == 4);
+    detune_level->setItemChecked( 154, kmidi->detune_state == 5);
 }
 
 KMidi::KMidi( QWidget *parent, const char *name )
@@ -450,7 +497,7 @@ KMidi::KMidi( QWidget *parent, const char *name )
     fastrewind = 0;
     fastforward = 0;
     current_voices = DEFAULT_VOICES;
-    stereo_state = reverb_state = chorus_state = verbosity_state = 1;
+    stereo_state = echo_state = detune_state = verbosity_state = 1;
     starting_up = true;
 
     readconfig();
@@ -1327,14 +1374,14 @@ void KMidi::updateRChecks( int which )
 	case 1:
 		// echo voice
 	    check_states = (int)rcb2->state();
-	    if (check_states != 2) reverb_state = check_states;
-	    temp = reverb_state;
+	    if (check_states != 2) echo_state = check_states;
+	    temp = echo_state;
 	    break;
 	case 2:
 		// detune voice
 	    check_states = (int)rcb3->state();
-	    if (check_states != 2) chorus_state = check_states;
-	    temp = chorus_state;
+	    if (check_states != 2) detune_state = check_states;
+	    temp = detune_state;
 	    break;
 	case 3:
 		// info window verbosity
@@ -1488,6 +1535,26 @@ void KMidi::setFilter( bool down )
     pipe_int_write(  MOTIF_FILTER );
     if (down) pipe_int_write( 1 );
     else pipe_int_write( 0 );
+}
+void KMidi::setDry( bool down )
+{
+    dry_state = down;
+    pipe_int_write(  MOTIF_DRY );
+    if (down) pipe_int_write( 1 );
+    else pipe_int_write( 0 );
+}
+
+void KMidi::setReverb( int level )
+{
+    reverb_state = level;
+    pipe_int_write(  MOTIF_REVERB );
+    pipe_int_write(level);
+}
+void KMidi::setChorus( int level )
+{
+    chorus_state = level;
+    pipe_int_write(  MOTIF_CHORUS );
+    pipe_int_write(level);
 }
 
 void KMidi::logoClicked(){
@@ -2021,12 +2088,12 @@ void KMidi::PlayCommandlineMods(){
 	rcb1->setChecked( (stereo_state>=2) );
 	updateRChecks(0);
   }
-  if (reverb_state != 1) {
-	rcb2->setChecked( (reverb_state>=2) );
+  if (echo_state != 1) {
+	rcb2->setChecked( (echo_state>=2) );
 	updateRChecks(1);
   }
-  if (chorus_state != 1) {
-	rcb3->setChecked( (chorus_state>=2) );
+  if (detune_state != 1) {
+	rcb3->setChecked( (detune_state>=2) );
 	updateRChecks(2);
   }
   if (verbosity_state != 1) {
@@ -2598,7 +2665,7 @@ void KMidi::ReadPipe(){
         led[BUFFER_LED]->setColor( QColor(250 - 2*Panel->buffer_state, 150, 50 ) );
 	last_buffer_state = Panel->buffer_state;
     }
-    rcheck_flags = reverb_state << 4 + chorus_state;
+    rcheck_flags = echo_state << 4 + detune_state;
 
     if (Panel->various_flags != last_various_flags || rcheck_flags != last_rcheck_flags) {
 	last_various_flags = Panel->various_flags;
@@ -2608,15 +2675,15 @@ void KMidi::ReadPipe(){
 	//reverberation
 	if (last_various_flags & 2) led[REVERB_LED]->setColor(Qt::black);
         else {
-	    if (reverb_state & 2) led[REVERB_LED]->setColor(Qt::blue);
-	    else if (reverb_state & 1) led[REVERB_LED]->setColor(Qt::darkBlue);
+	    if (echo_state & 2) led[REVERB_LED]->setColor(Qt::blue);
+	    else if (echo_state & 1) led[REVERB_LED]->setColor(Qt::darkBlue);
             else led[REVERB_LED]->setColor(Qt::black);
 	}
 	//chorus
 	if (last_various_flags & 4) led[CHORUS_LED]->setColor(Qt::black);
         else {
-	    if (chorus_state & 2) led[CHORUS_LED]->setColor(Qt::yellow);
-	    else if (chorus_state & 1) led[CHORUS_LED]->setColor(Qt::darkYellow);
+	    if (detune_state & 2) led[CHORUS_LED]->setColor(Qt::yellow);
+	    else if (detune_state & 1) led[CHORUS_LED]->setColor(Qt::darkYellow);
             else led[CHORUS_LED]->setColor(Qt::black);
 	}
 	last_rcheck_flags = rcheck_flags;
@@ -2666,8 +2733,11 @@ void KMidi::readconfig(){
     interpolationrequest = config->readNumEntry("Interpolation", 2);
     max_patch_megs = config->readNumEntry("MegsOfPatches", 60);
     stereo_state = config->readNumEntry("StereoNotes", 1);
-    reverb_state = config->readNumEntry("EchoNotes", 1);
-    chorus_state = config->readNumEntry("DetuneNotes", 1);
+    echo_state = config->readNumEntry("EchoNotes", 1);
+    reverb_state = config->readNumEntry("Reverb", 0);
+    detune_state = config->readNumEntry("DetuneNotes", 1);
+    chorus_state = config->readNumEntry("Chorus", 1);
+    dry_state = config->readBoolEntry("Dry", FALSE);
     verbosity_state = config->readNumEntry("Verbosity", 1);
     Panel->currentpatchset = config->readNumEntry("Patchset", 0);
 
@@ -2707,8 +2777,11 @@ void KMidi::writeconfig(){
     config->writeEntry("Interpolation", interpolationrequest);
     config->writeEntry("MegsOfPatches", max_patch_megs);
     config->writeEntry("StereoNotes", stereo_state);
-    config->writeEntry("EchoNotes", reverb_state);
-    config->writeEntry("DetuneNotes", chorus_state);
+    config->writeEntry("EchoNotes", echo_state);
+    config->writeEntry("Reverb", reverb_state);
+    config->writeEntry("DetuneNotes", detune_state);
+    config->writeEntry("Chorus", chorus_state);
+    config->writeEntry("Dry", dry_state);
     config->writeEntry("Verbosity", verbosity_state);
     config->writeEntry("Patchset", Panel->currentpatchset);
     config->sync();

@@ -134,10 +134,14 @@ protected slots:
 	void		fixStereoItems();
 	void		fixChorusItems();
 	void		fixReverbItems();
+	void		doEchoLevel(int);
 	void		doReverbLevel(int);
 	void		doChorusLevel(int);
+	void		doDetuneLevel(int);
 	void		fixReverbLevelItems();
 	void		fixChorusLevelItems();
+	void		fixEchoLevelItems();
+	void		fixDetuneLevelItems();
 
 private:
 	int		m_on_id, m_off_id, i_on_id, i_off_id;
@@ -146,7 +150,9 @@ private:
 	QPopupMenu	*stereo_options;
 	QPopupMenu	*chorus_options;
 	QPopupMenu	*chorus_level;
+	QPopupMenu	*detune_level;
 	QPopupMenu	*reverb_options;
+	QPopupMenu	*echo_level;
 	QPopupMenu	*reverb_level;
 
 };
@@ -261,6 +267,9 @@ public:
 	int		stereo_state;
 	int		reverb_state;
 	int		chorus_state;
+	int		echo_state;
+	bool		dry_state;
+	int		detune_state;
 	int		verbosity_state;
 
 	QString		fileName;
@@ -297,6 +306,9 @@ public:
 
 	void 		redoplaybox();
 	void 		restartPlaybox();
+	void		setDry(bool);
+	void		setReverb(int level);
+	void		setChorus(int level);
 
 signals:	
 	void		play();

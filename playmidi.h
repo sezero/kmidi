@@ -234,6 +234,7 @@ extern int opt_overlap_voice_allow;
 extern void recompute_freq(int v);
 extern int dont_cspline;
 #endif
+extern int opt_dry;
 extern int dont_filter_melodic;
 extern int dont_filter_drums;
 extern int command_cutoff_allowed;
@@ -265,6 +266,8 @@ extern char *current_config_file;
 extern int reverb_options;
 extern int global_reverb;
 extern int global_chorus;
+extern int global_echo;
+extern int global_detune;
 extern int cfg_select;
 extern void clear_config(void);
 extern void effect_activate( int iSwitch );

@@ -565,7 +565,7 @@ static int ctl_blocking_read(int32 *valp)
   int command;
   int new_volume;
   int new_centiseconds;
-  int arg, argopt;
+  int arg, argopt, i;
   int pausing = 0;
 
   pipe_int_read(&command);
@@ -658,6 +658,31 @@ static int ctl_blocking_read(int32 *valp)
 		  if (!pausing) return RC_NONE;
 		  break;
 
+	      case MOTIF_REVERB:
+		  pipe_int_read(&arg);
+		  *valp= arg;
+		  global_reverb = arg;
+		  for (i=0; i<MAXCHAN; i++)
+			channel[i].reverberation = arg;
+		  if (!pausing) return RC_NONE;
+		  break;
+
+	      case MOTIF_CHORUS:
+		  pipe_int_read(&arg);
+		  *valp= arg;
+		  global_chorus = arg;
+		  for (i=0; i<MAXCHAN; i++)
+			channel[i].chorusdepth = arg;
+		  if (!pausing) return RC_NONE;
+		  break;
+
+	      case MOTIF_DRY:
+		  pipe_int_read(&arg);
+		  *valp= arg;
+		  opt_dry = arg;
+		  if (!pausing) return RC_NONE;
+		  break;
+
 	      case MOTIF_INTERPOLATION:
 		  pipe_int_read(&arg);
 		  *valp= arg;
@@ -688,22 +713,22 @@ static int ctl_blocking_read(int32 *valp)
 			if (!argopt) reverb_options &= ~(OPT_REVERB_VOICE | OPT_REVERB_EXTRA);
 			else reverb_options |= OPT_REVERB_VOICE;
 			if (argopt >= 2) reverb_options |= OPT_REVERB_EXTRA;
-			if (argopt == 2) global_reverb = 32;
-			else if (argopt == 3) global_reverb = 64;
-			else if (argopt == 4) global_reverb = 96;
-			else if (argopt == 5) global_reverb = 127;
-			else global_reverb = 0;
+			if (argopt < 2) global_echo = 0;
+			else if (argopt == 2) global_echo = 32;
+			else if (argopt == 3) global_echo = 64;
+			else if (argopt == 4) global_echo = 96;
+			else if (argopt == 5) global_echo = 127;
 			break;
 		     case 2:
 			/* chorus */
 			if (!argopt) reverb_options &= ~(OPT_CHORUS_VOICE | OPT_CHORUS_EXTRA);
 			else reverb_options |= OPT_CHORUS_VOICE;
 			if (argopt >= 2) reverb_options |= OPT_CHORUS_EXTRA;
-			if (argopt == 2) global_chorus = 32;
-			else if (argopt == 3) global_chorus = 64;
-			else if (argopt == 4) global_chorus = 96;
-			else if (argopt == 5) global_chorus = 127;
-			else global_chorus = 0;
+			if (argopt < 2) global_detune = 0;
+			else if (argopt == 2) global_detune = 32;
+			else if (argopt == 3) global_detune = 64;
+			else if (argopt == 4) global_detune = 96;
+			else if (argopt == 5) global_detune = 127;
 			break;
 		     case 3:
 			/* verbosity */

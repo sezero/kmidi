@@ -95,6 +95,7 @@ int opt_overlap_voice_allow = 1;
 #endif
 int dont_cspline=0;
 #endif
+int opt_dry = 0;
 int dont_filter_melodic=1;
 int dont_filter_drums=1;
 int dont_chorus=0;
@@ -188,6 +189,8 @@ static void reset_controllers(int c)
   channel[c].sustain=0;
   channel[c].pitchbend=0x2000;
   channel[c].pitchfactor=0; /* to be computed */
+  channel[c].reverberation = global_reverb;
+  channel[c].chorusdepth = global_chorus;
 #ifdef tplus
   channel[c].modulation_wheel = 0;
   channel[c].portamento_time_lsb = 0;
@@ -676,16 +679,16 @@ static void clone_voice(Instrument *ip, int v, MidiEvent *e, uint8 clone_type, i
   if (chorus > 127) chorus = 127;
 
   if (clone_type == REVERB_CLONE) {
-	 if ( (reverb_options & OPT_REVERB_EXTRA) && reverb < global_reverb)
-		reverb = global_reverb;
+	 if ( (reverb_options & OPT_REVERB_EXTRA) && reverb < global_echo)
+		reverb = global_echo;
 	 if (reverb < 8 || dont_reverb) return;
   }
   if (clone_type == CHORUS_CLONE) {
 	 if (variationbank == 32) chorus = 30;
 	 else if (variationbank == 33) chorus = 60;
 	 else if (variationbank == 34) chorus = 90;
-	 if ( (reverb_options & OPT_CHORUS_EXTRA) && chorus < global_chorus)
-		chorus = global_chorus;
+	 if ( (reverb_options & OPT_CHORUS_EXTRA) && chorus < global_detune)
+		chorus = global_detune;
 	 if (chorus < 4 || dont_chorus) return;
   }
 
@@ -1469,7 +1472,7 @@ debug_count--;
   if (obf < 8) dont_chorus = 1;
   else if (obf > 20) dont_chorus = 0;
 
-  if (obf < 6) dont_keep_looping = 1;
+  if (opt_dry || obf < 6) dont_keep_looping = 1;
   else if (obf > 12) dont_keep_looping = 0;
 
 /*
@@ -1974,6 +1977,7 @@ static void seek_forward(uint32 until_time)
 	  break;
 
 	case ME_REVERBERATION:
+	 if (global_reverb > current_event->a) break;
 #ifdef CHANNEL_EFFECT
 	 if (opt_effect)
 	  effect_ctrl_change( current_event ) ;
@@ -1983,6 +1987,7 @@ static void seek_forward(uint32 until_time)
 	  break;
 
 	case ME_CHORUSDEPTH:
+	 if (global_chorus > current_event->a) break;
 #ifdef CHANNEL_EFFECT
 	 if (opt_effect)
 	  effect_ctrl_change( current_event ) ;
@@ -2459,6 +2464,7 @@ int play_midi(MidiEvent *eventlist, uint32 events, uint32 samples)
 	      break;
 	      
 	    case ME_REVERBERATION:
+	 if (global_reverb > current_event->a) break;
 #ifdef CHANNEL_EFFECT
 	 if (opt_effect)
 	      effect_ctrl_change( current_event ) ;
@@ -2468,6 +2474,7 @@ int play_midi(MidiEvent *eventlist, uint32 events, uint32 samples)
 	      break;
 
 	    case ME_CHORUSDEPTH:
+	 if (global_chorus > current_event->a) break;
 #ifdef CHANNEL_EFFECT
 	 if (opt_effect)
 	      effect_ctrl_change( current_event ) ;
