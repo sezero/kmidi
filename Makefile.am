@@ -7,6 +7,7 @@
 #
 
 VERSION = 0.2i
+KDE_OPTIONS = nofinal
 
 INCLUDES = $(all_includes) `$(ARTSCCONFIG) --cflags`
 AM_CPPFLAGS = -DDEFAULT_PATH=\"$(TIMID_DIR)\" -DKMIDI $(EXTRADEFS) $(CPPFLAGS)
