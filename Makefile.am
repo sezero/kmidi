@@ -70,9 +70,9 @@ pics_DATA = kmidilogo.png
 EXTRA_DIST = $(apps_DATA) $(pics_DATA)
 
 
-cfg.cpp: cfg.l
-	rm -f cfg.cpp
-	flex -t -B $(srcdir)/cfg.l >cfg.cpp
+#cfg.cpp: cfg.l
+#	rm -f cfg.cpp
+#	flex -t -B $(srcdir)/cfg.l >cfg.cpp
 
 install-data-local:
 	$(mkinstalldirs) $(DESTDIR)$(kde_appsdir)/Multimedia
