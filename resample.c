@@ -329,6 +329,17 @@ int recompute_modulation(int v)
 
 static int update_modulation(int v)
 {
+
+  if(voice[v].modulation_delay > 0)
+  {
+      /* voice[v].modulation_delay -= control_ratio; I think units are already
+	 in terms of control_ratio */
+      voice[v].modulation_delay -= 1;
+      if(voice[v].modulation_delay > 0)
+	  return 0;
+  }
+
+
   voice[v].modulation_volume += voice[v].modulation_increment;
   /* Why is there no ^^ operator?? */
   if (((voice[v].modulation_increment < 0) &&
@@ -361,12 +372,14 @@ static int calc_bw_index(int v)
 
   if (!voice[v].lfo_phase_increment && update_modulation_signal(v)) return 0;
 
+/* printf("mod_amount %f ", mod_amount); */
   if (voice[v].lfo_volume) {
 	if (mod_amount) mod_amount *= voice[v].lfo_volume;
 	else mod_amount = voice[v].lfo_volume;
+/* printf("lfo %f -> mod %f ", voice[v].lfo_volume, mod_amount); */
   }
 
-  if (mod_amount) {
+  if (mod_amount > 0.2 && mod_amount < 20.0) {
     if (voice[v].modulation_volume)
        freq =
 	(int32)( (double)freq*(1.0 + (mod_amount - 1.0) * (voice[v].modulation_volume>>22) / 255.0) );
@@ -392,7 +405,7 @@ static int32 calc_mod_freq(Voice *vp, int32 incr)
   int32 freq;
   /* already done in update_vibrato ? */
   if (vp->vibrato_control_ratio) return incr;
-  if (!(mod_amount=vp->sample->modEnvToPitch)) return incr;
+  if ((mod_amount=vp->sample->modEnvToPitch)<0.02) return incr;
   if (incr < 0) return incr;
   freq = vp->frequency;
   freq = (int32)( (double)freq*(1.0 + (mod_amount - 1.0) * (vp->modulation_volume>>22) / 255.0) );
@@ -684,7 +697,7 @@ static int32 update_vibrato(Voice *vp, int sign)
 	}
     }
 
-  if (mod_amount)
+  if (mod_amount>0.02)
    freq = (int32)( (double)freq*(1.0 + (mod_amount - 1.0) * (vp->modulation_volume>>22) / 255.0) );
 
   pb=(int)((sine(vp->vibrato_phase *
@@ -1139,7 +1152,7 @@ void do_lowpass(Sample *sample, uint32 srate, sample_t *buf, uint32 count, int32
     int findex, cc;
     int32 current_freq;
 
-    if (freq < 100) return;
+    if (freq < 20) return;
 
     if (freq > srate * 2) {
     	ctl->cmsg(CMSG_ERROR, VERB_NORMAL,
@@ -1152,13 +1165,14 @@ void do_lowpass(Sample *sample, uint32 srate, sample_t *buf, uint32 count, int32
     if (sample->modEnvToFilterFc)
 	mod_amount = sample->modEnvToFilterFc;
 
-    if (!mod_amount && freq >= 13500) return;
+    if (mod_amount < 0.02 && freq >= 13500) return;
 
     voice[0].sample = sample;
 
       /* Ramp up from 0 */
     voice[0].modulation_stage=ATTACK;
     voice[0].modulation_volume=0;
+    voice[0].modulation_delay=sample->modulation_rate[DELAY];
     cc = voice[0].modulation_counter=0;
     recompute_modulation(0);
 
@@ -1166,7 +1180,7 @@ void do_lowpass(Sample *sample, uint32 srate, sample_t *buf, uint32 count, int32
     while (count--) {
 
 	if (!cc) {
-	    if (mod_amount) {
+	    if (mod_amount>0.02) {
 		if (update_modulation_signal(0)) mod_amount = 0;
 		else
 		current_freq = (int32)( (double)freq*(1.0 + (mod_amount - 1.0) *
@@ -1182,7 +1196,7 @@ void do_lowpass(Sample *sample, uint32 srate, sample_t *buf, uint32 count, int32
 	    b1 = butterworth[findex][4];
 	}
 
-	if (mod_amount) cc--;
+	if (mod_amount>0.02) cc--;
 
     	samp = *buf;
 

@@ -156,7 +156,7 @@ typedef struct {
     vibrato_delay, orig_vibrato_control_ratio, modulation_wheel,
 #endif
     envelope_stage, modulation_stage, control_counter,
-    modulation_counter, bw_index, panning, panned;
+    modulation_delay, modulation_counter, bw_index, panning, panned;
 
 #ifdef tplus
   /* for portamento */
@@ -233,6 +233,8 @@ extern int dont_cspline;
 extern int dont_filter_melodic;
 extern int dont_filter_drums;
 extern int command_cutoff_allowed;
+extern int dont_chorus;
+extern int dont_reverb;
 
 extern int GM_System_On;
 extern int XG_System_On;

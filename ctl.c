@@ -263,6 +263,8 @@ static void ctl_current_time(int ct)
 
     Panel->buffer_state = output_buffer_full;
     if (dont_cspline) flags |= 1;
+    if (dont_reverb) flags |= 2;
+    if (dont_chorus) flags |= 4;
 
     Panel->various_flags = flags;
  

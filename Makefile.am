@@ -10,6 +10,7 @@ VERSION = 0.2i
 
 INCLUDES = $(all_includes)
 AM_CFLAGS = -DDEFAULT_PATH=\"$(TIMID_DIR)\" -DKMIDI
+CFLAGS = -O4
 LDFLAGS = $(all_libraries) $(KDE_RPATH)
 LDADD =  $(LIB_KDEUI) $(LIBALIB) $(LIBAUDIO) $(LIBMME) 
 

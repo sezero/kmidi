@@ -194,7 +194,14 @@ public:
 
 	bool		showmeterrequest;
 	bool		showinforequest;
+	bool		lpfilterrequest;
+	bool		effectsrequest;
 	int		infowindowheight;
+
+	int		stereo_state;
+	int		reverb_state;
+	int		chorus_state;
+	int		verbosity_state;
 
 	QString		fileName;
 	QStrList	*playlist;

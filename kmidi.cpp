@@ -28,8 +28,6 @@
 #include <unistd.h>
 #include <math.h>
 
-/*#include <qsocketnotifier.h> */
-
 #include <kconfig.h>
 #include <klocale.h>
 #include <kmessagebox.h>
@@ -106,6 +104,7 @@ KMidi::KMidi( QWidget *parent, const char *name ) :
     status = KNONE;
     song_number = 1;
     current_voices = DEFAULT_VOICES;
+    stereo_state = reverb_state = chorus_state = verbosity_state = 1;
     starting_up = true;
 
     readconfig();
@@ -182,8 +181,6 @@ KMidi::KMidi( QWidget *parent, const char *name ) :
 
     setAcceptDrops(TRUE);
 
-    //if (showmeterrequest) logoClicked();
-    //if (showinforequest) speedupslot();
 }
 
 void KMidi::dropEvent( QDropEvent * e )
@@ -786,28 +783,28 @@ void KMidi::updateRChecks( int which )
 {
     int check_states = 0;
 
-    check_states |= which << 4;
     switch (which) {
 	case 0:
 		// stereo voice
-	    check_states |= (int)rcb1->state();
+	    check_states = stereo_state = (int)rcb1->state();
 	    break;
 	case 1:
 		// reverb voice
-	    check_states |= (int)rcb2->state();
+	    check_states = reverb_state = (int)rcb2->state();
 	    break;
 	case 2:
 		// chorus voice
-	    check_states |= (int)rcb3->state();
+	    check_states = chorus_state = (int)rcb3->state();
 	    break;
 	case 3:
 		// info window verbosity
-	    check_states |= (int)rcb4->state();
+	    check_states = verbosity_state = (int)rcb4->state();
 	    break;
 	default:
 	    return;
 
     }
+    check_states |= which << 4;
     pipe_int_write(MOTIF_CHECK_STATE);
     pipe_int_write(check_states);
 }
@@ -1208,12 +1205,16 @@ void KMidi::nextClicked(){
 
 void KMidi::fwdClicked(){
 
+    if (status != KPLAYING) return;
+
     pipe_int_write(MOTIF_CHANGE_LOCATOR);
     pipe_int_write((last_sec + 15) * 100);
 
 }
 
 void KMidi::bwdClicked(){
+
+    if (status != KPLAYING) return;
 
     if( (last_sec -15 ) >= 0){
 	pipe_int_write(MOTIF_CHANGE_LOCATOR);
@@ -1388,6 +1389,8 @@ void KMidi::PlayCommandlineMods(){
   //  readtimer->start(10);
   if (showmeterrequest) logoClicked();
   if (showinforequest) speedupslot();
+  if (lpfilterrequest) filterbutton->setOn(TRUE);
+  if (effectsrequest) effectbutton->setOn(TRUE);
 
 }
 
@@ -1458,6 +1461,8 @@ void KMidi::ReadPipe(){
 
     static int last_buffer_state = 100;
     static int last_various_flags = 0;
+    static int last_rcheck_flags = 0;
+    int rcheck_flags;
     static int last_nbvoice=0;
     static midistatus last_status = KNONE;
     int message;
@@ -1834,14 +1839,32 @@ void KMidi::ReadPipe(){
 	last_status = status;
 	led[0]->setColor(c);
     }
-    if (Panel->buffer_state != last_buffer_state) {
+    if (Panel->buffer_state < last_buffer_state - 5 || Panel->buffer_state > last_buffer_state + 5) {
         led[1]->setColor( QColor(250 - 2*Panel->buffer_state, 150, 50 ) );
 	last_buffer_state = Panel->buffer_state;
     }
-    if (Panel->various_flags != last_various_flags) {
+    rcheck_flags = reverb_state << 4 + chorus_state;
+
+    if (Panel->various_flags != last_various_flags || rcheck_flags != last_rcheck_flags) {
 	last_various_flags = Panel->various_flags;
-	if (last_various_flags & 1) led[2]->setColor(Qt::blue);
-        else led[2]->setColor(Qt::black);
+	//cspline interpolation
+	if (last_various_flags & 1) led[2]->setColor(Qt::black);
+        else led[2]->setColor(Qt::darkCyan);
+	//reverberation
+	if (last_various_flags & 2) led[3]->setColor(Qt::black);
+        else {
+	    if (reverb_state & 2) led[3]->setColor(Qt::blue);
+	    else if (reverb_state & 1) led[3]->setColor(Qt::darkBlue);
+            else led[3]->setColor(Qt::black);
+	}
+	//chorus
+	if (last_various_flags & 4) led[4]->setColor(Qt::black);
+        else {
+	    if (chorus_state & 2) led[4]->setColor(Qt::yellow);
+	    else if (chorus_state & 1) led[4]->setColor(Qt::darkYellow);
+            else led[4]->setColor(Qt::black);
+	}
+	last_rcheck_flags = rcheck_flags;
     }
     if (nbvoice != last_nbvoice) {
 	int quant = current_voices / 6;
@@ -1883,6 +1906,8 @@ void KMidi::readconfig(){
     showmeterrequest = config->readBoolEntry("ShowMeter", TRUE);
     showinforequest = config->readBoolEntry("ShowInfo", TRUE);
     infowindowheight = config->readNumEntry("InfoWindowHeight", 100);
+    lpfilterrequest = config->readBoolEntry("Filter", FALSE);
+    effectsrequest = config->readBoolEntry("Effects", TRUE);
 
     /*	str = config->readEntry("RandomPlay");
 	if ( !str.isNull() )
@@ -1931,6 +1956,8 @@ void KMidi::writeconfig(){
     config->writeEntry("ShowMeter", meter->isVisible());
     config->writeEntry("ShowInfo", logwindow->isVisible());
     config->writeEntry("InfoWindowHeight", logwindow->height());
+    config->writeEntry("Filter", filterbutton->isOn());
+    config->writeEntry("Effects", effectbutton->isOn());
     config->sync();
 }
 

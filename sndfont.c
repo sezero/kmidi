@@ -1287,7 +1287,9 @@ fprintf(stderr, "preset %d, root_freq %ld\n", preset, sp->v.root_freq);
 	else sampleFlags = 0;
 
 	/* arbitrary adjustments (look at sustain of vol envelope? ) */
-	if (banknum != 128) {
+	if (sampleFlags && lay->val[SF_sustainEnv2] == 0) sampleFlags = 3;
+	else if (sampleFlags && lay->val[SF_sustainEnv2] >= 1000) sampleFlags = 1;
+	else if (banknum != 128) {
 		if (program >= 16 && program <= 23) sampleFlags = 3;
 		else if (program >= 40 && program <= 43) sampleFlags = 3;
 		else if (program >= 48 && program <= 54) sampleFlags = 3;
@@ -1386,6 +1388,7 @@ fprintf(stderr, "preset %d, root_freq %ld\n", preset, sp->v.root_freq);
 	sp->v.vibrato_sweep_increment = 0;
 	sp->v.vibrato_control_ratio = 0;
 	sp->v.vibrato_depth = 0;
+	sp->v.vibrato_delay = 0;
 #ifndef SF_SUPPRESS_VIBRATO
 	convert_vibrato(lay, sf, sp);
 #endif
@@ -1568,6 +1571,7 @@ printf("PRESET %d\n",preset);
 	sp->v.envelope_offset[RELEASEC] = to_offset(ENV_BOTTOM);
 	sp->v.envelope_rate[RELEASEC] = to_offset(200);
 
+	/* pc400.sf2 has bad delay times for soprano sax */
 	if (delay > 5) delay = 0;
 
 	sp->v.envelope_rate[DELAY] = (int32)( (delay*play_mode->rate) / 1000 );
@@ -1841,10 +1845,11 @@ static void convert_lfo(Layer *lay, SFInfo *sf, SampleList *sp)
 
 	level = lay->val[SF_lfo1ToFilterFc];
 	if (!level) return;
+/* FIXME: delay not yet implemented */
 #if 0
 printf("(lev=%d", (int)level);
 #endif
-	sp->v.modLfoToFilterFc = pow(2.0, ((FLOAT_T)level/1200.0));
+	sp->v.modLfoToFilterFc = pow(2.0, ((FLOAT_T)level/12000.0));
 
 	/* frequency in mHz */
 	if (lay->set[SF_freqLfo1]) freq = lay->val[SF_freqLfo1];
@@ -1894,10 +1899,12 @@ printf("vibLfo=%d freq=%d",(int)shift, (int)freq);
 #endif
 		if (lay->set[SF_delayLfo1]) delay = (int32)to_msec(lay, sf, SF_delayLfo1);
 	}
+/*
 	else if (lay->set[SF_freqLfo2]) {
 		freq = lay->val[SF_freqLfo2];
 		shift = 1;
 	}
+*/
 
 	if (!shift) return;
 
@@ -1941,6 +1948,8 @@ printf(" f=%d depth=%d (shift %d)\n", (int)freq, (int)sp->v.vibrato_depth, (int)
 	/* sp->v.vibrato_sweep_increment = 74; */
 	sp->v.vibrato_sweep_increment = convert_vibrato_sweep((uint8)(freq/5),
 		sp->v.vibrato_control_ratio);
+
+	sp->v.vibrato_delay = delay * control_ratio;
 }
 #endif
 
@@ -1961,12 +1970,15 @@ static void calc_cutoff(Layer *lay, SFInfo *sf, SampleList *sp)
 		}
 	}
 	if (lay->set[SF_env1ToFilterFc]) {
-		sp->v.modEnvToFilterFc = pow(2.0, ((FLOAT_T)lay->val[SF_env1ToFilterFc]/1200.0));
+		/*sp->v.modEnvToFilterFc = pow(2.0, ((FLOAT_T)lay->val[SF_env1ToFilterFc]/1200.0));*/
+		sp->v.modEnvToFilterFc = pow(2.0, ((FLOAT_T)lay->val[SF_env1ToFilterFc]/12000.0));
+/* printf("val %d -> %f\n", (int)lay->val[SF_env1ToFilterFc], sp->v.modEnvToFilterFc); */
 	}
 	else sp->v.modEnvToFilterFc = 0;
 
 	if (lay->set[SF_env1ToPitch]) {
-		sp->v.modEnvToPitch = pow(2.0, ((FLOAT_T)lay->val[SF_env1ToPitch]/1200.0));
+		sp->v.modEnvToPitch = pow(2.0, ((FLOAT_T)lay->val[SF_env1ToPitch]/12000.0));
+/* printf("mE %d -> %f\n", (int)lay->val[SF_env1ToPitch], sp->v.modEnvToPitch); */
 	}
 	else sp->v.modEnvToPitch = 0;
 

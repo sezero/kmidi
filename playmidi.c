@@ -95,6 +95,8 @@ int dont_cspline=0;
 #endif
 int dont_filter_melodic=1;
 int dont_filter_drums=0;
+int dont_chorus=0;
+int dont_reverb=0;
 static int voice_reserve=0;
 
 #ifndef ADAGIO
@@ -672,7 +674,7 @@ static void clone_voice(Instrument *ip, int v, MidiEvent *e, uint8 clone_type, i
   if (clone_type == REVERB_CLONE) {
 	 if ( (reverb_options & OPT_REVERB_EXTRA) && reverb < 90)
 		reverb = 90;
-	 if (reverb < 8 || dont_cspline) return;
+	 if (reverb < 8 || dont_reverb) return;
   }
   if (clone_type == CHORUS_CLONE) {
 	 if ( (reverb_options & OPT_CHORUS_EXTRA) && chorus < 40)
@@ -680,7 +682,7 @@ static void clone_voice(Instrument *ip, int v, MidiEvent *e, uint8 clone_type, i
 	 if (variationbank == 32) chorus = 30;
 	 else if (variationbank == 33) chorus = 60;
 	 else if (variationbank == 34) chorus = 90;
-	 if (chorus < 4 || dont_cspline) return;
+	 if (chorus < 4 || dont_chorus) return;
   }
 
   if (!voice[v].right_sample) {
@@ -769,7 +771,9 @@ static void clone_voice(Instrument *ip, int v, MidiEvent *e, uint8 clone_type, i
   voice[w].porta_control_ratio = voice[v].porta_control_ratio;
   voice[w].porta_dpb = voice[v].porta_dpb;
   voice[w].porta_pb = voice[v].porta_pb;
-  voice[w].vibrato_delay = 0;
+  /* ?? voice[w].vibrato_delay = 0; */
+  voice[w].vibrato_delay = voice[w].sample->vibrato_delay;
+  voice[w].modulation_delay = voice[w].sample->modulation_rate[DELAY];
 #endif
   if (reverb) {
 	int milli = play_mode->rate/1000;
@@ -1027,11 +1031,13 @@ static void start_note(MidiEvent *e, int i)
   voice[i].lfo_sweep_position=0;
   voice[i].modLfoToFilterFc=voice[i].sample->modLfoToFilterFc;
   voice[i].modEnvToFilterFc=voice[i].sample->modEnvToFilterFc;
+  voice[i].modulation_delay = voice[i].sample->modulation_rate[DELAY];
 
   voice[i].vibrato_sweep=voice[i].sample->vibrato_sweep_increment;
   voice[i].vibrato_depth=voice[i].sample->vibrato_depth;
   voice[i].vibrato_sweep_position=0;
   voice[i].vibrato_control_ratio=voice[i].sample->vibrato_control_ratio;
+  voice[i].vibrato_delay = voice[i].sample->vibrato_delay;
 #ifdef tplus
   if(channel[ch].vibrato_ratio && voice[i].vibrato_depth > 0)
   {
@@ -1349,7 +1355,13 @@ debug_count--;
   else voice_reserve = voices / 10; /* to be able to find a stereo clone */
 
   if (obf < 10) dont_cspline = 1;
-  else if (obf > 60) dont_cspline = 0;
+  else if (obf > 40) dont_cspline = 0;
+
+  if (obf < 5) dont_reverb = 1;
+  else if (obf > 15) dont_reverb = 0;
+
+  if (obf < 8) dont_chorus = 1;
+  else if (obf > 20) dont_chorus = 0;
 
 /*
   if (obf < 20) dont_filter = 1;
@@ -2196,6 +2208,7 @@ int play_midi(MidiEvent *eventlist, uint32 events, uint32 samples)
   skip_to(0);
 #ifdef KMIDI
   whensaytime = current_event->time;
+  ctl->current_time(1);
 #endif
 
   for (;;)

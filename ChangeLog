@@ -1,3 +1,9 @@
+1999-10-19  Greg Lee  <lee@hawaii.edu>
+
+	* sample vibrato and modulation delay
+	* kmidi.cpp: remember states of effects and filter buttons;
+	  leds for chorus and reverb
+
 1999-10-18  Greg Lee  <lee@hawaii.edu>
 
 	* implement lfo freq modulation

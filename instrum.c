@@ -697,6 +697,7 @@ static InstrumentLayer *load_instrument(char *name, int font_type, int percussio
 	sp->lfo_sweep_increment = 0;
 	sp->lfo_phase_increment = 0;
 	sp->modLfoToFilterFc = 0;
+	sp->vibrato_delay = 0;
 
 #ifdef EXAMINE_SOME_ENVELOPES
 if (percussion /* && (gm_num >= 42 && gm_num <= 51) */) {
