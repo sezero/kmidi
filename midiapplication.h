@@ -78,9 +78,9 @@ class MidiApplication : public KUniqueApplication
 
 public:
   
-  MidiApplication(int &argc, char *argv[], const QCString &appName);
+  MidiApplication();
 
-  virtual int newInstance(QValueList<QCString> params);
+  virtual int newInstance();
 
   bool process(const QCString &fun, const QByteArray &data,
 		        QCString &replyType, QByteArray &replyData);

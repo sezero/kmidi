@@ -378,7 +378,7 @@ int global_detune = 0;
 int got_a_configuration=0;
 
 #ifdef KMIDI	
-extern int createKApplication(int *argc, char **argv);
+extern int createKApplication(int *argc, char ***argv);
 #endif
 
 #ifdef __WIN32__
@@ -428,7 +428,7 @@ int main(int argc, char **argv)
   }
 
   if (i == argc) {
-	if (!createKApplication(&argc, argv)) return 0;
+	if (!createKApplication(&argc, &argv)) return 0;
   }
   if ( ! (KDEdir = getenv("KDEDIR"))) {
        kmidi_config = (char *)safe_malloc(strlen(DEFAULT_PATH)+1);

@@ -82,21 +82,12 @@ static KCmdLineOptions options[] =
    { "U", I18N_NOOP("Unload instruments from memory between MIDI files."), 0 },
    { "i <letter>", I18N_NOOP("Select user interface (letter=d(umb)/n(curses)/s(lang))."), 0 },
    { "B <n>", I18N_NOOP("Set number of buffer fragments."), 0 },
+   { "+[file(s)]", I18N_NOOP("MIDI file(s) to play."), 0 },
    { 0, 0, 0 } // End of options.
 };
 
-MidiApplication::MidiApplication(int &argc, char *argv[], const QCString &appName)
-  : KUniqueApplication(argc, argv, appName)
-  //: KUniqueApplication()
+MidiApplication::MidiApplication()
 {
-//fprintf(stderr,"2: argc=%d argv[1]={%s}\n", argc, (argc>0)? argv[1] : "none");
-
-    KAboutData about( appName, I18N_NOOP("KMidi"), "1.3alpha");
-
-    KCmdLineArgs::init(argc, argv, &about);
-    KCmdLineArgs::addCmdLineOptions( options );
-
-    KUniqueApplication::addCmdLineOptions();
 }
 
 bool MidiApplication::process(const QCString &fun, const QByteArray &data,
@@ -107,15 +98,7 @@ bool MidiApplication::process(const QCString &fun, const QByteArray &data,
   QString res;
   int exitcode;
 
-  if (fun == "newInstance(QValueList<QCString>)") {
-    QValueList<QCString> arg;
-    stream >> arg;
-    newInstance(arg);
-    replyType = "int";
-    exitcode = 0;
-    stream2 << exitcode;
-    return true;
-  } else if (fun == "play(QString)") {
+  if (fun == "play(QString)") {
     QString arg;
     stream >> arg;
     replyType = "void";
@@ -126,34 +109,29 @@ bool MidiApplication::process(const QCString &fun, const QByteArray &data,
     kmidi->singleplay = true;
     kmidi->setSong(0);
     return true;
-  } else {
-    fprintf(stderr,"unknown function call %s to MidiApplication::process()\n", fun.data());
-    return false;
-  }
+  } 
+  return KUniqueApplication::process(fun, data, replyType, replyData);
 }
 /*#define DO_IT_MYSELF*/
 
-int MidiApplication::newInstance(QValueList<QCString> params)
+int MidiApplication::newInstance()
 {
 #ifndef DO_IT_MYSELF
     char mbuff[5];
     int newones = 0;
-    QValueList<QCString>::Iterator it = params.begin();
     QFileInfo file;
-
-//printf("count %d [%s]\n", (*it).count(), (*it).data());
-    it++; // skip program name
-
+    KCmdLineArgs *args = KCmdLineArgs::parsedArgs();
 
     if (kmidi) {
 
-        for (; it != params.end(); it++) {
-//printf("NI:[%s]\n", (*it).data());
+        for (int i=0; i < args->count(); i++) {
+            QString filename = args->url(i).path();
+//printf("NI:[%s]\n", filename.latin1());
 
-	    file.setFile(*it);
+	    file.setFile(filename);
 	    if (!file.isReadable()) continue;
 
-            QFile f(*it);
+            QFile f(filename);
             if (!f.open( IO_ReadOnly )) continue;
             if (f.readBlock(mbuff, 4) != 4) {
 //printf("couldn't read 4 bytes\n");
@@ -168,8 +146,8 @@ int MidiApplication::newInstance(QValueList<QCString> params)
             }
             f.close();
 
-	    file.setFile(*it);
-	    //kmidi->playlist->insert(0, *it);
+	    file.setFile(filename);
+	    //kmidi->playlist->insert(0, filename);
 	    kmidi->playlist->append(file.absFilePath());
 	    newones++;
         }
@@ -184,18 +162,30 @@ int MidiApplication::newInstance(QValueList<QCString> params)
 
 
 
-int createKApplication(int *argc, char **argv) {
+int createKApplication(int *argc, char ***argv) 
+{
+       int deref_argc = *argc;
+       char **deref_argv = new (char *)[deref_argc];
+       for(int i = 0; i < deref_argc; i++)
+          deref_argv[i] = (*argv)[i];
 
-       int deref = *argc;
+       KAboutData about( "kmidi", I18N_NOOP("KMidi"), "1.3alpha");
 
-       if (!MidiApplication::start(deref, &*argv, "kmidi")) {
+       KCmdLineArgs::init(deref_argc, deref_argv, &about);
+
+       delete [] deref_argv;
+
+       KCmdLineArgs::addCmdLineOptions( options );
+
+       KUniqueApplication::addCmdLineOptions();
+
+       if (!MidiApplication::start()) {
 	    return 0;
        }
-	thisapp = new MidiApplication(*argc, argv, "kmidi");
 
-	KCmdLineArgs *args = KCmdLineArgs::parsedArgs();
+       thisapp = new MidiApplication();
 
-	return 1;
+       return 1;
 }
     
 int Launch_KMidi_Process(int _pipenumber) {
