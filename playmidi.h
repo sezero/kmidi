@@ -131,7 +131,7 @@ typedef struct {
     tremolo_sweep, tremolo_sweep_position, tremolo_phase,
     lfo_sweep, lfo_sweep_position, lfo_phase,
     vibrato_sweep, vibrato_sweep_position, vibrato_depth,
-    echo_delay, starttime;
+    echo_delay, echo_delay_count, starttime;
   int32
     sample_increment,
     envelope_increment,
@@ -142,7 +142,7 @@ typedef struct {
   final_volume_t left_mix, right_mix;
 
   FLOAT_T
-    left_amp, right_amp, tremolo_volume, lfo_volume,
+    volume, left_amp, right_amp, tremolo_volume, lfo_volume,
     modEnvToFilterFc, modLfoToFilterFc;
   float
     current_x0, current_x1, current_y0, current_y1;

@@ -1,3 +1,9 @@
+1999-10-22  Greg Lee  <lee@hawaii.edu>
+
+	* playmidi.c,resample.c: be more careful about
+	  terminating notes (no VOICE_DIE now)
+	* reworked reverberation
+
 1999-10-21  Greg Lee  <lee@hawaii.edu>
 
 	* resample.c: smooth off ends of patches

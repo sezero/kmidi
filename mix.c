@@ -548,7 +548,6 @@ static void ramp_out(sample_t *sp, int32 *lp, int v, uint32 c)
     }
 }
 
-
 /**************** interface function ******************/
 
 void mix_voice(int32 *buf, int v, uint32 c)
@@ -566,6 +565,11 @@ void mix_voice(int32 *buf, int v, uint32 c)
   else
     {
       sp=resample_voice(v, &c);
+      if (c<1)
+	{
+          vp->status=VOICE_FREE;
+	  return;
+	}
       if (play_mode->encoding & PE_MONO)
 	{
 	  /* Mono output. */

@@ -215,14 +215,14 @@ void do_compute_data_effect(uint32 count)
 		if( voice[ idVoice ].status != VOICE_FREE )
 		{
 		  idChannel = voice[ idVoice ].channel ;
-		  if (!voice[ idVoice ].sample_offset && voice[ idVoice ].echo_delay)
+		  if (!voice[ idVoice ].sample_offset && voice[ idVoice ].echo_delay_count)
 		    {
-			if (voice[ idVoice ].echo_delay >= count) voice[ idVoice ].echo_delay -= count;
+			if (voice[ idVoice ].echo_delay_count >= count) voice[ idVoice ].echo_delay_count -= count;
 			else
 			  {
-		            mix_voice( channel_buffer[ idChannel ] + voice[ idVoice ].echo_delay, idVoice,
-						count - voice[ idVoice ].echo_delay);
-			    voice[ idVoice ].echo_delay = 0;
+		            mix_voice( channel_buffer[ idChannel ] + voice[ idVoice ].echo_delay_count, idVoice,
+						count - voice[ idVoice ].echo_delay_count);
+			    voice[ idVoice ].echo_delay_count = 0;
 			  }
 		    }
 		  else mix_voice( channel_buffer[ idChannel ] , idVoice , count );
@@ -301,13 +301,13 @@ static void do_compute_data_default(uint32 count)
     {
       if(voice[i].status != VOICE_FREE)
 	{
-	  if (!voice[i].sample_offset && voice[i].echo_delay)
+	  if (!voice[i].sample_offset && voice[i].echo_delay_count)
 	    {
-		if (voice[i].echo_delay >= count) voice[i].echo_delay -= count;
+		if (voice[i].echo_delay_count >= count) voice[i].echo_delay_count -= count;
 		else
 		  {
-	            mix_voice(buffer_pointer+voice[i].echo_delay, i, count-voice[i].echo_delay);
-		    voice[i].echo_delay = 0;
+	            mix_voice(buffer_pointer+voice[i].echo_delay_count, i, count-voice[i].echo_delay_count);
+		    voice[i].echo_delay_count = 0;
 		  }
 	    }
 	  else mix_voice(buffer_pointer, i, count);

@@ -53,17 +53,19 @@ static int dont_cspline = 0;
 
 #define FILTER_INTERPOLATION
 
-#define OVERSHOOT 10
-#define PATCH_OVERSHOOT (OVERSHOOT<<FRACTION_BITS)
+#define OVERSHOOT_STEP 50
 
 #if defined(CSPLINE_INTERPOLATION)
 #ifndef FILTER_INTERPOLATION
-# define INTERPVARS      int32   ofsd, v0, v1, v2, v3, temp;
+# define INTERPVARS      int32   ofsd, v0, v1, v2, v3, temp, overshoot;
+# define BUTTERWORTH_COEFFICIENTS \
+			overshoot = src[(se>>FRACTION_BITS)-1] / OVERSHOOT_STEP; \
+			if (overshoot < 0) overshoot = -overshoot;
 # define RESAMPLATION \
 	if (ofs >= se) { \
 		int32 delta = (ofs - se)>>FRACTION_BITS ; \
         	v1 = (int32)src[(se>>FRACTION_BITS)-1]; \
-		v1 -=  (delta+1) * v1 / OVERSHOOT; \
+		v1 -=  (delta+1) * v1 / overshoot; \
         }else  v1 = (int32)src[(ofs>>FRACTION_BITS)]; \
 	if (ofs + (1L<<FRACTION_BITS) >= se) { \
 		v2 = v1; \
@@ -89,7 +91,7 @@ static int dont_cspline = 0;
 		ofs=ofsd; \
 	}
 #else
-# define INTERPVARS      int32   ofsd, v0, v1, v2, v3, temp; \
+# define INTERPVARS      int32   ofsd, v0, v1, v2, v3, temp, overshoot; \
 			float insamp, outsamp, a0, a1, a2, b0, b1, \
 			    x0=vp->current_x0, x1=vp->current_x1, y0=vp->current_y0, y1=vp->current_y1; \
 			int cc_count=vp->modulation_counter, bw_index=vp->bw_index; \
@@ -99,12 +101,14 @@ static int dont_cspline = 0;
 			a1 = butterworth[bw_index][1]; \
 			a2 = butterworth[bw_index][2]; \
 			b0 = butterworth[bw_index][3]; \
-			b1 = butterworth[bw_index][4];
+			b1 = butterworth[bw_index][4]; \
+			overshoot = src[(se>>FRACTION_BITS)-1] / OVERSHOOT_STEP; \
+			if (overshoot < 0) overshoot = -overshoot;
 # define RESAMPLATION \
 	if (ofs >= se) { \
 		int32 delta = (ofs - se)>>FRACTION_BITS; \
         	v1 = (int32)src[(se>>FRACTION_BITS)-1]; \
-		v1 -=  (delta+1) * v1 / OVERSHOOT; \
+		v1 -=  (delta+1) * v1 / overshoot; \
         }else  v1 = (int32)src[(ofs>>FRACTION_BITS)]; \
 	if (ofs + (1L<<FRACTION_BITS) >= se) { \
 		v2 = v1; \
@@ -185,12 +189,15 @@ static int dont_cspline = 0;
 	vp->modulation_counter=cc_count;
 #endif
 #elif defined(LAGRANGE_INTERPOLATION)
-# define INTERPVARS      int32   ofsd, v0, v1, v2, v3;
+# define INTERPVARS      int32   ofsd, v0, v1, v2, v3, overshoot;
+# define BUTTERWORTH_COEFFICIENTS \
+			overshoot = src[(se>>FRACTION_BITS)-1] / OVERSHOOT_STEP; \
+			if (overshoot < 0) overshoot = -overshoot;
 # define RESAMPLATION \
 	if (ofs >= se) { \
 		int32 delta = (ofs - se)>>FRACTION_BITS ; \
         	v1 = (int32)src[(se>>FRACTION_BITS)-1]; \
-		v1 -=  (delta+1) * v1 / OVERSHOOT; \
+		v1 -=  (delta+1) * v1 / overshoot; \
         }else  v1 = (int32)src[(ofs>>FRACTION_BITS)]; \
 	if (ofs + (1L<<FRACTION_BITS) >= se) { \
 		v2 = v1; \
@@ -221,6 +228,10 @@ static int dont_cspline = 0;
 	}
 #elif defined(LINEAR_INTERPOLATION)
 # if defined(LOOKUP_HACK) && defined(LOOKUP_INTERPOLATION)
+# define BUTTERWORTH_COEFFICIENTS \
+			overshoot = src[(se>>FRACTION_BITS)-1] / OVERSHOOT_STEP; \
+			if (overshoot < 0) overshoot = -overshoot;
+# define INTERPVARS     int32 overshoot;
 #   define RESAMPLATION \
 	if (ofs >= se) { \
 		int32 delta = (ofs - se)>>FRACTION_BITS ; \
@@ -233,6 +244,10 @@ static int dont_cspline = 0;
 	*dest++ = (sample_t)(v1 + (iplookup[(((v2-v1)<<5) & 0x03FE0) | \
            ((int32)(ofs & FRACTION_MASK) >> (FRACTION_BITS-5))]));
 # else
+# define BUTTERWORTH_COEFFICIENTS \
+			overshoot = src[(se>>FRACTION_BITS)-1] / OVERSHOOT_STEP; \
+			if (overshoot < 0) overshoot = -overshoot;
+# define INTERPVARS     int32 overshoot;
 #   define RESAMPLATION \
 	if (ofs >= se) { \
 		int32 delta = (ofs - se)>>FRACTION_BITS ; \
@@ -244,13 +259,13 @@ static int dont_cspline = 0;
         }else  v2 = (int32)src[(ofs>>FRACTION_BITS)+1]; \
 	*dest++ = (sample_t)(v1 + ((int32)((v2-v1) * (ofs & FRACTION_MASK)) >> FRACTION_BITS));
 # endif
-#  define INTERPVARS int32 v1, v2;
+#  define INTERPVARS int32 v1, v2, overshoot=0;
 #else
 /* Earplugs recommended for maximum listening enjoyment */
 #  define RESAMPLATION \
 	if (ofs >= se) *dest++ = 0; \
 	else *dest++=src[ofs>>FRACTION_BITS];
-#  define INTERPVARS
+#  define INTERPVARS int32 overshoot=0;
 #endif
 
 
@@ -446,7 +461,7 @@ static sample_t *rs_plain(int v, uint32 *countptr)
     {
       RESAMPLATION;
       ofs += incr;
-      if (ofs >= se + PATCH_OVERSHOOT)
+      if (ofs >= se + (overshoot << FRACTION_BITS))
 	{
 	  vp->status=VOICE_FREE;
  	  ctl->note(v);
@@ -489,15 +504,20 @@ static sample_t *rs_loop(int v, Voice *vp, uint32 *countptr)
     {
       RESAMPLATION;
       ofs += incr;
-      if (ofs >= se + PATCH_OVERSHOOT)
+      if (ofs>=le)
+	{
+	  if (vp->status & (VOICE_OFF | VOICE_FREE))
+	    vp->echo_delay -= ll >> FRACTION_BITS;
+	  if (vp->echo_delay >= 0)
+	    ofs -= ll; /* Hopefully the loop is longer than an increment. */
+	}
+      if (ofs >= se + (overshoot << FRACTION_BITS))
 	{
 	  vp->status=VOICE_FREE;
  	  ctl->note(v);
 	  *countptr-=count+1;
 	  break;
 	}
-      if (ofs>=le && !(vp->status & (VOICE_OFF | VOICE_FREE)))
-	ofs -= ll; /* Hopefully the loop is longer than an increment. */
     }
 
   vp->sample_offset=ofs; /* Update offset */
@@ -766,7 +786,7 @@ static sample_t *rs_vib_plain(int v, uint32 *countptr)
 	}
       RESAMPLATION;
       ofs += incr;
-      if (ofs >= se + PATCH_OVERSHOOT)
+      if (ofs >= se + (overshoot << FRACTION_BITS))
 	{
 	  vp->status=VOICE_FREE;
  	  ctl->note(v);
@@ -818,15 +838,20 @@ static sample_t *rs_vib_loop(int v, Voice *vp, uint32 *countptr)
 	}
       RESAMPLATION;
       ofs += incr;
-      if (ofs >= se + PATCH_OVERSHOOT)
+      if (ofs>=le)
+	{
+	  if (vp->status & (VOICE_OFF | VOICE_FREE))
+	    vp->echo_delay -= ll >> FRACTION_BITS;
+	  if (vp->echo_delay >= 0)
+	    ofs -= ll; /* Hopefully the loop is longer than an increment. */
+	}
+      if (ofs >= se + (overshoot << FRACTION_BITS))
 	{
 	  vp->status=VOICE_FREE;
  	  ctl->note(v);
 	  *countptr-=count+1;
 	  break;
 	}
-      if (ofs>=le && !(vp->status & (VOICE_OFF | VOICE_FREE)))
-	ofs -= ll; /* Hopefully the loop is longer than an increment. */
     }
 
   vp->vibrato_control_counter=cc;
@@ -1218,8 +1243,8 @@ void do_lowpass(Sample *sample, uint32 srate, sample_t *buf, uint32 count, int32
 void pre_resample(Sample * sp)
 {
   double a, xdiff;
-  int32 incr, ofs, newlen, count;
-  int16 *newdata, *dest, *src = (int16 *)sp->data, *vptr;
+  int32 incr, ofs, newlen, count, overshoot;
+  int16 *newdata, *dest, *src = (int16 *)sp->data, *vptr, *endptr;
   int32 v1, v2, v3, v4, i;
   static const char note_name[12][3] =
   {
@@ -1231,12 +1256,11 @@ void pre_resample(Sample * sp)
 	    note_name[sp->note_to_use % 12], (sp->note_to_use & 0x7F) / 12);
 
   if (sp->sample_rate == play_mode->rate && sp->root_freq == freq_table[(int)(sp->note_to_use)]) {
-  	sp->sample_rate = 0;
-	return;
+	a = 1;
   }
-
-  a = ((double) (sp->sample_rate) * freq_table[(int) (sp->note_to_use)]) /
+  else a = ((double) (sp->sample_rate) * freq_table[(int) (sp->note_to_use)]) /
     ((double) (sp->root_freq) * play_mode->rate);
+
   /* if (a<1.0) return; */
   if(sp->data_length / a >= 0x7fffffffL)
   {
@@ -1245,6 +1269,12 @@ void pre_resample(Sample * sp)
 		sp->note_to_use);
       return;
   }
+
+  endptr = src + (sp->data_length >> FRACTION_BITS) - 1;
+  overshoot = *endptr / OVERSHOOT_STEP;
+  if (overshoot < 0) overshoot = -overshoot;
+  if (overshoot < 2) overshoot = 0;
+
   newlen = (int32)(sp->data_length / a);
   count = (newlen >> FRACTION_BITS) - 1;
   ofs = incr = (sp->data_length - (1 << FRACTION_BITS)) / count;
@@ -1257,7 +1287,7 @@ void pre_resample(Sample * sp)
       return;
   }
 
-  dest = newdata = (int16 *)safe_malloc((newlen >> (FRACTION_BITS - 1)) + 2);
+  dest = newdata = (int16 *)safe_malloc((newlen >> (FRACTION_BITS - 1)) + 2 + 2*overshoot);
 
   if (--count)
     *dest++ = src[0];
@@ -1265,16 +1295,29 @@ void pre_resample(Sample * sp)
   /* Since we're pre-processing and this doesn't have to be done in
      real-time, we go ahead and do the full sliding cubic interpolation. */
   count--;
-  for(i = 0; i < count; i++)
+  for(i = 0; i < count + overshoot; i++)
     {
 #ifdef tplussliding
       int32 v, v5;
 #endif
       vptr = src + (ofs >> FRACTION_BITS);
-      v1 = *(vptr - 1);
-      v2 = *vptr;
-      v3 = *(vptr + 1);
-      v4 = *(vptr + 2);
+      if (i < count - 2 || !overshoot)
+	{
+          v1 = *(vptr - 1);
+          v2 = *vptr;
+          v3 = *(vptr + 1);
+          v4 = *(vptr + 2);
+	}
+      else
+	{
+	  if (i < count + 1) v1 = *(vptr - 1);
+	  else v1 = *endptr - (count-i+2) * *endptr / overshoot;
+	  if (i < count) v2 = *vptr;
+	  else v2 = *endptr - (count-i+1) * *endptr / overshoot;
+	  if (i < count - 1) v3 = *(vptr + 1);
+	  else v3 = *endptr - (count-i) * *endptr / overshoot;
+	  v4 = *endptr - (count-i-1) * *endptr / overshoot;
+	}
 #ifdef tplussliding
       v5 = v2 - v3;
       xdiff = FRSCALENEG((int32)(ofs & FRACTION_MASK), FRACTION_BITS);
@@ -1295,6 +1338,8 @@ void pre_resample(Sample * sp)
       ofs += incr;
     }
 
+ if (!overshoot)
+  {
   if ((int32)(ofs & FRACTION_MASK))
     {
       v1 = src[ofs >> FRACTION_BITS];
@@ -1305,8 +1350,9 @@ void pre_resample(Sample * sp)
     *dest++ = src[ofs >> FRACTION_BITS];
   *dest++ = *(dest - 1) / 2;
   *dest++ = *(dest - 1) / 2;
+  }
 
-  sp->data_length = newlen;
+  sp->data_length = newlen + (overshoot << FRACTION_BITS);
   sp->loop_start = (int32)(sp->loop_start / a);
   sp->loop_end = (int32)(sp->loop_end / a);
   free(sp->data);

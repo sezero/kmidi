@@ -502,7 +502,7 @@ static int load_one_side(SFInsts *rec, SampleList *sp, int sample_count, Sample 
 	}
 #endif
 
-#ifdef ADJUST_SAMPLE_VOLUMES
+#ifdef SF_ADJUST_SAMPLE_VOLUMES
       if (amp!=-1)
 	sample->volume=(double)(amp) / 100.0;
       else
@@ -531,47 +531,17 @@ static int load_one_side(SFInsts *rec, SampleList *sp, int sample_count, Sample 
 #endif
 
 
-		if (antialiasing_allowed) {
-			/* restore the normal value */
-			sample->data_length >>= FRACTION_BITS;
-			antialiasing(sample, play_mode->rate);
-			/* convert again to the fractional value */
-			sample->data_length <<= FRACTION_BITS;
-		}
+	if (antialiasing_allowed) {
+		/* restore the normal value */
+		sample->data_length >>= FRACTION_BITS;
+		antialiasing(sample, play_mode->rate);
+		/* convert again to the fractional value */
+		sample->data_length <<= FRACTION_BITS;
+	}
 
 		/* resample it if possible */
 		samplerate_save = sample->sample_rate;
-
-		if (sample->note_to_use && !(sample->modes & MODES_LOOPING))
-			pre_resample(sample);
-
-/*fprintf(stderr,"sample %d, note_to_use %d\n", i, sample->note_to_use);*/
-#ifdef LOOKUP_HACK
-		/* squash the 16-bit data into 8 bits. */
-		{
-			uint8 *gulp,*ulp;
-			int16 *swp;
-			int l = sample->data_length >> FRACTION_BITS;
-			gulp = ulp = safe_malloc(l + 1);
-			swp = (int16 *)sample->data;
-			while (l--)
-				*ulp++ = (*swp++ >> 8) & 0xFF;
-			free(sample->data);
-			sample->data=(sample_t *)gulp;
-		}
-#endif
-
-		if (!sample->sample_rate && !dont_filter_drums) {
-    		        if (!i) ctl->cmsg(CMSG_INFO, VERB_DEBUG, "cutoff = %ld ; resonance = %g",
-				sp->cutoff_freq, sp->resonance);
-			do_lowpass(sample, samplerate_save, sample->data, sample->data_length >> FRACTION_BITS,
-				sp->cutoff_freq, sp->resonance);
-		}
-
-/*
-printf("loop start %ld, loop end %ld, len %d\n", sample->loop_start>>FRACTION_BITS, sample->loop_end>>FRACTION_BITS,
-sample->data_length >> FRACTION_BITS);
-*/
+    /* trim off zero data at end */
     {
 	int ls = sample->loop_start>>FRACTION_BITS;
 	int le = sample->loop_end>>FRACTION_BITS;
@@ -583,7 +553,39 @@ sample->data_length >> FRACTION_BITS);
 	sample->data_length = se<<FRACTION_BITS;
     }
 
-#define HANNU_CLICK_REMOVAL
+
+	if (sample->note_to_use && !(sample->modes & MODES_LOOPING))
+		pre_resample(sample);
+
+/*fprintf(stderr,"sample %d, note_to_use %d\n", i, sample->note_to_use);*/
+#ifdef LOOKUP_HACK
+	/* squash the 16-bit data into 8 bits. */
+	{
+		uint8 *gulp,*ulp;
+		int16 *swp;
+		int l = sample->data_length >> FRACTION_BITS;
+		gulp = ulp = safe_malloc(l + 1);
+		swp = (int16 *)sample->data;
+		while (l--)
+			*ulp++ = (*swp++ >> 8) & 0xFF;
+		free(sample->data);
+		sample->data=(sample_t *)gulp;
+	}
+#endif
+
+	if (!sample->sample_rate && !dont_filter_drums) {
+    	        if (!i) ctl->cmsg(CMSG_INFO, VERB_DEBUG, "cutoff = %ld ; resonance = %g",
+			sp->cutoff_freq, sp->resonance);
+		do_lowpass(sample, samplerate_save, sample->data, sample->data_length >> FRACTION_BITS,
+			sp->cutoff_freq, sp->resonance);
+	}
+
+/*
+printf("loop start %ld, loop end %ld, len %d\n", sample->loop_start>>FRACTION_BITS, sample->loop_end>>FRACTION_BITS,
+sample->data_length >> FRACTION_BITS);
+*/
+
+/* #define HANNU_CLICK_REMOVAL */
 /*#define DEBUG_CLICK*/
 #ifdef HANNU_CLICK_REMOVAL
     if ((sample->modes & MODES_LOOPING)) {

@@ -123,7 +123,7 @@ FLOAT_T
     master_volume;
 
 int32 drumchannels=DEFAULT_DRUMCHANNELS;
-int adjust_panning_immediately=0;
+int adjust_panning_immediately=1;
 
 int GM_System_On=0;
 int XG_System_On=0;
@@ -498,7 +498,7 @@ static void recompute_amp(int v)
 	  voice[v].panned=PANNED_CENTER;
 
 	  voice[v].left_amp=
-	    FRSCALENEG((double)(tempamp) * voice[v].sample->volume * master_volume,
+	    FRSCALENEG((double)(tempamp) * voice[v].volume * master_volume,
 		      21);
 	}
       else if (voice[v].panning<5)
@@ -506,7 +506,7 @@ static void recompute_amp(int v)
 	  voice[v].panned = PANNED_LEFT;
 
 	  voice[v].left_amp=
-	    FRSCALENEG((double)(tempamp) * voice[v].sample->volume * master_volume,
+	    FRSCALENEG((double)(tempamp) * voice[v].volume * master_volume,
 		      20);
 	}
       else if (voice[v].panning>123)
@@ -514,7 +514,7 @@ static void recompute_amp(int v)
 	  voice[v].panned = PANNED_RIGHT;
 
 	  voice[v].left_amp= /* left_amp will be used */
-	    FRSCALENEG((double)(tempamp) * voice[v].sample->volume * master_volume,
+	    FRSCALENEG((double)(tempamp) * voice[v].volume * master_volume,
 		      20);
 	}
       else
@@ -522,7 +522,7 @@ static void recompute_amp(int v)
 	  voice[v].panned = PANNED_MYSTERY;
 
 	  voice[v].left_amp=
-	    FRSCALENEG((double)(tempamp) * voice[v].sample->volume * master_volume,
+	    FRSCALENEG((double)(tempamp) * voice[v].volume * master_volume,
 		      27);
 	  voice[v].right_amp=voice[v].left_amp * (voice[v].panning);
 	  voice[v].left_amp *= (double)(127-voice[v].panning);
@@ -533,7 +533,7 @@ static void recompute_amp(int v)
       voice[v].panned=PANNED_CENTER;
 
       voice[v].left_amp=
-	FRSCALENEG((double)(tempamp) * voice[v].sample->volume * master_volume,
+	FRSCALENEG((double)(tempamp) * voice[v].volume * master_volume,
 		  21);
     }
 }
@@ -546,7 +546,7 @@ static void recompute_amp(int v)
 
     tempamp = ((FLOAT_T)master_volume *
 	       voice[v].velocity *
-	       voice[v].sample->volume *
+	       voice[v].volume *
 	       channel[voice[v].channel].volume *
 	       channel[voice[v].channel].expression); /* 21 bits */
 
@@ -617,9 +617,7 @@ static void kill_others(MidiEvent *e, int i)
 
   while (j--)
     {
-      if (voice[j].status == VOICE_FREE) continue;
-      if (voice[j].status == VOICE_OFF) continue;
-      if (voice[j].status == VOICE_DIE) continue;
+      if (voice[j].status & (VOICE_FREE|VOICE_OFF|VOICE_DIE)) continue;
       if (i == j) continue;
       if (voice[i].channel != voice[j].channel) continue;
       if (voice[j].sample->note_to_use)
@@ -640,7 +638,7 @@ extern int reverb_options;
 
 static void clone_voice(Instrument *ip, int v, MidiEvent *e, uint8 clone_type, int variationbank)
 {
-  int w, k, played_note, chorus, reverb;
+  int w, k, played_note, chorus, reverb, milli;
   int chan = voice[v].channel;
 
 
@@ -652,16 +650,12 @@ static void clone_voice(Instrument *ip, int v, MidiEvent *e, uint8 clone_type, i
   reverb = ip->sample->reverberation;
 
   if (channel[chan].kit) {
-/*
-	if ((k=drumreverberation[chan][voice[v].note]) >= 0) reverb = (reverb+k)/2;
-	if ((k=drumchorusdepth[chan][voice[v].note]) >= 0) chorus = (chorus+k)/2;
-*/
-	if ((k=drumreverberation[chan][voice[v].note]) >= 0) reverb = k;
-	if ((k=drumchorusdepth[chan][voice[v].note]) >= 0) chorus = k;
+	if ((k=drumreverberation[chan][voice[v].note]) >= 0) reverb = (reverb>k)? reverb : k;
+	if ((k=drumchorusdepth[chan][voice[v].note]) >= 0) chorus = (chorus>k)? chorus : k;
   }
   else {
-	if (channel[chan].chorusdepth) chorus = (chorus + channel[chan].chorusdepth)/2;
-	if (channel[chan].reverberation) reverb = (reverb + channel[chan].reverberation)/2;
+	if ((k=channel[chan].chorusdepth) >= 0) chorus = (chorus>k)? chorus : k;
+	if ((k=channel[chan].reverberation) >= 0) reverb = (reverb>k)? reverb : k;
   }
 
   if (clone_type == REVERB_CLONE) chorus = 0;
@@ -775,20 +769,33 @@ static void clone_voice(Instrument *ip, int v, MidiEvent *e, uint8 clone_type, i
   voice[w].vibrato_delay = voice[w].sample->vibrato_delay;
   voice[w].modulation_delay = voice[w].sample->modulation_rate[DELAY];
 #endif
+  voice[w].volume = voice[w].sample->volume;
+
+  milli = play_mode->rate/1000;
+
   if (reverb) {
-	int milli = play_mode->rate/1000;
 	if (voice[w].panning < 64) voice[w].panning = 127;
 	else voice[w].panning = 0;
-	/*voice[w].velocity /= 2;*/
-	voice[w].velocity = (voice[w].velocity * reverb) / 128;
-	/**voice[w].velocity = (voice[w].velocity * reverb) / 256;**/
-	/*voice[w].echo_delay = 50 * (play_mode->rate/1000);*/
-	/**voice[w].echo_delay += (reverb>>2) * milli;**/
 
-	if ( reverb>>4 > 30) voice[w].echo_delay += 30 * milli;
-	else voice[w].echo_delay += (reverb>>4) * milli;
-/* 500, 250, 100, 50 too long; 25 pretty good */
-	voice[w].envelope_rate[3] /= 2;
+#ifdef DEBUG_REVERBERATION
+printf("r=%d vol %f", reverb, voice[w].volume);
+#endif
+	voice[w].volume = vol_table[(127-reverb)/8 + 127 - 15 - 1];
+
+#ifdef DEBUG_REVERBERATION
+printf(" -> vol %f", voice[w].volume);
+
+printf(" delay %d", voice[w].echo_delay);
+#endif
+	voice[w].echo_delay += (reverb>>1) * milli;
+#ifdef DEBUG_REVERBERATION
+printf(" -> delay %d\n", voice[w].echo_delay);
+#endif
+
+
+	voice[w].envelope_rate[DECAY] /= 2;
+	voice[w].envelope_rate[RELEASE] /= 2;
+
 	if (XG_System_reverb_type >= 0) {
 	    int subtype = XG_System_reverb_type & 0x07;
 	    int rtype = XG_System_reverb_type >>3;
@@ -841,6 +848,7 @@ static void clone_voice(Instrument *ip, int v, MidiEvent *e, uint8 clone_type, i
 		voice[w].sample->freq_center;
   voice[w].note = played_note;
   voice[w].orig_frequency = freq_table[played_note];
+
   if (chorus) {
 	/*voice[w].orig_frequency += (voice[w].orig_frequency/128) * chorus;*/
 /*fprintf(stderr, "voice %d v sweep from %ld (cr %d, depth %d)", w, voice[w].vibrato_sweep,
@@ -856,8 +864,12 @@ static void clone_voice(Instrument *ip, int v, MidiEvent *e, uint8 clone_type, i
 		voice[w].vibrato_sweep = 74;
 	}
 	/*voice[w].velocity = (voice[w].velocity * chorus) / 128;*/
+#if 0
 	voice[w].velocity = (voice[w].velocity * chorus) / (128+96);
 	voice[v].velocity = voice[w].velocity;
+#endif
+	voice[w].volume = (voice[w].volume * chorus) / (128+96);
+	voice[v].volume = voice[w].volume;
 	recompute_amp(v);
 	voice[w].vibrato_sweep = chorus/2;
 	voice[w].vibrato_depth /= 2;
@@ -867,6 +879,9 @@ static void clone_voice(Instrument *ip, int v, MidiEvent *e, uint8 clone_type, i
 /*fprintf(stderr, " to %ld (cr %d, depth %d).\n", voice[w].vibrato_sweep,
 	 voice[w].vibrato_control_ratio, voice[w].vibrato_depth);
 	voice[w].vibrato_phase = 20;*/
+
+	voice[w].echo_delay += 30 * milli;
+
 	if (XG_System_chorus_type >= 0) {
 	    int subtype = XG_System_chorus_type & 0x07;
 	    int chtype = XG_System_chorus_type >> 3;
@@ -897,6 +912,7 @@ static void clone_voice(Instrument *ip, int v, MidiEvent *e, uint8 clone_type, i
   }
   voice[w].loop_start = voice[w].sample->loop_start;
   voice[w].loop_end = voice[w].sample->loop_end;
+  voice[w].echo_delay_count = voice[w].echo_delay;
 
   recompute_freq(w);
   recompute_amp(w);
@@ -1010,8 +1026,10 @@ static void start_note(MidiEvent *e, int i)
 #endif
   voice[i].sample_offset=0;
   voice[i].sample_increment=0; /* make sure it isn't negative */
+  /* why am I copying loop points? */
   voice[i].loop_start = voice[i].sample->loop_start;
   voice[i].loop_end = voice[i].sample->loop_end;
+  voice[i].volume = voice[i].sample->volume;
   voice[i].current_x0 =
     voice[i].current_x1 =
     voice[i].current_y0 =
@@ -1138,6 +1156,7 @@ voice[i].envelope_offset[j]);
   }
 
   voice[i].echo_delay=voice[i].envelope_rate[DELAY];
+  voice[i].echo_delay_count = voice[i].echo_delay;
 
 #ifdef RATE_ADJUST_DEBUG
 if (e_debug) {
@@ -1291,11 +1310,15 @@ printf("(new rel time = %ld)\n",
   played_notes++;
 }
 
+/* changed from VOICE_DIE: the trouble with ramping out dying
+   voices in mix.c is that the dying time is just a coincidence
+   of how near a buffer end we happen to be.
+*/
 static void kill_note(int i)
 {
-  voice[i].status=(VOICE_DIE|VOICE_OFF);
+  voice[i].status=VOICE_OFF;
   if (voice[i].clone_voice >= 0)
-	voice[ voice[i].clone_voice ].status=(VOICE_DIE|VOICE_OFF);
+	voice[ voice[i].clone_voice ].status=VOICE_OFF;
   ctl->note(i);
 }
 
@@ -1497,6 +1520,8 @@ static void note_on(MidiEvent *e)
 
 static void finish_note(int i)
 {
+  if (voice[i].status & (VOICE_FREE | VOICE_DIE | VOICE_OFF)) return;
+
   if (voice[i].sample->modes & MODES_ENVELOPE)
     {
       /* We need to get the envelope out of Sustain stage */
@@ -1517,8 +1542,6 @@ static void finish_note(int i)
   { int v;
     if ( (v=voice[i].clone_voice) >= 0)
       {
-	voice[i].clone_voice = -1;
-	voice[v].clone_voice = -1;
         finish_note(v);
       }
   }
@@ -1526,7 +1549,7 @@ static void finish_note(int i)
 
 static void note_off(MidiEvent *e)
 {
-  int i=voices;
+  int i=voices, v;
   while (i--)
     if (voice[i].status==VOICE_ON &&
 	voice[i].channel==e->channel &&
@@ -1536,12 +1559,14 @@ static void note_off(MidiEvent *e)
 	  {
 	    voice[i].status=VOICE_SUSTAINED;
 	    ctl->note(i);
+    	    if ( (v=voice[i].clone_voice) >= 0)
+	      {
+		if (voice[v].status == VOICE_ON)
+		  voice[v].status=VOICE_SUSTAINED;
+	      }
 	  }
 	else
 	  finish_note(i);
-/** #ifndef ADAGIO
-	return; **/
-/** #endif **/
       }
 }
 
@@ -1621,8 +1646,9 @@ static void adjust_panning(int c)
   int i=voices;
   while (i--)
     if ((voice[i].channel==c) &&
-	(voice[i].status==VOICE_ON || voice[i].status==VOICE_SUSTAINED))
+	(voice[i].status & (VOICE_ON | VOICE_SUSTAINED)) )
       {
+/* FIXME */
 	if (voice[i].right_sample) continue;
 	voice[i].panning=channel[c].panning;
 	recompute_amp(i);
@@ -2060,13 +2086,13 @@ static void do_compute_data(uint32 count)
     {
       if(voice[i].status != VOICE_FREE)
 	{
-	  if (!voice[i].sample_offset && voice[i].echo_delay)
+	  if (!voice[i].sample_offset && voice[i].echo_delay_count)
 	    {
-		if (voice[i].echo_delay >= count) voice[i].echo_delay -= count;
+		if (voice[i].echo_delay_count >= count) voice[i].echo_delay_count -= count;
 		else
 		  {
-	            mix_voice(buffer_pointer+voice[i].echo_delay, i, count-voice[i].echo_delay);
-		    voice[i].echo_delay = 0;
+	            mix_voice(buffer_pointer+voice[i].echo_delay_count, i, count-voice[i].echo_delay_count);
+		    voice[i].echo_delay_count = 0;
 		  }
 	    }
 	  else mix_voice(buffer_pointer, i, count);

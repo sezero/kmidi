@@ -210,7 +210,8 @@ typedef float FLOAT_T;
 
 /* The number of samples to use for ramping out a dying note. Affects
    click removal. */
-#define MAX_DIE_TIME 20
+/* #define MAX_DIE_TIME 20 */
+#define MAX_DIE_TIME (DEFAULT_RATE/4)
 
 /* On some machines (especially PCs without math coprocessors),
    looking up sine values in a table will be significantly faster than

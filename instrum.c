@@ -836,6 +836,17 @@ if (percussion /* && (gm_num >= 42 && gm_num <= 51) */) {
       sp->loop_end |=
 	((fractions>>4) & 0x0F) << (FRACTION_BITS-4);
 
+    /* trim off zero data at end */
+    {
+	int ls = sp->loop_start>>FRACTION_BITS;
+	int le = sp->loop_end>>FRACTION_BITS;
+	int se = sp->data_length>>FRACTION_BITS;
+	while (se > 1 && !sp->data[se-1]) se--;
+	if (le > se) le = se;
+	if (ls >= le) sp->modes &= ~MODES_LOOPING;
+	sp->loop_end = le<<FRACTION_BITS;
+	sp->data_length = se<<FRACTION_BITS;
+    }
       /* If this instrument will always be played on the same note,
 	 and it's not looped, we can resample it now. */
       if (sp->note_to_use && !(sp->modes & MODES_LOOPING))
