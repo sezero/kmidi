@@ -88,7 +88,7 @@ static unsigned max_polyphony = 0;
 #ifdef tplus
 int dont_cspline=0;
 #endif
-int opt_dry = 0;
+int opt_dry = 1;
 int opt_expression_curve = 1;
 int opt_volume_curve = 1;
 int opt_stereo_surround = 1;

@@ -115,6 +115,7 @@ static void xaw_delete_midi_file(int delete_num);
 static void xaw_output_flist(void);
 static int ctl_blocking_read(int32 *valp);
 static void shuffle(int n,int *a);
+static int check_midi_file(char *path);
 
 static double indicator_last_update = 0;
 #define EXITFLG_QUIT 1
@@ -174,6 +175,28 @@ ControlMode ctl=
 };
 
 #endif
+
+
+static int check_midi_file(char *path)
+{
+  FILE *fp;
+  char tmp[4];
+  int len;
+
+  if (!(fp=open_file(path, 1, OF_VERBOSE, 0))) return 0;
+
+  if ((fread(tmp,1,4,fp) != 4) || (fread(&len,4,1,fp) != 1)) {
+	fclose(fp);
+	return 0;
+  }
+  len=BE_LONG(len);
+  if (memcmp(tmp, "MThd", 4) || len < 6) {
+	fclose(fp);
+	return 0;
+  }
+  fclose(fp);
+  return 1;
+}
 
 static char local_buf[300];
 
@@ -424,7 +447,11 @@ static void ctl_close(void)
 }
 
 static void xaw_add_midi_file(char *additional_path) {
+#ifdef ORIG_XAW
     char *files[1],**ret,**tmp;
+#else
+    char *files[1],**tmp;
+#endif
     int i,nfiles,nfit;
     char *p;
 
@@ -433,26 +460,26 @@ static void xaw_add_midi_file(char *additional_path) {
 #ifdef ORIG_XAW
     ret = expand_file_archives(files, &nfiles);
     if(ret == NULL)
-#endif
       return;
-#ifdef ORIG_XAW
+#endif
+
     tmp = list_of_files;
-    titles=(char **)safe_realloc(titles,(number_of_files+nfiles)*sizeof(char *));
+    titles=(char **)realloc(titles,(number_of_files+nfiles)*sizeof(char *));
     list_of_files=(char **)safe_malloc((number_of_files+nfiles)*sizeof(char *));
     for (i=0;i<number_of_files;i++)
-        list_of_files[i]=safe_strdup(tmp[i]);
+        list_of_files[i]=(char *)strdup(tmp[i]);
     for (i=0,nfit=0;i<nfiles;i++) {
-        if(check_midi_file(ret[i]) >= 0) {
-            p=strrchr(ret[i],'/');
-            if (p==NULL) p=ret[i]; else p++;      
+        if(check_midi_file(additional_path)) {
+            p=strrchr(additional_path,'/');
+            if (p==NULL) p=additional_path; else p++;      
             titles[number_of_files+nfit]=(char *)safe_malloc(sizeof(char)*(strlen(p)+ 9));
-            list_of_files[number_of_files+nfit]=safe_strdup(ret[i]);
+            list_of_files[number_of_files+nfit]=strdup(additional_path);
             sprintf(titles[number_of_files+nfit],"%d. %s",number_of_files+nfit+1,p);
             nfit++;
         }
     }
     if(nfit>0) {
-        file_table=(int *)safe_realloc(file_table,
+        file_table=(int *)realloc(file_table,
                                        (number_of_files+nfit)*sizeof(int));
         for(i = number_of_files; i < number_of_files + nfit; i++)
             file_table[i] = i;
@@ -462,6 +489,7 @@ static void xaw_add_midi_file(char *additional_path) {
         for (i=0;i<nfit;i++)
             a_pipe_write(titles[number_of_files-nfit+i]);
     }
+#ifdef ORIG_XAW
     free(ret[0]);
     free(ret);
 #endif
@@ -668,19 +696,6 @@ static void ctl_pass_playing_list(int init_number_of_files,
   if (strcmp("READY",local_buf)) return;
   xaw_ready=1;
 
-#ifdef ORIG_XAW
-  sprintf(local_buf,"%d",
-  (opt_modulation_wheel<<MODUL_N)
-     | (opt_portamento<<PORTA_N)
-     | (opt_nrpn_vibrato<<NRPNV_N)
-     | (opt_reverb_control<<REVERB_N)
-     | (opt_channel_pressure<<CHPRESSURE_N)
-     | (opt_overlap_voice_allow<<OVERLAPV_N)
-     | (opt_trace_text_meta_event<<TXTMETA_N));
-  a_pipe_write(local_buf);
-  sprintf(local_buf,"%d",opt_chorus_control);
-  a_pipe_write(local_buf);
-#else
   sprintf(local_buf,"%d",
   (1<<MODUL_N)
      | (1<<PORTA_N)
@@ -692,42 +707,24 @@ static void ctl_pass_playing_list(int init_number_of_files,
   a_pipe_write(local_buf);
   sprintf(local_buf,"%d",1);
   a_pipe_write(local_buf);
-#endif
 
   /* Make title string */
   titles=(char **)safe_malloc(init_number_of_files*sizeof(char *));
   list_of_files=(char **)safe_malloc(init_number_of_files*sizeof(char *));
   for (i=0,j=0;i<init_number_of_files;i++) {
-#ifdef ORIG_XAW
-    if(check_midi_file(init_list_of_files[i]) >= 0) {
-#else
     {
-#endif
       p=strrchr(init_list_of_files[i],'/');
       if (p==NULL) {
-#ifdef ORIG_XAW
-        p=safe_strdup(init_list_of_files[i]);
-#else
         p=strdup(init_list_of_files[i]);
-#endif
       } else p++;
-#ifdef ORIG_XAW
-      list_of_files[j]= safe_strdup(init_list_of_files[i]);
-#else
       list_of_files[j]= strdup(init_list_of_files[i]);
-#endif
       titles[j]=(char *)safe_malloc(sizeof(char)*(strlen(p)+ 9));
       sprintf(titles[j],"%d. %s",j+1,p);
       j++; number_of_files = j;
     }
   }
-#ifdef ORIG_XAW
-  titles=(char **)safe_realloc(titles,init_number_of_files*sizeof(char *));
-  list_of_files=(char **)safe_realloc(list_of_files,init_number_of_files*sizeof(char *));
-#else
   titles=(char **)realloc(titles,init_number_of_files*sizeof(char *));
   list_of_files=(char **)realloc(list_of_files,init_number_of_files*sizeof(char *));
-#endif
 
   /* Send title string */
   sprintf(local_buf,"%d",number_of_files);
@@ -754,9 +751,6 @@ static void ctl_pass_playing_list(int init_number_of_files,
       char *title;
       snprintf(local_buf,sizeof(local_buf),"E %s",titles[file_table[current_no]]);
       a_pipe_write(local_buf);
-#ifdef ORIG_XAW
-      if((title = get_midi_title(list_of_files[current_no])) == NULL)
-#endif
       title = list_of_files[current_no];
       snprintf(local_buf,sizeof(local_buf),"e %s", title);
       a_pipe_write(local_buf);
@@ -764,9 +758,6 @@ static void ctl_pass_playing_list(int init_number_of_files,
     } else {
       if (command==RC_CHANGE_VOLUME) amplitude+=val;
       if (command==RC_JUMP) ;
-#ifdef ORIG_XAW
-      if (command==RC_TOGGLE_SNDSPEC) ;
-#endif
       /* Quit timidity*/
       if (exitflag & EXITFLG_QUIT) return;
       /* Stop playing */

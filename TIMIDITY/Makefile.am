@@ -9,15 +9,11 @@
 VERSION = 0.2i
 
 INCLUDES = $(X_INCLUDES)
-#AM_CFLAGS = -DDEFAULT_PATH=\"$(TIMID_DIR)\" $(EXTRATDEFS) $(CPPFLAGS)
 AM_CFLAGS = -DDEFAULT_PATH=\"$(TIMID_DIR)\" $(EXTRATDEFS) $(EXTRATCFLAGS)
-#following should be done by config
-#X_EXTRALIBS = -L/usr/X11R6/lib -lXaw -lXt -lX11
 if GXXOPTIMIZE
 CFLAGS =
 AM_CPPFLAGSS = -O3 -fomit-frame-pointer -ffast-math -malign-double
 endif
-#LDFLAGS = $(all_libraries) $(KDE_RPATH)
 LDADD = $(LIBALIB) $(LIBAUDIO) $(LIBMME) $(EXTRATLIBS)
 
 # Where to install the patches, config files, and MIDI files.
@@ -25,6 +21,8 @@ LDADD = $(LIBALIB) $(LIBAUDIO) $(LIBMME) $(EXTRATLIBS)
 # or you'll need to invoke timidity with the -L option.
 TIMID_DIR = $(kde_datadir)/kmidi/config
 
+appsdir = $(kde_appsdir)/Multimedia
+apps_DATA = timidity.desktop
 
 bin_PROGRAMS = timidity
 

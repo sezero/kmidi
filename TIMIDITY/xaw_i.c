@@ -1160,6 +1160,11 @@ static void popupLoad(Widget w,XtPointer client_data,XtPointer call_data) {
   XawTextSetInsertionPoint(load_t,(XawTextPosition)(strlen(basepath)));
 }
 
+/*
+ Now this only allows clicking a file to add it to the list.
+ Revise: implement "Add ALL"
+ Revise: integrate *.plist
+*/
 static void popdownLoad(Widget w,XtPointer s,XtPointer data) {
   char *p, *p2;
   DirPath full;
@@ -1168,8 +1173,18 @@ static void popdownLoad(Widget w,XtPointer s,XtPointer data) {
   /* tricky way for both use of action and callback */
   if (s != NULL && data == NULL){
     if(*(char *)s == 'A') {
-      snprintf(tmp,sizeof(tmp),"%s%c",basepath,'/');
-      p = tmp;
+	int i, j;
+/* Here go through dirlist[i] and add each file (not ending in "/")  */
+	for (i=0; i<1000 && dirlist[i]; i++) {
+		j = strlen(dirlist[i]);
+		if (!j) continue;
+		if (dirlist[i][j-1] == '\\') continue;
+		snprintf(local_buf,sizeof(local_buf),"X %s/%s\n", basepath, dirlist[i]);
+		a_pipe_write(local_buf);
+		/* fprintf(stderr,"#%d - %s\n", i, dirlist[i]); */
+	}
+	XtPopdown(popup_load);
+	return;
     } else {
       p = XawDialogGetValueString(load_d);
     }

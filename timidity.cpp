@@ -612,11 +612,7 @@ int main(int argc, char **argv)
 	 }
 
   /* If there were problems, give up now */
-#ifndef KMIDI
-  if (cmderr || optind >= argc)
-#else /* KMIDI */
   if (cmderr )
-#endif /* KMIDI */
 	 {
 		fprintf(stderr, "Try %s -h for help\n", program_name);
 		return 1; /* problems with command line */
