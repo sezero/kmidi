@@ -30,7 +30,7 @@ static char *getname(char *p);
 static void print_sbk(SFInfo *sf, FILE *fout);
 
 
-void main(int argc, char **argv)
+int main(int argc, char **argv)
 {
 	FILE *fp;
 
@@ -54,7 +54,7 @@ void main(int argc, char **argv)
 	}
 	print_sbk(&sfinfo, fp);
 
-	exit(0);
+	return 0;
 }
 
 
@@ -117,12 +117,12 @@ static void print_sbk(SFInfo *sf, FILE *fout)
 		ninfos = sf->nrinfos - 1;
 	fprintf(fout, "\n** SampleInfo: %d\n", ninfos);
 	for (i = 0, hp = sf->sampleinfo; i < ninfos; hp++, i++) {
-		fprintf(fout, "[%s] start=%x end=%x startloop=%x endloop=%x\n",
+		fprintf(fout, "[%s] start=%lx end=%lx startloop=%lx endloop=%lx\n",
 		       sf->samplenames[i].name, hp->startsample, hp->endsample,
 		       hp->startloop, hp->endloop);
 		if (sf->version > 1) {
 			fprintf(fout, "    rate=%d, pitch=%d:%d, link=%d, type=%x\n",
-			       hp->samplerate,
+			       (int)hp->samplerate,
 			       hp->originalPitch,
 			       hp->pitchCorrection,
 			       hp->samplelink,

@@ -17,7 +17,7 @@ typedef struct _tsbkheader {
 } tsbkheader;
 
 typedef struct _tsamplenames {
-	char name[20];
+	char name[21];
 } tsamplenames;
 
 typedef struct _tpresethdr {

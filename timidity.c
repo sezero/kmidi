@@ -717,9 +717,9 @@ int read_config_file(char *name)
 		    return -2;
 		  }
 		bank->tone[i].note=k;
-			}
-		 else if (!strcmp(w[j], "pan"))
-			{
+	      }
+	    else if (!strcmp(w[j], "pan"))
+	      {
 		if (!strcmp(cp, "center"))
 		  k=64;
 		else if (!strcmp(cp, "left"))
@@ -738,9 +738,9 @@ int read_config_file(char *name)
 			 return -2;
 		  }
 		bank->tone[i].pan=k;
-			}
-		 else if (!strcmp(w[j], "keep"))
-			{
+	      }
+	    else if (!strcmp(w[j], "keep"))
+	      {
 		if (!strcmp(cp, "env"))
 		  bank->tone[i].strip_envelope=0;
 		else if (!strcmp(cp, "loop"))
@@ -752,8 +752,8 @@ int read_config_file(char *name)
 				 name, line);
 			 return -2;
 		  }
-			}
-		 else if (!strcmp(w[j], "strip"))
+	      }
+	    else if (!strcmp(w[j], "strip"))
 			{
 		if (!strcmp(cp, "env"))
 		  bank->tone[i].strip_envelope=1;

@@ -97,6 +97,7 @@ private slots:
   void setFilter();
   void checkList();
   void clearPlist();
+  void select_all();
   void local_file_selected(int index);
   void loadPlaylist(const QString &name);
   void readPlaylist(int index);

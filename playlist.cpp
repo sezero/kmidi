@@ -80,9 +80,10 @@ PlaylistDialog::PlaylistDialog(QWidget *parent, const char *name, QStrList *play
   
   QPopupMenu *edit = new QPopupMenu;
   CHECK_PTR( edit );
+  edit->insertItem( i18n("Clear"), this, SLOT(clearPlist()) );
+  edit->insertItem( i18n("Select all"), this, SLOT(select_all()) );
   edit->insertItem( i18n("Add"), this, SLOT(addEntry()) );
   edit->insertItem( i18n("Remove"), this, SLOT(removeEntry()) );
-  edit->insertItem( i18n("Clear"), this, SLOT(clearPlist()) );
   
   QPopupMenu *help = new QPopupMenu;
   CHECK_PTR( help );
@@ -258,6 +259,17 @@ void  PlaylistDialog::parse_fileinfo(QFileInfo* fi, MyListBoxItem* lbitem){
 }
 
 
+
+void PlaylistDialog::select_all(){
+  uint index;
+
+  for (index = 0; index < local_list->count(); index++) {
+
+    if( !cur_local_fileinfo.at((uint)index)->isDir())
+      listbox->insertItem(cur_local_fileinfo.at((uint)index)->filePath(),-1);
+
+  }
+}
 
 void PlaylistDialog::local_file_selected(int index){
 

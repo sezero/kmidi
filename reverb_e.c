@@ -191,7 +191,7 @@ static void ActionMono( reverb_effect* pThis , int32* pMonoBuffer, int32 count ,
 
 static void ActionStereo( reverb_effect* pThis , int32* pStereoBuffer , int32 count , int* pbSignal )
 {
-	int32 test = G ;
+	/* int32 test = G ; */
 	if( pThis->ge == 0 )
 		return ;
 	if( *pbSignal )

@@ -229,6 +229,7 @@ static void load_sample_names(int size, SFInfo *sf, FILE *fd)
 	sf->samplenames = NEW(tsamplenames, sf->nrsamples);
 	for (i = 0; i < sf->nrsamples; i++) {
 		READSTR(sf->samplenames[i].name, fd);
+		sf->samplenames[i].name[20] = 0;
 	}
 }
 

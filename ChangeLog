@@ -1,7 +1,12 @@
 1999-09-26  Greg Lee  <lee@hawaii.edu>
 
+	* config/piano+guitar,drums: more substitution
+	* playlist.cpp: "select all" edit command
 	* kmidi.cpp, log.cpp: put info window in panel
 	* playmidi.c: fix reverb bug
+	* timidity.c: note new options in help message
+	* playmidi.c: show lyrics even with quiet option
+	* sbk.h, sbktext.c: terminate name strings
 
 1999-09-20  Greg Lee  <lee@hawaii.edu>
 
