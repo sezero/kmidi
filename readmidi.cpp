@@ -475,11 +475,19 @@ static int dumpstring(uint32 len, const char *label, int type)
   return 0;
 }
 
+#ifdef POLYPHONY_COUNT
 #define MIDIEVENT(at,t,ch,pa,pb) \
   newev=(MidiEventList *)safe_malloc(sizeof(MidiEventList)); \
   newev->event.time=at; newev->event.type=t; newev->event.channel=ch; \
-  newev->event.a=pa; newev->event.b=pb; newev->next=0;\
+  newev->event.a=pa; newev->event.b=pb; newev->next=0; newev->event.polyphony = 0; \
   return newev;
+#else
+#define MIDIEVENT(at,t,ch,pa,pb) \
+  newev=(MidiEventList *)safe_malloc(sizeof(MidiEventList)); \
+  newev->event.time=at; newev->event.type=t; newev->event.channel=ch; \
+  newev->event.a=pa; newev->event.b=pb; newev->next=0; \
+  return newev;
+#endif
 
 #define MAGIC_EOT ((MidiEventList *)(-1))
 
@@ -542,7 +550,6 @@ static MidiEventList *read_midi_event(void)
 	  sret=sysex(len, &syschan, &sysa, &sysb);
 	  if (sret)
 	   {
-	     /** MIDIEVENT(at, ME_MASTERVOLUME, 0, sret&0x7f, sret>>7); **/
 	     MIDIEVENT(at, sret, syschan, sysa, sysb);
 	   }
 	}
@@ -1037,6 +1044,10 @@ static MidiEvent *groom_list(int32 divisions, uint32 *eventsp, uint32 *samplesp)
   MidiEvent *groomed_list, *lp;
   MidiEventList *meep;
   int32 i, our_event_count, tempo, skip_this_event, new_value;
+#ifdef POLYPHONY_COUNT
+  uint32 current_polyphony, future_interval;
+  MidiEvent *hind_list;
+#endif
   int32 sample_cum, samples_to_do, st, dt, counting_time;
   uint32 at;
   struct meta_text_type *meta = meta_text_list;
@@ -1064,6 +1075,12 @@ static MidiEvent *groom_list(int32 divisions, uint32 *eventsp, uint32 *samplesp)
   our_event_count=0;
   st=at=sample_cum=0;
   counting_time=2; /* We strip any silence before the first NOTE ON. */
+
+#ifdef POLYPHONY_COUNT
+  current_polyphony = 0;
+  hind_list = lp;
+  future_interval = play_mode->rate / 2;
+#endif
 
   for (i=0; i<event_count; i++)
     {
@@ -1149,6 +1166,11 @@ static MidiEvent *groom_list(int32 divisions, uint32 *eventsp, uint32 *samplesp)
 	  break;
 
 	case ME_NOTEON:
+	#ifdef POLYPHONY_COUNT
+	  if (meep->event.b) current_polyphony++;
+	  else current_polyphony--;
+	#endif
+
 	  if (counting_time)
 	    counting_time=1;
 #if 0
@@ -1318,6 +1340,13 @@ static MidiEvent *groom_list(int32 divisions, uint32 *eventsp, uint32 *samplesp)
 	  /* Add the event to the list */
 	  *lp=meep->event;
 	  lp->time=st;
+	#ifdef POLYPHONY_COUNT
+	  while (hind_list < lp && hind_list->time <= st - future_interval)
+	    {
+		hind_list->polyphony = current_polyphony;
+		hind_list++;
+	    }
+	#endif
 	  lp++;
 	  our_event_count++;
 	}
@@ -1400,7 +1429,6 @@ MidiEvent *read_midi_file(FILE *mfp, uint32 *count, uint32 *sp)
 	     "%s: Not a MIDI file!", current_filename);
       return 0;
     }
-  /* fread(&format, 2, 1, fp); */
   if ( fread(&tracks, 2, 1, fp) != 1 )
     {
       if (ferror(fp))
@@ -1413,7 +1441,6 @@ MidiEvent *read_midi_file(FILE *mfp, uint32 *count, uint32 *sp)
 	     "%s: Not a MIDI file!", current_filename);
       return 0;
     }
-  /* fread(&tracks, 2, 1, fp); */
   if ( fread(&divisions_tmp, 2, 1, fp) != 1 )
     {
       if (ferror(fp))

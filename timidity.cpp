@@ -120,6 +120,7 @@ static void help(void)
 					"Enable"
 #endif
 							  " fast decay mode\n"
+	 "  -d      dry mode\n"
 	 "  -p n    Allow n-voice polyphony\n"
 	 "  -A n    Amplify volume by n percent (may cause clipping)\n"
 	 "  -C n    Set ratio of sampling and control frequencies\n"
@@ -468,7 +469,7 @@ int main(int argc, char **argv)
 #endif /*CHANNEL_EFFECT*/
 
 
-  while ((c=getopt(argc, argv, "UI:P:L:c:A:C:ap:fo:O:s:Q:R:FD:hi:#:qEmk:r:X:V:"
+  while ((c=getopt(argc, argv, "UI:P:L:c:A:C:ap:fo:O:s:Q:R:FD:hi:#:qEmk:r:X:V:d"
 #if defined(AU_LINUX) || defined(AU_WIN32)
 			"B:" /* buffer fragments */
 #endif
@@ -495,6 +496,10 @@ int main(int argc, char **argv)
 
 		case 'k':
 	current_interpolation = atoi(optarg);
+	break;
+
+		case 'd':
+	opt_dry = 1;
 	break;
 
 		case 'X':

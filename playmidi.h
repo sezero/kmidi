@@ -22,10 +22,19 @@
 
    */
 
+#define POLYPHONY_COUNT
+
+#ifdef POLYPHONY_COUNT
+typedef struct {
+  uint32 time;
+  uint8 channel, type, a, b, polyphony;
+} MidiEvent;
+#else
 typedef struct {
   uint32 time;
   uint8 channel, type, a, b;
 } MidiEvent;
+#endif
 
 /* Midi events */
 #define ME_NONE 	0

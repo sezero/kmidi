@@ -127,6 +127,12 @@ Toggles fast envelopes. Some MIDI files sound better when notes decay
 slower -- it gives the impression of reverb, which TiMidity doesn't
 currently fully support.
 .TP
+.B \-d
+Sets "dry" mode.  After notes are released, their decay is governed by
+the patch data rather than the volume envelope.  This is economical of
+polyphony, but for some instruments, typically vibraphone, ocarina,
+and mandolin, notes may be terminated too suddenly.
+.TP
 .B \-e
 Make TiMidity evil.  On Win32 version, this increases the task
 priority by one. It can give better playback when you switch tasks at

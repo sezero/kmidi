@@ -556,6 +556,9 @@ static void recompute_amp(int v)
 
 
 static int current_polyphony = 0;
+#ifdef POLYPHONY_COUNT
+static int future_polyphony = 0;
+#endif
 
 #define NOT_CLONE 0
 #define STEREO_CLONE 1
@@ -1430,6 +1433,9 @@ if (!debug_count) {
 debug_count--;
 #endif
 
+#ifdef POLYPHONY_COUNT
+  if (current_polyphony < future_polyphony * 2) obf /= 2;
+#endif
 
   if (obf < 1) voice_reserve = (4*voices) / 5;
   else if (obf <  5) voice_reserve = 3*voices / 4;
@@ -2349,12 +2355,16 @@ int play_midi(MidiEvent *eventlist, uint32 events, uint32 samples)
       /* Handle all events that should happen at this time */
       while (current_event->time <= current_sample)
 	{
+	#ifdef POLYPHONY_COUNT
+	  future_polyphony = current_event->polyphony;
+	#endif
 	  switch(current_event->type)
 	    {
 
 	      /* Effects affecting a single note */
 
 	    case ME_NOTEON:
+
 #ifdef tplus
 #if 0
 	      if (channel[current_event->channel].portamento &&
@@ -3075,6 +3085,9 @@ int play_midi_file(const char *fn)
   else dont_filter_melodic = 1;
 
   got_a_lyric = 0;
+#ifdef POLYPHONY_COUNT
+  future_polyphony = 0;
+#endif
   rc=play_midi(event, events, samples);
   if (free_instruments_afterwards)
       free_instruments();

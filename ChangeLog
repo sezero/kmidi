@@ -1,3 +1,7 @@
+2000-01-12  Greg Lee  <lee@hawaii.edu>
+
+	* look ahead to estimate needed polyphony
+
 2000-01-10  Greg Lee  <lee@hawaii.edu>
 
 	* fix timidity-only compile of xaw and motif if
