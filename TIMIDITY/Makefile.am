@@ -11,10 +11,10 @@ VERSION = 0.2i
 INCLUDES = $(X_INCLUDES)
 AM_CFLAGS = -DDEFAULT_PATH=\"$(TIMID_DIR)\" $(EXTRATDEFS) $(EXTRATCFLAGS)
 if GXXOPTIMIZE
-CFLAGS = -lm
+CFLAGS =
 AM_CPPFLAGSS = -O3 -fomit-frame-pointer -ffast-math -malign-double
 endif
-LDADD = $(LIBALIB) $(LIBAUDIO) $(LIBMME) $(EXTRATLIBS)
+LDADD = $(LIBALIB) $(LIBAUDIO) $(LIBMME) $(EXTRATLIBS) -lm
 
 # Where to install the patches, config files, and MIDI files.
 # If you change this, it's a good idea to recompile the binary,
