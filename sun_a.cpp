@@ -33,6 +33,7 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include <errno.h>
+#include <string.h>
 
 #include <sys/ioctl.h> 
 /* #include "../config.h" */
@@ -140,6 +141,7 @@ static int open_output(void)
 		"1. (dpm.encoding=0x%02x  dpm.rate=%d)",
 		dpm.encoding, dpm.rate);
 
+      AUDIO_INITINFO(&auinfo);
 
       /* Select 16-bit linear / 8-bit uLaw encoding */
 
