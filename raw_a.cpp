@@ -41,6 +41,8 @@
 #include "output.h"
 #include "controls.h"
 
+#include <stdio.h>
+
 #if !defined(OPEN_MODE)
 #ifdef __WIN32__
 #define OPEN_MODE O_WRONLY | O_CREAT | O_TRUNC | O_BINARY

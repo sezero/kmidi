@@ -2,7 +2,7 @@
 	$Id$
 */
 
-/* #if defined(linux) || defined(__FreeBSD__) || defined(sun) */
+/* #if defined(__linux) || defined(__FreeBSD__) || defined(sun) */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -10,7 +10,7 @@
 #include <errno.h>
 #include <string.h>
 
-#ifdef linux
+#ifdef __linux
 #include <sys/ioctl.h> /* new with 1.2.0? Didn't need this under 1.1.64 */
 #include <linux/soundcard.h>
 #endif

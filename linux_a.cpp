@@ -24,14 +24,14 @@
 
 */
 
-/* #if defined(linux) || defined(__FreeBSD__) */
+/* #if defined(__linux) || defined(__FreeBSD__) */
 #ifdef AU_OSS
 #define _GNU_SOURCE
 #include <unistd.h>
 #include <fcntl.h>
 #include <errno.h>
 
-#ifdef linux
+#ifdef __linux
 #include <sys/ioctl.h> /* new with 1.2.0? Didn't need this under 1.1.64 */
 #include <linux/soundcard.h>
 #endif
@@ -45,6 +45,7 @@
 #include "output.h"
 #include "controls.h"
 
+#include <stdio.h>
 
 static int open_output(void); /* 0=success, 1=warning, -1=fatal error */
 static void close_output(void);
