@@ -1,4 +1,5 @@
 /* 
+	$Id$
 
     TiMidity -- Experimental MIDI to WAVE converter
     Copyright (C) 1995 Tuukka Toivonen <toivonen@clinet.fi>
@@ -21,7 +22,7 @@
 */
 
 #ifdef LOOKUP_SINE
-extern float sine(int x);
+extern FLOAT_T sine(int x);
 #else
 #include <math.h>
 #define sine(x) (sin((2*PI/1024.0) * (x)))
@@ -29,9 +30,12 @@ extern float sine(int x);
 
 #define SINE_CYCLE_LENGTH 1024
 extern int32 freq_table[];
-extern float vol_table[];
-extern float bend_fine[];
-extern float bend_coarse[];
+extern FLOAT_T vol_table[];
+extern FLOAT_T bend_fine[];
+extern FLOAT_T bend_coarse[];
+#ifdef tplus
+extern FLOAT_T midi_time_table[], midi_time_table2[];
+#endif
 extern uint8 *_l2u; /* 13-bit PCM to 8-bit u-law */
 extern uint8 _l2u_[]; /* used in LOOKUP_HACK */
 #ifdef LOOKUP_HACK
