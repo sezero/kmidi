@@ -10,6 +10,7 @@
  * as pipe i/o in Tk interface.
  *
  *================================================================*/
+#ifdef TCLTK
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -645,7 +646,8 @@ static void start_panel(void)
     
 	argc = 0;
 	argv[argc++] = "-f";
-	argv[argc++] = TKPROGPATH;
+	/* argv[argc++] = TKPROGPATH; */
+	argv[argc++] = TIMID_DIR;
 
 	if (ctl.trace_playing) {
 		argv[argc++] = "-mode";
@@ -915,3 +917,4 @@ static int TraceUpdate(ClientData clientData, Tcl_Interp *interp,
 	return TCL_OK;
 }
 
+#endif /* TCLTK */

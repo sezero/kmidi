@@ -24,17 +24,10 @@
 #define YY_INPUT(buf,result,max_size) \
 	 result = fread( buf, 1, max_size, yyin );
 
-#ifndef true
-#define true 1
-#endif
-#ifndef false
-#define false 0
-#endif
-
 extern int set_play_mode(char *cp);
 static int prescanning;
-static char doing_drums = false;
-static char doing_sf = false;
+static char doing_drums = 0;
+static char doing_sf = 0;
 static int patchno = -1, i, j;
 static char *patchname;
 static char cfg_flag = 1;
@@ -191,8 +184,8 @@ cm	[ \t]*("#".*)?\n
 	while (isspace(yytext[i])) i++;
 	i += 7;
 	current_drumset = atoi(yytext+i);
-	doing_drums = true;
-	doing_sf = true;
+	doing_drums = 1;
+	doing_sf = 1;
 	new_toneset(current_drumset);
 	font_type=FONT_SBK;
     if (!bank->name) {
@@ -216,8 +209,8 @@ cm	[ \t]*("#".*)?\n
 	while (isspace(yytext[i])) i++;
 	i += 7;
 	current_drumset = atoi(yytext+i);
-	doing_drums = true;
-	doing_sf = true;
+	doing_drums = 1;
+	doing_sf = 1;
 	new_toneset(current_drumset);
 	font_type=FONT_SBK;
 }
@@ -227,8 +220,8 @@ cm	[ \t]*("#".*)?\n
 	while (isspace(yytext[i])) i++;
 	i += 7;
 	current_drumset = atoi(yytext+i);
-	doing_drums = true;
-	doing_sf = false;
+	doing_drums = 1;
+	doing_sf = 0;
 	new_toneset(current_drumset);
 	font_type=FONT_NORMAL;
     if (!bank->name) {
@@ -249,8 +242,8 @@ cm	[ \t]*("#".*)?\n
 	while (isspace(yytext[i])) i++;
 	i += 7;
 	current_drumset = atoi(yytext+i);
-	doing_drums = true;
-	doing_sf = false;
+	doing_drums = 1;
+	doing_sf = 0;
 	new_toneset(current_drumset);
 	font_type=FONT_NORMAL;
 }
@@ -259,8 +252,8 @@ cm	[ \t]*("#".*)?\n
 	while (isspace(yytext[i])) i++;
 	i += 4;
 	current_toneset = atoi(yytext+i);
-	doing_drums = false;
-	doing_sf = true;
+	doing_drums = 0;
+	doing_sf = 1;
 	new_toneset(current_toneset);
 	font_type=FONT_SBK;
 }
@@ -269,40 +262,40 @@ cm	[ \t]*("#".*)?\n
 	while (isspace(yytext[i])) i++;
 	i += 4;
 	current_toneset = atoi(yytext+i);
-	doing_drums = false;
-	doing_sf = false;
+	doing_drums = 0;
+	doing_sf = 0;
 	new_toneset(current_toneset);
 	font_type=FONT_NORMAL;
 }
 ^{owh}"sfx"	{
 	current_toneset = SFXBANK;
-	doing_drums = false;
-	doing_sf = false;
+	doing_drums = 0;
+	doing_sf = 0;
 	new_toneset(current_toneset);
 	font_type=FONT_NORMAL;
 }
 ^{owh}"drumsfx1"	{
 	current_drumset = SFXDRUM1;
-	doing_drums = true;
-	doing_sf = false;
+	doing_drums = 1;
+	doing_sf = 0;
 	new_toneset(current_toneset);
 	font_type=FONT_NORMAL;
 	bank->name = "drumsfx1";
 }
 ^{owh}"drumsfx2"	{
 	current_drumset = SFXDRUM2;
-	doing_drums = true;
-	doing_sf = false;
+	doing_drums = 1;
+	doing_sf = 0;
 	new_toneset(current_toneset);
 	font_type=FONT_NORMAL;
 	bank->name = "drumsfx2";
 }
 
 ^{owh}"[Melodic Patches]" {
-	doing_drums = false;
+	doing_drums = 0;
 }
 ^{owh}"[Drum Patches]" {
-	doing_drums = true;
+	doing_drums = 1;
 	current_drumset = current_toneset;
 }
 
@@ -574,7 +567,7 @@ int read_config_file(const char *name, int prescan)
 	if (!yyin) return -1;
 
 	current_toneset = current_drumset = 0;
-	doing_drums = doing_sf = false;
+	doing_drums = doing_sf = 0;
 	if (!(retvalue = yylex())) {
 	   if (prescan) got_a_configuration = 1;
 	   else got_a_configuration = 2;

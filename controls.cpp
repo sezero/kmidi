@@ -126,6 +126,9 @@ ControlMode *ctl_list[]={
 #ifdef KMIDI
   &kmidi_control_mode,
 #endif
+#ifdef IA_GTK
+  &gtk_control_mode,
+#endif
 #ifdef TCLTK
   &tk_control_mode,
 #endif

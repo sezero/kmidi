@@ -1,3 +1,21 @@
+2000-02-27  Greg Lee  <lee@hawaii.edu>
+
+	* reorganize source dir; timidity to sudir
+	  TIMIDITY and is configured and compiled
+	* new timidity GTK+ interface
+
+2000-02-25  Greg Lee  <lee@hawaii.edu>
+
+	* remove file constants.h
+	* configure is not finding slang.h
+
+2000-02-24  Greg Lee  <lee@hawaii.edu>
+
+	* set active color palette to same as normal
+	* add id argument to b_out
+	* add artsd output i.f.
+	* temporary fix for timidity config
+
 2000-01-24  Greg Lee  <lee@hawaii.edu>
 
 	* fix output esd interface (flag -Oe)

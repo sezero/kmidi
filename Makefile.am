@@ -49,12 +49,12 @@ noinst_HEADERS = kmidi.h  playlist.h bwlednum.h configdlg.h \
 	docking.h table.h \
 	config.h common.h readmidi.h playmidi.h resample.h mix.h instrum.h \
 	tables.h controls.h output.h filter.h log.h version.h filepic.h \
-	cduppic.h constants.h folderpic.h sbk.h sflayer.h ctl.h effects.h \
+	cduppic.h folderpic.h sbk.h sflayer.h ctl.h effects.h \
 	midiapplication.h kmidiframe.h kmidifiledlg.h
 
 METASOURCES = AUTO
 
-SUBDIRS = config bitmaps patch midis
+SUBDIRS = config bitmaps patch midis TIMIDITY
 
 appsdir = $(kde_appsdir)/Multimedia
 apps_DATA = kmidi.desktop

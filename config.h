@@ -26,13 +26,17 @@
 
 #ifdef KMIDI
 #include "../config.h"
-#ifndef HAVE_STRING_H
-#define NO_STRING_H
-#endif
 #else
+#include "../../config.h"
+/* if above referenced file does not exist, use something like:
 #define HAVE_STRING_H
 #define HAVE_SLANG_H
 #define HAVE_USLEEP
+*/
+#endif
+
+#ifndef HAVE_STRING_H
+#define NO_STRING_H
 #endif
 
 #ifndef TIMID_DIR

@@ -22,9 +22,6 @@
 
 /* Return values for ControlMode.read */
 
-#ifdef KMIDI
-#include "constants.h"
-#else
 #define RC_ERROR -1
 #define RC_NONE 0
 #define RC_QUIT 1
@@ -65,7 +62,67 @@
 #define VERB_NOISY	2
 #define VERB_DEBUG	3
 #define VERB_DEBUG_SILLY	4
-#endif
+
+/* 
+ * MESSAGE FROM KERNEL TO MOTIF
+ */
+#define REFRESH_MESSAGE 1
+#define HELPMODE_MESSAGE 2
+#define TOTALTIME_MESSAGE 3
+#define MASTERVOL_MESSAGE 4
+#define FILENAME_MESSAGE 5
+#define CURTIME_MESSAGE 6
+#define NOTE_MESSAGE 7
+#define PROGRAM_MESSAGE 8
+#define VOLUME_MESSAGE 9
+#define EXPRESSION_MESSAGE 10
+#define PANNING_MESSAGE 11
+#define SUSTAIN_MESSAGE 12
+#define PITCH_MESSAGE 13
+#define RESET_MESSAGE 14
+#define CLOSE_MESSAGE 15
+#define CMSG_MESSAGE 16
+#define FILE_LIST_MESSAGE 17
+#define NEXT_FILE_MESSAGE 18
+#define PREV_FILE_MESSAGE 19
+#define TUNE_END_MESSAGE 20
+#define DEVICE_OPEN 21
+#define DEVICE_NOT_OPEN 22
+#define PATCH_CHANGED_MESSAGE 23
+#define JUMP_MESSAGE 24
+/* 
+ * MESSAGE ON THE PIPE FROM MOTIF TOWARD KERNEL
+ */
+#define MOTIF_CHANGE_VOLUME 1
+#define MOTIF_CHANGE_LOCATOR 2
+#define MOTIF_QUIT 3
+#define MOTIF_PLAY_FILE 4
+#define MOTIF_NEXT 5
+#define MOTIF_PREV 6
+#define MOTIF_RESTART 7
+#define MOTIF_FWD 8
+#define MOTIF_RWD 9
+#define MOTIF_PAUSE 10
+#define TRY_OPEN_DEVICE 11
+#define MOTIF_PATCHSET 12
+#define MOTIF_EFFECTS 13
+#define MOTIF_CHANGE_VOICES 14
+#define MOTIF_CHECK_STATE 15
+#define MOTIF_FILTER 16
+#define MOTIF_INTERPOLATION 17
+#define MOTIF_REVERB 18
+#define MOTIF_CHORUS 19
+#define MOTIF_DRY 20
+#define MOTIF_STOP 21
+#define MOTIF_EVS 22
+
+/* from TiMidity++, but not implemented */
+#define MOTIF_KEYUP 23
+#define MOTIF_KEYDOWN 24
+#define MOTIF_SLOWER 25
+#define MOTIF_FASTER 26
+#define MOTIF_TOGGLE_DRUMS 27
+
 
 typedef struct {
   const char *id_name;

@@ -45,6 +45,8 @@
 
    */
 
+#ifdef MOTIF
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -193,7 +195,7 @@ void CreatePixmaps(Widget parent)
  */
 void  GenericCB(Widget widget, int data, XtPointer call_data)
 {
-    pipe_int_write( data );
+    motif_pipe_int_write( data );
 }
 
 /*
@@ -203,8 +205,8 @@ void Generic_scaleCB(Widget widget, int data, XtPointer call_data)
 { 
     XmScaleCallbackStruct *cbs = (XmScaleCallbackStruct *) call_data;
     
-    pipe_int_write(  data );
-    pipe_int_write(cbs->value);
+    motif_pipe_int_write(  data );
+    motif_pipe_int_write(cbs->value);
 }
 
 /* 
@@ -240,8 +242,8 @@ void File_ListCB(Widget widget, int data, XtPointer call_data)
 
     /* Tell the application to play the requested file */
     XmStringGetLtoR(cbs->item,char_set,&text);
-    pipe_int_write(MOTIF_PLAY_FILE);
-    pipe_string_write(text);
+    motif_pipe_int_write(MOTIF_PLAY_FILE);
+    motif_pipe_string_write(text);
     file_number_to_play=cbs->item_position;
     XtFree(text);
 }
@@ -260,7 +262,7 @@ void menuCB(Widget w,int client_data,XmAnyCallbackStruct *call_data)
 	break;
 	
 	case MENU_QUIT : {
-	    pipe_int_write(MOTIF_QUIT);
+	    motif_pipe_int_write(MOTIF_QUIT);
 	}
 	    break;
 	case MENU_TOGGLE : {
@@ -322,7 +324,7 @@ void handle_input(XtPointer client_data, int *source, XtInputId *id)
 {
     int message;
      
-    pipe_int_read(&message);
+    motif_pipe_int_read(&message);
 
     switch (message)
 	{
@@ -338,7 +340,7 @@ void handle_input(XtPointer client_data, int *source, XtInputId *id)
 	    Arg al[10];
 	    int ac;
 
-	    pipe_int_read(&cseconds);
+	    motif_pipe_int_read(&cseconds);
 	    
 	    seconds=cseconds/100;
 	    minutes=seconds/60;
@@ -361,7 +363,7 @@ void handle_input(XtPointer client_data, int *source, XtInputId *id)
 	case MASTERVOL_MESSAGE: { 
 	    int volume;
 	    
-	    pipe_int_read(&volume);
+	    motif_pipe_int_read(&volume);
 	    XmScaleSetValue(volume_scale,volume);
 	}
 	    break;
@@ -373,7 +375,7 @@ void handle_input(XtPointer client_data, int *source, XtInputId *id)
 	    int ac, i;
 	    short nbcol;
 	    
-	    pipe_string_read(filename);
+	    motif_pipe_string_read(filename);
 
 	    /* Extract basename of the file */
 	    pc=strrchr(filename,'/');
@@ -417,11 +419,11 @@ void handle_input(XtPointer client_data, int *source, XtInputId *id)
 	    /* reset the playing list : play from the start */
 	    file_number_to_play=0;
 	    
-	    pipe_int_read(&number_of_files);
+	    motif_pipe_int_read(&number_of_files);
 	    
 	    for (i=0;i<number_of_files;i++)
 		{
-		    pipe_string_read(filename);
+		    motif_pipe_string_read(filename);
 		    s=XmStringCreate(filename,char_set);
 		    XmListAddItemUnselected(file_list,s,0);
 		    XmStringFree(s);
@@ -478,8 +480,8 @@ void handle_input(XtPointer client_data, int *source, XtInputId *id)
 	    Arg al[10];
 	    int ac;
 
-	    pipe_int_read(&cseconds);
-	    pipe_int_read(&nbvoice);
+	    motif_pipe_int_read(&cseconds);
+	    motif_pipe_int_read(&nbvoice);
 	    
 	    sec=seconds=cseconds/100;
 	    
@@ -511,8 +513,8 @@ void handle_input(XtPointer client_data, int *source, XtInputId *id)
 	    int channel;
 	    int note;
 	    
-	    pipe_int_read(&channel);
-	    pipe_int_read(&note);
+	    motif_pipe_int_read(&channel);
+	    motif_pipe_int_read(&note);
 	    printf("NOTE chn%i %i\n",channel,note);
 	}
 	    break;
@@ -521,8 +523,8 @@ void handle_input(XtPointer client_data, int *source, XtInputId *id)
 	    int channel;
 	    int pgm;
 	    
-	    pipe_int_read(&channel);
-	    pipe_int_read(&pgm);
+	    motif_pipe_int_read(&channel);
+	    motif_pipe_int_read(&pgm);
 	    printf("NOTE chn%i %i\n",channel,pgm);
 	}
 	    break;
@@ -531,8 +533,8 @@ void handle_input(XtPointer client_data, int *source, XtInputId *id)
 	    int channel;
 	    int volume;
 	    
-	    pipe_int_read(&channel);
-	    pipe_int_read(&volume);
+	    motif_pipe_int_read(&channel);
+	    motif_pipe_int_read(&volume);
 	    printf("VOLUME= chn%i %i \n",channel, volume);
 	}
 	    break;
@@ -542,8 +544,8 @@ void handle_input(XtPointer client_data, int *source, XtInputId *id)
 	    int channel;
 	    int express;
 	    
-	    pipe_int_read(&channel);
-	    pipe_int_read(&express);
+	    motif_pipe_int_read(&channel);
+	    motif_pipe_int_read(&express);
 	    printf("EXPRESSION= chn%i %i \n",channel, express);
 	}
 	    break;
@@ -552,8 +554,8 @@ void handle_input(XtPointer client_data, int *source, XtInputId *id)
 	    int channel;
 	    int pan;
 	    
-	    pipe_int_read(&channel);
-	    pipe_int_read(&pan);
+	    motif_pipe_int_read(&channel);
+	    motif_pipe_int_read(&pan);
 	    printf("PANNING= chn%i %i \n",channel, pan);
 	}
 	    break;
@@ -562,8 +564,8 @@ void handle_input(XtPointer client_data, int *source, XtInputId *id)
 	    int channel;
 	    int sust;
 	    
-	    pipe_int_read(&channel);
-	    pipe_int_read(&sust);
+	    motif_pipe_int_read(&channel);
+	    motif_pipe_int_read(&sust);
 	    printf("SUSTAIN= chn%i %i \n",channel, sust);
 	}
 	    break;
@@ -572,8 +574,8 @@ void handle_input(XtPointer client_data, int *source, XtInputId *id)
 	    int channel;
 	    int bend;
 	    
-	    pipe_int_read(&channel);
-	    pipe_int_read(&bend);
+	    motif_pipe_int_read(&channel);
+	    motif_pipe_int_read(&bend);
 	    printf("PITCH BEND= chn%i %i \n",channel, bend);
 	}
 	    break;
@@ -593,8 +595,8 @@ void handle_input(XtPointer client_data, int *source, XtInputId *id)
 	    int type;
 	    char message[1000];
 	    
-	    pipe_int_read(&type);
-	    pipe_string_read(message);
+	    motif_pipe_int_read(&type);
+	    motif_pipe_string_read(message);
 
 	    if (*message == '~') {
 	        XmTextInsert(text,wpr_position, message+1);
@@ -747,7 +749,7 @@ void create_dialog_boxes()
 		  (XtCallbackProc) openCB, (XtPointer) DIALOG_ALL);
 }
 
-void Launch_Motif_Process(int pipe_number)
+void Launch_Motif_Process(int motif_pipe_number)
 {
     Arg al[20];
     int ac;
@@ -1170,9 +1172,10 @@ void Launch_Motif_Process(int pipe_number)
   /* Plug the pipe ..... and heeere we go                */
   /*******************************************************/ 
 
-    XtAppAddInput(context,pipe_number, 
+    XtAppAddInput(context,motif_pipe_number, 
 		  (XtPointer) XtInputReadMask,handle_input,NULL);
     
     XtRealizeWidget(toplevel);
     XtAppMainLoop(context);
 }
+#endif /* MOTIF */

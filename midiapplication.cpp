@@ -44,7 +44,8 @@
 #include "output.h"
 #include "instrum.h"
 #include "playmidi.h"
-#include "constants.h"
+//#include "constants.h"
+#include "controls.h"
 #include "ctl.h"
 
 

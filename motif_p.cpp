@@ -22,6 +22,7 @@
     pipe communication between motif interface and sound generator
 
     */
+#ifdef MOTIF
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -50,7 +51,7 @@ int pid;	               /* Pid for child process */
 /* PIPE COMUNICATION                                                   */
 /***********************************************************************/
 
-void pipe_error(char *st)
+void motif_pipe_error(char *st)
 {
     fprintf(stderr,"CONNECTION PROBLEM WITH MOTIF PROCESS IN %s BECAUSE:%s\n",
 	    st,
@@ -63,7 +64,7 @@ void pipe_error(char *st)
  *              INT                      *
  *****************************************/
 
-void pipe_int_write(int c)
+void motif_pipe_int_write(int c)
 {
     int len;
     int code=INT_CODE;
@@ -71,15 +72,15 @@ void pipe_int_write(int c)
 #ifdef DEBUGPIPE
     len = write(fpip_out,&code,sizeof(code)); 
     if (len!=sizeof(code))
-	pipe_error("PIPE_INT_WRITE");
+	motif_pipe_error("PIPE_INT_WRITE");
 #endif
 
     len = write(fpip_out,&c,sizeof(c)); 
     if (len!=sizeof(int))
-	pipe_error("PIPE_INT_WRITE");
+	motif_pipe_error("PIPE_INT_WRITE");
 }
 
-void pipe_int_read(int *c)
+void motif_pipe_int_read(int *c)
 {
     int len;
     
@@ -88,13 +89,13 @@ void pipe_int_read(int *c)
 
     len = read(fpip_in,&code,sizeof(code)); 
     if (len!=sizeof(code))
-	pipe_error("PIPE_INT_READ");
+	motif_pipe_error("PIPE_INT_READ");
     if (code!=INT_CODE)	
 	fprintf(stderr,"BUG ALERT ON INT PIPE %i\n",code);
 #endif
 
     len = read(fpip_in,c, sizeof(int)); 
-    if (len!=sizeof(int)) pipe_error("PIPE_INT_READ");
+    if (len!=sizeof(int)) motif_pipe_error("PIPE_INT_READ");
 }
 
 
@@ -103,7 +104,7 @@ void pipe_int_read(int *c)
  *              STRINGS                  *
  *****************************************/
 
-void pipe_string_write(const char *str)
+void motif_pipe_string_write(const char *str)
 {
    int len, slen;
 
@@ -111,18 +112,18 @@ void pipe_string_write(const char *str)
    int code=STRING_CODE;
 
    len = write(fpip_out,&code,sizeof(code)); 
-   if (len!=sizeof(code))	pipe_error("PIPE_STRING_WRITE");
+   if (len!=sizeof(code))	motif_pipe_error("PIPE_STRING_WRITE");
 #endif
   
    slen=strlen(str);
    len = write(fpip_out,&slen,sizeof(slen)); 
-   if (len!=sizeof(slen)) pipe_error("PIPE_STRING_WRITE");
+   if (len!=sizeof(slen)) motif_pipe_error("PIPE_STRING_WRITE");
 
    len = write(fpip_out,str,slen); 
-   if (len!=slen) pipe_error("PIPE_STRING_WRITE on string part");
+   if (len!=slen) motif_pipe_error("PIPE_STRING_WRITE on string part");
 }
 
-void pipe_string_read(char *str)
+void motif_pipe_string_read(char *str)
 {
     int len, slen;
 
@@ -130,15 +131,15 @@ void pipe_string_read(char *str)
     int code;
 
     len = read(fpip_in,&code,sizeof(code)); 
-    if (len!=sizeof(code)) pipe_error("PIPE_STRING_READ");
+    if (len!=sizeof(code)) motif_pipe_error("PIPE_STRING_READ");
     if (code!=STRING_CODE) fprintf(stderr,"BUG ALERT ON STRING PIPE %i\n",code);
 #endif
 
     len = read(fpip_in,&slen,sizeof(slen)); 
-    if (len!=sizeof(slen)) pipe_error("PIPE_STRING_READ");
+    if (len!=sizeof(slen)) motif_pipe_error("PIPE_STRING_READ");
     
     len = read(fpip_in,str,slen); 
-    if (len!=slen) pipe_error("PIPE_STRING_READ on string part");
+    if (len!=slen) motif_pipe_error("PIPE_STRING_READ on string part");
     str[slen]='\0';		/* Append a terminal 0 */
 }
 
@@ -150,7 +151,7 @@ void pipe_string_read(char *str)
 #include <sys/filio.h>
 #endif
 
-int pipe_read_ready(void)
+int motif_pipe_read_ready(void)
 {
 #if defined(sgi)
     fd_set fds;
@@ -180,15 +181,15 @@ int pipe_read_ready(void)
 #endif
 }
 
-void pipe_open()
+void motif_pipe_open()
 {
     int res;
     
     res=pipe(pipeAppli);
-    if (res!=0) pipe_error("PIPE_APPLI CREATION");
+    if (res!=0) motif_pipe_error("PIPE_APPLI CREATION");
     
     res=pipe(pipeMotif);
-    if (res!=0) pipe_error("PIPE_MOTIF CREATION");
+    if (res!=0) motif_pipe_error("PIPE_MOTIF CREATION");
     
     if ((pid=fork())==0)   /*child*/
 	{
@@ -210,3 +211,5 @@ void pipe_open()
     fpip_in= pipeAppli[0];
     fpip_out= pipeMotif[1];
 }
+
+#endif /* MOTIF */

@@ -51,6 +51,8 @@
 #else
 #ifdef HAVE_SLANG_H
 #include <slang.h>
+#else
+#include <slang.h>
 #endif
 #endif
 

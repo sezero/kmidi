@@ -22,14 +22,18 @@
 	from Tomokazu Harada <harada@prince.pe.u-tokyo.ac.jp>
 	modified by Yoshishige Arai <ryo2@on.rim.or.jp>
 */
+#ifdef IA_XAW
 
 #ifdef ORIG_XAW
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif /* HAVE_CONFIG_H */
 #else
+#include "config.h"
+/*
 #define HAVE_UNISTD_H
 #define STDC_HEADERS
+*/
 #endif
 
 #include <stdio.h>
@@ -87,8 +91,6 @@
 
 #ifdef ORIG_XAW
 #include "timidity.h"
-#else
-#include "config.h"
 #endif
 #include "common.h"
 #include "instrum.h"
@@ -3829,3 +3831,5 @@ static void xaw_vendor_setup(void)
 #else
 static void xaw_vendor_setup(void) { }
 #endif
+
+#endif /* IA_XAW */

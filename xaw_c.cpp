@@ -22,13 +22,17 @@
 	Tomokazu Harada <harada@prince.pe.u-tokyo.ac.jp>
 	Yoshishige Arai <ryo2@on.rim.or.jp>
 */
+#ifdef IA_XAW
 
 #ifdef ORIG_XAW
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif /* HAVE_CONFIG_H */
 #else
+#include "config.h"
+/*
 #define HAVE_UNISTD_H
+*/
 #endif
 
 #include <stdio.h>
@@ -47,8 +51,6 @@
 
 #ifdef ORIG_XAW
 #include "timidity.h"
-#else
-#include "config.h"
 #endif
 
 #include "common.h"
@@ -1137,3 +1139,4 @@ ControlMode *interface_a_loader(void)
 {
     return &ctl;
 }
+#endif /* IA_XAW */

@@ -32,7 +32,10 @@
 #include <sys/ioctl.h>
 #include <sys/types.h>
 #include <sys/wait.h>
+
+#ifdef KMIDI
 #include "../config.h"
+#endif
 
 #ifdef NOW_USING_SEMAPHORES
 #ifdef HAVE_SYS_SEM_H
@@ -55,8 +58,6 @@
 #include "playmidi.h"
 #include "output.h"
 #include "controls.h"
-
-#include "constants.h"
 #include "ctl.h"
 
 #ifdef NOW_USING_SEMAPHORES
@@ -109,11 +110,19 @@ static void shm_free(int sig);
 
 /**********************************************/
 
+#ifdef KMIDI
 #define ctl kmidi_control_mode
+#else
+#define ctl gtk_control_mode
+#endif
 
 ControlMode ctl= 
 {
+#ifdef KMIDI
   "kmidi qt  interface", 'q',
+#else
+  "gtk interface", 'g',
+#endif
   1,1,0,
   ctl_open, ctl_pass_playing_list, ctl_close, ctl_read, cmsg,
   ctl_refresh, ctl_reset, ctl_file_name, ctl_total_time, ctl_current_time, 
@@ -135,7 +144,11 @@ static int pipeAppli[2],pipeMotif[2];
 static int fpip_in, fpip_out;	
 static int child_pid;
 
+#ifdef KMIDI
 extern int Launch_KMidi_Process(int );
+#else
+extern int Launch_Gtk_Process(int pipe_number);
+#endif
 
 /***********************************************************************/
 /* Put controls on the pipe                                            */
@@ -634,17 +647,7 @@ static int ctl_blocking_read(int32 *valp)
 		  ctl_reset();
 		  pausing = 0;
 		  return RC_RESTART;
-/* not used
-	      case MOTIF_FWD:
-		  *valp=play_mode->rate;
-		  ctl_reset();
-		  return RC_FORWARD;
-		  
-	      case MOTIF_RWD:
-		  *valp=play_mode->rate;
-		  ctl_reset();
-		  return RC_BACK;
-*/
+
 	      case MOTIF_PATCHSET:
 		  pipe_int_read(&arg);
 		  /*if (cfg_select == arg) return RC_NONE;*/
@@ -782,6 +785,15 @@ static int ctl_blocking_read(int32 *valp)
 	      case TRY_OPEN_DEVICE:
 		  pausing = 0;
 		  return RC_TRY_OPEN_DEVICE;
+
+	      case MOTIF_KEYUP:
+	      case MOTIF_KEYDOWN:
+	      case MOTIF_SLOWER:
+	      case MOTIF_FASTER:
+	      case MOTIF_TOGGLE_DRUMS:
+		  if (!pausing) return RC_NONE;
+		  break;
+
 	      }
 	  
 	  
@@ -797,7 +809,11 @@ static int ctl_blocking_read(int32 *valp)
 	  if (pausing) pipe_int_read(&command);
 	  else 
 	      {
+		#ifdef KMIDI
 		  fprintf(stderr,"UNKNOWN  KMIDI MESSAGE %i\n",command);
+		#else
+		  fprintf(stderr,"UNKNOWN  GTK MESSAGE %i\n",command);
+		#endif
 		  return RC_NONE;
 	      }
       }
@@ -837,8 +853,8 @@ static void ctl_pass_playing_list(int number_of_files, const char *list_of_files
     Panel->currentpatchset = cfg_select;
 
     /* Pass the list to the interface */
-#if 0
 /* The commandline files now come from the c++ ui side. */
+#ifndef KMIDI
     pipe_int_write(FILE_LIST_MESSAGE);
 
     pipe_int_write(number_of_files);
@@ -950,7 +966,11 @@ void pipe_open()
 	    fpip_in=pipeMotif[0];
 	    fpip_out= pipeAppli[1];
 
+	#ifdef KMIDI
 	    Launch_KMidi_Process(fpip_in);
+	#else
+	    Launch_Gtk_Process(fpip_in);
+	#endif
 	    exit(0);
 	}
     

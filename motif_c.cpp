@@ -27,6 +27,7 @@
 
     */
 
+#ifdef MOTIF
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -435,3 +436,5 @@ static void ctl_pass_playing_list(int number_of_files, const char *list_of_files
 		}
 	}
 }
+
+#endif /* MOTIF */
