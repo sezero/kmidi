@@ -80,6 +80,7 @@ typedef struct {
   Sample *left_sample;
   int right_samples;
   Sample *right_sample;
+  unsigned char *contents;
 } Instrument;
 
 typedef struct _InstrumentLayer {
@@ -157,3 +158,4 @@ extern InstrumentLayer *load_sbk_patch(char *name, int gm_num, int bank, int per
  int panning, int amp, int note_to_use, int strip_loop, int strip_envelope, int strip_tail);
 extern int current_tune_number;
 extern int max_patch_memory;
+extern int current_patch_memory;

@@ -259,7 +259,8 @@ extern void dumb_pass_playing_list(int number_of_files, char *list_of_files[]);
 #ifdef ADAGIO
 extern int play_midi(unsigned char *, unsigned char *, int);
 #endif /* ADAGIO */
-extern int read_config_file(const char *name);
+extern int read_config_file(const char *name, int prescanning);
+extern char *current_config_file;
 extern int reverb_options;
 extern int cfg_select;
 extern void clear_config(void);

@@ -89,12 +89,16 @@ static void free_instrument(Instrument *ip)
   Sample *sp;
   int i;
   if (!ip) return;
+
+  if (!ip->contents)
   for (i=0; i<ip->samples; i++)
     {
       sp=&(ip->sample[i]);
       if (sp->data) free(sp->data);
     }
   free(ip->sample);
+
+  if (!ip->contents)
   for (i=0; i<ip->right_samples; i++)
     {
       sp=&(ip->right_sample[i]);
@@ -435,6 +439,7 @@ static InstrumentLayer *load_instrument(char *name, int font_type, int percussio
   ip->left_sample = ip->sample;
   ip->right_samples = 0;
   ip->right_sample = 0;
+  ip->contents = 0;
 
   for (i=0; i<ip->samples; i++)
     {

@@ -497,9 +497,11 @@ static void ctl_reset(void)
 /***********************************************************************/
 static int ctl_open(int using_stdin, int using_stdout)
 {
-	int tcount = 10;
-	shm_alloc();
+	int tcount = 30;
+	extern char *cfg_names[30];
+	int i;
 
+	shm_alloc();
         Panel->currentpatchset = cfg_select;
         Panel->buffer_state = 100;
         Panel->various_flags = 0;
@@ -521,7 +523,8 @@ static int ctl_open(int using_stdin, int using_stdout)
 	    tcount--;
 	    if (!tcount)
 		fprintf(stderr,"Internal error: no pipe open.\n");
-	} 
+	}
+
 	return 0;
 }
 
@@ -612,7 +615,7 @@ static int ctl_blocking_read(int32 *valp)
 */
 	      case MOTIF_PATCHSET:
 		  pipe_int_read(&arg);
-		  if (cfg_select == arg) return RC_NONE;
+		  /* if (cfg_select == arg) return RC_NONE; */
 		  cfg_select = arg;
 	/* fprintf(stderr,"ctl_blocking_read set #%d\n", cfg_select); */
 		  return RC_PATCHCHANGE;
@@ -795,7 +798,7 @@ static void ctl_pass_playing_list(int number_of_files, char *list_of_files[])
 		  	    end_soundfont();
 		  	    clear_config();
 			/* what if read_config fails?? */
-	          	    if (!read_config_file(CONFIG_FILE))
+	          	    if (!read_config_file(current_config_file, 0))
 		  	        Panel->currentpatchset = cfg_select;
 			/* else fprintf(stderr,"couldn't read config file\n"); */
 			    pipe_int_write(PATCH_CHANGED_MESSAGE);

@@ -365,7 +365,9 @@ void clear_config(void)
 
 #define MAXWORDS 10
 
-int read_config_file(const char *name)
+char *current_config_file = 0;
+
+int read_config_file(const char *name, int prescanning)
 {
   FILE *fp;
   char tmp[1024], *w[MAXWORDS], *cp;
@@ -384,6 +386,11 @@ int read_config_file(const char *name)
 
   if (!(fp=open_file(name, 1, OF_VERBOSE)))
 	 return -1;
+
+  if (prescanning) {
+	 current_config_file = (char *)safe_malloc(strlen(name)+1);
+	 strcpy(current_config_file, name);
+  }
 
   while (fgets(tmp, sizeof(tmp), fp))
 	 {
@@ -430,7 +437,8 @@ int read_config_file(const char *name)
 	    strcpy(cfg_names[cfg_condition], w[1]);
 	  }
 #endif
-	 if (cfg_condition < 0 || cfg_condition == cfg_select)
+	 if (prescanning) cfg_condition = -1;
+	 else if (cfg_condition < 0 || cfg_condition == cfg_select)
 	  {
 	  if (words < 2)
 	         {
@@ -445,18 +453,20 @@ int read_config_file(const char *name)
 	      rcf_count++;
 	      cfg_condition = -1;
 #ifdef tplus
-	      status = read_config_file(w[i]);
+	      status = read_config_file(w[i], 0);
  	      rcf_count--;
 	      if(status != 0)
 		return status;
 #else
-			read_config_file(w[i]);
+			read_config_file(w[i], 0);
 	      rcf_count--;
 #endif
 	    }
 	  }
 	  cfg_condition = -1;
 	}
+      /******* end of prescan ****/
+		else if (prescanning) continue;
       /******* voices ********/
 		else if(!strcmp(w[0], "voices"))
 	{
@@ -901,7 +911,11 @@ int main(int argc, char **argv)
 		case 'U': free_instruments_afterwards=1; break;
 		case 'L': add_to_pathlist(optarg); try_config_again=1; break;
 		case 'c':
-	if (read_config_file(optarg)) cmderr++;
+#ifdef KMIDI
+	if (read_config_file(optarg, 1)) cmderr++;
+#else
+	if (read_config_file(optarg, 0)) cmderr++;
+#endif
 	else got_a_configuration=1;
 	break;
 #ifdef CHANNEL_EFFECT
@@ -1011,9 +1025,14 @@ int main(int argc, char **argv)
 		}
 
   try_config_again = 1;
+/* don't use unnecessary memory until we're a child process */
   if (!got_a_configuration)
 	 {
-		if (!try_config_again || read_config_file(CONFIG_FILE))
+#ifdef KMIDI
+		if (!try_config_again || read_config_file(CONFIG_FILE, 1))
+#else
+		if (!try_config_again || read_config_file(CONFIG_FILE, 0))
+#endif
 	cmderr++;
 	 }
 

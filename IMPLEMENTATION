@@ -110,9 +110,9 @@ only when they are first loaded -- not while playing.
 
 It's possible for TiMidity to use an excessive amount of memory for patches.  Symptoms
 are your window system becoming very sluggish, or crashing.  This is probably only
-a problem when using big sf2 soundfonts of 60+ megabytes.  For instance, the
-piano patches in Personal Choice's PC400 soundfont are 35 megs each.  After playing
-a list of midi files which use three of these pianos, well, that's 105 megs of
+a problem when using big sf2 soundfonts of 30+ megabytes.  For instance, the
+piano patches in Personal Choice's PC400 soundfont are 25 megs each.  After playing
+a list of midi files which use three of these pianos, well, that's 75 megs of
 ram right there.  In its configuration dialog, KMidi lets you set a maximum number
 of megs to be used to keep patches used in playing previous midi files;  when this
 maximum is exceeded, TiMidity will unload least recently used patches, returning
@@ -120,6 +120,10 @@ ram to the system.  The default maximum is 60 megs, which works ok on my system 
 have 48 megs ram and 196 megs cache).  Setting this to a lower value means that
 more patches have to be reloaded from patch files as you play through a list of midi
 songs, which slows things up.  If you're ram rich, you can set it to "no limit".
+If you allowed enough room, entire soundfont files are read at once, instead of
+patch by patch.  Setting the maximum too low can be counterproductive, because
+soundfont files occupy much less memory in toto when the entire file is read than when
+the patches are read individually (I don't know why).
 
 After playing each midi file, KMidi will report in the info window on how much memory
 is currently occupied by patches.

@@ -2,11 +2,15 @@
  * SoundFont file extension
  *	written by Takashi Iwai <iwai@dragon.mm.t.u-tokyo.ac.jp>
  *================================================================*/
+#define READ_WHOLE_SF_FILE
 
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
 #include <math.h>
+#ifdef READ_WHOLE_SF_FILE
+#include <sys/stat.h>
+#endif
 #include "config.h"
 #include "common.h"
 #include "tables.h"
@@ -57,6 +61,10 @@ typedef struct _InstList {
 	int already_loaded;
 	char *fname;
 	FILE *fd;
+#ifdef READ_WHOLE_SF_FILE
+	unsigned char *contents;
+	int size_of_contents;
+#endif
 	SampleList *slist, *rslist;
 	struct _InstList *next;
 } InstList;
@@ -66,6 +74,9 @@ typedef struct SFInsts {
 	FILE *fd;
 	uint16 version, minorversion;
 	int32 samplepos, samplesize;
+#ifdef READ_WHOLE_SF_FILE
+	unsigned char *contents;
+#endif
 	InstList *instlist;
 } SFInsts;
 
@@ -167,11 +178,47 @@ void correct_samples(SFInfo *sf)
 }
 #endif
 
+#ifdef READ_WHOLE_SF_FILE
+static int sf_size_of_contents;
+
+static unsigned char *read_whole_sf(FILE *fd) {
+    struct stat info;
+    unsigned char *sf_contents;
+
+    sf_size_of_contents = 0;
+    if (stat(current_filename, &info)) {
+	/* fprintf(stderr,"can't stat\n"); */
+    	return 0;
+    }
+/* check here if size less than what we are allowed */
+    if (info.st_size + current_patch_memory > max_patch_memory)
+	return 0;
+	/* fprintf(stderr,"room enough\n"); */
+    sf_contents = (unsigned char *)malloc(info.st_size);
+    if (!sf_contents) {
+	/* fprintf(stderr,"couldn't malloc\n"); */
+    	return 0;
+    }
+    rewind(fd);
+    if (!fread(sf_contents, info.st_size, 1, fd)) {
+	/* fprintf(stderr,"couldn't read\n"); */
+    	free(sf_contents);
+    	return 0;
+    }
+    sf_size_of_contents = info.st_size;
+    current_patch_memory += info.st_size;
+	/* fprintf(stderr,"OK -- read %d\n", sf_size_of_contents); */
+    return sf_contents;
+}
+#endif
+
 void init_soundfont(char *fname, int oldbank, int newbank)
 {
-	/*static SFInfo sfinfo;*/
 	int i;
 	InstList *ip;
+#ifdef READ_WHOLE_SF_FILE
+	unsigned char *sf_contents = 0;
+#endif
 
 	ctl->cmsg(CMSG_INFO, VERB_NOISY, "init soundfonts `%s'", fname);
 #ifdef ADAGIO
@@ -247,8 +294,20 @@ printf(" %d cbel = %f vol\n", i, YTO_VOLUME(i));
 
 	free_sbk(&sfinfo);
 
+
+#ifdef READ_WHOLE_SF_FILE
+	sf_contents = read_whole_sf(sfrec.fd);
+	for (ip = sfrec.instlist; ip; ip = ip->next) {
+	    if (!ip->already_loaded) {
+		ip->contents = sf_contents;
+		ip->size_of_contents = sf_size_of_contents;
+	    }
+	    ip->already_loaded = 10000000;
+	}
+#else
 	/* mark instruments as loaded so they won't be loaded again if we're re-called */
 	for (ip = sfrec.instlist; ip; ip = ip->next) ip->already_loaded = 10000000;
+#endif
 
 }
 
@@ -258,6 +317,8 @@ void end_soundfont(void)
 	InstList *ip, *next;
 	FILE *still_open = NULL;
 	char *still_not_free = NULL;
+	unsigned char *contents_not_free = NULL;
+	int contents_size = 0;
 
 	if (!sfrec.instlist) return;
 
@@ -267,6 +328,8 @@ void end_soundfont(void)
 		if (!still_open && ip->fd) {
 		    still_open = ip->fd;
 		    still_not_free = ip->fname;
+		    contents_not_free = ip->contents;
+		    contents_size = ip->size_of_contents;
 		}
 		if (still_open && ip->fd == still_open) ip->fd = NULL;
 	    }
@@ -275,6 +338,12 @@ void end_soundfont(void)
 		still_open = NULL;
 		if (still_not_free) free(still_not_free);
 		still_not_free = NULL;
+		if (contents_not_free) {
+		    free(contents_not_free);
+		    current_patch_memory -= contents_size;
+		}
+		contents_not_free = NULL;
+		contents_size = 0;
 	    }
 	    else break;
 	}
@@ -365,6 +434,9 @@ InstrumentLayer *load_sbk_patch(char *name, int gm_num, int bank, int percussion
 			load_index = ip->already_loaded - 1;
 		ip->already_loaded = load_index;
 		sfrec.fname = ip->fname;
+#ifdef READ_WHOLE_SF_FILE
+		sfrec.contents = ip->contents;
+#endif
     		ctl->cmsg(CMSG_INFO, VERB_NOISY, "%s%s[%d,%d] %s%s (%d-%d)",
 			(percussion)? "   ":"", name,
 			(percussion)? keynote : preset, (percussion)? preset : bank,
@@ -374,6 +446,9 @@ InstrumentLayer *load_sbk_patch(char *name, int gm_num, int bank, int percussion
 				HI_VAL(ip->velrange)? HI_VAL(ip->velrange) : 127 );
 		sfrec.fd = ip->fd;
 		inst = load_from_file(&sfrec, ip, amp);
+#ifdef READ_WHOLE_SF_FILE
+		if (inst) inst->contents = ip->contents;
+#endif
 	}
 	else {
 		ip = 0;
@@ -471,17 +546,32 @@ static int load_one_side(SFInsts *rec, SampleList *sp, int sample_count, Sample 
 		int16 *tmp, s;
 #endif
 		memcpy(sample, &sp->v, sizeof(Sample));
+/* here, if we read whole file, sample->data = rec.contents + sp->startsample */
+#ifdef READ_WHOLE_SF_FILE
+	    if (rec->contents)
+		sample->data = rec->contents + sp->startsample;
+		else
+#endif
 		sample->data = safe_malloc(sp->endsample);
+#ifndef READ_WHOLE_SF_FILE
 		patch_memory += sp->endsample;
+#else
+	    if (!rec->contents)
+#endif
 		if (fseek(rec->fd, (int)sp->startsample, SEEK_SET)) {
 			ctl->cmsg(CMSG_INFO, VERB_NORMAL, "Can't find sample in file!\n");
 			return 0;
 		}
+#ifdef READ_WHOLE_SF_FILE
+	    if (!rec->contents)
+#endif
 		if (!fread(sample->data, sp->endsample, 1, rec->fd)) {
 			ctl->cmsg(CMSG_INFO, VERB_NORMAL, "Can't read sample from file!\n");
 			return 0;
 		}
+
 #ifndef LITTLE_ENDIAN
+/* NOTE: only do this once */
 		tmp = (int16*)sample->data;
 		for (j = 0; j < sp->endsample/2; j++) {
 			s = LE_SHORT(*tmp);
@@ -559,8 +649,11 @@ static int load_one_side(SFInsts *rec, SampleList *sp, int sample_count, Sample 
     }
 
 
+#ifndef READ_WHOLE_SF_FILE
+/* NOTE: tell pre_resample not to free */
 	if (sample->note_to_use && !(sample->modes & MODES_LOOPING))
 		pre_resample(sample);
+#endif
 
 /*fprintf(stderr,"sample %d, note_to_use %d\n", i, sample->note_to_use);*/
 #ifdef LOOKUP_HACK

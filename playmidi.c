@@ -2339,7 +2339,6 @@ static void update_channel_freq(int ch)
 int play_midi(MidiEvent *eventlist, uint32 events, uint32 samples)
 {
   int rc;
-  extern int current_patch_memory;
 
   adjust_amplification();
 

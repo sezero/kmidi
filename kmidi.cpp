@@ -848,12 +848,15 @@ void KMidi::drawPanel()
 	"and editing the file<br>" \
 	"$KDEDIR/share/apps/kmidi/<br>config/timidity.cfg .)"));
     patchbox->setFont( QFont( "helvetica", 10, QFont::Normal) );
+
     int lx;
     for (lx = 30; lx > 0; lx--) if (cfg_names[lx-1]) break;
     for (int sx = 0; sx < lx; sx++)
 	if (cfg_names[sx]) patchbox->insertItem( cfg_names[sx] );
 	else patchbox->insertItem( "(none)" );
+
     patchbox->setCurrentItem(Panel->currentpatchset);
+    //setPatch(Panel->currentpatchset);
     connect( patchbox, SIGNAL(activated(int)), SLOT(setPatch(int)) );
     patchbox->hide();
  
@@ -1685,6 +1688,21 @@ void KMidi::PlayCommandlineMods(){
 
   Panel->max_patch_megs = max_patch_megs;
 
+#if 0
+  int lx;
+  for (lx = 30; lx > 0; lx--) if (Panel->cfg_names[lx-1][0]) break;
+  for (int sx = 0; sx < lx; sx++) if (Panel->cfg_names[sx][0]) {
+	fprintf(stderr,"%d=%s\n", sx, Panel->cfg_names[sx]);
+	//patchbox->insertItem( Panel->cfg_names[sx] );
+    }
+    else patchbox->insertItem( "(none)" );
+  patchbox->setCurrentItem(Panel->currentpatchset);
+#endif
+  //patchbox->setCurrentItem(Panel->currentpatchset);
+  //setPatch(Panel->currentpatchset);
+    pipe_int_write(  MOTIF_PATCHSET );
+    pipe_int_write( Panel->currentpatchset );
+
 }
 
 void KMidi::loadplaylist( int which ) {
@@ -2268,6 +2286,7 @@ void KMidi::readconfig(){
     reverb_state = config->readNumEntry("EchoNotes", 1);
     chorus_state = config->readNumEntry("DetuneNotes", 1);
     verbosity_state = config->readNumEntry("Verbosity", 1);
+    Panel->currentpatchset = config->readNumEntry("Patchset", 0);
 
     QColor defaultback = black;
     QColor defaultled = QColor(107,227,88);
@@ -2308,6 +2327,7 @@ void KMidi::writeconfig(){
     config->writeEntry("EchoNotes", reverb_state);
     config->writeEntry("DetuneNotes", chorus_state);
     config->writeEntry("Verbosity", verbosity_state);
+    config->writeEntry("Patchset", Panel->currentpatchset);
     config->sync();
 }
 
