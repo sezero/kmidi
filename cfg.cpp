@@ -788,9 +788,9 @@ static char *yy_last_accepting_cpos;
 #define YY_MORE_ADJ 0
 #define YY_RESTORE_YY_MORE_OFFSET
 char *yytext;
-#line 1 "cfg.l"
+#line 1 "./cfg.l"
 #define INITIAL 0
-#line 2 "cfg.l"
+#line 2 "./cfg.l"
 /*
  * Cfg file reader, Greg Lee, 8/93.
  * Adapted from Adagio for KMidi 12/99.
@@ -820,7 +820,8 @@ extern int set_play_mode(char *cp);
 static int prescanning;
 static char doing_drums = 0;
 static char doing_sf = 0;
-static int patchno = -1, i, j;
+static int patchno = -1;
+static int i, j;
 static char *patchname;
 static char cfg_flag = 1;
 static int tone_bank;
@@ -1005,7 +1006,7 @@ YY_DECL
 	register char *yy_cp, *yy_bp;
 	register int yy_act;
 
-#line 70 "cfg.l"
+#line 71 "./cfg.l"
 
 
 
@@ -1089,17 +1090,17 @@ do_action:	/* This label is used only to access EOF actions. */
 
 case 1:
 YY_RULE_SETUP
-#line 72 "cfg.l"
+#line 73 "./cfg.l"
 ;
 	YY_BREAK
 case 2:
 YY_RULE_SETUP
-#line 73 "cfg.l"
+#line 74 "./cfg.l"
 ;
 	YY_BREAK
 case 3:
 YY_RULE_SETUP
-#line 75 "cfg.l"
+#line 76 "./cfg.l"
 {
 	int i = 0;
 	while (isspace(yytext[i])) i++;
@@ -1109,14 +1110,14 @@ YY_RULE_SETUP
 	YY_BREAK
 case 4:
 YY_RULE_SETUP
-#line 81 "cfg.l"
+#line 82 "./cfg.l"
 {
 	cfg_condition = 0;
 }
 	YY_BREAK
 case 5:
 YY_RULE_SETUP
-#line 84 "cfg.l"
+#line 85 "./cfg.l"
 {
 	int sf_oldbank, sf_newbank = banknum;
 	int i = 0, j;
@@ -1143,7 +1144,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 6:
 YY_RULE_SETUP
-#line 107 "cfg.l"
+#line 108 "./cfg.l"
 {
 	int i = 0;
 	while (isspace(yytext[i])) i++;
@@ -1157,7 +1158,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 7:
 YY_RULE_SETUP
-#line 117 "cfg.l"
+#line 118 "./cfg.l"
 {
 	char *fname;
 	int i = 0;
@@ -1213,7 +1214,7 @@ case YY_STATE_EOF(INITIAL):
 case YY_STATE_EOF(P):
 case YY_STATE_EOF(K):
 case YY_STATE_EOF(S):
-#line 168 "cfg.l"
+#line 169 "./cfg.l"
 {
         if ( --include_stack_ptr < 0 ) {
                 yyterminate();
@@ -1229,7 +1230,7 @@ case YY_STATE_EOF(S):
 	YY_BREAK
 case 8:
 YY_RULE_SETUP
-#line 181 "cfg.l"
+#line 182 "./cfg.l"
 {
 	char *bank_name = NULL;
 	int i = 0;
@@ -1259,7 +1260,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 9:
 YY_RULE_SETUP
-#line 207 "cfg.l"
+#line 208 "./cfg.l"
 {
 	int i = 0;
 	while (isspace(yytext[i])) i++;
@@ -1273,7 +1274,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 10:
 YY_RULE_SETUP
-#line 217 "cfg.l"
+#line 218 "./cfg.l"
 {
 	char *bank_name = NULL;
 	int i = 0;
@@ -1300,7 +1301,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 11:
 YY_RULE_SETUP
-#line 240 "cfg.l"
+#line 241 "./cfg.l"
 {
 	int i = 0;
 	while (isspace(yytext[i])) i++;
@@ -1314,7 +1315,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 12:
 YY_RULE_SETUP
-#line 250 "cfg.l"
+#line 251 "./cfg.l"
 {
 	int i = 0;
 	while (isspace(yytext[i])) i++;
@@ -1328,7 +1329,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 13:
 YY_RULE_SETUP
-#line 260 "cfg.l"
+#line 261 "./cfg.l"
 {
 	int i = 0;
 	while (isspace(yytext[i])) i++;
@@ -1342,7 +1343,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 14:
 YY_RULE_SETUP
-#line 270 "cfg.l"
+#line 271 "./cfg.l"
 {
 	current_toneset = SFXBANK;
 	doing_drums = 0;
@@ -1353,7 +1354,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 15:
 YY_RULE_SETUP
-#line 277 "cfg.l"
+#line 278 "./cfg.l"
 {
 	current_drumset = SFXDRUM1;
 	doing_drums = 1;
@@ -1365,7 +1366,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 16:
 YY_RULE_SETUP
-#line 285 "cfg.l"
+#line 286 "./cfg.l"
 {
 	current_drumset = SFXDRUM2;
 	doing_drums = 1;
@@ -1377,14 +1378,14 @@ YY_RULE_SETUP
 	YY_BREAK
 case 17:
 YY_RULE_SETUP
-#line 294 "cfg.l"
+#line 295 "./cfg.l"
 {
 	doing_drums = 0;
 }
 	YY_BREAK
 case 18:
 YY_RULE_SETUP
-#line 297 "cfg.l"
+#line 298 "./cfg.l"
 {
 	doing_drums = 1;
 	current_drumset = current_toneset;
@@ -1392,7 +1393,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 19:
 YY_RULE_SETUP
-#line 302 "cfg.l"
+#line 303 "./cfg.l"
 {
 	const char *gm_name = NULL;
 	char *vc_name = NULL;
@@ -1440,7 +1441,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 20:
 YY_RULE_SETUP
-#line 347 "cfg.l"
+#line 348 "./cfg.l"
 {
 	const char *gm_name = NULL;
 	char *vc_name = NULL;
@@ -1487,7 +1488,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 21:
 YY_RULE_SETUP
-#line 391 "cfg.l"
+#line 392 "./cfg.l"
 { if (prescanning) {
 		i=0; while(isspace(yytext[i])) i++;
 		j = atoi(yytext+i+2);
@@ -1496,7 +1497,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 22:
 YY_RULE_SETUP
-#line 396 "cfg.l"
+#line 397 "./cfg.l"
 { if (prescanning) {
 		i=0; while(isspace(yytext[i])) i++;
 		j = atoi(yytext+i+2);
@@ -1505,7 +1506,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 23:
 YY_RULE_SETUP
-#line 401 "cfg.l"
+#line 402 "./cfg.l"
 { if (prescanning) {
 		i=0; while(isspace(yytext[i])) i++;
 		j = atoi(yytext+i+2);
@@ -1514,7 +1515,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 24:
 YY_RULE_SETUP
-#line 406 "cfg.l"
+#line 407 "./cfg.l"
 { if (prescanning) {
 		i=0; while(isspace(yytext[i])) i++;
 		j = atoi(yytext+i+2);
@@ -1524,7 +1525,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 25:
 YY_RULE_SETUP
-#line 412 "cfg.l"
+#line 413 "./cfg.l"
 { if (prescanning) {
 		i=0; while(isspace(yytext[i])) i++;
 		j = atoi(yytext+i+2);
@@ -1533,7 +1534,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 26:
 YY_RULE_SETUP
-#line 417 "cfg.l"
+#line 418 "./cfg.l"
 { if (prescanning) {
 		i=0; while(isspace(yytext[i])) i++;
 		j = atoi(yytext+i+2);
@@ -1542,7 +1543,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 27:
 YY_RULE_SETUP
-#line 422 "cfg.l"
+#line 423 "./cfg.l"
 { if (prescanning) {
 		i=0; while(isspace(yytext[i])) i++;
 		j = atoi(yytext+i+2);
@@ -1551,7 +1552,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 28:
 YY_RULE_SETUP
-#line 427 "cfg.l"
+#line 428 "./cfg.l"
 { if (prescanning) {
 		i=0; while(isspace(yytext[i])) i++;
 		j = atoi(yytext+i+2);
@@ -1560,7 +1561,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 29:
 YY_RULE_SETUP
-#line 432 "cfg.l"
+#line 433 "./cfg.l"
 { if (prescanning) {
 		i=0; while(isspace(yytext[i])) i++;
 		i+=2;
@@ -1570,7 +1571,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 30:
 YY_RULE_SETUP
-#line 439 "cfg.l"
+#line 440 "./cfg.l"
 {
 	int i = 0;
 	while (yytext[i] != '=') i++;
@@ -1580,7 +1581,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 31:
 YY_RULE_SETUP
-#line 445 "cfg.l"
+#line 446 "./cfg.l"
 {
 	int i = 0;
 	while (yytext[i] != '=') i++;
@@ -1590,7 +1591,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 32:
 YY_RULE_SETUP
-#line 451 "cfg.l"
+#line 452 "./cfg.l"
 {
 	int i = 0;
 	while (yytext[i] != '=') i++;
@@ -1600,17 +1601,17 @@ YY_RULE_SETUP
 	YY_BREAK
 case 33:
 YY_RULE_SETUP
-#line 457 "cfg.l"
+#line 458 "./cfg.l"
 BEGIN(K);
 	YY_BREAK
 case 34:
 YY_RULE_SETUP
-#line 458 "cfg.l"
+#line 459 "./cfg.l"
 BEGIN(S);
 	YY_BREAK
 case 35:
 YY_RULE_SETUP
-#line 460 "cfg.l"
+#line 461 "./cfg.l"
 {
 		  bank->tone[patchno].strip_loop=0;
 	BEGIN(P);
@@ -1618,7 +1619,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 36:
 YY_RULE_SETUP
-#line 464 "cfg.l"
+#line 465 "./cfg.l"
 {
 		  bank->tone[patchno].strip_tail=0;
 	BEGIN(P);
@@ -1626,7 +1627,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 37:
 YY_RULE_SETUP
-#line 468 "cfg.l"
+#line 469 "./cfg.l"
 {
 		  bank->tone[patchno].strip_envelope=0;
 	BEGIN(P);
@@ -1634,7 +1635,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 38:
 YY_RULE_SETUP
-#line 472 "cfg.l"
+#line 473 "./cfg.l"
 {
 		  bank->tone[patchno].strip_loop=1;
 	BEGIN(P);
@@ -1642,7 +1643,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 39:
 YY_RULE_SETUP
-#line 476 "cfg.l"
+#line 477 "./cfg.l"
 {
 		  bank->tone[patchno].strip_tail=1;
 	BEGIN(P);
@@ -1650,7 +1651,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 40:
 YY_RULE_SETUP
-#line 480 "cfg.l"
+#line 481 "./cfg.l"
 {
 		  bank->tone[patchno].strip_envelope=1;
 	BEGIN(P);
@@ -1658,7 +1659,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 41:
 YY_RULE_SETUP
-#line 484 "cfg.l"
+#line 485 "./cfg.l"
 {
 	set_patchno(yytext);
 	if (patchno < 256) gm_voice[patchno].flags &= ~SOLO_MASK;
@@ -1666,17 +1667,17 @@ YY_RULE_SETUP
 	YY_BREAK
 case 42:
 YY_RULE_SETUP
-#line 488 "cfg.l"
+#line 489 "./cfg.l"
 {
 	set_patchno(yytext);
 	if (patchno < 256) gm_voice[patchno].flags |= SOLO_MASK;
 }
 	YY_BREAK
 case 43:
-#line 494 "cfg.l"
+#line 495 "./cfg.l"
 case 44:
 YY_RULE_SETUP
-#line 494 "cfg.l"
+#line 495 "./cfg.l"
 {
 	patchno = -1;
 	BEGIN(0);
@@ -1684,7 +1685,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 45:
 YY_RULE_SETUP
-#line 498 "cfg.l"
+#line 499 "./cfg.l"
 ECHO;
 	YY_BREAK
 
@@ -2573,7 +2574,7 @@ int main()
 	return 0;
 	}
 #endif
-#line 498 "cfg.l"
+#line 499 "./cfg.l"
 
 
 static void new_toneset(int n)

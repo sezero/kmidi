@@ -137,8 +137,11 @@ ConfigDlg::ConfigDlg(QWidget *parent, struct configstruct *data, const char *nam
 			       "when cursor is left over a<br>\n"
 			       "object on the screen"));
 
-    meg = new KIntNumInput("Limit megabytes of patch memory",
-                          0, 255, 1, configdata.max_patch_megs, "megs", 10, true, w, "hex_with_slider");
+    meg = new KIntNumInput(configdata.max_patch_megs, w, 10, "hex_with_slider" );
+    meg->setRange(0, 255);
+    meg->setLabel("Limit megabytes of patch memory");
+    //meg = new KIntNumInput("Limit megabytes of patch memory",
+    //                      0, 255, 1, configdata.max_patch_megs, "megs", 10, true, w, "hex_with_slider");
     meg->setSpecialValueText("no limit");
     meg->move(30, 200);
     connect(meg,SIGNAL(valueChanged(int)),this,SLOT(megChanged(int)));
