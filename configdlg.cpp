@@ -4,11 +4,11 @@
  *    kmidi
  *
  * $Id$
- * 
- * Copyright (C) 1997 Bernd Johannes Wuebben 
+ *
+ * Copyright (C) 1997 Bernd Johannes Wuebben
  * wuebben@math.cornell.edu
  *
- * 
+ *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Library General Public
  * License as published by the Free Software Foundation; either
@@ -64,7 +64,7 @@ ConfigDlg::ConfigDlg(QWidget *parent, struct configstruct *data, const char *nam
   configdata.led_color = green;
   configdata.tooltips = true;
   configdata.max_patch_megs = 60;
-  
+
   if(data){
     configdata.background_color = data->background_color;
     configdata.led_color = data->led_color;
@@ -76,7 +76,7 @@ ConfigDlg::ConfigDlg(QWidget *parent, struct configstruct *data, const char *nam
     /*
      * add a tabctrl widget
      */
-    
+
     test = new KTabCtl(this, "test");
     connect(test, SIGNAL(tabSelected(int)), this, SLOT(tabChanged(int)));
 
@@ -106,7 +106,7 @@ ConfigDlg::ConfigDlg(QWidget *parent, struct configstruct *data, const char *nam
     //box->setGeometry(10,10,320,260);
     configsize = QSize( 320+20, 260+80 );
 
-    QString str = i18n("The led color is used in<br>the panel and meter.");
+    QString str = i18n("The led color is used in<br>\nthe panel and meter.");
     label1 = new QLabel(w);
     label1->setGeometry(60,25,135,25);
     label1->setText(i18n("LED Color:"));
@@ -117,7 +117,7 @@ ConfigDlg::ConfigDlg(QWidget *parent, struct configstruct *data, const char *nam
     connect(button1,SIGNAL(changed( const QColor & )),this,SLOT(set_led_color( const QColor & )));
     what->add(button1, str);
 
-    str = i18n("This color is for<br>the panel and meter backgrounds.");
+    str = i18n("This color is for<br>\nthe panel and meter backgrounds.");
     label2 = new QLabel(w);
     label2->setGeometry(60,85,135,25);
     label2->setText(i18n("Background Color:"));
@@ -133,16 +133,16 @@ ConfigDlg::ConfigDlg(QWidget *parent, struct configstruct *data, const char *nam
     ttcheckbox->setFixedSize( ttcheckbox->sizeHint() );
     ttcheckbox->setChecked(configdata.tooltips);
     connect(ttcheckbox,SIGNAL(clicked()),this,SLOT(ttclicked()));
-    what->add(ttcheckbox, i18n("Provide brief descriptions<br>" \
-			"when cursor is left over a<br>" \
-			"object on the screen"));
+    what->add(ttcheckbox, i18n("Provide brief descriptions<br>\n"
+			       "when cursor is left over a<br>\n"
+			       "object on the screen"));
 
     meg = new KIntNumInput("Limit megabytes of patch memory",
                           0, 255, 1, configdata.max_patch_megs, "megs", 10, true, w, "hex_with_slider");
     meg->setSpecialValueText("no limit");
     meg->move(30, 200);
     connect(meg,SIGNAL(valueChanged(int)),this,SLOT(megChanged(int)));
-    what->add(meg, i18n("Try to stop KMidi from<br>using up too much of your ram."));
+    what->add(meg, i18n("Try to stop KMidi from<br>\nusing up too much of your ram."));
 
     w->resize(320, 260);
     test->addTab(w, "Configure");
@@ -159,22 +159,22 @@ ConfigDlg::ConfigDlg(QWidget *parent, struct configstruct *data, const char *nam
     ("Bernd Johannes Wuebben", "wuebben@kde.org", QString::null, i18n("Initial developer."));
     // ----- set the application maintainer:
     about->setMaintainer("Greg Lee", // name
-		      "lee@hawaii.edu", // email address 
+		      "lee@hawaii.edu", // email address
 		      QString::null, // URL
 		      i18n("lyrics, IW patches, current maintainer.")); // description
     // ----- add some contributors:
-    about->addContributor("Tuukka Toivonen", 
-		       "toivonen@clinet.fi", 
-		       "http://www.cgs.fi/~tt/discontinued.html", 
+    about->addContributor("Tuukka Toivonen",
+		       "toivonen@clinet.fi",
+		       "http://www.cgs.fi/~tt/discontinued.html",
 		       i18n("TiMidity sound, patch loader, interface design, ..."));
     about->addContributor("Takashi Iwai", "iwai@dragon.mm.t.u-tokyo.ac.jp",
-			"http://bahamut.mm.t.u-tokyo.ac.jp/~iwai/midi.html", 
+			"http://bahamut.mm.t.u-tokyo.ac.jp/~iwai/midi.html",
 		       i18n("soundfonts, window communication"));
     about->addContributor("Nicolas Witczak", "witczak@geocities.fr",
-			"http://www.geocities.com/SiliconValley/Lab/6307/", 
+			"http://www.geocities.com/SiliconValley/Lab/6307/",
 		       i18n("effects: reverb, chorus, phaser, celeste"));
     about->addContributor("Masanao Izumo", "mo@goice.co.jp",
-			"http://www.goice.co.jp/member/mo/timidity.html", 
+			"http://www.goice.co.jp/member/mo/timidity.html",
 		       i18n("mod wheel, portamento ..."));
 
     connect(about, SIGNAL( sendEmail(const QString& , const QString& ) ),
@@ -183,7 +183,7 @@ ConfigDlg::ConfigDlg(QWidget *parent, struct configstruct *data, const char *nam
 	this, SLOT ( openURLSlot(const QString& ) ) );
 
     // ----- contents of the dialog have changed, adapt sizes:
-    about->adjust(); 
+    about->adjust();
     aboutsize = QSize( about->width() + 30, about->height() + 80 );
     w->resize(width(), height());
     test->addTab(w, "About");
@@ -219,7 +219,7 @@ ConfigDlg::ConfigDlg(QWidget *parent, struct configstruct *data, const char *nam
     connect(patches, SIGNAL( openURL(const QString& ) ),
 	this, SLOT ( openURLSlot(const QString& ) ) );
 
-    patches->adjust(); 
+    patches->adjust();
     patchessize = QSize( patches->width() + 30, patches->height() + 80 );
     w->resize(width(), height());
     test->addTab(w, "Patchsets");

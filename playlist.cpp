@@ -1,6 +1,6 @@
 /*
    kmidi
-   
+
    $Id$
 
    Copyright 1997 Bernd Johannes Wuebben math.cornell.edu
@@ -80,50 +80,50 @@ PlaylistEdit::PlaylistEdit(const char *name, QStrList *playlist,
   file->insertItem( i18n("OK"), this, SLOT(checkList()), 0, 40);
 	file->setWhatsThis(40, i18n("Accept and use the new play list.") );
   file->insertItem( i18n("Save"), this, SLOT(saveIt()), 0, 41);
-	file->setWhatsThis(41, i18n("Replace the contents of the<br>" \
-				"currently selected playlist<br>" \
+	file->setWhatsThis(41, i18n("Replace the contents of the<br>\n"
+				"currently selected playlist<br>\n"
 				"file with the new play list.") );
   file->insertItem( i18n("Save as ..."), this, SLOT( editNewPlaylist() ), 0, 42);
-	file->setWhatsThis(42, i18n("Make up a name for a<br>" \
-				"new playlist file and<br>" \
+	file->setWhatsThis(42, i18n("Make up a name for a<br>\n"
+				"new playlist file and<br>\n"
 				"save the current play list there.") );
   file->insertItem( i18n("Append"), this, SLOT(appendIt()), 0, 43);
-	file->setWhatsThis(43, i18n("Add the midi files in the<br>" \
-				"current play list to the selected<br>" \
+	file->setWhatsThis(43, i18n("Add the midi files in the<br>\n"
+				"current play list to the selected<br>\n"
 				"playlist file.") );
   file->insertItem( i18n("Delete"), this, SLOT(removeIt()), 0, 44);
-	file->setWhatsThis(44, i18n("Delete the currently selected<br>" \
-				"playlist file (it's contents<br>" \
+	file->setWhatsThis(44, i18n("Delete the currently selected<br>\n"
+				"playlist file (it's contents<br>\n"
 				"will be lost).") );
   file->insertSeparator();
   file->insertItem( i18n("&Quit"), this, SLOT(hide()), 0, 45);
-	file->setWhatsThis(45, i18n("Discard the play list<br>" \
+	file->setWhatsThis(45, i18n("Discard the play list<br>\n"
 				"and leave the play list editor.") );
- 
+
   view = new QPopupMenu;
   CHECK_PTR( view );
   view->insertItem( i18n("All files"), this, SLOT(setFilter()), 0, 50 );
-	view->setWhatsThis(50, i18n("Choose whether the file<br>" \
-				"list should show only uncompressed<br>" \
+	view->setWhatsThis(50, i18n("Choose whether the file<br>\n"
+				"list should show only uncompressed<br>\n"
 				"midi files or all files.") );
 
   QPopupMenu *edit = new QPopupMenu;
   CHECK_PTR( edit );
   edit->insertItem( i18n("Clear"), this, SLOT(clearPlist()), 0, 51 );
-	edit->setWhatsThis(51, i18n("Discard the contents<br>" \
+	edit->setWhatsThis(51, i18n("Discard the contents<br>\n"
 				"of the current play list.") );
   edit->insertItem( i18n("Select all"), this, SLOT(select_all()), 0, 52 );
-	edit->setWhatsThis(52, i18n("Append all the files<br>" \
-				"in the directory listing<br>" \
+	edit->setWhatsThis(52, i18n("Append all the files<br>\n"
+				"in the directory listing<br>\n"
 				"to the play list.") );
   edit->insertItem( i18n("Add"), this, SLOT(addEntry()), 0, 53 );
-	edit->setWhatsThis(53, i18n("Append the selected<br>" \
-				"in the directory listing<br>" \
+	edit->setWhatsThis(53, i18n("Append the selected<br>\n"
+				"in the directory listing<br>\n"
 				"file to the play list.") );
   edit->insertItem( i18n("Remove"), this, SLOT(removeEntry()), 0, 54 );
-	edit->setWhatsThis(54, i18n("Remove the selected<br>" \
+	edit->setWhatsThis(54, i18n("Remove the selected<br>\n"
 				"file from the play list.") );
-  
+
   menu = new KMenuBar( this );
   CHECK_PTR( menu );
   menu->insertItem( i18n("&File"), file );
@@ -147,12 +147,12 @@ PlaylistEdit::PlaylistEdit(const char *name, QStrList *playlist,
   hpanner = new QSplitter(Horizontal, vpanner, "_panner");
   vpanner->setOpaqueResize( TRUE );
   hpanner->setOpaqueResize( TRUE );
-  what->add(vpanner, i18n("You can drag this<br>bar up or down.") );
-  what->add(hpanner, i18n("You can drag this<br>bar left or right.") );
+  what->add(vpanner, i18n("You can drag this<br>\nbar up or down.") );
+  what->add(hpanner, i18n("You can drag this<br>\nbar left or right.") );
 
-  listbox = new QListBox(hpanner,"listbox",0); 
-  what->add(listbox, i18n("Here is the play<br>list you are composing.<br>" \
-	"Double-click to delete<br>" \
+  listbox = new QListBox(hpanner,"listbox",0);
+  what->add(listbox, i18n("Here is the play<br>\nlist you are composing.<br>\n"
+	"Double-click to delete<br>\n"
 	"an entry."));
   hpanner->moveToLast(listbox);
 
@@ -161,32 +161,33 @@ PlaylistEdit::PlaylistEdit(const char *name, QStrList *playlist,
   showmidisonly = TRUE;
 
   local_list = new QListBox(hpanner, "local_list",0);
-  what->add(local_list, i18n("Here are the files<br>you can add<br>" \
-		"to the play list.<br>" \
-		"Double-click on a file name<br>" \
-		"to add it."));
+  what->add(local_list, i18n("Here are the files<br>\nyou can add<br>\n"
+			     "to the play list.<br>\n"
+			     "Double-click on a file name<br>\n"
+			     "to add it."));
   hpanner->moveToFirst(local_list);
 
   playlist_ptr = current_playlist_ptr;
-  plistbox = new QListBox(vpanner,"listbox",0); 
+  plistbox = new QListBox(vpanner,"listbox",0);
   connect(plistbox, SIGNAL(selected(int)), this, SLOT(readPlaylist(int)));
   connect(plistbox, SIGNAL(highlighted(int)), this, SLOT(selectPlaylist(int)));
-  what->add(plistbox, i18n("<u>Playlist files:</u><br> Click to select one.<br>" \
-			"Doubleclick to append contents<br>" \
-			"to the play list."));
+  what->add(plistbox, i18n("<u>Playlist files:</u><br>\n"
+			   "Click to select one.<br>\n"
+			   "Doubleclick to append contents<br>\n"
+			   "to the play list."));
   QValueList<int> size;
   size << 30 << 70;
   hpanner->setSizes(size);
 
   //local_list->insertItem("Local Directory", -1);
   connect(local_list, SIGNAL(selected(int )), this, SLOT(local_file_selected(int )));
-  
+
   QString str;
   KConfig *config = thisapp->config();
   config->setGroup("KMidi");
   str = config->readEntry("Directory");
   if ( !str.isNull() ) set_local_dir(str);
-  else set_local_dir(QString(""));    
+  else set_local_dir(QString(""));
 
   this->resize(PLAYLIST_WIDTH,PLAYLIST_HEIGHT);
 
@@ -201,7 +202,7 @@ PlaylistEdit::PlaylistEdit(const char *name, QStrList *playlist,
 
 
 PlaylistEdit::~PlaylistEdit(){
-  
+
 };
 
 //void PlaylistEdit::closeEvent( QCloseEvent *e ){
@@ -218,7 +219,7 @@ void PlaylistEdit::invokeWhatsThis(){
 }
 
 void MyListBoxItem::paint( QPainter *p ){
- 
+
   p->drawPixmap( 3, 0, pm );
   QFontMetrics fm = p->fontMetrics();
 
@@ -251,7 +252,7 @@ int MyListBoxItem::width(const QListBox *lb ) const{
   int ref1 = ref.width();
   return 6 + pm.width() + ref1;
 
-}	  
+}	
 
 void PlaylistEdit::redoDisplay() {
 
@@ -283,7 +284,7 @@ void PlaylistEdit::clearPlist() {
 }
 
 void  PlaylistEdit::parse_fileinfo(QFileInfo* fi, MyListBoxItem* lbitem){
-  
+
   lbitem->filename =fi->fileName();
 
   QString size;
@@ -294,16 +295,16 @@ void  PlaylistEdit::parse_fileinfo(QFileInfo* fi, MyListBoxItem* lbitem){
 
   QString monthname = date.monthName(date.month());
   lbitem->month = monthname;
-   
+
   QTime time = fi->lastModified().time();
-  
+
   lbitem->day_and_time.sprintf("%02d  %02d:%02d",date.day(),time.hour(),time.minute());
 
   QFontMetrics fm = local_list->fontMetrics();
 
   QRect ref1 = fm.boundingRect(fi->fileName());
   loc_max_namewidth  = QMAX(loc_max_namewidth,ref1.width());
-  
+
   ref1 = fm.boundingRect(monthname);
   loc_max_monthwidth  = QMAX(loc_max_monthwidth,ref1.width());
 }
@@ -333,7 +334,7 @@ void PlaylistEdit::local_file_selected(int index){
   }
 
   listbox->insertItem(cur_local_fileinfo.at((uint)index)->filePath(),-1);
-  
+
 }
 
 
@@ -434,12 +435,12 @@ void PlaylistEdit::set_local_dir(const QString &dir){
    config->writeEntry("Directory", cur_local_dir.filePath("."));
    //config->sync();
 
-   cur_local_dir.setSorting( cur_local_dir.sorting() | QDir::DirsFirst );  
+   cur_local_dir.setSorting( cur_local_dir.sorting() | QDir::DirsFirst );
 
   qApp ->setOverrideCursor( waitCursor );
   local_list ->setAutoUpdate( FALSE );
   local_list->clear();
-  
+
   cur_local_fileinfo.clear();
 
   const QFileInfoList  *filist = cur_local_dir.entryInfoList();
@@ -456,7 +457,7 @@ void PlaylistEdit::set_local_dir(const QString &dir){
 
       if (tmp == ".."){
 
-	MyListBoxItem* mylistboxitem1 = 
+	MyListBoxItem* mylistboxitem1 =
 	  new MyListBoxItem(fi->fileName(),kmidi->cdup_pixmap);
 
 	parse_fileinfo(fi,mylistboxitem1);
@@ -480,7 +481,7 @@ void PlaylistEdit::set_local_dir(const QString &dir){
       }
 
       // printf("directory:%s\n",fi->fileName().data());
-      
+
       fi = ++it;
     }
     for ( ; fi ; fi = ++it ) {
@@ -514,11 +515,11 @@ void PlaylistEdit::set_local_dir(const QString &dir){
   }
   local_list->setAutoUpdate( TRUE );
   local_list->repaint();
-  
+
   //updatePathBox( d.path() );
 
   qApp->restoreOverrideCursor();
-  
+
   //  printf("Current Dir Path: %s\n",QDir::currentDirPath().data());
 }
 
@@ -528,7 +529,7 @@ void PlaylistEdit::setFilter(){
    if (showmidisonly) view->changeItem(0, "Midi files only");
    else view->changeItem(0, "All files");
    showmidisonly = !showmidisonly;
-   set_local_dir(QString(""));    
+   set_local_dir(QString(""));
 }
 
 void PlaylistEdit::addEntry(){
@@ -538,7 +539,7 @@ void PlaylistEdit::addEntry(){
   if (local_list->currentItem() != -1)
     if(!cur_local_fileinfo.at(local_list->currentItem())->isDir()){
       listbox->insertItem(
-	  cur_local_fileinfo.at(local_list->currentItem())->filePath(),-1);  
+	  cur_local_fileinfo.at(local_list->currentItem())->filePath(),-1);
   }
 }
 
@@ -592,7 +593,7 @@ void PlaylistEdit::newPlaylist(){
 }
 
 
-void PlaylistEdit::savePlaylistbyName(const QString &name, bool truncate) 
+void PlaylistEdit::savePlaylistbyName(const QString &name, bool truncate)
 {
   if(name.isEmpty())
     return;
@@ -617,9 +618,9 @@ void PlaylistEdit::savePlaylistbyName(const QString &name, bool truncate)
 
 
 void PlaylistEdit::loadPlaylist(const QString &name){
-     
+
   current_playlist = name;
-  
+
  QString defaultlist = locate("appdata", current_playlist);
  if (defaultlist.isEmpty())
     return;
@@ -647,7 +648,7 @@ void PlaylistEdit::loadPlaylist(const QString &name){
  }
 
  f.close();
- 
+
 }
 
 //void PlaylistEdit::help(){
