@@ -106,6 +106,3 @@ uninstall-local:
 	rm -f $(TIMID_DIR)/patch/nylongt2.pat
 	rm -f $(TIMID_DIR)/patch/sologrnd.pat
 
-messages:
-	$(XGETTEXT) -C -ki18n -x $(includedir)/kde.pot $(kmidi_SOURCES) && mv messages.po $(podir)/kmidi.pot
-
