@@ -47,3 +47,6 @@ noinst_HEADERS = config.h common.h readmidi.h playmidi.h resample.h mix.h instru
 
 timidity.c:
 	(cd $(srcdir); ./makelinks)
+
+$(HEADERS): ;
+
