@@ -26,7 +26,7 @@ static const int NUMROWS = 17;
 */
 
 Table::Table( int width, int height, QWidget *parent, const char *name, WFlags f)
-    : QTableView(parent,name,f)
+    : QtTableView(parent,name,f)
 {
     int n;
 

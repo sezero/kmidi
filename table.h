@@ -11,10 +11,10 @@
 #ifndef TABLE_H
 #define TABLE_H
 
-#include <qtableview.h>
+#include <qttableview.h>
 
 
-class Table : public QTableView
+class Table : public QtTableView
 {
     Q_OBJECT
 public:

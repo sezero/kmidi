@@ -72,7 +72,7 @@ KMidiFrame::KMidiFrame( const char *name ) :
     kmidi = new KMidi(this, "_kmidi" );
 
     view_options = new QPopupMenu();
-    CHECK_PTR( view_options );
+    Q_CHECK_PTR( view_options );
     view_options->setCheckable( TRUE );
     menuBar->insertItem( i18n("&View"), view_options );
     connect( view_options, SIGNAL(activated(int)), this, SLOT(doViewMenuItem(int)) );
@@ -94,7 +94,7 @@ KMidiFrame::KMidiFrame( const char *name ) :
 	view_options->setWhatsThis(i_off_id, i18n("Turns off the info window<br>\n"
 				"at the bottom.") );
     view_level = new QPopupMenu();
-    CHECK_PTR( view_level );
+    Q_CHECK_PTR( view_level );
     view_level->setCheckable( TRUE );
     view_options->insertSeparator();
     view_options->insertItem( i18n("Info level"), view_level);
@@ -130,7 +130,7 @@ KMidiFrame::KMidiFrame( const char *name ) :
 
 
     stereo_options = new QPopupMenu();
-    CHECK_PTR( stereo_options );
+    Q_CHECK_PTR( stereo_options );
     stereo_options->setCheckable( TRUE );
     menuBar->insertItem( i18n("Stereo"), stereo_options );
     connect( stereo_options, SIGNAL(activated(int)), this, SLOT(doStereoMenuItem(int)) );
@@ -158,7 +158,7 @@ KMidiFrame::KMidiFrame( const char *name ) :
 				"to left and right.") );
 
     reverb_options = new QPopupMenu();
-    CHECK_PTR( reverb_options );
+    Q_CHECK_PTR( reverb_options );
     reverb_options->setCheckable( TRUE );
     menuBar->insertItem( i18n("Reverb"), reverb_options );
     connect( reverb_options, SIGNAL(activated(int)), this, SLOT(doReverbMenuItem(int)) );
@@ -173,7 +173,7 @@ KMidiFrame::KMidiFrame( const char *name ) :
 				"notes continues to the ends of<br>\n"
 				"their volume envelopes.") );
     reverb_level = new QPopupMenu();
-    CHECK_PTR( reverb_level );
+    Q_CHECK_PTR( reverb_level );
     reverb_level->setCheckable( TRUE );
     reverb_options->insertSeparator();
     reverb_options->insertItem( i18n("Reverb level"), reverb_level);
@@ -205,7 +205,7 @@ KMidiFrame::KMidiFrame( const char *name ) :
 					       "played to get the effect<br>\n"
 					       "of reverberation.") );
     echo_level = new QPopupMenu();
-    CHECK_PTR( echo_level );
+    Q_CHECK_PTR( echo_level );
     echo_level->setCheckable( TRUE );
     reverb_options->insertSeparator();
     reverb_options->insertItem( i18n("Echo level"), echo_level);
@@ -231,13 +231,13 @@ KMidiFrame::KMidiFrame( const char *name ) :
 
 
     chorus_options = new QPopupMenu();
-    CHECK_PTR( chorus_options );
+    Q_CHECK_PTR( chorus_options );
     chorus_options->setCheckable( TRUE );
     menuBar->insertItem( i18n("Chorus"), chorus_options );
     connect( chorus_options, SIGNAL(activated(int)), this, SLOT(doChorusMenuItem(int)) );
     connect( chorus_options, SIGNAL(aboutToShow()), this, SLOT(fixChorusItems()) );
     chorus_level = new QPopupMenu();
-    CHECK_PTR( chorus_level );
+    Q_CHECK_PTR( chorus_level );
     chorus_level->setCheckable( TRUE );
     chorus_options->insertItem( i18n("Chorus level"), chorus_level);
     chorus_level->insertItem( i18n("default") , 170);
@@ -268,7 +268,7 @@ KMidiFrame::KMidiFrame( const char *name ) :
 					   "played to get the effect<br>\n"
 					   "of chorusing") );
     detune_level = new QPopupMenu();
-    CHECK_PTR( detune_level );
+    Q_CHECK_PTR( detune_level );
     detune_level->setCheckable( TRUE );
     chorus_options->insertSeparator();
     chorus_options->insertItem( i18n("Detune level"), detune_level);
@@ -294,12 +294,12 @@ KMidiFrame::KMidiFrame( const char *name ) :
     connect( detune_level, SIGNAL(aboutToShow()), this, SLOT(fixDetuneLevelItems()) );
 
     volume_options = new QPopupMenu();
-    CHECK_PTR( volume_options );
+    Q_CHECK_PTR( volume_options );
     //volume_options->setCheckable( TRUE );
     menuBar->insertItem( i18n("Volume"), volume_options );
     //connect( volume_options, SIGNAL(activated(int)), this, SLOT(doVolumeMenuItem(int)) );
     volume_curve = new QPopupMenu();
-    CHECK_PTR( volume_curve );
+    Q_CHECK_PTR( volume_curve );
     volume_curve->setCheckable( TRUE );
     volume_options->insertItem( i18n("Volume Curve"), volume_curve);
     connect( volume_curve, SIGNAL(activated(int)), this, SLOT(doVolumeCurve(int)) );
@@ -315,7 +315,7 @@ KMidiFrame::KMidiFrame( const char *name ) :
 				"changes the volume exponentially." ) );
     volume_options->insertSeparator();
     expression_curve = new QPopupMenu();
-    CHECK_PTR( expression_curve );
+    Q_CHECK_PTR( expression_curve );
     expression_curve->setCheckable( TRUE );
     volume_options->insertItem( i18n("Expression Curve"), expression_curve);
     connect( expression_curve, SIGNAL(activated(int)), this, SLOT(doExpressionCurve(int)) );

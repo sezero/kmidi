@@ -36,7 +36,7 @@ LogWindow::LogWindow(QWidget *parent, const char *name)
   text_window = new QMultiLineEdit(this,"logwindow");
   text_window->setFocusPolicy ( QWidget::NoFocus );
   text_window->setReadOnly( TRUE );
-  text_window->setUndoEnabled( FALSE );
+  text_window->setUndoRedoEnabled( FALSE );
   //text_window->setMaxLineLength( 24 );
   text_window->setMaxLines( 110 ); // text_window->numRows() ??
 

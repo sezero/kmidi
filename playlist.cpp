@@ -60,7 +60,7 @@ PlaylistEdit::PlaylistEdit(const char *name, QStringList *playlist,
   what = new QWhatsThis(this);
 
   QPopupMenu *file = new QPopupMenu;
-  CHECK_PTR( file );
+  Q_CHECK_PTR( file );
 
   snpopup = new QFrame( this ,0, WType_Popup);
   snpopup->setFrameStyle( QFrame::PopupPanel|QFrame::Raised );
@@ -99,14 +99,14 @@ PlaylistEdit::PlaylistEdit(const char *name, QStringList *playlist,
 				"and leave the play list editor.") );
 
   view = new QPopupMenu;
-  CHECK_PTR( view );
+  Q_CHECK_PTR( view );
   view->insertItem( i18n("All files"), this, SLOT(setFilter()), 0, 50 );
 	view->setWhatsThis(50, i18n("Choose whether the file<br>\n"
 				"list should show only uncompressed<br>\n"
 				"midi files or all files.") );
 
   QPopupMenu *edit = new QPopupMenu;
-  CHECK_PTR( edit );
+  Q_CHECK_PTR( edit );
   edit->insertItem( i18n("Clear"), this, SLOT(clearPlist()), 0, 51 );
 	edit->setWhatsThis(51, i18n("Discard the contents<br>\n"
 				"of the current play list.") );
@@ -123,7 +123,7 @@ PlaylistEdit::PlaylistEdit(const char *name, QStringList *playlist,
 				"file from the play list.") );
 
   menu = new KMenuBar( this );
-  CHECK_PTR( menu );
+  Q_CHECK_PTR( menu );
   menu->insertItem( i18n("&File"), file );
   menu->insertItem( i18n("&View"), view );
   menu->insertItem( i18n("&Edit"), edit );
