@@ -46,7 +46,7 @@ noinst_HEADERS = config.h common.h readmidi.h playmidi.h resample.h mix.h instru
 #	flex -t -B $(srcdir)/cfg.l >cfg.c
 
 timidity.c:
-	(cd $(srcdir); ./makelinks)
+	$(srcdir)/makelinks $(srcdir)/..
 
 $(HEADERS): ;
 
