@@ -47,6 +47,7 @@ static void purge_output(void);
 static int output_count(uint32 ct);
 
 static arts_stream_t stream;
+static int server_buffer;
 
 /* export the playback mode */
 
@@ -76,7 +77,19 @@ PlayMode dpm = {
 
 static int output_count(uint32 ct)
 {
-  return ct;
+  extern int b_out_count();
+
+  int bytes_written = b_out_count();
+  int bytes_buffered = arts_stream_get(stream, ARTS_P_BUFFER_SIZE)
+                     - arts_stream_get(stream, ARTS_P_BUFFER_SPACE)
+                     + server_buffer;  /* see comment in _open */
+  int samples = bytes_written - bytes_buffered;
+  if(samples < 0)
+    samples = 0;
+
+  if (!(dpm.encoding & PE_MONO)) samples >>= 1;
+  if (dpm.encoding & PE_16BIT) samples >>= 1;
+  return samples;
 }
 
 static int driver_output_data(unsigned char *buf, uint32 count)
@@ -128,8 +141,14 @@ static void purge_output(void)
 static int open_output(void) /* 0=success, 1=warning, -1=fatal error */
 {
   int sample_width, channels, rate;
+  int rc;
 
-  if (arts_init() < 0) return -1;
+  rc = arts_init();
+  if (rc < 0)
+  {
+    fprintf(stderr, "aRts init failed: %s\n", arts_error_text(rc));
+    return -1;
+  }
 
   /* They can't mean these */
   dpm.encoding &= ~(PE_ULAW|PE_BYTESWAP);
@@ -156,5 +175,17 @@ static int open_output(void) /* 0=success, 1=warning, -1=fatal error */
 
   arts_stream_set (stream, ARTS_P_BLOCKING, 0);
 
+  /*
+   * I am not sure if its wise to include the server buffer in our
+   * output sample calculation. While including will give a more realistic
+   * idea of the position we are playing right now (and thus a better
+   * ability to synchronize with the display), it will also give the
+   * certainity "oh well, no worries, there are yet 70kb buffered".
+   *
+   * Well, they are, but if 64kb of these are buffered on the server,
+   * dropout will occur after 6kb anyways.
+   */
+  server_buffer = arts_stream_get(stream, ARTS_P_SERVER_LATENCY) *
+                  rate * (sample_width/8) * channels / 1000;
   return 0;
 }
