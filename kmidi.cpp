@@ -32,6 +32,7 @@
 #include <kconfig.h>
 #include <klocale.h>
 #include <kmessagebox.h>
+#include <kglobalsettings.h>
 
 #include <khelpmenu.h>
 #include <kfiledialog.h>
@@ -113,9 +114,6 @@ extern bool menubarisvisible;
 
 extern QSize requestedframesize;
 extern int fixframesizecount;
-
-//QFont default_font("Helvetica", 10, QFont::Bold);
-
 
 KMidi *kmidi;
 Table		*channelwindow;
@@ -228,7 +226,7 @@ int KMidi::smallPtSize()
 
     // Find a font that fits the 13 and 14 pixel widgets
     theSmallPtSize = 10;
-    QFont fn( "Helvetica", theSmallPtSize, QFont::Bold );
+    QFont fn( KGlobalSettings::generalFont().family(), theSmallPtSize, QFont::Bold );
     bool fits = false;
     while (!fits && theSmallPtSize > 1)
       {
@@ -604,6 +602,10 @@ void KMidi::drawPanel()
     int SBARWIDTH = 220; //140
     int totalwidth, regularheight, extendedheight;
 
+    QString defaultFontName( KGlobalSettings::generalFont().family() );
+    QFont defaultFontBold( defaultFontName, smallPtSize(), QFont::Bold);
+    QFont defaultFontNormal( defaultFontName, smallPtSize(), QFont::Normal);
+
     //setCaption( i18n("kmidi") );
     aboutPB = makeButton( ix, iy, WIDTH, 2 * HEIGHT, "About" );
     what->add(aboutPB, i18n("Open up or close lower<br>\npart of panel with<br>\n"
@@ -649,14 +651,14 @@ void KMidi::drawPanel()
     ix = WIDTH;
     statusLA = new QLabel( this );
     statusLA->setGeometry( WIDTH -25 +2*SBARWIDTH/3, 6, 44, 15 );
-    statusLA->setFont( QFont( "Helvetica", smallPtSize(), QFont::Bold ) );
+    statusLA->setFont( defaultFontBold );
     statusLA->setAlignment( AlignLeft );
     statusLA->setText("    ");
     what->add(statusLA, i18n("what's happening now"));
 
     looplabel = new QLabel( this );
     looplabel->setGeometry( WIDTH -25 +2*SBARWIDTH/3 +45, 6, 60, 13 );
-    looplabel->setFont( QFont( "Helvetica", smallPtSize(), QFont::Bold ) );
+    looplabel->setFont( defaultFontBold );
     looplabel->setAlignment( AlignLeft );
     looplabel->clear();
 
@@ -664,14 +666,14 @@ void KMidi::drawPanel()
     properties2LA = new QLabel( this );
 
     properties2LA->setGeometry( WIDTH -25 + 2*SBARWIDTH/3 , HEIGHT + 20, 100, 13 );
-    properties2LA->setFont( QFont( "Helvetica", smallPtSize(), QFont::Bold ) );
+    properties2LA->setFont( defaultFontBold );
     properties2LA->setAlignment( AlignLeft );
     properties2LA->clear();
 
     propertiesLA = new QLabel( this );
 
     propertiesLA->setGeometry( WIDTH -25 + 2*SBARWIDTH/3 ,  33, 100, 13 );
-    propertiesLA->setFont( QFont( "Helvetica", smallPtSize(), QFont::Bold ) );
+    propertiesLA->setFont( defaultFontBold );
     propertiesLA->setAlignment( AlignLeft );
     propertiesLA->clear();
 
@@ -702,7 +704,7 @@ void KMidi::drawPanel()
     volLA->setAlignment( AlignLeft );
     volLA->setGeometry( WIDTH -25 + 2*SBARWIDTH/3 , 20, 60, 13 );
 
-    volLA->setFont( QFont( "helvetica", smallPtSize(), QFont::Bold) );
+    volLA->setFont( defaultFontBold );
     what->add(volLA, i18n("the current volume level"));
 
 
@@ -713,20 +715,20 @@ void KMidi::drawPanel()
     modlabel = new QLabel( this );
     modlabel->setAlignment( AlignLeft );
     modlabel->setGeometry( WIDTH + 9, HEIGHT + 24 + 10, SBARWIDTH - 26, 12 );
-    modlabel->setFont( QFont( "helvetica", smallPtSize(), QFont::Bold) );
+    modlabel->setFont( defaultFontBold );
     modlabel->setText( "" );
 
     totaltimelabel = new QLabel( this );
     totaltimelabel->setAlignment( AlignLeft );
     totaltimelabel->setGeometry( WIDTH + 80, HEIGHT + 20, 30, 14 );
-    totaltimelabel->setFont( QFont( "helvetica", smallPtSize(), QFont::Bold) );
+    totaltimelabel->setFont( defaultFontBold );
     totaltimelabel->setText( "--:--" );
 
 
     song_count_label = new QLabel( this );
     song_count_label->setAlignment( AlignLeft );
     song_count_label->setGeometry( WIDTH + 9, HEIGHT + 20, 60, 15 );
-    song_count_label->setFont( QFont( "helvetica", smallPtSize(), QFont::Bold) );
+    song_count_label->setFont( defaultFontBold );
 
     song_count_label->setText( i18n("Song --/--") );
 
@@ -874,7 +876,7 @@ void KMidi::drawPanel()
 
     int CHHEIGHT = 17 * (HEIGHT/2);
     channelwindow = new Table( totalwidth, CHHEIGHT, this, "channels", Qt::WRepaintNoErase );
-    channelwindow->setFont( QFont( "helvetica", smallPtSize(), QFont::Normal) );
+    channelwindow->setFont( defaultFontNormal );
 
     channelwindow->move(ix, iy);
     channelwindow->hide();
@@ -907,7 +909,7 @@ void KMidi::drawPanel()
 	"downloading them from somewhere<br>\n"
 	"and editing the file<br>\n"
 	"$KDEDIR/share/apps/kmidi/<br>\nconfig/timidity.cfg .)"));
-    patchbox->setFont( QFont( "helvetica", smallPtSize(), QFont::Normal) );
+    patchbox->setFont( defaultFontNormal );
 
     int lx;
     for (lx = 30; lx > 0; lx--) if (cfg_names[lx-1]) break;
@@ -924,7 +926,7 @@ void KMidi::drawPanel()
     playbox = new QComboBox( FALSE, this, "song" );
     playbox->setGeometry(ix, iy, WIDTH + WIDTH/2, HEIGHT);
     what->add(playbox, i18n("Select a MIDI file<br>\nto play from this<br>\nplay list."));
-    //playbox->setFont( QFont( "helvetica", smallPtSize(), QFont::Normal) );
+    //playbox->setFont( defaultFontNormal );
     connect( playbox, SIGNAL(activated(int)), SLOT(setSong(int)) );
     playbox->hide();
 
@@ -936,7 +938,7 @@ void KMidi::drawPanel()
 	"you've created using<br>\n the <i>playlist editor</i>.<br>\n"
 	"Click on one, and its<br>\ncontents will replace<br>\n"
 	"the play list above."));
-    //playlistbox->setFont( QFont( "helvetica", smallPtSize(), QFont::Normal) );
+    //playlistbox->setFont( defaultFontNormal );
     connect( playlistbox, SIGNAL( activated( int ) ), this, SLOT( plActivated( int ) ) );
     playlistbox->hide();
 
@@ -1001,7 +1003,7 @@ void KMidi::drawPanel()
     iy += HEIGHT;
     effectbutton = makeButton( ix,          iy, WIDTH/2, HEIGHT, "eff" );
     effectbutton->setToggleButton( TRUE );
-    effectbutton->setFont( QFont( "helvetica", smallPtSize(), QFont::Bold) );
+    effectbutton->setFont( defaultFontBold );
     what->add(effectbutton, i18n("When this button is down,<br>\n"
 				 "filters are used for the<br>\n"
 				 "<i>MIDI</i> channel effects:<br>\n"
@@ -1019,7 +1021,7 @@ void KMidi::drawPanel()
     voicespin = new QSpinBox( 1, MAX_VOICES, 1, this, "_spinv" );
     voicespin->setValue(current_voices);
     voicespin->setGeometry( ix +WIDTH/2, iy, WIDTH/2, HEIGHT );
-    voicespin->setFont( QFont( "helvetica", smallPtSize(), QFont::Bold) );
+    voicespin->setFont( defaultFontBold );
     what->add(voicespin, i18n("Use this to set the maximum<br>\n"
 			      "notes that can be played<br>\n"
 			      "at one time. Use a lower<br>\n"
@@ -1035,7 +1037,7 @@ void KMidi::drawPanel()
     meterspin->setGeometry( ix, iy, WIDTH/2, HEIGHT );
     connect( meterspin, SIGNAL( valueChanged(int) ),
 	     SLOT( meterfudgeChanged(int) ) );
-    meterspin->setFont( QFont( "helvetica", smallPtSize(), QFont::Bold) );
+    meterspin->setFont( defaultFontBold );
     what->add(meterspin, i18n("This setting is a delay,<br>\n"
 			      "in hundredths of a second, before a played<br>\n"
 			      "note is displayed on the<br>\n"
@@ -1046,7 +1048,7 @@ void KMidi::drawPanel()
 
     filterbutton = makeButton( ix +WIDTH/2,     iy, WIDTH/2,   HEIGHT, "filt" );
     filterbutton->setToggleButton( TRUE );
-    filterbutton->setFont( QFont( "helvetica", smallPtSize(), QFont::Bold) );
+    filterbutton->setFont( defaultFontBold );
     what->add(filterbutton, i18n("When this filter button<br>\n"
 				 "is on, a low pass filter<br>\n"
 				 "is used for drum patches<br>\n"

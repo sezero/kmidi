@@ -48,8 +48,6 @@
 #include "version.h"
 #include "midiapplication.h"
 
-//QFont default_font("Helvetica", 12);
-
 extern const char * whatsthis_image[];
 
 ConfigDlg::ConfigDlg(QWidget *parent, struct configstruct *data, const char *name)

@@ -49,9 +49,6 @@ bool menubarisvisible;
 QSize requestedframesize = QSize (0, 0);
 int fixframesizecount = 0;
 
-//QFont default_font("Helvetica", 10, QFont::Bold);
-
-
 KMidiFrame *kmidiframe;
 
 DockWidget*     dock_widget;
