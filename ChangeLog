@@ -1,3 +1,7 @@
+1999-09-27  Greg Lee  <lee@hawaii.edu>
+
+	* kmidi.cpp: make info and meter windows independent
+
 1999-09-26  Greg Lee  <lee@hawaii.edu>
 
 	* config/piano+guitar,drums: more substitution

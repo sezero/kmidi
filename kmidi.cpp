@@ -175,11 +175,13 @@ KMidi::KMidi( QWidget *parent, const char *name ) :
     srandom(time(0L));
     adjustSize();
     setMinimumSize( regularsize );
-    //setMaximumSize( fullsize );
 
     resize( regularsize );
 
     setAcceptDrops(TRUE);
+
+    if (showmeterrequest) logoClicked();
+    if (showinforequest) speedupslot();
 }
 
 void KMidi::dropEvent( QDropEvent * e )
@@ -656,19 +658,14 @@ void KMidi::drawPanel()
     meter->hide();
     extendedheight = iy + 3*HEIGHT;
     extendedsize = QSize (totalwidth, extendedheight);
-
+    
     ix = 0;
     logwindow = new LogWindow(this,"logwindow");
-    logwindow->setGeometry(ix,extendedheight, totalwidth, 100);
-    logwindow->resize(totalwidth, 100);
-    //logwindow->setBackgroundColor( background_color );
-    //logwindow->led_color = led_color;
-    //logwindow->background_color = background_color;
+    logwindow->setGeometry(ix,extendedheight, totalwidth, infowindowheight);
+    logwindow->resize(totalwidth, infowindowheight);
     logwindow->hide();
-    extendedheight += 100;
 
     regularsize = QSize (totalwidth, regularheight);
-    fullsize = QSize (totalwidth, extendedheight);
 
     // Choose patch set
     ix = 0;
@@ -889,14 +886,36 @@ void KMidi::setEffects( bool down )
 void KMidi::logoClicked(){
 
     if(meter->isVisible()){
-	resize( regularsize );
 	meter->hide();
-	logwindow->hide();
+	patchbox->hide();
+	playbox->hide();
+	playlistbox->hide();
+	rchecks->hide();
+	effectbutton->hide();
+	voicespin->hide();
+	meterspin->hide();
+	rbuttond->hide();
+	if (logwindow->isVisible()) {
+	    logwindow->move(0, regularsize.height());
+            resize( regularsize.width(), regularsize.height() + logwindow->height() );
+	}
+	else resize( regularsize );
 	return;
     }
-    resize( fullsize );
     meter->show();
-    logwindow->show();
+    patchbox->show();
+    playbox->show();
+    playlistbox->show();
+    rchecks->show();
+    effectbutton->show();
+    voicespin->show();
+    meterspin->show();
+    rbuttond->show();
+    if (logwindow->isVisible()) {
+        resize( extendedsize.width(), extendedsize.height() + logwindow->height() );
+	logwindow->move(0, extendedsize.height());
+    }
+    else resize( extendedsize );
 }
 
 void KMidi::loadBitmaps() {
@@ -1101,12 +1120,27 @@ void KMidi::speedupslot(){
 	logwindow->hide();
 	if (meter->isVisible()) resize( extendedsize );
 	else resize( regularsize );
+	return;
     }
-    else {
-	resize( fullsize );
-	if (~meter->isVisible()) meter->show();
+    if (meter->isVisible()) {
+	logwindow->move(0, extendedsize.height());
 	logwindow->show();
+        resize( extendedsize.width(), extendedsize.height() + logwindow->height() );
+	return;
     }
+
+    patchbox->hide();
+    playbox->hide();
+    playlistbox->hide();
+    rchecks->hide();
+    effectbutton->hide();
+    voicespin->hide();
+    meterspin->hide();
+    rbuttond->hide();
+
+    logwindow->move(0, regularsize.height());
+    logwindow->show();
+    resize( regularsize.width(), regularsize.height() + logwindow->height() ); //FIX
 }
 
 void KMidi::nextClicked(){
@@ -1738,9 +1772,7 @@ void KMidi::readconfig(){
 
     // let's set the defaults
 
-    volume  = 40;
     randomplay = false;
-    int tooltipsint  = 1;
     /*	int randomplayint = 0;*/
 
     //////////////////////////////////////////
@@ -1751,13 +1783,11 @@ void KMidi::readconfig(){
     volume = config->readNumEntry("Volume", 40);
     current_voices = config->readNumEntry("Polyphony", DEFAULT_VOICES);
     meterfudge = config->readNumEntry("MeterAdjust", 14);
-    tooltipsint = config->readNumEntry("ToolTips", 1);
+    tooltips = config->readBoolEntry("ToolTips", TRUE);
     current_playlist_num = config->readNumEntry("Playlist", 0);
-
-    if (tooltipsint == 1)
-	tooltips = TRUE;
-    else
-	tooltips = FALSE;
+    showmeterrequest = config->readBoolEntry("ShowMeter", TRUE);
+    showinforequest = config->readBoolEntry("ShowInfo", TRUE);
+    infowindowheight = config->readNumEntry("InfoWindowHeight", 100);
 
     /*	str = config->readEntry("RandomPlay");
 	if ( !str.isNull() )
@@ -1799,10 +1829,13 @@ void KMidi::writeconfig(){
 
     config->writeEntry("Volume", volume);
     config->writeEntry("Polyphony", current_voices);
-    config->writeEntry("BackColor",background_color);
-    config->writeEntry("LEDColor",led_color);
-    config->writeEntry("MeterAdjust",meterfudge);
-    config->writeEntry("Playlist",current_playlist_num);
+    config->writeEntry("BackColor", background_color);
+    config->writeEntry("LEDColor", led_color);
+    config->writeEntry("MeterAdjust", meterfudge);
+    config->writeEntry("Playlist", current_playlist_num);
+    config->writeEntry("ShowMeter", meter->isVisible());
+    config->writeEntry("ShowInfo", logwindow->isVisible());
+    config->writeEntry("InfoWindowHeight", logwindow->height());
     config->sync();
 }
 
@@ -1815,23 +1848,22 @@ void KMidi::setColors(){
     //logwindow->setBackgroundColor(background_color);
 
 /*			 foreground, button, light, dark, mid, text, base   */
-    //QColorGroup colgrp( led_color, background_color, yellow,yellow , yellow,
-    //                    led_color, white );
 
-    //QColorGroup colgrp( led_color, background_color, yellow,yellow , yellow,
-    //                    led_color, background_color );
 
     QColorGroup norm( led_color, background_color, cp.normal().light(), cp.normal().dark(),
 	cp.normal().mid(), led_color, background_color );
-    QColorGroup dis( led_color, background_color, cp.disabled().light(), cp.disabled().dark(),
-	cp.disabled().mid(), led_color, background_color );
-    QColorGroup act( led_color, background_color, cp.active().light(), cp.active().dark(),
-	cp.active().mid(), led_color, background_color );
+    QColorGroup dis( yellow, background_color, cp.disabled().light(), cp.disabled().dark(),
+	cp.disabled().mid(), yellow, background_color );
+    QColorGroup act( background_color, led_color, cp.active().light(), cp.active().dark(),
+	cp.active().mid(), background_color, led_color );
+
     QPalette np(norm, dis, act);
 
+//    setPalette( np );
     logwindow->setPalette( np );
     statusLA->setPalette( np );
     looplabel->setPalette( np );
+
     //    titleLA->setPalette( np );
     propertiesLA->setPalette( np );
     properties2LA->setPalette( np );
@@ -1841,8 +1873,8 @@ void KMidi::setColors(){
     modlabel->setPalette( np );
     song_count_label->setPalette( np );
 				/* normal, disabled, active */
-    //patchbox->setPalette( np );
-    //playbox->setPalette( np );
+//    patchbox->setPalette( np );
+//    playbox->setPalette( np );
 
     for (int u = 0; u<=4;u++){
 	trackTimeLED[u]->setLEDoffColor(background_color);
@@ -1903,21 +1935,43 @@ void KMidi::updateUI(){
 void KMidi::resizeEvent(QResizeEvent *e){
 
     int h = (e->size()).height();
+    int lwheight;
 
-    if (h > extendedsize.height()) logwindow->resize(extendedsize.width(), h - extendedsize.height());
+    if (meter->isVisible()) lwheight = h - extendedsize.height();
+    else lwheight = h - regularsize.height();
+    if (lwheight > 0 && logwindow->isVisible()) logwindow->resize(extendedsize.width(), lwheight);
 
-    if (h > extendedsize.height() - 10 && !meter->isVisible()) {
+
+    if (h > extendedsize.height() - 10 && !meter->isVisible() && !logwindow->isVisible()) {
 	meter->show();
+	patchbox->show();
+	playbox->show();
+	playlistbox->show();
+	rchecks->show();
+	effectbutton->show();
+	voicespin->show();
+	meterspin->show();
+	rbuttond->show();
     }
-    if (h > fullsize.height() - 10 && !logwindow->isVisible()) {
+    if (h > extendedsize.height() + logwindow->height() - 10 && meter->isVisible() && !logwindow->isVisible()) {
 	logwindow->show();
     }
 
-    if (h < regularsize.height() + 10 && meter->isVisible()) {
+    if (h < regularsize.height() + 10) {
 	if (logwindow->isVisible()) logwindow->hide();
-	meter->hide();
+	if (meter->isVisible()) {
+	    meter->hide();
+	    patchbox->hide();
+	    playbox->hide();
+	    playlistbox->hide();
+	    rchecks->hide();
+	    effectbutton->hide();
+	    voicespin->hide();
+	    meterspin->hide();
+	    rbuttond->hide();
+	}
     }
-    if (h < extendedsize.height() + 10 && logwindow->isVisible()) {
+    if (h < extendedsize.height() + 10 && meter->isVisible() && logwindow->isVisible()) {
 	logwindow->hide();
     }
 }

@@ -141,7 +141,6 @@ public:
 	MeterWidget	*meter;
 	QSize		regularsize;
 	QSize		extendedsize;
-	QSize		fullsize;
     
 	QPixmap folder_pixmap;
 	QPixmap file_pixmap;
@@ -170,7 +169,7 @@ public:
 	QPushButton     *makeButton( int, int, int, int, const QString & );
 
 	int		mixerFd;
-        bool             StopRequested;
+        bool            StopRequested;
 	bool 		loop;
 	int 		init_volume;
 	int 		Child;
@@ -189,6 +188,10 @@ public:
 	QColor		led_color;
 	bool 		playing;
 	bool 		blink;
+
+	bool		showmeterrequest;
+	bool		showinforequest;
+	int		infowindowheight;
 
 	QString		fileName;
 	QStrList	*playlist;
