@@ -69,7 +69,7 @@ PlaylistEdit::PlaylistEdit(const char *name, QStringList *playlist,
   newEdit = new QLineEdit( snpopup, "_editnew" );
 
   QLabel *labsavename = new QLabel(snpopup);
-  labsavename->setText("enter new name");
+  labsavename->setText(i18n("Enter new name"));
   newEdit->setGeometry(10,10, 150, 30);
   labsavename->setGeometry(20,10+30, 150, 30);
   connect( newEdit, SIGNAL( returnPressed() ), this, SLOT( newPlaylist() ) );

@@ -55,7 +55,7 @@ extern const char * whatsthis_image[];
 ConfigDlg::ConfigDlg(QWidget *parent, struct configstruct *data, const char *name)
     : QDialog(parent, name, TRUE)
 {
-    setCaption("kmidi configuration");
+    setCaption(i18n("kmidi configuration"));
     setMinimumSize(300, 200);
 
   configdata.background_color = black;
@@ -81,9 +81,9 @@ ConfigDlg::ConfigDlg(QWidget *parent, struct configstruct *data, const char *nam
 
     tl = new QVBoxLayout(this, 5);
     bbox = new KButtonBox(this);
-    ok = bbox->addButton("OK");
+    ok = bbox->addButton(i18n("OK"));
     ok->setDefault(TRUE);
-    cancel = bbox->addButton("Cancel");
+    cancel = bbox->addButton(i18n("Cancel"));
     cancel->setDefault(TRUE);
 
     connect(ok, SIGNAL(clicked()), this, SLOT(accept()));
@@ -142,13 +142,13 @@ ConfigDlg::ConfigDlg(QWidget *parent, struct configstruct *data, const char *nam
     what->add(label3, str);
     meg = new KIntNumInput(configdata.max_patch_megs, w, 10, "hex_with_slider" );
     meg->setRange(0, 255);
-    meg->setSpecialValueText("no limit");
+    meg->setSpecialValueText(i18n("no limit"));
     meg->move(205, 200);
     connect(meg,SIGNAL(valueChanged(int)),this,SLOT(megChanged(int)));
     what->add(meg, str);
 
     w->resize(320, 260);
-    test->addTab(w, "Configure");
+    test->addTab(w, i18n("Configure"));
     pages[0] = w;
 
 // Page 2
@@ -179,8 +179,8 @@ ConfigDlg::ConfigDlg(QWidget *parent, struct configstruct *data, const char *nam
     about->addContributor("Masanao Izumo", "mo@goice.co.jp",
 			"http://www.goice.co.jp/member/mo/timidity/",
 		       i18n("mod wheel, portamento ..."));
-    about->addContributor("see the timidity.1 man page", "for authors of",
-			"", 
+    about->addContributor(i18n("see the timidity.1 man page"),
+                       i18n("for authors of"), "",
 		       i18n("drivers, interfaces, configure scripts"));
 
     connect(about, SIGNAL( sendEmail(const QString& , const QString& ) ),
@@ -192,7 +192,7 @@ ConfigDlg::ConfigDlg(QWidget *parent, struct configstruct *data, const char *nam
     about->adjust();
     aboutsize = QSize( about->width() + 30, about->height() + 80 );
     w->resize(width(), height());
-    test->addTab(w, "About");
+    test->addTab(w, i18n("About"));
     pages[1] = w;
 
 
@@ -212,10 +212,10 @@ ConfigDlg::ConfigDlg(QWidget *parent, struct configstruct *data, const char *nam
 	i18n("GUS patches -- unrar needed to decompress."));
     patches->addContributor("Chaos", "mailto:chaos@soback.kornet.nm.kr",
 		"http://taeback.kornet.nm.kr/~chaos/soundfont/",
-		"A very moderately sized soundfont (12 megs).");
+		i18n("A very moderately sized soundfont (12 megs)."));
     patches->addContributor("Personal Copy v4.0.0", QString::null,
 		"http://www.personalcopy.com/sfarkfonts.htm",
-		"A very good large soundfont (38 megs).");
+		i18n("A very good large soundfont (38 megs)."));
     patches->addContributor("Msdos sfark decompressor.", QString::null,
 		"http://www.melodymachine.com/",
 		i18n("You may need this msdos-only tool."));
@@ -228,7 +228,7 @@ ConfigDlg::ConfigDlg(QWidget *parent, struct configstruct *data, const char *nam
     patches->adjust();
     patchessize = QSize( patches->width() + 30, patches->height() + 80 );
     w->resize(width(), height());
-    test->addTab(w, "Patchsets");
+    test->addTab(w, i18n("Patchsets"));
     pages[2] = w;
 
 //------------------------
