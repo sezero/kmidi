@@ -3092,6 +3092,8 @@ void dumb_pass_playing_list(int number_of_files, const char *list_of_files[])
 #ifndef ADAGIO
     int i=0;
 
+    if (number_of_files == 0) return;
+
     for (;;)
 	{
 	  switch(play_midi_file(list_of_files[i]))

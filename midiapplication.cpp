@@ -164,12 +164,15 @@ int createKApplication(int *argc, char **argv) {
 	thisapp = new MidiApplication(*argc, argv, "kmidi");
 //fprintf(stderr,"3: argc=%d argv[1]={%s}\n", *argc, (*argc>0)? argv[1] : "none");
 
+	//QString timplace = KGlobal::dirs()->KStandardDirs::findResourceDir("appdata", "timidity.cfg");
+	//QString timplace = KGlobal::dirs()->findResourceDir("appdata", "timidity.cfg");
+//fprintf(stderr, "I'm in [%s]\n", timplace.ascii());
 
 
 	return 1;
-   }
+}
     
-   int Launch_KMidi_Process(int _pipenumber){
+int Launch_KMidi_Process(int _pipenumber) {
 
 	pipenumber = _pipenumber;
 
@@ -181,21 +184,20 @@ int createKApplication(int *argc, char **argv) {
 	   }
 	}
 	else {
-
-	kmidiframe = new KMidiFrame( "_kmidiframe" );
-	KWM::setWmCommand(kmidiframe->winId(),"_kmidiframe");
-	kmidiframe->setCaption( i18n("Midi Player") );
-	//kmidiframe->setCaption( QString::null );
-	//kmidiframe->setFontPropagation( QWidget::AllChildren );
-        //thisapp->setFont(default_font, TRUE);
-        //kmidiframe->setFont(default_font, TRUE);
+	   kmidiframe = new KMidiFrame( "_kmidiframe" );
+	   KWM::setWmCommand(kmidiframe->winId(),"_kmidiframe");
+	   kmidiframe->setCaption( i18n("Midi Player") );
+	   //kmidiframe->setCaption( QString::null );
+	   //kmidiframe->setFontPropagation( QWidget::AllChildren );
+           //thisapp->setFont(default_font, TRUE);
+           //kmidiframe->setFont(default_font, TRUE);
 	}
 
 	kmidiframe->show();
 	thisapp->exec();
 
 	return 0;
-    }
+}
 
 
 #include "midiapplication.moc"

@@ -13,6 +13,11 @@ SYSEXTRAS=
 
 dnl AC_CHECK_HEADER(string.h,, [ EXTRADEFS="$EXTRADEFS -DNO_STRING_H " ])
 
+AC_CHECK_HEADERS(ncurses/curses.h ncurses.h slang/slang.h slang.h)
+
+AC_CHECK_LIB(ncurses,initscr, [ EXTRALIBS="$EXTRALIBS -lncurses " EXTRADEFS="$EXTRADEFS -DIA_NCURSES "])
+AC_CHECK_LIB(slang,SLang_init_tty, [ EXTRALIBS="$EXTRALIBS -lslang " EXTRADEFS="$EXTRADEFS -DIA_SLANG "])
+
 dnl
 dnl Audio section
 dnl

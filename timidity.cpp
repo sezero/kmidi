@@ -59,12 +59,7 @@ extern int init_effect(void) ;
 #endif /*CHANNEL_EFFECT*/
 
 int have_commandline_midis = 0;
-#ifdef KMIDI
-int output_device_open = 1;
-#endif /* KMIDI */
-#ifdef tplusdontuse
-extern int opt_portamento;
-#endif
+int output_device_open = 0;
 
 #ifdef __WIN32__
 int intr;
@@ -317,9 +312,7 @@ static int set_ctl(char *cp)
   return 1;
 }
 
-#ifdef KMIDI
 char *cfg_names[30];
-#endif
 
 
 void clear_config(void)
@@ -377,6 +370,8 @@ int global_chorus = 0;
 int global_echo = 0;
 int global_detune = 0;
 
+int got_a_configuration=0;
+
 #ifdef KMIDI	
 extern int createKApplication(int *argc, char **argv);
 #endif
@@ -390,13 +385,10 @@ int main(int argc, char **argv)
   int c, 
       cmderr=0, 
       i, 
-      got_a_configuration=0, 
       try_config_again=0,
       need_stdin=0, 
       need_stdout=0;
-#ifdef KMIDI
   int orig_optind;
-#endif /* KMIDI */
 
   int32 tmpi32, output_rate=DEFAULT_RATE;
 
@@ -419,24 +411,33 @@ int main(int argc, char **argv)
   char *KDEdir;
   char *kmidi_config;                                                          
 
-  if (!createKApplication(&argc, argv)) return 0;
-  if ( ! (KDEdir = getenv("KDEDIR")))                                          
-   {
-     /* kmidi_config = DEFAULT_PATH; */
-     kmidi_config = (char *)safe_malloc(strlen(DEFAULT_PATH)+1);
-     strcpy(kmidi_config, DEFAULT_PATH);
-   }
-  else
-   {
-     kmidi_config = (char *)safe_malloc(strlen(KDEdir)+strlen(KMIDI_CONFIG_SUBDIR)+1);
-     strcpy(kmidi_config, KDEdir);
-     strcat(kmidi_config, KMIDI_CONFIG_SUBDIR); 
-     /* add_to_pathlist(kmidi_config, 0); */
-   }
-   add_to_pathlist(kmidi_config, 0);
+
+  for (i = 0; i < argc; i++) {
+	if (strlen(argv[i]) < 2) continue;
+	if (argv[i][0] != '-') continue;
+	if (argv[i][1] == 'h') break;
+	if (strlen(argv[i]) < 3) continue;
+	if (argv[i][1] != 'i') continue;
+	if (argv[i][2] != 'q') break;
+  }
+
+  if (i == argc) {
+	if (!createKApplication(&argc, argv)) return 0;
+  }
+  if ( ! (KDEdir = getenv("KDEDIR"))) {
+       kmidi_config = (char *)safe_malloc(strlen(DEFAULT_PATH)+1);
+       strcpy(kmidi_config, DEFAULT_PATH);
+  }
+  else {
+       kmidi_config = (char *)safe_malloc(strlen(KDEdir)+strlen(KMIDI_CONFIG_SUBDIR)+1);
+       strcpy(kmidi_config, KDEdir);
+       strcat(kmidi_config, KMIDI_CONFIG_SUBDIR); 
+       /* add_to_pathlist(kmidi_config, 0); */
+  }
+  add_to_pathlist(kmidi_config, 0);
 #else
 #ifdef DEFAULT_PATH
-   add_to_pathlist(DEFAULT_PATH, 0);
+  add_to_pathlist(DEFAULT_PATH, 0);
 #endif
 #endif
 
@@ -447,7 +448,7 @@ int main(int argc, char **argv)
   setreuid(u_uid, u_uid);
 #endif
 
-   
+ 
   if ((program_name=rindex(argv[0], '/'))) program_name++;
   else program_name=argv[0];
 #ifndef KMIDI
@@ -479,7 +480,6 @@ int main(int argc, char **argv)
 		case 'L': add_to_pathlist(optarg, 0); try_config_again=1; break;
 		case 'c':
 	if (read_config_file(optarg, 1)) cmderr++;
-	else got_a_configuration=1;
 	break;
 #ifdef CHANNEL_EFFECT
 		case 'E':  effect_activate( 1 ); break ;
@@ -595,8 +595,7 @@ int main(int argc, char **argv)
 /* don't use unnecessary memory until we're a child process */
   if (!got_a_configuration)
 	 {
-		if (!try_config_again || read_config_file(CONFIG_FILE, 1))
-	cmderr++;
+		if (!try_config_again || read_config_file(CONFIG_FILE, 1)) cmderr++;
 	 }
 
   /* If there were problems, give up now */
@@ -627,26 +626,14 @@ int main(int argc, char **argv)
 
   init_tables();
 
-#ifndef KMIDI
-  if (optind<argc)
-	 {
-		int orig_optind=optind;
-#else /* KMIDI */
   orig_optind=optind;
-#endif /* KMIDI */
 
-		while (optind<argc)
-	if (!strcmp(argv[optind++], "-"))
-	  need_stdin=1;
-		optind=orig_optind;
+  while (optind<argc) if (!strcmp(argv[optind++], "-")) need_stdin=1;
+  optind=orig_optind;
 
-	if(argc-optind > 0 ) have_commandline_midis = argc - optind;
-	else have_commandline_midis = 0;
+  if(argc-optind > 0 ) have_commandline_midis = argc - optind;
+  else have_commandline_midis = 0;
  
-#ifndef KMIDI
-		if (ctl->open(need_stdin, need_stdout))
-	{
-#else /* KMIDI */
   if (play_mode->open_output()<0){
 
       fprintf(stderr, "KMidi: Sorry, couldn't open %s.\n", play_mode->id_name);
@@ -656,37 +643,34 @@ int main(int argc, char **argv)
 
       /*return 2;*/
   }
+  else output_device_open = 1;
       
-  if (ctl->open(need_stdin, need_stdout)){
+  if (ctl->open(need_stdin, need_stdout)) {
 
-#endif /* KMIDI */
 	  fprintf(stderr, "Couldn't open %s\n", ctl->id_name);
 	  play_mode->close_output();
 	  return 3;
-	}
+  }
+
 #ifndef KMIDI
-		/* Open output device */
-		if (play_mode->open_output()<0)
-	{
+  if (!output_device_open) {
 	  fprintf(stderr, "Couldn't open %s\n", play_mode->id_name);
 	  ctl->close();
 	  return 2;
-	}
+  }
 #endif /* not KMIDI */
 
 
-		if (!control_ratio)
-        {
+  if (!control_ratio) {
 
 	  control_ratio = play_mode->rate / CONTROLS_PER_SECOND;
 	  if(control_ratio<1)
 		 control_ratio=1;
 	  else if (control_ratio > MAX_CONTROL_RATIO)
 		 control_ratio=MAX_CONTROL_RATIO;
-	}
+  }
 
-		if (*def_instr_name)
-	set_default_instrument(def_instr_name);
+  if (*def_instr_name) set_default_instrument(def_instr_name);
 
 #ifdef __WIN32__
       
@@ -698,27 +682,15 @@ int main(int argc, char **argv)
 				fprintf(stderr, "Error raising process priority.\n");
 #endif
 
-		/* Return only when quitting */
-/*
-	if(argc-optind > 0 ) have_commandline_midis = argc - optind;
-	else have_commandline_midis = 0;
-*/
-#ifndef KMIDI
-	read_config_file(current_config_file, 0);
-#endif
+  if (got_a_configuration < 2) read_config_file(current_config_file, 0);
  
-	/* ctl->pass_playing_list(argc-optind, &argv[orig_optind]); */
-	ctl->pass_playing_list(argc-optind, (const char **)&argv[orig_optind]);
+  ctl->pass_playing_list(argc-optind, (const char **)&argv[orig_optind]);
 
-	play_mode->close_output();
-	ctl->close();
+  play_mode->close_output();
+  ctl->close();
 
 #ifdef __WIN32__
 			DeleteCriticalSection (&critSect);
 #endif
-#ifndef KMIDI
-	return 0;
-	 }
-#endif /* not KMIDI */
   return 0;
 }

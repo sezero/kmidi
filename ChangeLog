@@ -1,3 +1,10 @@
+2000-01-04  Greg Lee  <lee@hawaii.edu>
+
+	* kde interface is no longer started up if
+	  commandline has "-h" for help or if some other
+	  interface is requested ("-id"/"-in"/"-is")
+	* added ncurses and slang alternative interfaces
+
 2000-01-02  Greg Lee  <lee@hawaii.edu>
 
 	* cfg.l: replace read_config_file()

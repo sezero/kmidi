@@ -21,19 +21,30 @@
    
     */
 
+#ifdef IA_NCURSES
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include <stdarg.h>
-
-#include <curses.h>
-
 #include "config.h"
+
+#ifdef HAVE_NCURSES_CURSES_H
+#include <ncurses/curses.h>
+#else
+#ifdef HAVE_NCURSES_H
+#include <ncurses.h>
+#else
+#include <curses.h>
+#endif
+#endif
+
 #include "common.h"
 #include "instrum.h"
 #include "playmidi.h"
 #include "output.h"
 #include "controls.h"
+#include "version.h"
 
 static void ctl_refresh(void);
 static void ctl_help_mode(void);
@@ -52,7 +63,7 @@ static void ctl_reset(void);
 static int ctl_open(int using_stdin, int using_stdout);
 static void ctl_close(void);
 static int ctl_read(int32 *valp);
-static int cmsg(int type, int verbosity_level, char *fmt, ...);
+static int cmsg(int type, int verbosity_level, const char *fmt, ...);
 
 /**********************************************/
 /* export the interface functions */
@@ -474,7 +485,7 @@ static int ctl_read(int32 *valp)
   return RC_NONE;
 }
 
-static int cmsg(int type, int verbosity_level, char *fmt, ...)
+static int cmsg(int type, int verbosity_level, const char *fmt, ...)
 {
   va_list ap;
   int flagnl = 1;
@@ -550,3 +561,5 @@ static int cmsg(int type, int verbosity_level, char *fmt, ...)
   va_end(ap);
   return 0;
 }
+
+#endif

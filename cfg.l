@@ -2,7 +2,7 @@
 /*
  * Cfg file reader, Greg Lee, 8/93.
  * Adapted from Adagio for KMidi 12/99.
- *	$Id:$
+ *	$Id$
  */
 #include <ctype.h>
 #include <stdlib.h>
@@ -24,10 +24,6 @@
 #define YY_INPUT(buf,result,max_size) \
 	 result = fread( buf, 1, max_size, yyin );
 
-
-#ifdef KMIDI
-extern char *cfg_names[];
-#endif
 
 static int prescanning;
 static char doing_drums = false;
@@ -138,14 +134,12 @@ cm	[ \t]*("#".*)?\n
 	i += 6;
 	while (isspace(yytext[i])) i++;
 
-#ifdef KMIDI
 	 if (prescanning && cfg_condition >= 0 && cfg_condition < 30 &&
 		rcf_count==1 && !cfg_names[cfg_condition])
 	  {
 	    cfg_names[cfg_condition] = (char *)safe_malloc(strlen(yytext+i)+1);
 	    strcpy(cfg_names[cfg_condition], yytext+i);
 	  }
-#endif
 
     if (!prescanning && (cfg_condition < 0 || cfg_condition == cfg_select)) {
 
@@ -567,7 +561,10 @@ int read_config_file(const char *name, int prescan)
 
 	current_toneset = current_drumset = 0;
 	doing_drums = doing_sf = false;
-	retvalue = yylex();
+	if (!(retvalue = yylex())) {
+	   if (prescan) got_a_configuration = 1;
+	   else got_a_configuration = 2;
+	}
 	close_file(yyin);
 	return retvalue;
 }

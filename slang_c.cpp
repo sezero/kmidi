@@ -36,6 +36,7 @@
       - Get the real size of screen we are running on
 
     */
+#ifdef IA_SLANG
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -43,15 +44,22 @@
 #include <stdarg.h>
 #include <termios.h>
 #include <sys/ioctl.h>
-
-#include <slang.h>
-
 #include "config.h"
+
+#ifdef HAVE_SLANG_SLANG_H
+#include <slang/slang.h>
+#else
+#ifdef HAVE_SLANG_H
+#include <slang.h>
+#endif
+#endif
+
 #include "common.h"
 #include "instrum.h"
 #include "playmidi.h"
 #include "output.h"
 #include "controls.h"
+#include "version.h"
 
 /*
  * For the set_color pairs (so called 'objects')
@@ -78,7 +86,7 @@ static void ctl_reset(void);
 static int ctl_open(int using_stdin, int using_stdout);
 static void ctl_close(void);
 static int ctl_read(int32 *valp);
-static int cmsg(int type, int verbosity_level, char *fmt, ...);
+static int cmsg(int type, int verbosity_level, const char *fmt, ...);
 
 /**********************************************/
 /* export the interface functions */
@@ -109,7 +117,7 @@ static void _ctl_refresh(void)
   SLsmg_refresh();
 }
 
-static void SLsmg_printfrc( int r, int c, char *fmt, ...) {
+static void SLsmg_printfrc( int r, int c, const char *fmt, ...) {
   char p[1000];
   va_list ap;
 
@@ -489,7 +497,7 @@ static int ctl_read(int32 *valp)
   return RC_NONE;
 }
 
-static int cmsg(int type, int verbosity_level, char *fmt, ...)
+static int cmsg(int type, int verbosity_level, const char *fmt, ...)
 {
   va_list ap;
   char p[1000];
@@ -587,3 +595,5 @@ static int cmsg(int type, int verbosity_level, char *fmt, ...)
   va_end(ap);
   return 0;
 }
+
+#endif
