@@ -1684,8 +1684,8 @@ void KMidi::quitClicked(){
 
 void KMidi::replayClicked(){
 
-    if(status != KPLAYING)
-	return;
+    //if(status != KPLAYING)
+//	return;
 
     last_status = KNONE;
 
