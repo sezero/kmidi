@@ -81,7 +81,7 @@ PlaylistEdit::PlaylistEdit(const char *name, QStringList *playlist,
 	file->setWhatsThis(41, i18n("Replace the contents of the<br>\n"
 				"currently selected playlist<br>\n"
 				"file with the new play list.") );
-  file->insertItem( i18n("Save as ..."), this, SLOT( editNewPlaylist() ), 0, 42);
+  file->insertItem( i18n("Save as..."), this, SLOT( editNewPlaylist() ), 0, 42);
 	file->setWhatsThis(42, i18n("Make up a name for a<br>\n"
 				"new playlist file and<br>\n"
 				"save the current play list there.") );
