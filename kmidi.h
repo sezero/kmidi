@@ -208,6 +208,7 @@ public:
 	bool 		tooltips;
 	bool 		starting_up;
 	bool 		looping;
+	int		max_patch_megs;
 	int		volume;
 	int		current_voices;
 	int 		max_sec;

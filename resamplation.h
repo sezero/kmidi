@@ -10,7 +10,8 @@
 #define MODULATE_NONVIB_PITCH \
 		if (!cc_count--) { \
 		    cc_count = control_ratio - 1; \
-		    incr = calc_mod_freq(v, incr); \
+		    if (!update_modulation_signal(v)) \
+		        incr = calc_mod_freq(v, incr); \
 		}
 #define REMEMBER_CC_STATE \
 	vp->modulation_counter=cc_count;

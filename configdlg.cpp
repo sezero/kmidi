@@ -73,11 +73,13 @@ ConfigDlg::ConfigDlg(QWidget *parent, struct configstruct *data, const char *nam
   configdata.background_color = black;
   configdata.led_color = green;
   configdata.tooltips = true;
+  configdata.max_patch_megs = 60;
   
   if(data){
     configdata.background_color = data->background_color;
     configdata.led_color = data->led_color;
     configdata.tooltips = data->tooltips;
+    configdata.max_patch_megs = data->max_patch_megs;
   }
 
 
@@ -88,7 +90,6 @@ ConfigDlg::ConfigDlg(QWidget *parent, struct configstruct *data, const char *nam
     test = new KTabCtl(this, "test");
     connect(test, SIGNAL(tabSelected(int)), this, SLOT(tabChanged(int)));
 
-    QWidget *w = new QWidget(test, "_page1");
 
     tl = new QVBoxLayout(this, 5);
     bbox = new KButtonBox(this);
@@ -103,36 +104,47 @@ ConfigDlg::ConfigDlg(QWidget *parent, struct configstruct *data, const char *nam
     helpbutton = bbox->addButton("Help");
     connect(helpbutton, SIGNAL(clicked()), this, SLOT(help()));
 
-  box = new QGroupBox(w, "box");
-  box->setGeometry(10,10,320,260);
-  configsize = QSize( 320+20, 260+80 );
+// Page 1
+    QWidget *w = new QWidget(test, "_page1");
 
-  label1 = new QLabel(w);
-  label1->setGeometry(60,25,135,25);
-  label1->setText(i18n("LED Color:"));
+    //box = new QGroupBox(w, "box");
+    //box->setGeometry(10,10,320,260);
+    configsize = QSize( 320+20, 260+80 );
 
-  button1 = new KColorButton(configdata.led_color, w);
-  button1->setGeometry(205,25,100,45);
-  connect(button1,SIGNAL(changed( const QColor & )),this,SLOT(set_led_color( const QColor & )));
+    label1 = new QLabel(w);
+    label1->setGeometry(60,25,135,25);
+    label1->setText(i18n("LED Color:"));
 
-  label2 = new QLabel(w);
-  label2->setGeometry(60,85,135,25);
-  label2->setText(i18n("Background Color:"));
+    button1 = new KColorButton(configdata.led_color, w);
+    button1->setGeometry(205,25,100,45);
+    connect(button1,SIGNAL(changed( const QColor & )),this,SLOT(set_led_color( const QColor & )));
 
-  button2 = new KColorButton(configdata.background_color, w);
-  button2->setGeometry(205,85,100,45);
-  connect(button2,SIGNAL(changed( const QColor & )),this,SLOT(set_background_color( const QColor & )));
+    label2 = new QLabel(w);
+    label2->setGeometry(60,85,135,25);
+    label2->setText(i18n("Background Color:"));
 
-  ttcheckbox = new QCheckBox(i18n("Show Tool Tips"), w, "tooltipscheckbox");
-  ttcheckbox->setGeometry(30,150,135,25);
-  ttcheckbox->setFixedSize( ttcheckbox->sizeHint() );
-  ttcheckbox->setChecked(configdata.tooltips);
-  connect(ttcheckbox,SIGNAL(clicked()),this,SLOT(ttclicked()));
+    button2 = new KColorButton(configdata.background_color, w);
+    button2->setGeometry(205,85,100,45);
+    connect(button2,SIGNAL(changed( const QColor & )),this,SLOT(set_background_color( const QColor & )));
+
+    ttcheckbox = new QCheckBox(i18n("Show Tool Tips"), w, "tooltipscheckbox");
+    ttcheckbox->setGeometry(30,150,135,25);
+    ttcheckbox->setFixedSize( ttcheckbox->sizeHint() );
+    ttcheckbox->setChecked(configdata.tooltips);
+    connect(ttcheckbox,SIGNAL(clicked()),this,SLOT(ttclicked()));
+
+
+    meg = new KIntNumInput("Limit megabytes of patch memory",
+                          0, 255, 1, configdata.max_patch_megs, "megs", 10, true, w, "hex_with_slider");
+    meg->setSpecialValueText("no limit");
+    meg->move(30, 200);
+    connect(meg,SIGNAL(valueChanged(int)),this,SLOT(megChanged(int)));
 
     w->resize(320, 260);
     test->addTab(w, "Configure");
     pages[0] = w;
 
+// Page 2
     w = new QWidget(test, "_page2");
     about = new KAboutWidget(w, "_about");
     QPixmap pm = BarIcon("kmidilogo");
@@ -243,6 +255,10 @@ void ConfigDlg::set_background_color( const QColor &newColor ) {
   configdata.background_color = newColor;
   //qframe2->setBackgroundColor(configdata.background_color);
 
+}
+
+void ConfigDlg::megChanged( int newMegs ) {
+  configdata.max_patch_megs = newMegs;
 }
 
 struct configstruct * ConfigDlg::getData(){

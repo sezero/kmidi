@@ -503,6 +503,7 @@ static int ctl_open(int using_stdin, int using_stdout)
         Panel->currentpatchset = cfg_select;
         Panel->buffer_state = 100;
         Panel->various_flags = 0;
+        Panel->max_patch_megs = max_patch_memory / 1000000;
 
 	pipe_open();
 
@@ -744,6 +745,7 @@ static void ctl_pass_playing_list(int number_of_files, char *list_of_files[])
 	{ 
 	    if (command==RC_LOAD_FILE)
 		{
+        	    max_patch_memory = 1000000 * Panel->max_patch_megs;
 		    /* Read a LoadFile command */
 		    pipe_string_read(file_to_play);
 		    command=play_midi_file(file_to_play);

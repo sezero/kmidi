@@ -25,7 +25,7 @@ typedef struct {
 	char currentpatchset;
 	/* Channel channel[MAXDISPCHAN]; */
 	/* int wait_reset; */
-	int buffer_state, various_flags;
+	int buffer_state, various_flags, max_patch_megs;
 } PanelInfo;
 
 

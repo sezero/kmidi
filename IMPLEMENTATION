@@ -1,45 +1,69 @@
 Implementation
-Greg Lee, Oct. 1999
+Greg Lee, Nov. 1999
 
 
-	Processes
+			Processes
 
 KMidi is the user front end which handles the screen display and button
 presses, etc.  It executes as a separate process from TiMidity, which
 reads midi files and plays them.
 
 
-	Synthesis Model
+			Synthesis Model
 
 TiMidity has a tone generator, two envelope generators, three low frequency
-sine-wave oscillators, a low pass filter, and an effects unit.
+sine-wave oscillators, a low pass filter, and an effects unit.  (The low pass
+filter is used only when KMidi's fourth interpolation option is chosen and
+the "filt" button is depressed -- at present it doesn't work well.)
 
 The tone generator resamples instrument patches at the basic frequencies appropriate
-for specific notes being played.
+for specific notes being played.  (The interpolation algorithm used is selectable
+using the four checkboxes on the upper panel.)
 
-The envelope generators modulate each note with successively an attack phase, a
+The envelope generators modulate each note with successively: an attack phase, a
 hold phase, a decay, and a release.  One of the generators affects amplitude,
 and the other affects the cutoff frequency of the low pass filter.
 
 The low frequency oscillators modulate amplitude (for tremolo), frequency (for
-vibrato), and the low pass filter cutoff frequency.
+vibrato), and the low pass filter cutoff frequency (XG "rezo sweep").
 
 The effects unit supplies echo, detuning, reverberation, chorusing, celeste, and
 phaser effects.  Echo (done by generating extra echo notes) and reverbration
 (done with a filter) implement midi reverberation.  Detuning (done by generating
 extra pitch bent notes) and chorusing (done with a filter) implement midi
-chorusing.
-
-(The low pass filter is active only when KMidi's "filt" button is pressed on;
-the effects filters are active only when KMidi's "eff" button is pressed on.)
+chorusing.  (The effects filters are active only when KMidi's "eff" button is
+pressed on.  Echo and detuning can be controlled with the middle two checkboxes
+on the right of the lower panel.)
 
 Instruments may have either one or two tone elements, and for each of these,
 a patch set may provide separate patches for different note-velocity ranges
 (commonly for pianos) and for different note-pitch ranges.  GUS patch sets,
 however, provide only one tone element and one velocity range per instrument.
+(If you click the rightmost checkbox at the right of the lower panel, KMidi will
+display in its info window the names of patches as it loads them, a "(2)" if
+they have two tone elements, and the velocity range.)
 
 
-	Computation Issues
+			Midi Implementation
+
+Almost all midi messages and controllers that I'm aware of are implemented somehow
+(meaning that they cause something to happen, if not necessarily the right thing).
+NRPN controllers for setting attack and decay time are not implemented, because
+I haven't found any midi files that use them.  The flanging controller is not
+implemented (though flanging requested in an XG sysex dump is implemented).  Only
+a few of the hardware oriented controls in Roland and Yamaha system exclusive
+dumps are implemented.
+
+TiMidity can handle midi files meant to play on up to four synthesizers, keeping
+separate the four sets of 16 channels for each synth.  However, in the midi file,
+the synths have to be selected using port commands (in either Roland-GS or
+Yamaha-XG sysex dumps).  Some midi files intended for multiple synths don't have
+port commands.
+
+The KMidi display of channel activity is limited to two sets of 16 channels.
+
+
+			Computation Issues
 
 TiMidity can fall behind in computing data to send out to the sound driver, and
 then there are dropouts in the music.  TiMidity tries to anticipate the possibility
@@ -51,7 +75,46 @@ chorus effects, and starts terminating notes early, or even skipping notes
 altogether.  So, depending on midi song, patchset, how fast your system is,
 even if you don't hear dropouts, you will notice a loss in quality as TiMidity
 gets busier.  KMidi's front panel lights give some picture of how desperate
-TiMidity is becoming in its effort to keep the music playing.
+TiMidity is becoming in its effort to keep the music playing.  (Signs of
+desperation: the buffer led goes from healthy greenish to busy orangeish,
+the interpolation led turns off (meaning linear interpolation is being used
+for resampling), the echo led goes off, or the detuning led goes off (meaning
+no extra echo or detuned notes are being played).
 
-	Memory Issues
+Monitoring the output buffer involves calling the sound driver to find out how
+much data it has buffered up.  I know how to do this for Hannu Savolainen's OSS
+driver (Linux and some other systems), perhaps for older Suns (it used to work),
+but not for other drivers.
+
+You can lighten TiMidity's computational burden by various manoeuvres: (1) reduce
+the permitted polyphony (spin box on lower panel), (2) press off the "eff" button,
+(3) choose cheaper resampling interpolation (one of the checkboxes on the upper
+panel further to the left), (4) turn off echo, detuning, or stereo using the left
+three checkboxes on the lower panel.   Of course, there is attendant loss in
+quality.  Having the "filt" button on doesn't cost anything unless you've also
+chosen the "cspline+filter" interpolation option (since drum patches are filtered
+only when they are first loaded -- not while playing).
+
+
+			Memory Issues
+
+It's possible for TiMidity to use an excessive amount of memory for patches.  Symptoms
+are your window system becoming very sluggish, or crashing.  This is probably only
+a problem when using big sf2 soundfonts of 60+ megabytes.  For instance, the
+piano patches in Personal Choice's PC400 soundfont are 35 megs each.  After playing
+a list of midi files which use three of these pianos, well, that's 105 megs of
+ram right there.  In its configuration dialog, KMidi lets you set a maximum number
+of megs to be used to keep patches used in playing previous midi files;  when this
+maximum is exceeded, TiMidity will unload least recently used patches, returning
+ram to the system.  The default maximum is 60 megs, which works ok on my system (I
+have 48 megs ram and 196 megs cache).  Setting this to a lower value means that
+more patches have to be reloaded from patch files as you play through a list of midi
+songs, which slows things up.  If you're ram rich, you can set it to "no limit".
+
+After playing each midi file, KMidi will report on how much memory is currently
+occupied by patches, provided you've clicked on the verbose option for the rightmost
+checkbox on the lower panel.
+
+If you don't have much ram or cache memory, setting a low maximum for patch memory
+might not prevent KMidi from crashing your system.  So be careful using big soundfonts.
 

@@ -42,17 +42,20 @@
 #include <qcheckbox.h>
 #include <qlayout.h>
 #include <kbuttonbox.h>
+#include <knuminput.h>
 #include <kcolorbtn.h>
 
 struct configstruct{
   QColor led_color;
   QColor background_color;
   bool   tooltips;
+  int	 max_patch_megs;
 };
 
 class KTabCtl;
 class QPushButton;
 class KAboutWidget;
+class KIntNumInput;
 
 class ConfigDlg : public QDialog
 {
@@ -69,6 +72,7 @@ protected:
     KTabCtl *test;
     KAboutWidget *about;
     QWidget *pages[3];
+    KIntNumInput *meg;
 public slots:
     void tabChanged(int);
 
@@ -79,6 +83,7 @@ protected slots:
   void set_background_color( const QColor & );
   void help();
   void ttclicked();
+  void megChanged( int );
 
 public:
   QSize configsize, aboutsize;

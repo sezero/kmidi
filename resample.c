@@ -214,9 +214,6 @@ int32 calc_mod_freq(int v, int32 incr)
   int32 freq;
   /* already done in update_vibrato ? */
   if (voice[v].vibrato_control_ratio) return incr;
-#ifndef FILTER_INTERPOLATION
-  if (update_modulation_signal(v)) return incr;
-#endif
   if ((mod_amount=voice[v].sample->modEnvToPitch)<0.02) return incr;
   if (incr < 0) return incr;
   freq = voice[v].frequency;
@@ -1162,9 +1159,6 @@ void pre_resample(Sample * sp)
   count--;
   for(i = 0; i < count + overshoot; i++)
     {
-#ifdef tplussliding
-      int32 v, v5;
-#endif
       vptr = src + (ofs >> FRACTION_BITS);
       if (i < count - 2 || !overshoot)
 	{
@@ -1183,23 +1177,9 @@ void pre_resample(Sample * sp)
 	  else v3 = *endptr - (count-i) * *endptr / overshoot;
 	  v4 = *endptr - (count-i-1) * *endptr / overshoot;
 	}
-#ifdef tplussliding
-      v5 = v2 - v3;
-      xdiff = FRSCALENEG((int32)(ofs & FRACTION_MASK), FRACTION_BITS);
-/* this looks a little strange: v1 - v2 - v5 = v1 + v3 */
-      v = (int32)(v2 + xdiff * (1.0/6.0) * (3 * (v3 - v5) - 2 * v1 - v4 +
-       xdiff * (3 * (v1 - v2 - v5) + xdiff * (3 * v5 + v4 - v1))));
-      if(v < -32768)
-	  *dest++ = -32768;
-      else if(v > 32767)
-	  *dest++ = 32767;
-      else
-	  *dest++ = (int16)v;
-#else
       xdiff = FRSCALENEG((int32)(ofs & FRACTION_MASK), FRACTION_BITS);
       *dest++ = v2 + (xdiff / 6.0) * (-2 * v1 - 3 * v2 + 6 * v3 - v4 +
       xdiff * (3 * (v1 - 2 * v2 + v3) + xdiff * (-v1 + 3 * (v2 - v3) + v4)));
-#endif
       ofs += incr;
     }
 

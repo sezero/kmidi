@@ -1,3 +1,7 @@
+1999-11-07  Greg Lee  <lee@hawaii.edu>
+
+	* max mem for patches now configurable
+
 1999-11-06  Greg Lee  <lee@hawaii.edu>
 
 	* better memory management

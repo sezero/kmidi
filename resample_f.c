@@ -143,13 +143,16 @@ static sample_t *rs_plain(int v, uint32 *countptr)
   sample_t
     *dest=resample_buffer+resample_buffer_offset,
     *src=vp->sample->data;
+/*WHY not uint32??*/
   int32
     ofs=vp->sample_offset,
-    incr=vp->sample_increment,
+    incr=vp->sample_increment;
 #if defined(LAGRANGE_INTERPOLATION) || defined(CSPLINE_INTERPOLATION)
+  int32
     ls=0,
-    le=vp->sample->data_length,
+    le=vp->sample->data_length;
 #endif /* LAGRANGE_INTERPOLATION */
+  uint32
     se=vp->sample->data_length;
   uint32
     count=*countptr;
@@ -196,11 +199,11 @@ static sample_t *rs_loop(int v, Voice *vp, uint32 *countptr)
   #ifdef CCVARS
   CCVARS
   #endif
+/*WHY not uint32??*/
   int32
     ofs=vp->sample_offset,
     incr=vp->sample_increment,
     le=vp->loop_end,
-    se=vp->sample->data_length,
 #if defined(LAGRANGE_INTERPOLATION) || defined(CSPLINE_INTERPOLATION)
     ls=vp->loop_start,
 #endif /* LAGRANGE_INTERPOLATION */
@@ -209,6 +212,7 @@ static sample_t *rs_loop(int v, Voice *vp, uint32 *countptr)
     *dest=resample_buffer+resample_buffer_offset,
     *src=vp->sample->data;
   uint32
+    se=vp->sample->data_length,
     count = *countptr;
 
 #ifdef BUTTERWORTH_COEFFICIENTS
@@ -256,12 +260,14 @@ REMEMBER_CC_STATE
 static sample_t *rs_bidir(int v, Voice *vp, uint32 count)
 {
   INTERPVARS
+/*WHY not uint32??*/
   int32
     ofs=vp->sample_offset,
     incr=vp->sample_increment,
     le=vp->loop_end,
-    se=vp->sample->data_length,
     ls=vp->loop_start;
+  uint32
+    se=vp->sample->data_length;
   sample_t
     *dest=resample_buffer+resample_buffer_offset,
     *src=vp->sample->data;
@@ -490,15 +496,16 @@ static sample_t *rs_vib_plain(int v, uint32 *countptr)
   sample_t
     *dest=resample_buffer+resample_buffer_offset,
     *src=vp->sample->data;
+/*WHY not uint32??*/
   int32
 #if defined(LAGRANGE_INTERPOLATION) || defined(CSPLINE_INTERPOLATION)
     ls=0,
     le=vp->sample->data_length,
 #endif /* LAGRANGE_INTERPOLATION */
-    se=vp->sample->data_length,
     ofs=vp->sample_offset,
     incr=vp->sample_increment;
   uint32
+    se=vp->sample->data_length,
     count=*countptr;
   int
     cc=vp->vibrato_control_counter;
@@ -545,6 +552,7 @@ static sample_t *rs_vib_loop(int v, Voice *vp, uint32 *countptr)
 {
   /* Play sample until end-of-loop, skip back and continue. */
   INTERPVARS
+/*WHY not uint32??*/
   int32
     ofs=vp->sample_offset,
     incr=vp->sample_increment,
@@ -552,12 +560,12 @@ static sample_t *rs_vib_loop(int v, Voice *vp, uint32 *countptr)
     ls=vp->loop_start,
 #endif /* LAGRANGE_INTERPOLATION */
     le=vp->loop_end,
-    se=vp->sample->data_length,
     ll=le - vp->loop_start;
   sample_t
     *dest=resample_buffer+resample_buffer_offset,
     *src=vp->sample->data;
   uint32
+    se=vp->sample->data_length,
     count = *countptr;
   int
     cc=vp->vibrato_control_counter;
@@ -608,12 +616,14 @@ REMEMBER_FILTER_STATE
 static sample_t *rs_vib_bidir(int v, Voice *vp, uint32 count)
 {
   INTERPVARS
+/*WHY not uint32??*/
   int32
     ofs=vp->sample_offset,
     incr=vp->sample_increment,
     le=vp->loop_end,
-    se=vp->sample->data_length,
     ls=vp->loop_start;
+  uint32
+    se=vp->sample->data_length;
   sample_t
     *dest=resample_buffer+resample_buffer_offset,
     *src=vp->sample->data;

@@ -180,6 +180,7 @@ KMidi::KMidi( QWidget *parent, const char *name )
     config.background_color = background_color;
     config.led_color = led_color;
     config.tooltips = tooltips;
+    config.max_patch_megs = max_patch_megs;
 
     drawPanel();
     loadBitmaps();
@@ -324,7 +325,7 @@ void KMidi::setToolTips()
 	QToolTip::add( led[LOADING_LED],	i18n("loading") );
 	QToolTip::add( led[LYRICS_LED],		i18n("lyrics") );
 	QToolTip::add( led[BUFFER_LED],		i18n("buffer") );
-	QToolTip::add( led[CSPLINE_LED],	i18n("cspline") );
+	QToolTip::add( led[CSPLINE_LED],	i18n("interpolation") );
 	QToolTip::add( led[REVERB_LED],		i18n("reverb") );
 	QToolTip::add( led[CHORUS_LED],		i18n("chorus") );
 	QToolTip::add( ich[0],		i18n("linear interpolation") );
@@ -1442,6 +1443,7 @@ void KMidi::aboutClicked()
 	    Panel->reset_panel = 10;
 	}
 	tooltips = configdlg->getData()->tooltips;
+	Panel->max_patch_megs = max_patch_megs = configdlg->getData()->max_patch_megs;
 	setColors();
 	setToolTips();
    }
@@ -1518,6 +1520,7 @@ void KMidi::PlayCommandlineMods(){
 	ich[interpolationrequest]->setChecked( TRUE );
 	updateIChecks(interpolationrequest);
   }
+  Panel->max_patch_megs = max_patch_megs;
 
 }
 
@@ -2094,7 +2097,8 @@ void KMidi::readconfig(){
     infowindowheight = config->readNumEntry("InfoWindowHeight", 80);
     lpfilterrequest = config->readBoolEntry("Filter", FALSE);
     effectsrequest = config->readBoolEntry("Effects", TRUE);
-    interpolationrequest = config->readNumEntry("Interpolation", 1);
+    interpolationrequest = config->readNumEntry("Interpolation", 2);
+    max_patch_megs = config->readNumEntry("MegsOfPatches", 60);
 
     QColor defaultback = black;
     QColor defaultled = QColor(107,227,88);
@@ -2130,6 +2134,7 @@ void KMidi::writeconfig(){
     config->writeEntry("Filter", filterbutton->isOn());
     config->writeEntry("Effects", effectbutton->isOn());
     config->writeEntry("Interpolation", interpolationrequest);
+    config->writeEntry("MegsOfPatches", max_patch_megs);
     config->sync();
 }
 
