@@ -46,6 +46,7 @@
 #include <fcntl.h>
 #include <stdio.h>
 #include <sys/ioctl.h> 
+#include <string.h> 
 
 #include <mme/mme_api.h>
 
@@ -126,12 +127,8 @@ void MMS_Audio_Init()
  * playing one block of data and is ready to accept the next
  **********/
 
-static void MMS_wave_callback(hWaveOut,wMsg,dwInstance,lParam1,lParam2)
-HANDLE hWaveOut;
-UINT wMsg;
-DWORD dwInstance;
-LPARAM lParam1;
-LPARAM lParam2;
+static void MMS_wave_callback(HANDLE hWaveOut, UINT wMsg, DWORD dwInstance,
+                              LPARAM lParam1, LPARAM lParam2)
 {
 
    switch(wMsg)
@@ -184,7 +181,7 @@ void MMS_Audio_On()
     status = waveOutOpen( &mms_device_handle,
 			  WAVE_MAPPER,
 			  (LPWAVEFORMAT)lpWaveFormat,
-			  MMS_wave_callback,
+			  (void (*)()) MMS_wave_callback,
 			  NULL,
 			  WAVE_ALLOWSYNC | CALLBACK_FUNCTION  );
 

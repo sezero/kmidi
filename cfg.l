@@ -35,7 +35,7 @@ static char cfg_flag = 1;
 static int tone_bank;
 static void set_patchno(char *m);
 
-static char *dirname = 0;
+static char *s_dirname = 0;
 static char *sfname = 0;
 
 static int current_toneset = 0;
@@ -111,9 +111,9 @@ cm	[ \t]*("#".*)?\n
 	if (yytext[i] == 'd') i += 3;
 	else i += 9;
 	while (isspace(yytext[i])) i++;
-	dirname = strcpy( (char *)malloc(strlen(yytext+i)+1), yytext+i );
-	add_to_pathlist(dirname, rcf_count);
-	free(dirname);
+	s_dirname = strcpy( (char *)malloc(strlen(yytext+i)+1), yytext+i );
+	add_to_pathlist(s_dirname, rcf_count);
+	free(s_dirname);
 }
 ^{owh}"source"{wh}{nm} {
 	char *fname;
