@@ -19,6 +19,7 @@ tcltk_dep=
 
 dnl Which X libraries?
 dnl  KEEPLIBS=$LIBS
+dnl  LIBS="-lX11"
 dnl  AC_CHECK_LIB(Xext,XShapeCombineMask,have_xext=yes; LIBS="-lXext $LIBS",
 dnl    have_xext=no)
 dnl  AC_CHECK_LIB(ICE,IceConnectionNumber)
@@ -496,15 +497,12 @@ dnl    LIBS="$LIBS -lslang"
 dnl Motif
 CONFIG_INTERFACE(motif,MOTIF,m,
   [  --enable-motif          Enable motif interface for TiMidity (default is yes)],
-  [
-dnl    lib_xm_opt=-lXm
-dnl    lib_xt_opt=-lXt
-dnl    lib_xext_opt=-lXext
-dnl    if test "x$have_xprelibs" = xyes; then
-dnl	lib_xprelibs_opt='-lSM -lICE'
-dnl    fi
-    EXTRATDEFS="$EXTRATDEFS -DIA_MOTIF"
-    EXTRATLIBS="$EXTRATLIBS -L/usr/X11R6/lib -lXm -lXt -lX11"
+  [ AC_FIND_MOTIF
+    if test "x$with_motif" = xyes; then
+    EXTRATDEFS="$EXTRATDEFS -DIA_MOTIF $MOTIF_CFLAGS"
+dnl    EXTRATLIBS="$EXTRATLIBS -L/usr/X11R6/lib -lXm -lXt -lX11"
+    EXTRATLIBS="$EXTRATLIBS $MOTIF_LIBS"
+    fi
   ])
 
 
@@ -519,15 +517,15 @@ CONFIG_INTERFACE(tcltk,TCLTK,k,
     CPPFLAGS="$tcl_include_dir $tk_includes $CPPFLAGS"
     LDFLAGS="$tcl_libdir $tk_libdir $LDFLAGS"
 dnl    LIBS="$LIBS $lib_dl_opt"
-    EXTRATLIBS="$EXTRATLIBS $lib_dl_opt"
+dnl    EXTRATLIBS="$EXTRATLIBS $lib_dl_opt"
 
     tcl_lib=
     tk_lib=
-    for l in tcl tcl8.0jp tcl7.6jp tcl80jp tcl76jp tcl8.0 tcl7.6 tcl80 tcl76; do
+    for l in tcl tcl8.0jp tcl7.6jp tcl80jp tcl76jp tcl8.3 tcl8.0 tcl7.6 tcl80 tcl76; do
       case "x$tcl_lib" in x) AC_CHECK_LIB($l,Tcl_Init,tcl_lib=-l$l);; esac
     done
     LIBS="$LIBS $tcl_lib"
-    for l in tk tk8.0jp tk4.2jp tk80jp tk42jp tk8.0 tk4.2 tk80 tk42; do
+    for l in tk tk8.0jp tk4.2jp tk80jp tk42jp tk8.3 tk8.0 tk4.2 tk80 tk42; do
       case "x$tk_lib" in x) AC_CHECK_LIB($l,Tk_Init,tk_lib=-l$l);; esac
     done
 
@@ -540,15 +538,17 @@ dnl    LIBS="$LIBS $lib_dl_opt"
       AC_MSG_WARN(tcl/tk is not enable)
     else
       tcltk_dep='tclIndex'
-    fi
+dnl    fi
 dnl    LIBS=`echo $LIBS | sed "s/-lX11/$tk_lib $tcl_lib -lX11/"`
-    EXTRATLIBS=`echo $EXTRATLIBS | sed "s/-lX11/$tk_lib $tcl_lib -lX11/"`
+dnl    EXTRATLIBS=`echo $EXTRATLIBS | sed "s/-lX11/$tk_lib $tcl_lib -lX11/"`
+    EXTRATLIBS="$EXTRATLIBS $tcl_lib $tk_lib"
     case "$target" in
       *-*-bsdi*)
         EXTRATLIBS="$EXTRATLIBS -lipc"
         ;;
     esac
     EXTRATDEFS="$EXTRATDEFS -DTCLTK"
+    fi
   ])
 
 

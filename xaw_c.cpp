@@ -127,6 +127,21 @@ static char **titles;
 static int *file_table;
 extern int amplitude;
 
+
+#ifndef ORIG_XAW
+extern MidiEvent *current_event;
+
+typedef struct {
+  uint8 status, channel, note, velocity, voices;
+  uint32 time;
+} OldVoice;
+#define MAX_OLD_NOTES 500
+static OldVoice old_note[MAX_OLD_NOTES];
+static int leading_pointer=0, trailing_pointer=0;
+static uint32 current_centiseconds = 0;
+static int songoffset = 0, current_voices = 0;
+#endif
+
 /**********************************************/
 /* export the interface functions */
 
@@ -235,8 +250,9 @@ static void ctl_current_time(uint32 ct)
   static int last_v=-1, last_time=-1;
     realct = play_mode->output_count(ct);
     if (realct < 0) realct = 0;
-    /* else realct += songoffset; */
+    else realct += songoffset;
     centisecs = realct / (play_mode->rate/100);
+  current_centiseconds = (uint32)centisecs;
   sec = centisecs / 100;
  
     v=0;
@@ -283,6 +299,8 @@ static void ctl_total_time(uint32 tt)
 #else
     ctl_current_time(0);
     sprintf(local_buf,"m%d",9);
+    songoffset = 0;
+    current_centiseconds = 0;
 #endif
     a_pipe_write(local_buf);
 }
@@ -507,28 +525,44 @@ static int ctl_blocking_read(int32 *valp) {
   a_pipe_read(local_buf,sizeof(local_buf));
   for (;;) {
     switch (local_buf[0]) {
-      case 'P' : return RC_LOAD_FILE;
-      case 'U' : return RC_TOGGLE_PAUSE;
-      case 'f': *valp=(int32)(play_mode->rate * 10);
+      case 'P' :
+	return RC_LOAD_FILE;
+      case 'U' :
+	return RC_TOGGLE_PAUSE;
+      case 'f':
+	*valp=(int32)(play_mode->rate * 10);
         return RC_FORWARD;
-      case 'b': *valp=(int32)(play_mode->rate * 10);
+      case 'b':
+	*valp=(int32)(play_mode->rate * 10);
         return RC_BACK;
-      case 'S' : return RC_QUIT;
-      case 'N' : return RC_NEXT;
-      case 'B' : return RC_REALLY_PREVIOUS;
-      case 'R' : repeatflag=atoi(local_buf+2);return RC_NONE;
-      case 'D' : randomflag=atoi(local_buf+2);return RC_QUIT;
-      case 'd' : n=atoi(local_buf+2);
+      case 'S' :
+	return RC_QUIT;
+      case 'N' :
+	songoffset = 0;
+	ctl_reset();
+	return RC_NEXT;
+      case 'B' :
+	return RC_REALLY_PREVIOUS;
+      case 'R' :
+	repeatflag=atoi(local_buf+2);
+	return RC_NONE;
+      case 'D' :
+	randomflag=atoi(local_buf+2);
+	return RC_QUIT;
+      case 'd' :
+	n=atoi(local_buf+2);
         xaw_delete_midi_file(atoi(local_buf+2));
         return RC_QUIT;
       case 'A' : xaw_delete_midi_file(-1);
         return RC_QUIT;
-      case 'C' : n=atoi(local_buf+2);
+      case 'C' :
+	n=atoi(local_buf+2);
 #ifdef ORIG_XAW
         opt_chorus_control = n;
 #endif
         return RC_QUIT;
-      case 'E' : n=atoi(local_buf+2);
+      case 'E' :
+	n=atoi(local_buf+2);
 #ifdef ORIG_XAW
         opt_modulation_wheel = n & MODUL_BIT;
         opt_portamento = n & PORTA_BIT;
@@ -540,12 +574,18 @@ static int ctl_blocking_read(int32 *valp) {
 #endif
         return RC_QUIT;
       case 'F' : 
-      case 'L' : selectflag=atoi(local_buf+2);return RC_QUIT;
-      case 'T' : a_pipe_read(local_buf,sizeof(local_buf));
-        n=atoi(local_buf+2); *valp= n * play_mode->rate;
+      case 'L' :
+	selectflag=atoi(local_buf+2);
+	return RC_QUIT;
+      case 'T' :
+	a_pipe_read(local_buf,sizeof(local_buf));
+        n=atoi(local_buf+2);
+	*valp= n * play_mode->rate;
         return RC_JUMP;
-      case 'V' : a_pipe_read(local_buf,sizeof(local_buf));
-        amplification=atoi(local_buf+2); *valp=(int32)0;
+      case 'V' :
+	a_pipe_read(local_buf,sizeof(local_buf));
+        amplification=atoi(local_buf+2);
+	*valp=(int32)0;
         return RC_CHANGE_VOLUME;
 #ifdef ORIG_XAW
       case '+': a_pipe_read(local_buf,sizeof(local_buf));
@@ -561,17 +601,23 @@ static int ctl_blocking_read(int32 *valp) {
       case 'O': a_pipe_read(local_buf,sizeof(local_buf));
         *valp = (int32)1; return RC_VOICEDECR;
 #endif
-      case 'X': a_pipe_read(local_buf,sizeof(local_buf));
+      case 'X':
+	a_pipe_read(local_buf,sizeof(local_buf));
         xaw_add_midi_file(local_buf + 2);
         return RC_NONE;
       case 's':
-        xaw_output_flist();return RC_NONE;
+        xaw_output_flist();
+	return RC_NONE;
 #ifdef ORIG_XAW
       case 'g': return RC_TOGGLE_SNDSPEC;
 #endif
-      case 'q' : exitflag ^= EXITFLG_AUTOQUIT;return RC_NONE;
+      case 'q' :
+	exitflag ^= EXITFLG_AUTOQUIT;
+	return RC_NONE;
       case 'Q' :
-      default  : exitflag |= EXITFLG_QUIT;return RC_QUIT;
+      default  :
+	exitflag |= EXITFLG_QUIT;
+	return RC_QUIT;
     }
   }
 }
@@ -916,6 +962,7 @@ ctl_xaw_note(int status, int ch, int note, int velocity)
 }
 
 #ifndef ORIG_XAW
+#if 0
 static void ctl_note(int v)
 {
 	int ch, note, vel;
@@ -933,6 +980,48 @@ static void ctl_note(int v)
 	vel = voice[v].velocity;
 	ctl_xaw_note(voice[v].status, ch, note, vel);
 }
+#else
+static void ctl_note(int v)
+{
+  int i, n;
+  if (!ctl.trace_playing)
+    return;
+  if (voice[v].clone_type != 0) return;
+
+  old_note[leading_pointer].status = voice[v].status;
+  old_note[leading_pointer].channel = voice[v].channel;
+  old_note[leading_pointer].note = voice[v].note;
+  old_note[leading_pointer].velocity = voice[v].velocity;
+  old_note[leading_pointer].time = current_event->time / (play_mode->rate/100);
+  n=0;
+  i=voices;
+  while (i--)
+    if (voice[i].status!=VOICE_FREE) n++;
+  old_note[leading_pointer].voices = n;
+  leading_pointer++;
+  if (leading_pointer == MAX_OLD_NOTES) leading_pointer = 0;
+
+}
+
+static void ctl_note_display(void)
+{
+  int v = trailing_pointer;
+  uint32 then;
+
+  then = old_note[v].time;
+
+  while (then <= current_centiseconds && v != leading_pointer)
+    {
+	ctl_xaw_note(old_note[v].status, old_note[v].channel, old_note[v].note, old_note[v].velocity);
+        current_voices = old_note[v].voices;
+        v++;
+        if (v == MAX_OLD_NOTES) v = 0;
+        then = old_note[v].time;
+    }
+  trailing_pointer = v;
+}
+
+#endif
 #endif
 
 #ifdef ORIG_XAW
@@ -1035,6 +1124,8 @@ static void ctl_event(CtlEvent *e)
 
 static void ctl_refresh(void)
 {
+       ctl_current_time(0);
+       ctl_note_display();
 }
 
 static void set_otherinfo(int ch, int val, char c) {
@@ -1107,6 +1198,13 @@ static void ctl_reset(void)
     else
       ctl_pitch_bend(i, channel[i].pitchbend);
   }
+#ifndef ORIG_XAW
+  for (i=0; i<MAX_OLD_NOTES; i++)
+    {
+      old_note[i].time = 0;
+    }
+  leading_pointer = trailing_pointer = current_voices = 0;
+#endif
   sprintf(local_buf, "R");
   a_pipe_write(local_buf);  
 }
