@@ -241,19 +241,22 @@ static void CtrlReset( chorus_effect* pThis )
 
 static void CtrlChange( chorus_effect* pThis , MidiEvent* pCurrentEvent )
 {
+	int amount = pCurrentEvent->a;
+	if (amount < global_chorus) amount = global_chorus;
+
 	if( pCurrentEvent->b ==  ME_CELESTE ||
 	    (pCurrentEvent->b ==  ME_CHORUSDEPTH && XG_effect_chorus_is_celeste_flag) )
 	if( pCurrentEvent->b == ME_CHORUSDEPTH && !XG_effect_chorus_is_celeste_flag &&
 		!XG_effect_chorus_is_phaser_flag)
 	{
-		if( pCurrentEvent->a != 0 )
+		if( amount != 0 )
 		{
 			redim_cirbuff( &( pThis->leftX ) , ( d_max >> FRACTION_BITS ) + 1 ) ;
 			if( ! ( play_mode->encoding & PE_MONO ) )
 			{
 				redim_cirbuff( &( pThis->rightX ) , ( d_max >> FRACTION_BITS ) + 1 ) ;
 			}
-			pThis->a = G * ( A_MIN + ( A_MAX - A_MIN ) * ( pCurrentEvent->a - 1 ) / 126.0 ) ;	
+			pThis->a = G * ( A_MIN + ( A_MAX - A_MIN ) * ( amount - 1 ) / 126.0 ) ;	
 		}
 		else
 			CtrlReset( pThis ) ;

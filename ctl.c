@@ -687,13 +687,23 @@ static int ctl_blocking_read(int32 *valp)
 			/* reverb */
 			if (!argopt) reverb_options &= ~(OPT_REVERB_VOICE | OPT_REVERB_EXTRA);
 			else reverb_options |= OPT_REVERB_VOICE;
-			if (argopt == 2) reverb_options |= OPT_REVERB_EXTRA;
+			if (argopt >= 2) reverb_options |= OPT_REVERB_EXTRA;
+			if (argopt == 2) global_reverb = 32;
+			else if (argopt == 3) global_reverb = 64;
+			else if (argopt == 4) global_reverb = 96;
+			else if (argopt == 5) global_reverb = 127;
+			else global_reverb = 0;
 			break;
 		     case 2:
 			/* chorus */
 			if (!argopt) reverb_options &= ~(OPT_CHORUS_VOICE | OPT_CHORUS_EXTRA);
 			else reverb_options |= OPT_CHORUS_VOICE;
-			if (argopt == 2) reverb_options |= OPT_CHORUS_EXTRA;
+			if (argopt >= 2) reverb_options |= OPT_CHORUS_EXTRA;
+			if (argopt == 2) global_chorus = 32;
+			else if (argopt == 3) global_chorus = 64;
+			else if (argopt == 4) global_chorus = 96;
+			else if (argopt == 5) global_chorus = 127;
+			else global_chorus = 0;
 			break;
 		     case 3:
 			/* verbosity */

@@ -645,7 +645,6 @@ static void kill_others(MidiEvent *e, int i)
     }
 }
 
-extern int reverb_options;
 
 static void clone_voice(Instrument *ip, int v, MidiEvent *e, uint8 clone_type, int variationbank)
 {
@@ -677,16 +676,16 @@ static void clone_voice(Instrument *ip, int v, MidiEvent *e, uint8 clone_type, i
   if (chorus > 127) chorus = 127;
 
   if (clone_type == REVERB_CLONE) {
-	 if ( (reverb_options & OPT_REVERB_EXTRA) && reverb < 90)
-		reverb = 90;
+	 if ( (reverb_options & OPT_REVERB_EXTRA) && reverb < global_reverb)
+		reverb = global_reverb;
 	 if (reverb < 8 || dont_reverb) return;
   }
   if (clone_type == CHORUS_CLONE) {
-	 if ( (reverb_options & OPT_CHORUS_EXTRA) && chorus < 40)
-		chorus = 40;
 	 if (variationbank == 32) chorus = 30;
 	 else if (variationbank == 33) chorus = 60;
 	 else if (variationbank == 34) chorus = 90;
+	 if ( (reverb_options & OPT_CHORUS_EXTRA) && chorus < global_chorus)
+		chorus = global_chorus;
 	 if (chorus < 4 || dont_chorus) return;
   }
 

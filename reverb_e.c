@@ -292,9 +292,12 @@ static void CtrlReset( reverb_effect* pThis )
 
 static void CtrlChange( reverb_effect* pThis , MidiEvent* pCurrentEvent )
 {
+	int amount = pCurrentEvent->a;
+	if (amount < global_reverb) amount = global_reverb;
+
 	if( pCurrentEvent->b ==  ME_REVERBERATION )
 	{
-		if( pCurrentEvent->a != 0 )
+		if( amount != 0 )
 		{
 if ( 1-d6 < 0 ) fprintf(stderr,"Check reverb_e.c!\n");
 			redim_cirbuff( &( pThis->leftX ) , (uint32)(1 - d6) ) ;
@@ -308,8 +311,8 @@ if ( 1+delay_flt-d6 < 0 ) fprintf(stderr,"Check reverb_e.c!\n");
 				redim_cirbuff( &( pThis->rightYa) , (uint32)(1 + delay_flt - d6) ) ;
 			}
 
-			pThis->ge = G * ( ( GE_MAX * G_MIN ) + ( GE_MAX * ( 1.0 - G_MIN ) / 126.0 ) * ( pCurrentEvent->a - 1 ) ) ;			
-			pThis->ga = G * ( ( GA_MAX * G_MIN ) + ( GA_MAX * ( 1.0 - G_MIN ) / 126.0 ) * ( pCurrentEvent->a - 1 ) ) ;
+			pThis->ge = G * ( ( GE_MAX * G_MIN ) + ( GE_MAX * ( 1.0 - G_MIN ) / 126.0 ) * ( amount - 1 ) ) ;			
+			pThis->ga = G * ( ( GA_MAX * G_MIN ) + ( GA_MAX * ( 1.0 - G_MIN ) / 126.0 ) * ( amount - 1 ) ) ;
 
 		}
 		else

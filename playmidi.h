@@ -263,6 +263,8 @@ extern int play_midi(unsigned char *, unsigned char *, int);
 extern int read_config_file(const char *name, int prescanning);
 extern char *current_config_file;
 extern int reverb_options;
+extern int global_reverb;
+extern int global_chorus;
 extern int cfg_select;
 extern void clear_config(void);
 extern void effect_activate( int iSwitch );

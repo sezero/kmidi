@@ -817,6 +817,8 @@ int read_config_file(const char *name, int prescanning)
 }
 
 int reverb_options=7;
+int global_reverb = 0;
+int global_chorus = 0;
 
 #ifdef KMIDI	
 extern void createKApplication(int *argc, char **argv);

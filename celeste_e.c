@@ -214,12 +214,15 @@ static void CtrlReset( celeste_effect* pThis )
 
 static void CtrlChange( celeste_effect* pThis , MidiEvent* pCurrentEvent )
 {
+	int amount = pCurrentEvent->a;
+	if (amount < global_chorus) amount = global_chorus;
+
 	if( pCurrentEvent->b ==  ME_CELESTE ||
 	    (pCurrentEvent->b ==  ME_CHORUSDEPTH && XG_effect_chorus_is_celeste_flag) )
 	{
-		if( pCurrentEvent->a != 0 )
+		if( amount != 0 )
 		{
-			pThis->d_max = ( ( D_MAX * play_mode->rate *  ( D_MIN  + ( ( 1.0 - D_MIN ) / 126.0 ) * ( pCurrentEvent->a - 1 ) ) ) / FREQU ) * FRACTION ;
+			pThis->d_max = ( ( D_MAX * play_mode->rate *  ( D_MIN  + ( ( 1.0 - D_MIN ) / 126.0 ) * ( amount - 1 ) ) ) / FREQU ) * FRACTION ;
 			pThis->incr = ( 2 * pThis->d_max * FREQU ) / play_mode->rate  ;
 			redim_cirbuff( &( pThis->leftX ) , ( pThis->d_max >> FRACTION_BITS ) + 2 ) ;
 			if( ! ( play_mode->encoding & PE_MONO ) )
