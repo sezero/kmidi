@@ -1,7 +1,7 @@
 #
 #
 
-all: ../TIMIDITY/buildhack
+all-local: ../TIMIDITY/buildhack
 
 ../TIMIDITY/buildhack:
 	( cd ../TIMIDITY && $(srcdir)/../TIMIDITY/makelinks $(srcdir)/.. )
