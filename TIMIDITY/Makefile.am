@@ -10,8 +10,6 @@
 
 INCLUDES = $(X_INCLUDES) `$(ARTSCCONFIG) --cflags`
 AM_CFLAGS = -DDEFAULT_PATH=\"$(TIMID_DIR)\" $(EXTRATDEFS) $(EXTRATCFLAGS)
-LDFLAGS = `$(ARTSCCONFIG) --libs`
-LDADD = $(LIBALIB) $(LIBAUDIO) $(LIBMME) $(EXTRATLIBS) $(X_LIBS) -lkdefakes -lm
 
 # Where to install the patches, config files, and MIDI files.
 # If you change this, it's a good idea to recompile the binary,
@@ -37,6 +35,8 @@ timidity_SOURCES = timidity.c common.c readmidi.c playmidi.c resample.c mix.c in
 	bsd20_a.c esd_a.c nas_a.c \
 	ncurs_c.c slang_c.c tk_c.c gtk_i.c ctl.c \
 	motif_c.c motif_i.c motif_p.c xaw_i.c xaw_c.c
+timidity_LDADD = $(LIBALIB) $(LIBAUDIO) $(LIBMME) $(EXTRATLIBS) $(X_LIBS) -lkdefakes -lm
+timidity_LDFLAGS = `$(ARTSCCONFIG) --libs`
 
 noinst_HEADERS = config.h common.h readmidi.h playmidi.h resample.h mix.h instrum.h \
         tables.h controls.h output.h filter.h motif.h xaw.h ctl.h

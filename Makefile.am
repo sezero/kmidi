@@ -15,9 +15,7 @@ AM_CPPFLAGS = -DDEFAULT_PATH=\"$(TIMID_DIR)\" -DKMIDI $(EXTRADEFS) $(CPPFLAGS)
 if GXXOPTIMIZE
 KDE_CXXFLAGS = -O3 -fomit-frame-pointer -ffast-math
 endif
-LDFLAGS = $(all_libraries) $(ARTSFLAGS) $(KDE_RPATH)
-#LDADD = $(LIB_KFILE) $(LIBALIB) $(LIBAUDIO) $(LIBMME) $(EXTRALIBS) -lsoundserver_idl -lartsflow
-LDADD = $(LIB_KFILE) $(LIBALIB) $(LIBAUDIO) $(LIBMME) $(EXTRALIBS) 
+AM_LDFLAGS = $(all_libraries) $(ARTSFLAGS) $(KDE_RPATH)
 
 # Where to install the patches, config files, and MIDI files.
 # If you change this, it's a good idea to recompile the binary,
@@ -44,6 +42,9 @@ kmidi_SOURCES = kmidi.cpp  playlist.cpp bwlednum.cpp configdlg.cpp log.cpp \
 	effects.cpp reverb_e.cpp chorus_e.cpp phaser_e.cpp celeste_e.cpp \
 	resample_l.cpp resample_f.cpp midiapplication.cpp kmidiframe.cpp \
 	kmidifiledlg.cpp qttableview.cpp
+kmidi_LDADD = $(LIB_KFILE) $(LIBALIB) $(LIBAUDIO) $(LIBMME) $(EXTRALIBS)
+kmidi_LDFLAGS = $(all_libraries) $(ARTSFLAGS) $(KDE_RPATH)
+
 
 sf2cfg_SOURCES = sf2cfg.cpp readsbk.cpp
 sf2cfg_LDADD =
