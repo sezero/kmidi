@@ -24,7 +24,7 @@
 #include <stdlib.h>
 #include <errno.h>
 
-#if (defined(SUN) && defined(SYSV)) | defined(__WIN32__)
+#ifndef NO_STRING_H
 # include <string.h>
 #else
 #include <strings.h>
