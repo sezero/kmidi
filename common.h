@@ -24,6 +24,8 @@
 extern char *program_name, current_filename[];
 extern int current_filedescriptor;
 
+#include <stdio.h>
+
 extern FILE *msgfp;
 
 typedef struct {

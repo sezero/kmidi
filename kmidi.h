@@ -234,6 +234,7 @@ public:
 	QDir		current_dir;
 
 private:
+        int             smallPtSize();
 	void 		display_playmode();
 	int		randomSong();
 	void 		resetPos();
