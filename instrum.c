@@ -620,6 +620,28 @@ static InstrumentLayer *load_instrument(char *name, int font_type, int percussio
 	}
       sp->envelope_rate[DELAY] = sp->envelope_offset[DELAY] = 0;
 
+#ifdef EXAMINE_SOME_ENVELOPES
+if (!bank && (gm_num >= 24 && gm_num <= 27)) {
+	printf("\nPRESET %d:\n", gm_num);
+	printf(" attack(0): off %ld  rate %ld\n",
+		sp->envelope_offset[0] >>(7+15), sp->envelope_rate[0] >>(7+15));
+	printf("   hold(1): off %ld  rate %ld\n",
+		sp->envelope_offset[1] >>(7+15), sp->envelope_rate[1] >>(7+15));
+	printf("sustain(2): off %ld  rate %ld\n",
+		sp->envelope_offset[2] >>(7+15), sp->envelope_rate[2] >>(7+15));
+	printf("release(3): off %ld  rate %ld\n",
+		sp->envelope_offset[3] >>(7+15), sp->envelope_rate[3] >>(7+15));
+	printf("  decay(4): off %ld  rate %ld\n",
+		sp->envelope_offset[4] >>(7+15), sp->envelope_rate[4] >>(7+15));
+	printf("    die(5): off %ld  rate %ld\n",
+		sp->envelope_offset[5] >>(7+15), sp->envelope_rate[5] >>(7+15));
+	printf("  delay(6): off %ld  rate %ld\n",
+		sp->envelope_offset[6] >>(7+15), sp->envelope_rate[6] >>(7+15));
+}
+#endif
+
+
+
       /* Then read the sample data */
       sp->data = safe_malloc(sp->data_length);
       if (1 != fread(sp->data, sp->data_length, 1, fp))

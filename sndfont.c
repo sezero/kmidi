@@ -199,6 +199,27 @@ void init_soundfont(char *fname, int oldbank, int newbank)
 	play_mode->rate = setting_dsp_rate;  /*output_rate;*/
 #endif
 
+#if 0
+#define XTO_MSEC(tcents) (int32)(1000 * pow(2.0, (double)(tcents) / 1200.0))
+for (i = -12000; i <= 8000; i+= 500)
+printf(" %d tcents = %d msec = %d adj = %d adjj\n", i, XTO_MSEC( 0.5 *(i-8000) ),
+	 XTO_MSEC( 0.5*(i - 7000) ),
+	 XTO_MSEC( 0.5*(i - 4000) ) );
+#endif
+
+#if 0
+#define XTO_LINEAR(centibel) pow(10.0, -(double)(centibel)/200.0)
+for (i = -200; i <= 1000; i+= 50)
+printf(" %d cbel = %f vol\n", i, XTO_LINEAR((double)i/10.0));
+#endif
+
+#if 0
+#define YTO_VOLUME(centibel) (255 * (1.0 - (centibel) / (1200.0 * log10(2.0))))
+#define XTO_VOLUME(centibel) (uint8)(255 * pow(10.0, -(double)(centibel)/200.0))
+for (i = 0; i <= 200; i+= 5)
+printf(" %d cbel = %d vol\n", i, XTO_VOLUME(i));
+#endif
+
 	control_ratio = play_mode->rate / CONTROLS_PER_SECOND;
 	if(control_ratio<1)
 		 control_ratio=1;
@@ -567,8 +588,10 @@ printf(" to %f\n", sp->resonance);
 #else
       if (amp!=-1)
 	sample->volume=(double)(amp) / 100.0;
+/*
       else
 	sample->volume=1.0;
+*/
 #endif
 
 
@@ -671,7 +694,7 @@ static void parse_preset(SFInsts *rec, SFInfo *sf, int preset)
 
 #ifdef GREGSTEST
 if (to_ndx - from_ndx > 1) {
-fprintf(stderr,"Preset #%d (%s) has %d instruments.\n", preset,
+fprintf(stderr,"Preset #%d (%s) has %d(-1) instruments.\n", preset,
  getname(sf->presethdr[preset].name), to_ndx - from_ndx);
 }
 #endif
@@ -796,6 +819,29 @@ static void append_layer(Layer *dst, Layer *src, SFInfo *sf)
 	}
 }
 
+static char rvec[128];
+
+static void clear_rvec()
+{
+	int i;
+	for (i=0; i<128; i++) rvec[i] = 0;
+}
+static void union_rvec(int kr)
+{
+	int i;
+	if (!kr || kr<0) return;
+	for (i=0; i<128; i++)
+	    if (i >= LO_VAL(kr) && i <= HI_VAL(kr)) rvec[i] = 1;
+
+}
+static int subset_rvec(int kr)
+{
+	int i;
+	if (!kr || kr<0) return 0;
+	for (i=0; i<128; i++)
+	    if (i >= LO_VAL(kr) && i <= HI_VAL(kr) && !rvec[i]) return 0;
+	return 1;
+}
 /* convert layer info to timidity instrument strucutre */
 static void make_inst(SFInsts *rec, Layer *lay, SFInfo *sf, int pr_idx, int in_idx, int inum, int range)
 {
@@ -909,24 +955,29 @@ else printf("NO CFG NAME!\n");
 	if (lay->set[SF_keyRange]) keyrange = lay->val[SF_keyRange];
 	else keyrange = 0;
 
+	/* melodic preset with 2 instruments: put 2nd one at right */
+	if (banknum < 128 && inum == 1 && !velrange) put_me_at_left = 0;
+	else put_me_at_left = 1;
+
 	if (lastpreset != preset) {
 		lastpreset = preset;
 		lastinum = -1;
 		lastkeyrange = -1;
+		clear_rvec();
 	}
 	else if (lastinum != inum) {
 		lastinum = inum;
 		lastkeyrange = -1;
+		clear_rvec();
 	}
 	else if (lastkeyrange != keyrange) {
+		if (subset_rvec(keyrange))
+		   put_me_at_left = 0;
 		lastkeyrange = keyrange;
-		/* melodic preset with 2 instruments: put 2nd one at right */
-		if (banknum < 128 && inum == 1) put_me_at_left = 0;
-		else put_me_at_left = 1;
 	}
 	else if (keyrange) put_me_at_left = 0;
-	else put_me_at_left = 1;
 
+	if (put_me_at_left) union_rvec(keyrange);
 
 	if (ip == NULL) {
 		put_me_at_left = 1;
@@ -1100,7 +1151,7 @@ fprintf(stderr, "preset %d, root_freq %ld\n", preset, sp->v.root_freq);
 	sp->v.modes = MODES_16BIT;
 
 	/* volume envelope & total volume */
-	sp->v.volume = calc_volume(lay,sf);
+	sp->v.volume = 1.0; /* was calc_volume(lay,sf) */
 
 	if (sampleFlags == 1 || sampleFlags == 3) {
 		/* sp->v.modes |= MODES_LOOPING|MODES_SUSTAIN; */
@@ -1126,6 +1177,7 @@ fprintf(stderr, "preset %d, root_freq %ld\n", preset, sp->v.root_freq);
 	  sp->v.modes &=~(MODES_SUSTAIN | MODES_LOOPING | 
 			MODES_PINGPONG | MODES_REVERSE);
 	}
+/*strip_envelope=1;*/
       if (strip_envelope==1)
 	{
 	  if (sp->v.modes & MODES_ENVELOPE)
@@ -1298,7 +1350,7 @@ static int32 calc_root_pitch(Layer *lay, SFInfo *sf, SampleList *sp)
 #endif
 }
 
-/*#define EXAMINE_SOME_ENVELOPES*/
+/* #define EXAMINE_SOME_ENVELOPES */
 /*----------------------------------------------------------------
  * convert volume envelope
  *----------------------------------------------------------------*/
@@ -1312,10 +1364,13 @@ static void convert_volume_envelope(Layer *lay, SFInfo *sf, SampleList *sp, int 
 	int32 hold = to_msec(lay, sf, SF_holdEnv2);
 	int32 decay = to_msec(lay, sf, SF_decayEnv2);
 	int32 release = to_msec(lay, sf, SF_releaseEnv2);
+	int32 volume = (int32)(255*calc_volume(lay,sf));
 	int milli = play_mode->rate/1000;
 #ifdef EXAMINE_SOME_ENVELOPES
 	static int no_shown = 0;
-if (!no_shown) {
+no_shown = !banknum && (preset >= 24 && preset <= 27);
+if (no_shown) {
+printf("PRESET %d\n",preset);
 	printf("sustainEnv2 %d delayEnv2 %d attackEnv2 %d holdEnv2 %d decayEnv2 %d releaseEnv2 %d\n",
 	lay->val[SF_sustainEnv2],
 	lay->val[SF_delayEnv2],
@@ -1328,21 +1383,33 @@ if (!no_shown) {
 }
 #endif
 
-#ifdef tplussbkuse
+#ifdef tplussbk
 	if(sustain > 250) sustain = 250;
 #endif
-	sp->v.envelope_offset[ATTACK] = to_offset(255);
-if (fast_decay)
-	sp->v.envelope_rate[ATTACK] = calc_rate(255, attack) * 2;
-else
-	sp->v.envelope_rate[ATTACK] = calc_rate(255, attack) * 4;
+	if (!lay->set[SF_releaseEnv2] /*&& banknum < 128*/) release = 400; /* or maybe all banks?? */
 
-	sp->v.envelope_offset[HOLD] = to_offset(250);
+/* ramp from 0 to <volume> in <attack> msecs */
+	sp->v.envelope_offset[ATTACK] = to_offset(volume);
+	sp->v.envelope_rate[ATTACK] = calc_rate(volume, attack) * 4;
+
+/* ramp to 250 in <hold> msecs */
+	sp->v.envelope_offset[HOLD] = to_offset(volume-5);
 	sp->v.envelope_rate[HOLD] = calc_rate(5, hold);
+/* ramp to <250-sustain> in <decay> msecs */
+
+	if(sustain < 5) sustain = 5;
+	if(sustain > volume - 5) sustain = volume - 5;
+
 	sp->v.envelope_offset[DECAY] = to_offset(sustain);
-	sp->v.envelope_rate[DECAY] = calc_rate(250 - sustain, decay);
+	/* sp->v.envelope_rate[DECAY] = calc_rate(250 - sustain, decay); */
+	sp->v.envelope_rate[DECAY] = calc_rate(volume - 5 - sustain, decay);
+	if (fast_decay) sp->v.envelope_rate[DECAY] *= 2;
+
+/* ramp to 5 in ?? msec */
 	sp->v.envelope_offset[RELEASE] = to_offset(5);
 	sp->v.envelope_rate[RELEASE] = calc_rate(255, release);
+	if (fast_decay) sp->v.envelope_rate[RELEASE] *= 2;
+
 	sp->v.envelope_offset[RELEASEB] = to_offset(4);
 	sp->v.envelope_rate[RELEASEB] = to_offset(200);
 	sp->v.envelope_offset[RELEASEC] = to_offset(4);
@@ -1353,20 +1420,22 @@ else
 
 	sp->v.modes |= MODES_ENVELOPE;
 #ifdef EXAMINE_SOME_ENVELOPES
-if (no_shown < 6) {
-	no_shown++;
-	printf(" attack: off %ld  rate %ld\n",
-		sp->v.envelope_offset[0], sp->v.envelope_rate[0]);
-	printf("   hold: off %ld  rate %ld\n",
-		sp->v.envelope_offset[1], sp->v.envelope_rate[1]);
-	printf("sustain: off %ld  rate %ld\n",
-		sp->v.envelope_offset[2], sp->v.envelope_rate[2]);
-	printf("release: off %ld  rate %ld\n",
-		sp->v.envelope_offset[3], sp->v.envelope_rate[3]);
-	printf("  decay: off %ld  rate %ld\n",
-		sp->v.envelope_offset[4], sp->v.envelope_rate[4]);
-	printf("    die: off %ld  rate %ld\n",
-		sp->v.envelope_offset[5], sp->v.envelope_rate[5]);
+if (no_shown) {
+	/*no_shown++;*/
+	printf(" attack(0): off %ld  rate %ld\n",
+		sp->v.envelope_offset[0] >>(7+15), sp->v.envelope_rate[0] >>(7+15));
+	printf("   hold(1): off %ld  rate %ld\n",
+		sp->v.envelope_offset[1] >>(7+15), sp->v.envelope_rate[1] >>(7+15));
+	printf("sustain(2): off %ld  rate %ld\n",
+		sp->v.envelope_offset[2] >>(7+15), sp->v.envelope_rate[2] >>(7+15));
+	printf("release(3): off %ld  rate %ld\n",
+		sp->v.envelope_offset[3] >>(7+15), sp->v.envelope_rate[3] >>(7+15));
+	printf("  decay(4): off %ld  rate %ld\n",
+		sp->v.envelope_offset[4] >>(7+15), sp->v.envelope_rate[4] >>(7+15));
+	printf("    die(5): off %ld  rate %ld\n",
+		sp->v.envelope_offset[5] >>(7+15), sp->v.envelope_rate[5] >>(7+15));
+	printf("  delay(6): off %ld  rate %ld\n",
+		sp->v.envelope_offset[6] >>(7+15), sp->v.envelope_rate[6] >>(7+15));
 }
 #endif
 }
@@ -1392,8 +1461,6 @@ static int32 calc_rate(int diff, double msec)
 	diff = 255;
     diff <<= (7+15);
     rate = ((double)diff / play_mode->rate) * control_ratio * 1000.0 / msec;
-    if(fast_decay)
-	rate *= 2;
     return (int32)rate;
 }
 #else
@@ -1422,6 +1489,7 @@ static int32 calc_rate(int diff, int time)
 #define TO_LINEAR(centibel) pow(10.0, -(double)(centibel)/200.0)
 #endif
 /* #define TO_VOLUME(centibel) (uint8)(255 * (1.0 - (centibel) / (1200.0 * log10(2.0)))); */
+#define TO_VOLUME(centibel) (uint8)(255 * pow(10.0, -(double)(centibel)/200.0))
 
 /* convert the value to milisecs */
 static int32 to_msec(Layer *lay, SFInfo *sf, int index)
@@ -1433,13 +1501,15 @@ static int32 to_msec(Layer *lay, SFInfo *sf, int index)
 	if (sf->version == 1)
 		return value;
 	else
-		return TO_MSEC(value);
+		/* return TO_MSEC( 0.5*(value - 8000) ); */
+		/* return TO_MSEC( 0.5*(value - 7000) ); */
+		return TO_MSEC( 0.5*(value - 4000) );
 }
 
 /* convert peak volume to linear volume (0-255) */
 static FLOAT_T calc_volume(Layer *lay, SFInfo *sf)
 {
-#ifdef tplussbkuse
+#ifdef tplussbk
     int v;
     if(!lay->set[SF_instVol] || lay->val[SF_instVol] == 0)
 	return (FLOAT_T)1.0;
@@ -1463,7 +1533,7 @@ static FLOAT_T calc_volume(Layer *lay, SFInfo *sf)
 /* convert sustain volume to linear volume */
 static int32 calc_sustain(Layer *lay, SFInfo *sf, int banknum, int preset)
 {
-#ifdef tplussbkuse
+#ifdef tplussbk
 /*
  * Sustain level
  * sf: centibels
@@ -1480,7 +1550,7 @@ static int32 calc_sustain(Layer *lay, SFInfo *sf, int banknum, int preset)
     else level = (double)lay->val[SF_sustainEnv2];
     if(level >= 1000)
 	return 1;
-    return (uint8)(255.0 - (level) * (255.0/1000.0));
+    return (uint8)(250.0 - (level) * (250.0/1000.0));
 #else
 	int32 level;
 	if (!lay->set[SF_sustainEnv2])

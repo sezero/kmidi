@@ -237,7 +237,7 @@ static void reset_midi(void)
 
 static void select_sample(int v, Instrument *ip)
 {
-  int32 f, cdiff, diff;
+  int32 f, cdiff, diff, midfreq;
   int s,i;
   Sample *sp, *closest;
 
@@ -269,9 +269,14 @@ static void select_sample(int v, Instrument *ip)
 
   cdiff=0x7FFFFFFF;
   closest=sp=ip->sample;
+  midfreq = (sp->low_freq + sp->high_freq) / 2;
   for(i=0; i<s; i++)
     {
-      diff=sp->root_freq - f;
+      /* diff=sp->root_freq - f; */
+  /*  But the root freq. can perfectly well lie outside the keyrange
+   *  frequencies, so let's try:
+   */
+      diff=midfreq - f;
       if (diff<0) diff=-diff;
       if (diff<cdiff)
 	{
@@ -1945,7 +1950,7 @@ int play_midi(MidiEvent *eventlist, int32 events, int32 samples)
       while (current_event->time <= current_sample)
 	{
 #ifdef KMIDI
-	  if (whensaytime + 100 > current_event->time && current_event->time + 100 < current_sample)
+	  if (whensaytime + 400 > current_event->time && current_event->time + 400 < current_sample)
 	  {
 		ctl->current_time(current_event->time);
 		whensaytime = current_event->time;
