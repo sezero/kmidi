@@ -48,11 +48,5 @@ noinst_HEADERS = config.h common.h readmidi.h playmidi.h resample.h mix.h instru
 
 # $(HEADERS): ;
 
-# Ok, anything that gets linked in here, we make it depend on BITMAPS
-# since that's the last file we link in.
-
 CLEANFILES = buildhack
 
-$(timidity_SOURCES) buildhack:
-	$(srcdir)/makelinks $(srcdir)/..
-	touch buildhack
