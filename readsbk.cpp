@@ -87,7 +87,7 @@ enum {
 	/* inst stuff */
 	INST_ID, IBAG_ID, IMOD_ID, IGEN_ID,
 	/* sample header */
-	SHDR_ID,
+	SHDR_ID
 };
 
 
@@ -271,7 +271,7 @@ static void load_bag(int size, SFInfo *sf, FILE *fd, int *totalp, unsigned short
 
 	debugval("bagsize", size);
 	size /= 4;
-	buf = NEW(short, size);
+	buf = NEW(unsigned short, size);
 	for (i = 0; i < size; i++) {
 		READW(&buf[i], fd);
 		SKIPW(fd); /* mod */

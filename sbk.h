@@ -7,12 +7,12 @@
 
 typedef struct _tchunk {
 	char id[4];
-	int32 size;
+	uint32 size;
 } tchunk;
 
 typedef struct _tsbkheader {
 	char riff[4];	/* RIFF */
-	int32 size;	/* size of sbk after there bytes */
+	uint32 size;	/* size of sbk after there bytes */
 	char sfbk[4];	/* sfbk id */
 } tsbkheader;
 
@@ -27,10 +27,10 @@ typedef struct _tpresethdr {
 } tpresethdr;
 
 typedef struct _tsampleinfo {
-	int32 startsample, endsample;
-	int32 startloop, endloop;
+	uint32 startsample, endsample;
+	uint32 startloop, endloop;
 	/* ver.2 additional info */
-	int32 samplerate;
+	uint32 samplerate;
 	uint8 originalPitch;
 	uint8 pitchCorrection;
 	uint16 samplelink;
@@ -43,8 +43,8 @@ typedef struct _tinsthdr {
 } tinsthdr;
 
 typedef struct _tgenrec {
-	int16 oper;
-	int16 amount;
+	uint16 oper;
+	uint16 amount;
 } tgenrec;
 
 
@@ -54,7 +54,7 @@ typedef struct _tgenrec {
 
 typedef struct _SFInfo {
 	uint16 version, minorversion;
-	int32 samplepos, samplesize;
+	uint32 samplepos, samplesize;
 
 	int nrsamples;
 	tsamplenames *samplenames;

@@ -527,7 +527,7 @@ static Instrument *load_from_file(SFInsts *rec, InstList *ip, int amp)
 		  ip->bank, ip->preset, ip->keynote, rec->fname);
 */
 
-	inst = safe_malloc(sizeof(Instrument));
+	inst = (Instrument *)safe_malloc(sizeof(Instrument));
 	patch_memory += sizeof(Instrument);
 	inst->type = INST_SF2;
 	/* we could have set up right samples but no left ones */
@@ -538,7 +538,7 @@ static Instrument *load_from_file(SFInsts *rec, InstList *ip, int amp)
 		ip->rslist = 0;
 	}
 	inst->samples = ip->samples;
-	inst->sample = safe_malloc(sizeof(Sample)*ip->samples);
+	inst->sample = (Sample *)safe_malloc(sizeof(Sample)*ip->samples);
 	patch_memory += sizeof(Sample)*ip->samples;
 
 	inst->left_samples = inst->samples;
@@ -553,7 +553,7 @@ static Instrument *load_from_file(SFInsts *rec, InstList *ip, int amp)
 		else r_amp = -3;
 	}
 #endif
-	if (ip->rsamples) inst->right_sample = safe_malloc(sizeof(Sample)*ip->rsamples);
+	if (ip->rsamples) inst->right_sample = (Sample *)safe_malloc(sizeof(Sample)*ip->rsamples);
 	else inst->right_sample = 0;
 
 	if (load_one_side(rec, ip->slist, ip->samples, inst->sample, amp) &&

@@ -319,6 +319,7 @@ static InstrumentLayer *load_instrument(char *name, int font_type, int percussio
   Sample *sp;
   FILE *fp;
   uint8 tmp[1024];
+  char tmpbuf[1024];
   int i,j,noluck=0;
 #ifdef PATCH_EXT_LIST
   static const char *patch_ext[] = PATCH_EXT_LIST;
@@ -361,9 +362,9 @@ static InstrumentLayer *load_instrument(char *name, int font_type, int percussio
 	{
 	  if (strlen(name)+strlen(patch_ext[i])<1024)
 	    {
-	      strcpy(tmp, name);
-	      strcat(tmp, patch_ext[i]);
-	      if ((fp=open_file(tmp, 1, OF_NORMAL, 0)))
+	      strcpy(tmpbuf, name);
+	      strcat(tmpbuf, patch_ext[i]);
+	      if ((fp=open_file(tmpbuf, 1, OF_NORMAL, 0)))
 		{
 		  noluck=0;
 		  break;
@@ -422,18 +423,18 @@ static InstrumentLayer *load_instrument(char *name, int font_type, int percussio
   newmode = gus_voice[tpgm].modes;
 #endif
   
-  lp=safe_malloc(sizeof(InstrumentLayer));
+  lp=(InstrumentLayer *)safe_malloc(sizeof(InstrumentLayer));
   lp->size = sizeof(InstrumentLayer);
   lp->lo = 0;
   lp->hi = 127;
-  ip=safe_malloc(sizeof(Instrument));
+  ip=(Instrument *)safe_malloc(sizeof(Instrument));
   lp->size += sizeof(Instrument);
   lp->instrument = ip;
   lp->next = 0;
 
   ip->type = INST_GUS;
   ip->samples = tmp[198];
-  ip->sample = safe_malloc(sizeof(Sample) * ip->samples);
+  ip->sample = (Sample *)safe_malloc(sizeof(Sample) * ip->samples);
   lp->size += sizeof(Sample) * ip->samples;
   ip->left_samples = ip->samples;
   ip->left_sample = ip->sample;

@@ -935,16 +935,7 @@ fprintf(stderr,"REVERB_CLONE v%d vol=%f pan=%d reverb=%d delay=%dms\n", w, voice
 	voice[w].vibrato_phase = 20;*/
 
 	voice[w].echo_delay += 30 * milli;
-#ifdef tplus
-#if 0
-	if (chorus > 42) chorus = 42;    /* higher chorus detune notes too much */
-#else
-	chorus /= 3;
-#endif
-	if(channel[ voice[w].channel ].pitchbend + chorus < 0x2000)
-            voice[w].orig_frequency *= bend_fine[chorus];
-	else voice[w].orig_frequency /= bend_fine[chorus];
-#endif
+
 	if (XG_System_chorus_type >= 0) {
 	    int subtype = XG_System_chorus_type & 0x07;
 	    int chtype = 0x0f & (XG_System_chorus_type >> 3);
@@ -952,10 +943,12 @@ fprintf(stderr,"REVERB_CLONE v%d vol=%f pan=%d reverb=%d delay=%dms\n", w, voice
 		case 0: /* no effect */
 		  break;
 		case 1: /* chorus */
-		  if (chorus > 42) chorus = 42;    /* higher choruss detune notes too much */
+		  chorus /= 3;
 		  if(channel[ voice[w].channel ].pitchbend + chorus < 0x2000)
-	              voice[w].orig_frequency *= bend_fine[chorus];
-		  else voice[w].orig_frequency /= bend_fine[chorus];
+            		voice[w].orig_frequency =
+				(uint32)( (FLOAT_T)voice[w].orig_frequency * bend_fine[chorus] );
+        	  else voice[w].orig_frequency =
+			(uint32)( (FLOAT_T)voice[w].orig_frequency / bend_fine[chorus] );
 		  if (subtype) voice[w].vibrato_depth *= 2;
 		  break;
 		case 2: /* celeste */
@@ -979,10 +972,12 @@ fprintf(stderr,"REVERB_CLONE v%d vol=%f pan=%d reverb=%d delay=%dms\n", w, voice
 	    }
 	}
 	else {
-	    if (chorus > 42) chorus = 42;    /* higher choruss detune notes too much */
+	    chorus /= 3;
 	    if(channel[ voice[w].channel ].pitchbend + chorus < 0x2000)
-                voice[w].orig_frequency *= bend_fine[chorus];
-	    else voice[w].orig_frequency /= bend_fine[chorus];
+          	voice[w].orig_frequency =
+			(uint32)( (FLOAT_T)voice[w].orig_frequency * bend_fine[chorus] );
+            else voice[w].orig_frequency =
+		(uint32)( (FLOAT_T)voice[w].orig_frequency / bend_fine[chorus] );
 	}
 #ifdef DEBUG_CLONE_NOTES
 fprintf(stderr,"CHORUS_CLONE v%d vol%f pan%d chorus%d\n", w, voice[w].volume, voice[w].panning, chorus);
@@ -1226,12 +1221,14 @@ voice[i].envelope_offset[j]);
   if (voice[i].sample->keyToVolEnvHold) {
 	FLOAT_T rate_adjust;
 	rate_adjust = pow(2.0, (60 - voice[i].note) * voice[i].sample->keyToVolEnvHold / 1200.0);
-	voice[i].envelope_rate[HOLD] /= rate_adjust;
+	voice[i].envelope_rate[HOLD] =
+		(uint32)( (FLOAT_T)voice[i].envelope_rate[HOLD] / rate_adjust );
   }
   if (voice[i].sample->keyToVolEnvDecay) {
 	FLOAT_T rate_adjust;
-	rate_adjust = pow(2.0, (60 - voice[i].note) * voice[i].sample->keyToVolEnvHold / 1200.0);
-	voice[i].envelope_rate[DECAY] /= rate_adjust;
+	rate_adjust = pow(2.0, (60 - voice[i].note) * voice[i].sample->keyToVolEnvDecay / 1200.0);
+	voice[i].envelope_rate[DECAY] =
+		(uint32)( (FLOAT_T)voice[i].envelope_rate[DECAY] / rate_adjust );
   }
 
   voice[i].echo_delay=voice[i].envelope_rate[DELAY];
@@ -1475,10 +1472,10 @@ debug_count--;
   else if (obf > 15) dont_reverb = 0;
 
   if (obf < 8) dont_chorus = 1;
-  else if (obf > 20) dont_chorus = 0;
+  else if (obf > 30) dont_chorus = 0;
 
   if (opt_dry || obf < 6) dont_keep_looping = 1;
-  else if (obf > 12) dont_keep_looping = 0;
+  else if (obf > 22) dont_keep_looping = 0;
 
 /*
   if (obf < 20) dont_filter = 1;

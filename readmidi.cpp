@@ -221,7 +221,7 @@ while at==0
 
 static int sysex(uint32 len, uint8 *syschan, uint8 *sysa, uint8 *sysb)
 {
-  unsigned char *s=(char *)safe_malloc(len);
+  unsigned char *s=(unsigned char *)safe_malloc(len);
   int id, model, ch, port, adhi, adlo, cd, dta, dtb, dtc;
   if (len != fread(s, 1, len, fp))
     {
@@ -750,11 +750,11 @@ static int read_track(int append)
 	  return 0;
 	}
 
-      next=meep->next;
+      next=(MidiEventList *)meep->next;
       while (next && (next->event.time < newev->event.time))
 	{
 	  meep=next;
-	  next=meep->next;
+	  next=(MidiEventList *)meep->next;
 	}
 	  
       newev->next=next;
@@ -772,7 +772,7 @@ static void free_midi_list(void)
   if (!(meep=evlist)) return;
   while (meep)
     {
-      next=meep->next;
+      next=(MidiEventList *)meep->next;
       free(meep);
       meep=next;
     }

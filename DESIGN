@@ -22,7 +22,7 @@ using the four checkboxes on the upper panel.)
 
 The envelope generators modulate each note with successively: an attack phase, a
 hold phase, a decay, and a release.  One of the generators affects amplitude,
-and the other affects the cutoff frequency of the low pass filter.
+and the other affects pitch and/or the cutoff frequency of the low pass filter.
 
 The low frequency oscillators modulate amplitude (for tremolo), frequency (for
 vibrato), and the low pass filter cutoff frequency (XG "rezo sweep").
@@ -102,8 +102,7 @@ the permitted polyphony (spin box on lower panel), (2) press off the "eff" butto
 panel further to the left), (4) turn off echo, detuning, or stereo using the left
 three checkboxes on the lower panel.   Of course, there is attendant loss in
 quality.  Having the "filt" button on doesn't cost anything unless you've also
-chosen the "cspline+filter" interpolation option -- then drum patches are filtered
-only when they are first loaded -- not while playing.
+chosen the "cspline+filter" interpolation option.
 
 
 			Memory Issues
@@ -124,6 +123,10 @@ If you allowed enough room, entire soundfont files are read at once, instead of
 patch by patch.  Setting the maximum too low can be counterproductive, because
 soundfont files occupy much less memory in toto when the entire file is read than when
 the patches are read individually (I don't know why).
+
+For little-endian systems like x86, rather than being read in, sf2 soundfonts are
+mmapped.  This is much faster on startup.  I haven't figured out a way to do this
+for big-endian systems.
 
 After playing each midi file, KMidi will report in the info window on how much memory
 is currently occupied by patches.

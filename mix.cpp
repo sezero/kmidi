@@ -141,12 +141,12 @@ voice[v].envelope_volume >> 23);
 #endif
 	}
 
-      la = FRSCALE(lamp,AMP_BITS);
+      la = (int32)FRSCALE(lamp,AMP_BITS);
       
       if (la>MAX_AMP_VALUE)
 	la=MAX_AMP_VALUE;
 
-      ra = FRSCALE(ramp,AMP_BITS);
+      ra = (int32)FRSCALE(ramp,AMP_BITS);
       if (ra>MAX_AMP_VALUE)
 	ra=MAX_AMP_VALUE;
 
@@ -173,7 +173,7 @@ voice[v].envelope_volume >> 23);
       if (voice[v].sample->modes & MODES_ENVELOPE)
 	lamp *= vol_table[voice[v].envelope_volume>>23];
 
-      la = FRSCALE(lamp,AMP_BITS);
+      la = (int32)FRSCALE(lamp,AMP_BITS);
 
       if (la>MAX_AMP_VALUE)
 	la=MAX_AMP_VALUE;
