@@ -167,11 +167,11 @@ typedef struct {
 } Voice;
 
 /* Voice status options: */
-#define VOICE_FREE 0
-#define VOICE_ON 1
-#define VOICE_SUSTAINED 2
-#define VOICE_OFF 3
-#define VOICE_DIE 4
+#define VOICE_FREE	(1<<0)
+#define VOICE_ON	(1<<1)
+#define VOICE_SUSTAINED	(1<<2)
+#define VOICE_OFF	(1<<3)
+#define VOICE_DIE	(1<<4)
 
 /* Voice panned options: */
 #define PANNED_MYSTERY 0

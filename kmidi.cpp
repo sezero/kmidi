@@ -86,7 +86,7 @@ static int meterfudge = 0;
 enum midistatus{ KNONE, KPLAYING, KSTOPPED, KLOOPING, KFORWARD,
 		 KBACKWARD, KNEXT, KPREVIOUS,KPAUSED};
 
-static midistatus status;
+static midistatus status, last_status;
 static int nbvoice = 0;
 
 KApplication * thisapp;
@@ -101,7 +101,7 @@ KMidi::KMidi( QWidget *parent, const char *name ) :
     randomplay = false;
     looping = false;
     driver_error = false;
-    status = KNONE;
+    last_status = status = KNONE;
     song_number = 1;
     current_voices = DEFAULT_VOICES;
     stereo_state = reverb_state = chorus_state = verbosity_state = 1;
@@ -848,6 +848,7 @@ void KMidi::setSong( int number )
 
     if(status == KPLAYING)
       setLEDs("OO:OO");
+    nbvoice = currplaytime = 0;
 
     playPB->setOn( TRUE );
     statusLA->setText(i18n("Playing"));
@@ -1026,8 +1027,10 @@ void KMidi::randomClicked(){
     replayPB->setOn( FALSE );
 
     randomplay = TRUE;
+    last_status = KNONE;
     updateUI();
     setLEDs("OO:OO");
+    nbvoice = currplaytime = 0;
     statusLA->setText(i18n("Playing"));
     looplabel->setText(i18n("Random"));
 
@@ -1048,6 +1051,7 @@ void KMidi::randomPlay(){
     shufflebutton->setOn( TRUE );
     updateUI();
     setLEDs("OO:OO");
+    nbvoice = currplaytime = 0;
     statusLA->setText(i18n("Playing"));
     looplabel->setText(i18n("Random"));
 
@@ -1095,6 +1099,7 @@ void KMidi::playClicked()
 
   if(((int)playlist->count()  > index) && (index >= 0)){
     setLEDs("OO:OO");
+    nbvoice = currplaytime = 0;
     statusLA->setText(i18n("Playing"));
 
     pipe_int_write(MOTIF_PLAY_FILE);
@@ -1118,7 +1123,7 @@ void KMidi::stopClicked()
      statusLA->setText(i18n("Ready"));
      looplabel->setText("");
      setLEDs("00:00");
-     nbvoice = 0;
+     currplaytime = nbvoice = 0;
 }
 
 
@@ -1248,6 +1253,8 @@ void KMidi::replayClicked(){
 
     if(status != KPLAYING)
 	return;
+
+    last_status = KNONE;
 
     if (replayPB->isOn()) {
     //if(looping == false){
@@ -1462,12 +1469,24 @@ void KMidi::ReadPipe(){
     static int last_buffer_state = 100;
     static int last_various_flags = 0;
     static int last_rcheck_flags = 0;
+    static int last_loading_blink = 0;
     int rcheck_flags;
     static int last_nbvoice=0;
-    static midistatus last_status = KNONE;
     int message;
 
-    if (status == KPLAYING && currplaytime) currplaytime++;
+    if (status == KPLAYING) {
+	if (currplaytime) currplaytime++;
+	else {
+	    last_loading_blink++;
+	    if (!last_loading_blink) last_loading_blink++;
+	    if (last_loading_blink > 50) {
+	        last_loading_blink = -25;
+	        led[10]->setColor(Qt::black);
+	    }
+	    else if (last_loading_blink > 0) led[10]->setColor(Qt::yellow);
+	}
+    }
+
 
     if(pipe_read_ready()){
 
@@ -1508,6 +1527,7 @@ void KMidi::ReadPipe(){
 		totaltimelabel->setText(local_string);
 		/*		printf("GUI: TOTALTIME %s\n",local_string);*/
 		max_sec=cseconds;
+		nbvoice = currplaytime = 0;
 	    }
 	    break;
 	
@@ -1600,6 +1620,7 @@ void KMidi::ReadPipe(){
 	    break;
 	
 	    case PATCH_CHANGED_MESSAGE :
+		nbvoice = currplaytime = 0;
 	    break;
 
 	    case NEXT_FILE_MESSAGE :
@@ -1613,7 +1634,7 @@ void KMidi::ReadPipe(){
 			    !XmToggleButtonGetState(auto_next_option))
 			    return;
 			    */
-		nbvoice = 0;
+		nbvoice = currplaytime = 0;
 
 		if(starting_up){
 		    starting_up = false;
@@ -1655,6 +1676,7 @@ void KMidi::ReadPipe(){
 			setLEDs("--:--");
 			looplabel->setText("");
 			statusLA->setText(i18n("Ready"));
+    			nbvoice = currplaytime = 0;
 			QString str;
 			str.sprintf(i18n("Song: --/%02d"),playlist->count());
 			song_count_label->setText(str);
@@ -1686,7 +1708,7 @@ void KMidi::ReadPipe(){
 	
 		sec=seconds=cseconds/100;
 
-		currplaytime = cseconds;
+		currplaytime = cseconds + 1;
 	
 		/* To avoid blinking */
 		if (sec!=last_sec)
@@ -1827,18 +1849,26 @@ void KMidi::ReadPipe(){
 	    case KNONE:		c = Qt::black; break;
 	    case KPLAYING:	c = Qt::green; break;
 	    case KSTOPPED:	c = Qt::red; break;
-	    case KLOOPING:	c = Qt::magenta; break;
+	    case KLOOPING:	c = Qt::blue; break;
 	    case KFORWARD:	c = Qt::cyan; break;
 	    case KBACKWARD:	c = Qt::darkCyan; break;
-	    case KNEXT:		c = Qt::blue; break;
+	    case KNEXT:		c = Qt::magenta; break;
 	    case KPREVIOUS:	c = Qt::darkBlue; break;
 	    case KPAUSED:	c = Qt::yellow; break;
 	    default:		c = led_color; break;
 	}
 	if (status != KPLAYING) nbvoice = 0;
+	else if (looping) c = Qt::blue;
+	else if (randomplay) c = Qt::magenta;
 	last_status = status;
 	led[0]->setColor(c);
     }
+
+    if (last_loading_blink && currplaytime) {
+	led[10]->setColor(Qt::black);
+	last_loading_blink = 0;
+    }
+
     if (Panel->buffer_state < last_buffer_state - 5 || Panel->buffer_state > last_buffer_state + 5) {
         led[1]->setColor( QColor(250 - 2*Panel->buffer_state, 150, 50 ) );
 	last_buffer_state = Panel->buffer_state;

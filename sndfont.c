@@ -567,10 +567,22 @@ static int load_one_side(SFInsts *rec, SampleList *sp, int sample_count, Sample 
 			do_lowpass(sample, samplerate_save, sample->data, sample->data_length >> FRACTION_BITS,
 				sp->cutoff_freq, sp->resonance);
 		}
+
 /*
 printf("loop start %ld, loop end %ld, len %d\n", sample->loop_start>>FRACTION_BITS, sample->loop_end>>FRACTION_BITS,
 sample->data_length >> FRACTION_BITS);
 */
+    {
+	int ls = sample->loop_start>>FRACTION_BITS;
+	int le = sample->loop_end>>FRACTION_BITS;
+	int se = sample->data_length>>FRACTION_BITS;
+	while (se > 1 && !sample->data[se-1]) se--;
+	if (le > se) le = se;
+	if (ls >= le) sample->modes &= ~MODES_LOOPING;
+	sample->loop_end = le<<FRACTION_BITS;
+	sample->data_length = se<<FRACTION_BITS;
+    }
+
 #define HANNU_CLICK_REMOVAL
 /*#define DEBUG_CLICK*/
 #ifdef HANNU_CLICK_REMOVAL
@@ -1097,16 +1109,12 @@ else printf("NO CFG NAME!\n");
 	else if (!intersect_rvec(1, keyrange)) stereo_chan = 1;
 	else if (!subset_rvec(0, keyrange)) stereo_chan = 0;
 	else if (!subset_rvec(1, keyrange)) stereo_chan = 1;
-#if 0
 	else {
-		ctl->cmsg(CMSG_INFO, VERB_NOISY,
+		ctl->cmsg(CMSG_INFO, VERB_DEBUG,
 		  "sndfont: invalid key range in bank %d preset %d: low %d, high %d",
 			banknum, preset, LO_VAL(keyrange), HI_VAL(keyrange));
 		return;
 	}
-#else
-	else stereo_chan = 0;
-#endif
 
 	union_rvec(stereo_chan, keyrange);
 
@@ -1298,6 +1306,7 @@ fprintf(stderr, "preset %d, root_freq %ld\n", preset, sp->v.root_freq);
 		else if (program >=121 && program <=124) sampleFlags = 3;
 		else if (program ==126) sampleFlags = 3;
 	}
+
 
 	if (sampleFlags == 2) sampleFlags = 0;
 

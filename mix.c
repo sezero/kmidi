@@ -48,7 +48,7 @@ int recompute_envelope(int v)
   if (stage>5)
     {
       /* Envelope ran out. */
-      int tmp=(voice[v].status == VOICE_DIE); /* Already displayed as dead */
+      int tmp=(voice[v].status&VOICE_DIE); /* Already displayed as dead */
       voice[v].status = VOICE_FREE;
       if(!tmp)
 	ctl->note(v);
@@ -58,7 +58,7 @@ int recompute_envelope(int v)
   /**if (voice[v].sample->modes & MODES_ENVELOPE)**/
   if ((voice[v].sample->modes & MODES_ENVELOPE) && (voice[v].sample->modes & MODES_SUSTAIN))
     {
-      if (voice[v].status==VOICE_ON || voice[v].status==VOICE_SUSTAINED)
+      if (voice[v].status & (VOICE_ON | VOICE_SUSTAINED))
 	{
 	  if (stage>2)
 	    {
@@ -116,11 +116,8 @@ void apply_envelope_to_amp(int v)
 	ra=MAX_AMP_VALUE;
 
 #ifdef tplus
-      if ((voice[v].status == VOICE_OFF ||
-		 voice[v].status == VOICE_DIE ||
-		 voice[v].status == VOICE_FREE ||
-		 voice[v].status == VOICE_SUSTAINED) &&
-	 (la | ra) <= MIN_AMP_VALUE)
+      if ((voice[v].status & (VOICE_OFF | VOICE_DIE | VOICE_FREE | VOICE_SUSTAINED))
+	  && (la | ra) <= MIN_AMP_VALUE)
       {
 	  voice[v].status = VOICE_FREE;
 	  ctl->note(v);
@@ -144,11 +141,8 @@ void apply_envelope_to_amp(int v)
 	la=MAX_AMP_VALUE;
 
 #ifdef tplus
-      if ((voice[v].status == VOICE_OFF ||
-		 voice[v].status == VOICE_DIE ||
-		 voice[v].status == VOICE_FREE ||
-		 voice[v].status == VOICE_SUSTAINED) &&
-	 la <= MIN_AMP_VALUE)
+      if ( (voice[v].status & (VOICE_OFF | VOICE_DIE | VOICE_FREE | VOICE_SUSTAINED))
+	 && la <= MIN_AMP_VALUE)
       {
 	  voice[v].status = VOICE_FREE;
 	  ctl->note(v);
@@ -561,7 +555,7 @@ void mix_voice(int32 *buf, int v, uint32 c)
 {
   Voice *vp=voice+v;
   sample_t *sp;
-  if (vp->status==VOICE_DIE)
+  if (vp->status&VOICE_DIE)
     {
       if (c>=MAX_DIE_TIME)
 	c=MAX_DIE_TIME;

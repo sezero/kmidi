@@ -1,3 +1,11 @@
+1999-10-21  Greg Lee  <lee@hawaii.edu>
+
+	* resample.c: smooth off ends of patches
+	  (but ocarina, vibes, pan flute still click)
+	* config.h: up FRACTION_BITS to 13
+	* playmidi.c: more polyphony reduction
+	* kmidi.cpp: led flashes yellow when loading patches
+
 1999-10-20  Greg Lee  <lee@hawaii.edu>
 
 	* avoid compiler warnings

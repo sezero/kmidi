@@ -53,7 +53,8 @@ static int dont_cspline = 0;
 
 #define FILTER_INTERPOLATION
 
-#define PATCH_OVERSHOOT (10<<FRACTION_BITS)
+#define OVERSHOOT 10
+#define PATCH_OVERSHOOT (OVERSHOOT<<FRACTION_BITS)
 
 #if defined(CSPLINE_INTERPOLATION)
 #ifndef FILTER_INTERPOLATION
@@ -62,7 +63,7 @@ static int dont_cspline = 0;
 	if (ofs >= se) { \
 		int32 delta = (ofs - se)>>FRACTION_BITS ; \
         	v1 = (int32)src[(se>>FRACTION_BITS)-1]; \
-		if (v1) v1 = (v1 - delta) / v1; \
+		v1 -=  (delta+1) * v1 / OVERSHOOT; \
         }else  v1 = (int32)src[(ofs>>FRACTION_BITS)]; \
 	if (ofs + (1L<<FRACTION_BITS) >= se) { \
 		v2 = v1; \
@@ -88,11 +89,11 @@ static int dont_cspline = 0;
 		ofs=ofsd; \
 	}
 #else
-# define INTERPVARS      int32   ofsd, v0, v1, v2, v3, temp, zero_cross=0; \
+# define INTERPVARS      int32   ofsd, v0, v1, v2, v3, temp; \
 			float insamp, outsamp, a0, a1, a2, b0, b1, \
 			    x0=vp->current_x0, x1=vp->current_x1, y0=vp->current_y0, y1=vp->current_y1; \
 			int cc_count=vp->modulation_counter, bw_index=vp->bw_index; \
-			sample_t newsample, lastsample=0;
+			sample_t newsample;
 # define BUTTERWORTH_COEFFICIENTS \
 			a0 = butterworth[bw_index][0]; \
 			a1 = butterworth[bw_index][1]; \
@@ -101,9 +102,9 @@ static int dont_cspline = 0;
 			b1 = butterworth[bw_index][4];
 # define RESAMPLATION \
 	if (ofs >= se) { \
-		int32 delta = (ofs - se)>>FRACTION_BITS ; \
+		int32 delta = (ofs - se)>>FRACTION_BITS; \
         	v1 = (int32)src[(se>>FRACTION_BITS)-1]; \
-		if (v1) v1 = (v1 - delta) / v1; \
+		v1 -=  (delta+1) * v1 / OVERSHOOT; \
         }else  v1 = (int32)src[(ofs>>FRACTION_BITS)]; \
 	if (ofs + (1L<<FRACTION_BITS) >= se) { \
 		v2 = v1; \
@@ -174,10 +175,7 @@ static int dont_cspline = 0;
 		} \
 		ofs=ofsd; \
 	} \
-	*dest++ = newsample; \
-	if (lastsample < 0 && newsample >= 0) zero_cross = ofs; \
-	else if (lastsample > 0 && newsample <= 0) zero_cross = ofs; \
-	lastsample = newsample;
+	*dest++ = newsample;
 #define REMEMBER_FILTER_STATE \
 	vp->current_x0=x0; \
 	vp->current_x1=x1; \
@@ -192,7 +190,7 @@ static int dont_cspline = 0;
 	if (ofs >= se) { \
 		int32 delta = (ofs - se)>>FRACTION_BITS ; \
         	v1 = (int32)src[(se>>FRACTION_BITS)-1]; \
-		if (v1) v1 = (v1 - delta) / v1; \
+		v1 -=  (delta+1) * v1 / OVERSHOOT; \
         }else  v1 = (int32)src[(ofs>>FRACTION_BITS)]; \
 	if (ofs + (1L<<FRACTION_BITS) >= se) { \
 		v2 = v1; \
@@ -301,7 +299,7 @@ int recompute_modulation(int v)
 
   if ((voice[v].sample->modes & MODES_ENVELOPE) && (voice[v].sample->modes & MODES_SUSTAIN))
     {
-      if (voice[v].status==VOICE_ON || voice[v].status==VOICE_SUSTAINED)
+      if (voice[v].status & (VOICE_ON | VOICE_SUSTAINED))
 	{
 	  if (stage>2)
 	    {
@@ -498,7 +496,7 @@ static sample_t *rs_loop(int v, Voice *vp, uint32 *countptr)
 	  *countptr-=count+1;
 	  break;
 	}
-      if (ofs>=le && vp->status != VOICE_OFF && vp->status != VOICE_FREE)
+      if (ofs>=le && !(vp->status & (VOICE_OFF | VOICE_FREE)))
 	ofs -= ll; /* Hopefully the loop is longer than an increment. */
     }
 
@@ -827,7 +825,7 @@ static sample_t *rs_vib_loop(int v, Voice *vp, uint32 *countptr)
 	  *countptr-=count+1;
 	  break;
 	}
-      if (ofs>=le && vp->status != VOICE_OFF && vp->status != VOICE_FREE)
+      if (ofs>=le && !(vp->status & (VOICE_OFF | VOICE_FREE)))
 	ofs -= ll; /* Hopefully the loop is longer than an increment. */
     }
 

@@ -1293,9 +1293,9 @@ printf("(new rel time = %ld)\n",
 
 static void kill_note(int i)
 {
-  voice[i].status=VOICE_DIE;
+  voice[i].status=(VOICE_DIE|VOICE_OFF);
   if (voice[i].clone_voice >= 0)
-	voice[ voice[i].clone_voice ].status=VOICE_DIE;
+	voice[ voice[i].clone_voice ].status=(VOICE_DIE|VOICE_OFF);
   ctl->note(i);
 }
 
@@ -1309,9 +1309,9 @@ static void reduce_polyphony()
   i=voices;
   while (i--)
     {
-      if ((voice[i].status!=VOICE_ON) &&
-	  (voice[i].status!=VOICE_FREE) &&
-	  (voice[i].status!=VOICE_DIE))
+      if (voice[i].status==VOICE_FREE || !voice[i].sample->sample_rate) /* idea from Eric Welsh */
+	    continue;
+      if (voice[i].status & ~(VOICE_OFF | VOICE_DIE))
 	{
 	  v=voice[i].left_mix;
 	  if ((voice[i].panned==PANNED_MYSTERY) && (voice[i].right_mix>v))
@@ -1367,11 +1367,30 @@ debug_count--;
   if (obf < 20) dont_filter = 1;
   else if (obf > 80) dont_filter = 0;
 */
-  if (obf < 20 && current_polyphony > voices / 2) reduce_polyphony();
-  if (obf < 10 && current_polyphony > voices / 3) reduce_polyphony();
-  if (obf < 8 && current_polyphony > voices / 4) reduce_polyphony();
-  if (obf < 5 && current_polyphony > voices / 5) reduce_polyphony();
-  if (obf < 4 && current_polyphony > voices / 6) reduce_polyphony();
+  if (obf < 20 && current_polyphony > voices / 2) {
+	reduce_polyphony();
+  }
+  if (obf < 10 && current_polyphony > voices / 3) {
+	reduce_polyphony();
+	reduce_polyphony();
+  }
+  if (obf < 8 && current_polyphony > voices / 4) {
+	reduce_polyphony();
+	reduce_polyphony();
+	reduce_polyphony();
+  }
+  if (obf < 5 && current_polyphony > voices / 5) {
+	reduce_polyphony();
+	reduce_polyphony();
+	reduce_polyphony();
+	reduce_polyphony();
+  }
+  if (obf < 4 && current_polyphony > voices / 6) {
+	reduce_polyphony();
+	reduce_polyphony();
+	reduce_polyphony();
+	reduce_polyphony();
+  }
 
   if (command_cutoff_allowed) dont_filter_melodic = 0;
   else dont_filter_melodic = 1;
@@ -1413,9 +1432,7 @@ static void note_on(MidiEvent *e)
   i=voices;
   while (i--)
     {
-      if ((voice[i].status!=VOICE_ON) &&
-	  (voice[i].status!=VOICE_FREE) &&
-	  (voice[i].status!=VOICE_DIE))
+      if (voice[i].status & ~(VOICE_ON | VOICE_DIE | VOICE_FREE))
 	{
 	  v=voice[i].left_mix;
 	  if ((voice[i].panned==PANNED_MYSTERY) && (voice[i].right_mix>v))
@@ -1434,8 +1451,7 @@ static void note_on(MidiEvent *e)
    i=voices;
    while (i--)
     {
-      if ((voice[i].status!=VOICE_ON) &&
-	  (voice[i].status!=VOICE_FREE) &&
+      if ( (voice[i].status & ~(VOICE_ON | VOICE_DIE | VOICE_FREE)) &&
 	  (!voice[i].clone_type))
 	{
 	  v=voice[i].left_mix;
