@@ -396,10 +396,10 @@ void KMidi::volChanged( int vol )
 	
     QString volumetext;
     if (vol == 100){
-	volumetext.sprintf(i18n("Vol:%03d%%").utf8().data(),vol);
+	volumetext = QString::fromUtf8(QCString().sprintf(i18n("Vol:%03d%%").utf8().data(),vol) );
     }
     else{
-	volumetext.sprintf(i18n("Vol:%02d%%").utf8().data(),vol);
+	volumetext = QString::fromUtf8(QCString().sprintf(i18n("Vol:%02d%%").utf8().data(),vol) );
     }
     volLA->setText( volumetext );
 
@@ -656,7 +656,7 @@ void KMidi::drawPanel()
     looplabel->setGeometry( WIDTH -25 +2*SBARWIDTH/3 +45, 6, 60, 13 );
     looplabel->setFont( QFont( "Helvetica", smallPtSize(), QFont::Bold ) );
     looplabel->setAlignment( AlignLeft );
-    looplabel->setText("");
+    looplabel->clear();
 
 
     properties2LA = new QLabel( this );
@@ -664,14 +664,14 @@ void KMidi::drawPanel()
     properties2LA->setGeometry( WIDTH -25 + 2*SBARWIDTH/3 , HEIGHT + 20, 100, 13 );
     properties2LA->setFont( QFont( "Helvetica", smallPtSize(), QFont::Bold ) );
     properties2LA->setAlignment( AlignLeft );
-    properties2LA->setText("");
+    properties2LA->clear();
 
     propertiesLA = new QLabel( this );
 
     propertiesLA->setGeometry( WIDTH -25 + 2*SBARWIDTH/3 ,  33, 100, 13 );
     propertiesLA->setFont( QFont( "Helvetica", smallPtSize(), QFont::Bold ) );
     propertiesLA->setAlignment( AlignLeft );
-    propertiesLA->setText("");
+    propertiesLA->clear();
 
     ix += SBARWIDTH/2;
     //leds here
@@ -705,7 +705,7 @@ void KMidi::drawPanel()
 
 
     QString volumetext;
-    volumetext.sprintf(i18n("Vol:%02d%%").utf8().data(),volume);
+    volumetext = QString::fromUtf8( QCString().sprintf(i18n("Vol:%02d%%").utf8().data(),volume) );
     volLA->setText( volumetext );
 
     modlabel = new QLabel( this );
@@ -1429,7 +1429,7 @@ void KMidi::randomClicked(){
 
     if (!shufflebutton->isOn()) {
 	randomplay = FALSE;
-	looplabel->setText("");
+	looplabel->clear();
 	return;
     }
     looping = FALSE;
@@ -1539,7 +1539,7 @@ void KMidi::stopClicked()
      status = KSTOPPED;
      playPB->setOn( FALSE );
      statusLA->setText(i18n("Ready"));
-     looplabel->setText("");
+     looplabel->clear();
      setLEDs("00:00");
      settletime = fastforward = fastrewind = currplaytime = nbvoice = 0;
 }
@@ -1664,7 +1664,7 @@ void KMidi::invokeWhatsThis(){
 void KMidi::quitClicked(){
 
     setLEDs("--:--");
-    statusLA->setText("");
+    statusLA->clear();
 
     writeconfig();
     pipe_int_write(MOTIF_QUIT);
@@ -1693,7 +1693,7 @@ void KMidi::replayClicked(){
     }
     else{
 	looping = false;
-	looplabel->setText("");
+	looplabel->clear();
     }
 
 }
@@ -1816,7 +1816,7 @@ void KMidi::PlayCommandlineMods(){
     if (blink){
       blink = false;
       statusLA->setText("           ");
-      modlabel->setText(""); // clear the error message
+      modlabel->clear(); // clear the error message
 	}
     else{
       blink = true;
@@ -1829,7 +1829,7 @@ void KMidi::PlayCommandlineMods(){
     return;
   }
 
-  modlabel->setText(""); // clear the error message
+  modlabel->clear(); // clear the error message
   song_count_label->setText( i18n("Song --/--") );
 
   // O.K all clear -- the driver is ready.
@@ -2132,13 +2132,13 @@ void KMidi::ReadPipe(){
 		    {
 			song_number = 1 ;
 			setLEDs("--:--");
-			looplabel->setText("");
+			looplabel->clear();
 			statusLA->setText(i18n("Ready"));
     			settletime = fastforward = fastrewind = nbvoice = currplaytime = 0;
 			QString str;
-			str.sprintf(i18n("Song: --/%02d").utf8().data(),playlist->count());
+			str = QString::fromUtf8( QCString().sprintf(i18n("Song: --/%02d").utf8().data(),playlist->count()) );
 			song_count_label->setText(str);
-			modlabel->setText("");
+			modlabel->clear();
 			totaltimelabel->setText("--:--");
 			playPB->setOn( FALSE );
 			status = KSTOPPED;
@@ -2549,7 +2549,7 @@ void KMidi::updateUI(){
     QString songstr;
 
     if(playlist->count() >0)
-	songstr.sprintf(i18n("Song: %02d/%02d").utf8().data(),song_number,playlist->count());
+	songstr = QString::fromUtf8( QCString().sprintf(i18n("Song: %02d/%02d").utf8().data(),song_number,playlist->count()) );
     else
 	songstr = i18n("Song: --/--");
 

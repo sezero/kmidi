@@ -134,10 +134,10 @@ PlaylistEdit::PlaylistEdit(const char *name, QStringList *playlist,
 
 #if 0
   QString aboutapp;
-  aboutapp.sprintf(i18n("KDE midi file player\n\n"
+  aboutapp = i18n("KDE midi file player\n\n"
                      "A software synthesizer for playing\n"
                      "midi songs using Tuukka Toivonen's\n"
-                     "TiMidity"));
+                     "TiMidity");
 
   QPopupMenu *about = helpMenu(aboutapp);
   menu->insertItem( i18n("About"), about);
