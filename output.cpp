@@ -25,6 +25,7 @@
 #include "config.h"
 #include "output.h"
 #include "tables.h"
+#include <sys/types.h>
 
 
 /* These are very likely mutually exclusive.. */
