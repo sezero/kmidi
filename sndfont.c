@@ -51,19 +51,6 @@ typedef struct _SampleList {
 	int32 startsample, endsample;
 	int32 cutoff_freq;
 	FLOAT_T resonance;
-#ifdef tplussbk
-	int16 scaleTuning;	/* pitch scale tuning(%), normally 100 */
-	int16 root, tune;
-	char low, high;		/* key note range */
-
-	/* Depend on play_mode->rate */
-	int32 vibrato_freq;
-	double attack;
-	double hold;
-	int sustain;
-	double decay;
-	double release;
-#endif
 } SampleList;
 
 typedef struct _InstList {
@@ -93,7 +80,7 @@ static Instrument *load_from_file(SFInsts *rec, InstList *ip, int amp, int brigh
 static void parse_preset(SFInsts *rec, SFInfo *sf, int preset);
 static void parse_gen(Layer *lay, tgenrec *gen);
 static void parse_preset_layer(Layer *lay, SFInfo *sf, int idx);
-static void merge_layer(Layer *dst, Layer *src);
+/* static void merge_layer(Layer *dst, Layer *src); */
 static int search_inst(Layer *lay);
 static void parse_inst(SFInsts *rec, Layer *pr_lay, SFInfo *sf, int preset, int inst, int inum, int num_i);
 static void parse_inst_layer(Layer *lay, SFInfo *sf, int idx);
@@ -745,6 +732,7 @@ static void parse_preset_layer(Layer *lay, SFInfo *sf, int idx)
 }
 
 
+#if 0
 /* merge two layers; never overrides on the destination */
 static void merge_layer(Layer *dst, Layer *src)
 {
@@ -756,7 +744,7 @@ static void merge_layer(Layer *dst, Layer *src)
 		}
 	}
 }
-
+#endif
 
 /* search instrument id from the layer */
 static int search_inst(Layer *lay)
@@ -1075,7 +1063,7 @@ else printf("NO CFG NAME!\n");
 	else if (!subset_rvec(0, keyrange)) stereo_chan = 0;
 	else if (!subset_rvec(1, keyrange)) stereo_chan = 1;
 	else {
-		ctl->cmsg(CMSG_ERROR, VERB_NORMAL,
+		ctl->cmsg(CMSG_INFO, VERB_NOISY,
 		  "sndfont: invalid key range in bank %d preset %d: low %d, high %d",
 			banknum, preset, LO_VAL(keyrange), HI_VAL(keyrange));
 		return;
@@ -1486,10 +1474,6 @@ printf("PRESET %d\n",preset);
 }
 #endif
 
-#ifdef tplussbk
-	if(sustain > 250) sustain = 250;
-#endif
-
 	if (!lay->set[SF_releaseEnv2] && banknum < 128) release = 400;
 	if (!lay->set[SF_decayEnv2] && banknum < 128) decay = 400;
 
@@ -1556,17 +1540,10 @@ static int32 to_offset(int offset)
 /* calculate ramp rate in fractional unit;
  * diff = 8bit, time = msec
  */
-#ifdef tplussbkuse
 static int32 calc_rate(int diff, double msec)
 {
     double rate;
 
-#if 0
-    if(msec < 6)
-	msec = 6;
-    if(diff == 0)
-	diff = 255;
-#endif
     diff <<= (7+15);
     /* rate = ((double)diff / play_mode->rate) * control_ratio * 1000.0 / msec; */
     rate = ( (double)diff * 1000.0 ) / (msec * CONTROLS_PER_SECOND);
@@ -1584,31 +1561,11 @@ static int32 calc_rate(int diff, double msec)
  *			= (diff * 1000) / (msec * CONTROLS_PER_SECOND)
  */
 }
-#else
-static int32 calc_rate(int diff, int time)
-{
-	int32 rate;
 
-	if (time < 6) time = 6;
-	if (diff == 0) diff = 255;
-	diff <<= (7+15);
-	rate = (diff / play_mode->rate) * control_ratio;
-	rate = rate * 1000 / time;
-	if (fast_decay) rate *= 2;
-
-	return rate;
-}
-#endif
-
-#ifdef tplussbk
-#define TO_VOLUME(level)  (uint8)(255.0 - (level) * (255.0/1000.0))
-
-#else
 #define TO_MSEC(tcents) (int32)(1000 * pow(2.0, (double)(tcents) / 1200.0))
 #define TO_MHZ(abscents) (int32)(8176.0 * pow(2.0,(double)(abscents)/1200.0))
 #define TO_HZ(abscents) (int32)(8.176 * pow(2.0,(double)(abscents)/1200.0))
 #define TO_LINEAR(centibel) pow(10.0, -(double)(centibel)/200.0)
-#endif
 /* #define TO_VOLUME(centibel) (uint8)(255 * (1.0 - (centibel) / (1200.0 * log10(2.0)))); */
 #define TO_VOLUME(centibel) (uint8)(255 * pow(10.0, -(double)(centibel)/200.0))
 
@@ -1622,64 +1579,23 @@ static double to_msec(Layer *lay, SFInfo *sf, int index)
 	value = lay->val[index];
 	if (sf->version == 1)
 		return (double)value;
-		/* return TO_MSEC( 0.5*(value - 8000) ); */
-		/* return TO_MSEC( 0.5*(value - 7000) ); */
-		/* return TO_MSEC( 0.5*(value - 4000) ); */
-		/* return TO_MSEC( value - 4000 ); */
-		/* return TO_MSEC( value - 4000 ); */
-	msec = (double)(1000 * pow(2.0, (double)( value - 4000) / 1200.0));
-	if (msec < 1.0) return 1.0;
+	msec = (double)(1000 * pow(2.0, (double)( value ) / 1200.0));
 	return msec;
 }
 
-#define YTO_VOLUME(centibel) (255 * (1.0 - ((double)(centibel)/100.0) / (1200.0 * log10(2.0)) ))
+#define CB_TO_VOLUME(centibel) (255 * (1.0 - ((double)(centibel)/100.0) / (1200.0 * log10(2.0)) ))
 /* convert peak volume to linear volume (0-255) */
 static FLOAT_T calc_volume(Layer *lay, SFInfo *sf)
 {
-#ifdef tplussbk
-    int v;
-    if(!lay->set[SF_instVol] || lay->val[SF_instVol] == 0)
-	return (FLOAT_T)1.0;
-    v = lay->val[SF_instVol];
-    if(v < 0)
-	return (FLOAT_T)1.0;
-    if(v > 956)
-	return (FLOAT_T)0.0;
-
-    v = v * 127 / 956;		/* 0..127 */
-
-    return vol_table[127 - v];
-#else
 	if (sf->version == 1)
 		return (FLOAT_T)(lay->val[SF_instVol] * 2) / 255.0;
 	else
-		/* return TO_LINEAR((double)lay->val[SF_instVol] / 10.0); */
-		return YTO_VOLUME((double)lay->val[SF_instVol]);
-#endif
+		return CB_TO_VOLUME((double)lay->val[SF_instVol]);
 }
 
 /* convert sustain volume to linear volume */
 static int32 calc_sustain(Layer *lay, SFInfo *sf, int banknum, int preset)
 {
-#ifdef tplussbk
-/*
- * Sustain level
- * sf: centibels
- * parm: 0x7f - sustain_level(dB) * 0.75
- */
-    double level;
-    if(!lay->set[SF_sustainEnv2]) {
-	return 255;
-/*
-	if (banknum < 128) level = 0;
-	else level = 1000;
-*/
-    }
-    else level = (double)lay->val[SF_sustainEnv2];
-    if(level >= 1000)
-	return 1;
-    return (uint8)(250.0 - (level) * (250.0/1000.0));
-#else
 	int32 level;
 	if (!lay->set[SF_sustainEnv2])
 		return 250;
@@ -1691,7 +1607,6 @@ static int32 calc_sustain(Layer *lay, SFInfo *sf, int banknum, int preset)
 			return 0;
 	}
 	return TO_VOLUME(level);
-#endif
 }
 
 
