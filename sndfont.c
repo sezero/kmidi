@@ -500,7 +500,7 @@ static int load_one_side(SFInsts *rec, SampleList *sp, int sample_count, Sample 
 	}
 #endif
 
-#ifdef SF_ADJUST_SAMPLE_VOLUMES
+#ifdef ADJUST_SAMPLE_VOLUMES
       if (amp!=-1)
 	sample->volume=(double)(amp) / 100.0;
       else

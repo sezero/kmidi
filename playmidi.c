@@ -640,8 +640,10 @@ static void clone_voice(Instrument *ip, int v, MidiEvent *e, uint8 clone_type, i
   int chan = voice[v].channel;
 
 
-  if (clone_type == STEREO_CLONE && !voice[v].right_sample && variationbank != 3) return;
-
+  if (clone_type == STEREO_CLONE) {
+	if (!voice[v].right_sample && variationbank != 3) return;
+	if (variationbank == 6) return;
+  }
   chorus = ip->sample->chorusdepth;
   reverb = ip->sample->reverberation;
 
@@ -801,7 +803,13 @@ static void clone_voice(Instrument *ip, int v, MidiEvent *e, uint8 clone_type, i
 	}
   }
   played_note = voice[w].sample->note_to_use;
-  if (!played_note) played_note = e->a & 0x7f;
+  if (!played_note) {
+	played_note = e->a & 0x7f;
+	if (variationbank == 35) played_note += 12;
+	else if (variationbank == 36) played_note -= 12;
+	else if (variationbank == 37) played_note += 7;
+	else if (variationbank == 36) played_note -= 7;
+  }
 #ifdef ADAGIO
   if (voice[w].sample->freq_scale == 1024)
 	played_note = played_note + voice[w].sample->freq_center - 60;
@@ -1213,6 +1221,36 @@ static void kill_note(int i)
   ctl->note(i);
 }
 
+static void reduce_polyphony()
+{
+  int i=voices, lowest=-1; 
+  int32 lv=0x7FFFFFFF, v;
+
+
+  /* Look for the decaying note with the lowest volume */
+  i=voices;
+  while (i--)
+    {
+      if ((voice[i].status!=VOICE_ON) &&
+	  (voice[i].status!=VOICE_FREE) &&
+	  (voice[i].status!=VOICE_DIE))
+	{
+	  v=voice[i].left_mix;
+	  if ((voice[i].panned==PANNED_MYSTERY) && (voice[i].right_mix>v))
+	    v=voice[i].right_mix;
+	  if (v<lv)
+	    {
+	      lv=v;
+	      lowest=i;
+	    }
+	}
+    }
+
+  if (lowest != -1) kill_note(i);
+
+}
+
+
 static void check_quality()
 {
 #ifdef QUALITY_DEBUG
@@ -1244,12 +1282,15 @@ debug_count--;
   if (obf < 20) dont_filter = 1;
   else if (obf > 80) dont_filter = 0;
 */
+  if (obf < 20 && current_polyphony > voices / 2) reduce_polyphony();
+  if (obf < 10 && current_polyphony > voices / 3) reduce_polyphony();
+  if (obf < 5 && current_polyphony > voices / 4) reduce_polyphony();
+
   if (command_cutoff_allowed) dont_filter = 0;
   else dont_filter = 1;
 
 }
 
-/* Only one instance of a note can be playing on a single channel. */
 static void note_on(MidiEvent *e)
 {
   int i=voices, lowest=-1; 
@@ -1268,10 +1309,6 @@ static void note_on(MidiEvent *e)
 
   if (voices - current_polyphony <= voice_reserve)
     lowest = -1;
-
-#ifdef tplus
-  /* dont_cspline = (current_polyphony > voices / 2); */
-#endif
 
 #ifdef ADAGIO
   if (current_polyphony <= max_polyphony)
@@ -1309,6 +1346,7 @@ static void note_on(MidiEvent *e)
    while (i--)
     {
       if ((voice[i].status!=VOICE_ON) &&
+	  (voice[i].status!=VOICE_FREE) &&
 	  (!voice[i].clone_type))
 	{
 	  v=voice[i].left_mix;
@@ -1354,9 +1392,7 @@ static void note_on(MidiEvent *e)
 
 static void finish_note(int i)
 {
-  if (voice[i].sample->modes & MODES_FAST_RELEASE) return;
   if (voice[i].sample->modes & MODES_ENVELOPE)
-  /**if ((voice[i].sample->modes & MODES_ENVELOPE) && !(voice[i].sample->modes & MODES_FAST_RELEASE)) **/
     {
       /* We need to get the envelope out of Sustain stage */
      if (voice[i].envelope_stage < RELEASE)

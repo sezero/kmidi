@@ -101,6 +101,13 @@ on the implementation.
 .B \-a
 Turns on antialiasing. Samples are run through a lowpass filter before
 playing, which reduces aliasing noise at low resampling frequencies.
+(With the sampling rate set to the standard 44,100 samples per second,
+there's no point to using this.)
+.TP
+.B \-q
+Turns on lowpass filter. Samples are run through a lowpass filter before
+playing to modify their timber (implementing the midi brightness and
+harmonic content controls).  This takes lots of computation time.
 .TP
 .B \-f
 Toggles fast envelopes. Some MIDI files sound better when notes decay
@@ -200,6 +207,9 @@ The ncurses full\-screen interface with interactive controls.
 .B \-is
 The S-Lang full\-screen interface with interactive controls.
 .TP
+.B \-iq
+The KMidi KDE interface with interactive controls.
+.TP
 .B "Interface options"
 Option characters may be added immediately after the interface
 identifier.  The following options are recognized:
@@ -294,6 +304,12 @@ The options allowed are \fBfff\fP and \fBsbk\fP, which were described above.
 Selects the XG non-rhythm SFX bank to modify.
 Patch mappings that follow will affect this tone bank.
 .TP
+.BI drumsfx1
+.TP
+.BI drumsfx2
+Select the XG rhythm SFX banks to modify.
+Patch mappings that follow will affect these tone banks.
+.TP
 .I "number file [options]"
 Specifies that the the MIDI program \fInumber\fP in the current tone
 bank or drum set should be played using the patch \fIfile\fP.
@@ -361,7 +377,9 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 \fIGNU General Public License\fP for more details.
 .SH AVAILABILITY
 The latest release of the original version is available on the TiMidity Home Page,
-URL \fIhttp://www.clinet.fi/~toivonen/timidity/\fP.
+URL \fIhttp://www.clinet.fi/~toivonen/timidity/\fP.  (But the
+original version is no longer being maintained -- see
+URL \fIhttp://http://www.cgs.fi/~tt/discontinued.html\fP.)
 The present modified version is part of the KDE distribution,
 URL \fIftp://ftp.kde.org/\fP in the directory kdemultimedia/kmidi.
 .SH BUGS
@@ -388,3 +406,10 @@ by Greg Lee <lee@hawaii.edu>
 .br
 KDE user interface "KMidi"
 Copyright (C) 1997 Bernd Johannes Wuebben <wuebben@math.cornell.edu>
+.br
+Effects filter by Nicolas Witczak <witczak@geocities.fr>, see
+URL \fIhttp://www.geocities.com/SiliconValley/Lab/6307/\fP).
+.br
+Portamento, mod wheel, and other enhancements from TiMidity++
+Copyright (C) 1999 Masanao Izumo <mo@goice.co.jp>.  See
+URL \fIhttp://www.goice.co.jp/member/mo/hack-progs/timidity.html\fP.

@@ -1,3 +1,10 @@
+1999-10-04  Greg Lee  <lee@hawaii.edu>
+
+	* playmidi.c: implement octave and fifth XG variation banks;
+	  better control of dropouts
+	* timidity.1: note new features and authors
+	* kmidi.desktop: icon and doc names
+
 1999-10-03  Greg Lee  <lee@hawaii.edu>
 
 	* b_out.c: forgot to reset out_bytes after purge
