@@ -105,7 +105,7 @@ PlaylistEdit::PlaylistEdit(const char *name, QStrList *playlist,
   view->insertItem( i18n("All files"), this, SLOT(setFilter()), 0, 50 );
 	view->setWhatsThis(50, i18n("Choose whether the file<br>" \
 				"list should show only uncompressed<br>" \
-				"midi files or all file.") );
+				"midi files or all files.") );
 
   QPopupMenu *edit = new QPopupMenu;
   CHECK_PTR( edit );
@@ -114,9 +114,11 @@ PlaylistEdit::PlaylistEdit(const char *name, QStrList *playlist,
 				"of the current play list.") );
   edit->insertItem( i18n("Select all"), this, SLOT(select_all()), 0, 52 );
 	edit->setWhatsThis(52, i18n("Append all the files<br>" \
+				"in the directory listing<br>" \
 				"to the play list.") );
   edit->insertItem( i18n("Add"), this, SLOT(addEntry()), 0, 53 );
 	edit->setWhatsThis(53, i18n("Append the selected<br>" \
+				"in the directory listing<br>" \
 				"file to the play list.") );
   edit->insertItem( i18n("Remove"), this, SLOT(removeEntry()), 0, 54 );
 	edit->setWhatsThis(54, i18n("Remove the selected<br>" \
@@ -147,7 +149,9 @@ PlaylistEdit::PlaylistEdit(const char *name, QStrList *playlist,
   what->add(hpanner, i18n("You can drag this<br>bar left or right.") );
 
   listbox = new QListBox(hpanner,"listbox",0); 
-  what->add(listbox, i18n("Here is the play<br>list you are composing."));
+  what->add(listbox, i18n("Here is the play<br>list you are composing.<br>" \
+	"Double-click to delete<br>" \
+	"an entry."));
   hpanner->moveToLast(listbox);
 
   connect(listbox, SIGNAL(selected(int)), this, SLOT(removeEntry()));
@@ -155,7 +159,10 @@ PlaylistEdit::PlaylistEdit(const char *name, QStrList *playlist,
   showmidisonly = TRUE;
 
   local_list = new QListBox(hpanner, "local_list",0);
-  what->add(local_list, i18n("Here are the files<br>you can add<br>to the play list."));
+  what->add(local_list, i18n("Here are the files<br>you can add<br>" \
+		"to the play list.<br>" \
+		"Double-click on a file name<br>" \
+		"to add it."));
   hpanner->moveToFirst(local_list);
 
   playlist_ptr = current_playlist_ptr;
@@ -163,7 +170,7 @@ PlaylistEdit::PlaylistEdit(const char *name, QStrList *playlist,
   connect(plistbox, SIGNAL(selected(int)), this, SLOT(readPlaylist(int)));
   connect(plistbox, SIGNAL(highlighted(int)), this, SLOT(selectPlaylist(int)));
   what->add(plistbox, i18n("<u>Playlist files:</u><br> Click to select one.<br>" \
-			"Doubleclick to transfer contents<br>" \
+			"Doubleclick to append contents<br>" \
 			"to the play list."));
   QValueList<int> size;
   size << 30 << 70;
@@ -389,7 +396,7 @@ void PlaylistEdit::readPlaylist(int index){
   *playlist_ptr = index;
   QString name = plistbox->text((uint) index);
   name += ".plist";
-  listbox->clear();
+  //listbox->clear();
   loadPlaylist( name );
 
 }

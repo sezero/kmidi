@@ -52,6 +52,29 @@
 #include "cduppic.h"
 #include "folderpic.h"
 
+
+static const char * whatsthis_image[] = {
+"16 16 3 1",
+" 	c None",
+"o	c #000000",
+"a	c #000080",
+"o        aaaaa  ",
+"oo      aaa aaa ",
+"ooo    aaa   aaa",
+"oooo   aa     aa",
+"ooooo  aa     aa",
+"oooooo  a    aaa",
+"ooooooo     aaa ",
+"oooooooo   aaa  ",
+"ooooooooo aaa   ",
+"ooooo     aaa   ",
+"oo ooo          ",
+"o  ooo    aaa   ",
+"    ooo   aaa   ",
+"    ooo         ",
+"     ooo        ",
+"     ooo        "};
+
 #include "config.h"
 #include "playlist.h"
 #include "output.h"
@@ -542,6 +565,8 @@ void KMidi::drawPanel()
 
     quitPB = makeButton( ix, iy, 3*WIDTH/4, HEIGHT, "Quit" );
     whatbutton = makeButton( ix + 3*WIDTH/4, iy, WIDTH/4, HEIGHT, "??" );
+    QPixmap p( whatsthis_image );
+    whatbutton->setPixmap( p );
     what->add(quitPB, i18n("exit from KMidi"));
 
     ix += WIDTH;

@@ -135,7 +135,7 @@ static void ctl_total_time(uint32 tt)
       secs=tt/play_mode->rate;
       mins=secs/60;
       secs-=mins*60;
-      fprintf(outfp, "Total playing time: %3d min %02d s\n", mins, secs);
+      fprintf(outfp, "Total playing time: %3ld min %02ld s\n", mins, secs);
     }
 }
 
@@ -155,7 +155,7 @@ static void ctl_current_time(uint32 ct)
       secs=ct/play_mode->rate;
       mins=secs/60;
       secs-=mins*60;
-      fprintf(outfp, "\r%3d:%02d", mins, secs);
+      fprintf(outfp, "\r%3ld:%02ld", mins, secs);
       fflush(outfp);
     }
 }

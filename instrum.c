@@ -332,10 +332,12 @@ static InstrumentLayer *load_instrument(char *name, int font_type, int percussio
 #else
 
   if (gm_num >= 0) {
+#ifdef FFF_HAS_BEEN_FIXED
       if (font_type == FONT_FFF && (lp = load_fff_patch(name, gm_num, bank, percussion,
 			   panning, amp, note_to_use,
 			   strip_loop, strip_envelope,
 			   strip_tail))) return(lp);
+#endif
       if (font_type == FONT_SBK && (lp = load_sbk_patch(name, gm_num, bank, percussion,
 			   panning, amp, note_to_use,
 			   strip_loop, strip_envelope,

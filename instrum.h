@@ -149,8 +149,10 @@ extern int32 convert_tremolo_rate(uint8 rate);
 extern int32 convert_vibrato_rate(uint8 rate);
 
 extern void init_soundfont(char *fname, int oldbank, int newbank);
+#ifdef FFF_HAS_BEEN_FIXED
 extern InstrumentLayer *load_fff_patch(char *name, int gm_num, int bank, int percussion,
  int panning, int amp, int note_to_use, int strip_loop, int strip_envelope, int strip_tail);
+#endif
 extern InstrumentLayer *load_sbk_patch(char *name, int gm_num, int bank, int percussion,
  int panning, int amp, int note_to_use, int strip_loop, int strip_envelope, int strip_tail);
 extern int current_tune_number;

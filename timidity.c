@@ -603,6 +603,7 @@ int read_config_file(const char *name)
 			else if (!strcmp(w[1], "fff")) font_type = FONT_FFF;
 		}
 	}
+#ifdef FFF_HAS_BEEN_FIXED
       /******* fff ********/
 		else if (!strcmp(w[0], "fff"))
 	{
@@ -617,6 +618,7 @@ int read_config_file(const char *name)
 	  if (words > 2) loadfff(w[1], banknum, atoi(w[2]));
 	  else loadfff(w[1], banknum, -1);
 	}
+#endif
       /******* glib ********/
 		else if (!strcmp(w[0], "glib"))
 	{

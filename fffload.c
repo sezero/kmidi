@@ -1,3 +1,5 @@
+
+#ifdef FFF_HAS_BEEN_FIXED
 /*
  * fffload - Read .fff patch-description files and load the patches
  *   they refer to.  The routine load_fff_patch is adapted from "load_instrument",
@@ -305,7 +307,7 @@ static struct hunk_type *hunkit(unsigned char *here, int req) {
     }
     h->tag = tag;
     offset = (unsigned long)LGGT(4);
-    if (here - fff + offset + 8 >= fsize) h->ptr = 0;
+    if (here - fff + offset + 8 >= (unsigned long)fsize) h->ptr = 0;
     else h->ptr = here + offset + 8;
     return h;
 }
@@ -499,7 +501,8 @@ InstrumentLayer *load_fff_patch(char *name, int prog, int bank, int percussion,
     InstrumentLayer *lp;
     Instrument *ip;
     Sample *sp;
-    int cnt, i;
+    int i;
+    uint32 cnt;
     unsigned char mode;
     struct ptch_type *p;
     struct envp_type *e;
@@ -772,7 +775,7 @@ envelopes are only stripped by specific request in config file.
 
 /** debug -- How is strip_loop set to 1 here??? **/
 /**if (!percussion) strip_loop = 0;*/
-if (sp->loop_start < 0) strip_loop = 1;
+/* if (sp->loop_start < 0) strip_loop = 1; */
 if (sp->loop_end > sp->data_length) strip_loop = 1;
 if (sp->loop_start >=  sp->loop_end) strip_loop = 1;
 if (!percussion && strip_loop == 1) {
@@ -1485,3 +1488,4 @@ printf("read %d byte sample\n", cnt);
 #endif
 #endif /* ADAGIO */
 
+#endif

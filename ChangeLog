@@ -1,3 +1,11 @@
+1999-11-14  Greg Lee  <lee@hawaii.edu>
+
+	* kmidi.cpp: image for whatthis button
+	* playlist.cpp: doubleclick on playlist
+	  file appends contents to play list
+	* disabled IW patch support, since it
+	  now dumps core
+
 1999-11-13  Greg Lee  <lee@hawaii.edu>
 
 	* fix bug in envelope calculation
