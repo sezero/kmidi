@@ -226,9 +226,11 @@ static void ctl_total_time(int tt)
   pipe_int_write(centisecs);
 }
 
+static int change_in_volume = 0;
+
 static void ctl_master_volume(int mv)
 {
-
+  change_in_volume = 0;
   pipe_int_write(MASTERVOL_MESSAGE);
   pipe_int_write(mv);
 
@@ -456,7 +458,6 @@ static void ctl_close(void)
 
 /* commands are: PREV, NEXT, QUIT, STOP, LOAD, JUMP, VOLM */
 
-static int change_in_volume = 0;
 
 static int ctl_blocking_read(int32 *valp)
 {
@@ -624,6 +625,7 @@ static void ctl_pass_playing_list(int number_of_files, char *list_of_files[])
 			    if (change_in_volume>0 || amplification > -change_in_volume)
 	  			amplification += change_in_volume;
 			    else amplification = 0;
+			    change_in_volume = 0;
 			    if (amplification > MAX_AMPLIFICATION)
 	  			amplification=MAX_AMPLIFICATION;
 			    ctl_master_volume(amplification);
