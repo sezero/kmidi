@@ -63,7 +63,7 @@ static void ctl_reset(void);
 static int ctl_open(int using_stdin, int using_stdout);
 static void ctl_close(void);
 static int ctl_read(int32 *valp);
-static int cmsg(int type, int verbosity_level, const char *fmt, ...);
+static int cmsg(int type, int verbosity_level, char *fmt, ...);
 
 /**********************************************/
 /* export the interface functions */
@@ -485,7 +485,7 @@ static int ctl_read(int32 *valp)
   return RC_NONE;
 }
 
-static int cmsg(int type, int verbosity_level, const char *fmt, ...)
+static int cmsg(int type, int verbosity_level, char *fmt, ...)
 {
   va_list ap;
   int flagnl = 1;
