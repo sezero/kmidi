@@ -1,4 +1,6 @@
 /*
+	$Id$
+
     TiMidity -- Experimental MIDI to WAVE converter
     Copyright (C) 1995 Tuukka Toivonen <toivonen@clinet.fi>
 
@@ -73,6 +75,10 @@
 #define DEFAULT_DRUMCHANNELS (1<<9)
 /*#define DEFAULT_DRUMCHANNELS ((1<<9) | (1<<15))*/
 
+/* type of floating point number */
+/*typedef double FLOAT_T;*/
+typedef float FLOAT_T;
+
 /* A somewhat arbitrary frequency range. The low end of this will
    sound terrible as no lowpass filtering is performed on most
    instruments before resampling. */
@@ -95,7 +101,7 @@
 #ifdef ADAGIO
 #define DEFAULT_VOICES	DEFAULT_DSPVOICES
 #else
-#define DEFAULT_VOICES	32
+#define DEFAULT_VOICES	64
 #endif
 #endif
 
@@ -108,7 +114,7 @@
 */
 #define MAX_VOICES	MAX_DSPVOICES
 #else
-#define MAX_VOICES	48
+#define MAX_VOICES	64
 #endif
 #endif
 
