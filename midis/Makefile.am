@@ -7,5 +7,5 @@ exampledir = $(kde_datadir)/kmidi
 EXTRA_DIST = $(example_DATA)
 
 messages:
-	(cd .. && $(XGETTEXT) -C -ki18n -x $(includedir)/kde.pot *.cpp -o $(podir)/kmidi.pot)
+	(cd .. && $(XGETTEXT) *.cpp -o $(podir)/kmidi.pot)
 
