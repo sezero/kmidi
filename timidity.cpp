@@ -82,7 +82,12 @@ static void help(void)
   PlayMode **pmp=play_mode_list;
   ControlMode **cmp=ctl_list;
   cmp = cmp;
-  printf(" TiMidity version " TIMID_VERSION " (C) 1995 Tuukka Toivonen "
+  /*
+   * glibc headers break this code because printf is a macro there, and
+   * you cannot use a preprocessing instruction like #ifdef inside a macro.
+   * current workaround is not using printf ( Dirk )
+   */
+  fprintf(stdout, " TiMidity version " TIMID_VERSION " (C) 1995 Tuukka Toivonen "
 	 "<toivonen@clinet.fi>\n"
 	 " TiMidity is free software and comes with ABSOLUTELY NO WARRANTY.\n"
 	 "\n"
@@ -192,7 +197,7 @@ static void help(void)
 #ifndef KMIDI
 static void interesting_message(void)
 {
-  printf(
+  fprintf(stdout,
 "\n"
 " TiMidity version " TIMID_VERSION " -- Experimental MIDI to WAVE converter\n"
 " Copyright (C) 1995 Tuukka Toivonen <toivonen@clinet.fi>\n"
@@ -226,7 +231,7 @@ static int set_channel_flag(int32 *flags, int32 i, const char *name)
   else if ((i<1 || i>16) && (i<-16 || i>-1))
     {
 		fprintf(stderr,
-	      "%s must be between 1 and 16, or between -1 and -16, or 0\n", 
+	      "%s must be between 1 and 16, or between -1 and -16, or 0\n",
 	      name);
       return -1;
 	 }
@@ -282,7 +287,7 @@ int set_play_mode(char *cp)
 	  return 0;
 	}
 	 }
-  
+
   fprintf(stderr, "Playmode `%c' is not compiled in.\n", *cp);
   return 1;
 }
@@ -302,7 +307,7 @@ static int set_ctl(char *cp)
 			case 'v': cmp->verbosity++; break;
 	   		case 'q': cmp->verbosity--; break;
 			case 't': /* toggle */
-		cmp->trace_playing= (cmp->trace_playing) ? 0 : 1; 
+		cmp->trace_playing= (cmp->trace_playing) ? 0 : 1;
 		break;
 
 	      default:
@@ -312,7 +317,7 @@ static int set_ctl(char *cp)
 	  return 0;
 	}
 	 }
-  
+
   fprintf(stderr, "Interface `%c' is not compiled in.\n", *cp);
   return 1;
 }
@@ -377,7 +382,7 @@ int global_detune = 0;
 
 int got_a_configuration=0;
 
-#ifdef KMIDI	
+#ifdef KMIDI
 extern int createKApplication(int *argc, char ***argv);
 #endif
 
@@ -387,11 +392,11 @@ int __cdecl main(int argc, char **argv)
 int main(int argc, char **argv)
 #endif
 {
-  int c, 
-      cmderr=0, 
-      i, 
+  int c,
+      cmderr=0,
+      i,
       try_config_again=0,
-      need_stdin=0, 
+      need_stdin=0,
       need_stdout=0;
   int orig_optind;
 
@@ -414,7 +419,7 @@ int main(int argc, char **argv)
 #ifdef KMIDI
 #define KMIDI_CONFIG_SUBDIR "/share/apps/kmidi/config"
   char *KDEdir;
-  char *kmidi_config;                                                          
+  char *kmidi_config;
 
 
   for (i = 0; i < argc; i++) {
@@ -437,7 +442,7 @@ int main(int argc, char **argv)
   else {
        kmidi_config = (char *)safe_malloc(strlen(KDEdir)+strlen(KMIDI_CONFIG_SUBDIR)+1);
        strcpy(kmidi_config, KDEdir);
-       strcat(kmidi_config, KMIDI_CONFIG_SUBDIR); 
+       strcat(kmidi_config, KMIDI_CONFIG_SUBDIR);
        /* add_to_pathlist(kmidi_config, 0); */
   }
   add_to_pathlist(kmidi_config, 0);
@@ -454,7 +459,7 @@ int main(int argc, char **argv)
   setreuid(u_uid, u_uid);
 #endif
 
- 
+
   if ((program_name=rindex(argv[0], '/'))) program_name++;
   else program_name=argv[0];
 #ifndef KMIDI
@@ -592,7 +597,7 @@ int main(int argc, char **argv)
 	break;
 
 #if defined(AU_LINUX) || defined(AU_WIN32)
-	
+
 		case 'B':
 	if (set_value(&tmpi32, atoi(optarg), 0, 1000,
 				"Buffer fragments")) cmderr++;
@@ -603,7 +608,7 @@ int main(int argc, char **argv)
 		case 'e': /* evil */
 			evil = 1;
 			break;
-	
+
 #endif
 		case '#':
 	cfg_select=atoi(optarg);
@@ -641,9 +646,9 @@ int main(int argc, char **argv)
 		if (!strcmp(output_name, "-"))
 	need_stdout=1;
 	 }
-  
+
 #if defined(AU_LINUX) || defined(AU_WIN32)
- 
+
   if (buffer_fragments != -1)
 	 play_mode->extra_param[0]=buffer_fragments;
 #endif
@@ -657,12 +662,12 @@ int main(int argc, char **argv)
 
   if(argc-optind > 0 ) have_commandline_midis = argc - optind;
   else have_commandline_midis = 0;
- 
+
   if (play_mode->open_output()<0){
 
       /* fprintf(stderr, "KMidi: Sorry, couldn't open %s.\n", play_mode->id_name); */
       /*	  ctl->close();*/
-      
+
       output_device_open = 0;
 
       /*return 2;*/
@@ -680,7 +685,7 @@ int main(int argc, char **argv)
 	  output_device_open = 1;
 	}
   }
- 
+
   if (ctl->open(need_stdin, need_stdout)) {
 
 	  fprintf(stderr, "Couldn't open %s\n", ctl->id_name);
@@ -709,17 +714,17 @@ int main(int argc, char **argv)
   if (*def_instr_name) set_default_instrument(def_instr_name);
 
 #ifdef __WIN32__
-      
+
 		SetConsoleCtrlHandler (handler, TRUE);
 		InitializeCriticalSection (&critSect);
-  
+
 		if(evil)
 			if (!SetThreadPriority(GetCurrentThread(), THREAD_PRIORITY_ABOVE_NORMAL))
 				fprintf(stderr, "Error raising process priority.\n");
 #endif
 
   if (got_a_configuration < 2) read_config_file(current_config_file, 0);
- 
+
   ctl->pass_playing_list(argc-optind, (const char **)&argv[orig_optind]);
 
   play_mode->close_output();

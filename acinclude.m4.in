@@ -1043,7 +1043,14 @@ AC_DEFUN(SC_PATH_TCLXCONFIG, [
 
 AC_DEFUN(KMIDI_OPTIMIZE,
 [
-AM_CONDITIONAL(GXXOPTIMIZE, test x$ac_cv_prog_gxx$kde_use_debug_code = xyesno)
+  kde_gcc3_is_horrible_broken=no
+  if test "$ac_cv_prog_gxx" = "yes"; then
+    if test "`$CXX --version`" = "3.0"; then
+      kde_gcc3_is_horrible_broken=yes
+    fi
+  fi
+
+  AM_CONDITIONAL(GXXOPTIMIZE, test x$ac_cv_prog_gxx$kde_use_debug_code$kde_gcc3_is_horrible_broken = xyesnono)
 ])
 
 AC_DEFUN(AC_SUBST_KMIDI,
