@@ -1,7 +1,6 @@
 [Desktop Entry]
 Encoding=UTF-8
 BinaryPattern=kmidi;
-Protocols=file;ftp;http;tar;cgi;
 MimeType=audio/x-midi;audio/x-karaoke;
 Comment=Midi Synthesizer
 Comment[af]=midi sintetiseerder
