@@ -169,13 +169,14 @@ CSRCS = timidity.c common.c readmidi.c playmidi.c resample.c mix.c instrum.c \
         tables.c controls.c output.c filter.c \
         wave_a.c raw_a.c dumb_c.c fffload.c \
         sndfont.c readsbk.c \
-	effects.c reverb_e.c chorus_e.c phaser_e.c celeste_e.c
+	effects.c reverb_e.c chorus_e.c phaser_e.c celeste_e.c \
+	resample_l.c resample_f.c
 
 # ... except for dsp.o
 DSPCSRCS = common.c playmidi.c resample.c mix.c instrum.c \
         tables.c output.c filter.c \
         dumb_c.c fffload.c \
-        sndfont.c readsbk.c
+        sndfont.c readsbk.c resample_l.c resample_f.c
 
 # Optional installation-specific sources
 OPTSRCS = hpux_a.c linux_a.c sun_a.c dec_a.c win_a.c \
@@ -200,7 +201,7 @@ BITMAPS = $(BITMAPF) \
 
 # All headers
 CHDRS = config.h common.h readmidi.h playmidi.h resample.h mix.h instrum.h \
-        tables.h controls.h output.h filter.h motif.h
+        tables.h controls.h output.h filter.h motif.h resamplation.h
 
 # Used in making the distribution archive
 ALLSRCS = $(CSRCS) $(OPTSRCS) $(CHDRS) $(TOOLSRCS) $(TCLSRCS) $(MAKEFILES) \

@@ -882,7 +882,7 @@ int main(int argc, char **argv)
   init_effect() ;
 #endif /*CHANNEL_EFFECT*/
 
-  while ((c=getopt(argc, argv, "UI:P:L:c:A:C:ap:fo:O:s:Q:R:FD:hi:#:qEm"
+  while ((c=getopt(argc, argv, "UI:P:L:c:A:C:ap:fo:O:s:Q:R:FD:hi:#:qEmk:"
 #if defined(AU_LINUX) || defined(AU_WIN32)
 			"B:" /* buffer fragments */
 #endif
@@ -909,6 +909,10 @@ int main(int argc, char **argv)
 		case 'Q':
 	if (set_channel_flag(&quietchannels, atoi(optarg), "Quiet channel"))
 	  cmderr++;
+	break;
+
+		case 'k':
+	current_interpolation = atoi(optarg);
 	break;
 
 		case 'R': reverb_options = atoi(optarg); break;

@@ -55,13 +55,11 @@ static int dont_cspline = 0;
 #define OVERSHOOT_STEP 50
 
 #define LINEAR_INTERPOLATION
-#define CSPLINE_INTERPOLATION
+#define LAGRANGE_INTERPOLATION
 #define ENVELOPE_PITCH_MODULATION
 
 #include "resamplation.h"
 
-sample_t resample_buffer[AUDIO_BUFFER_SIZE+100];
-uint32 resample_buffer_offset = 0;
 static sample_t *vib_resample_voice(int, uint32 *, int);
 static sample_t *normal_resample_voice(int, uint32 *, int);
 
@@ -91,82 +89,6 @@ static void update_lfo(int v)
 }
 #endif
 
-/* Returns 1 if envelope runs out */
-int recompute_modulation(int v)
-{
-  int stage;
-
-  stage = voice[v].modulation_stage;
-
-  if (stage>5)
-    {
-      /* Envelope ran out. */
-      voice[v].modulation_increment = 0;
-      return 1;
-    }
-
-  if ((voice[v].sample->modes & MODES_ENVELOPE) && (voice[v].sample->modes & MODES_SUSTAIN))
-    {
-      if (voice[v].status & (VOICE_ON | VOICE_SUSTAINED))
-	{
-	  if (stage>2)
-	    {
-	      /* Freeze modulation until note turns off. Trumpets want this. */
-	      voice[v].modulation_increment=0;
-	      return 0;
-	    }
-	}
-    }
-  voice[v].modulation_stage=stage+1;
-
-#ifdef tplus
-  if (voice[v].modulation_volume==voice[v].sample->modulation_offset[stage] ||
-      (stage > 2 && voice[v].modulation_volume < voice[v].sample->modulation_offset[stage]))
-#else
-  if (voice[v].modulation_volume==voice[v].sample->modulation_offset[stage])
-#endif
-    return recompute_modulation(v);
-  voice[v].modulation_target=voice[v].sample->modulation_offset[stage];
-  voice[v].modulation_increment = voice[v].sample->modulation_rate[stage];
-  if (voice[v].modulation_target<voice[v].modulation_volume)
-    voice[v].modulation_increment = -voice[v].modulation_increment;
-  return 0;
-}
-
-int update_modulation(int v)
-{
-
-  if(voice[v].modulation_delay > 0)
-  {
-      /* voice[v].modulation_delay -= control_ratio; I think units are already
-	 in terms of control_ratio */
-      voice[v].modulation_delay -= 1;
-      if(voice[v].modulation_delay > 0)
-	  return 0;
-  }
-
-
-  voice[v].modulation_volume += voice[v].modulation_increment;
-  /* Why is there no ^^ operator?? */
-  if (((voice[v].modulation_increment < 0) &&
-       (voice[v].modulation_volume <= voice[v].modulation_target)) ||
-      ((voice[v].modulation_increment > 0) &&
-	   (voice[v].modulation_volume >= voice[v].modulation_target)))
-    {
-      voice[v].modulation_volume = voice[v].modulation_target;
-      if (recompute_modulation(v))
-	return 1;
-    }
-  return 0;
-}
-
-/* Returns 1 if the note died */
-int update_modulation_signal(int v)
-{
-  if (voice[v].modulation_increment && update_modulation(v))
-    return 1;
-  return 0;
-}
 
 #ifdef FILTER_INTERPOLATION
 static int calc_bw_index(int v)
@@ -206,29 +128,6 @@ mod_amount);
 }
 #endif
 
-#if defined(FILTER_INTERPOLATION) || defined(ENVELOPE_PITCH_MODULATION)
-/* modulation_volume has been set by above routine */
-int32 calc_mod_freq(int v, int32 incr)
-{
-  FLOAT_T mod_amount;
-  int32 freq;
-  /* already done in update_vibrato ? */
-  if (voice[v].vibrato_control_ratio) return incr;
-#ifndef FILTER_INTERPOLATION
-  if (update_modulation_signal(v)) return incr;
-#endif
-  if ((mod_amount=voice[v].sample->modEnvToPitch)<0.02) return incr;
-  if (incr < 0) return incr;
-  freq = voice[v].frequency;
-  freq = (int32)( (double)freq*(1.0 + (mod_amount - 1.0) * (voice[v].modulation_volume>>22) / 255.0) );
-
-  return FRSCALE(((double)(voice[v].sample->sample_rate) *
-		  (double)(freq)) /
-		 ((double)(voice[v].sample->root_freq) *
-		  (double)(play_mode->rate)),
-		 FRACTION_BITS);
-}
-#endif
 /*************** resampling with fixed increment *****************/
 
 static sample_t *rs_plain(int v, uint32 *countptr)
@@ -954,40 +853,10 @@ static sample_t *normal_resample_voice(int v, uint32 *countptr, int mode)
     return rs_bidir(v, vp, *countptr);
 }
 
-sample_t *resample_voice(int v, uint32 *countptr)
+sample_t *resample_voice_lagrange(int v, uint32 *countptr)
 {
     Voice *vp=&voice[v];
     int mode;
-
-    if(!(vp->sample->sample_rate))
-    {
-	int32 ofs;
-
-	/* Pre-resampled data -- just update the offset and check if
-	   we're out of data. */
-	ofs=vp->sample_offset >> FRACTION_BITS; /* Kind of silly to use
-						   FRACTION_BITS here... */
-	if(*countptr >= (vp->sample->data_length>>FRACTION_BITS) - ofs)
-	{
-	    /* Note finished. Free the voice. */
-	  if (!(vp->status&VOICE_FREE))
-	    {
-	      vp->status=VOICE_FREE;
- 	      ctl->note(v);
-	    }
-
-	    /* Let the caller know how much data we had left */
-	    *countptr = (vp->sample->data_length>>FRACTION_BITS) - ofs;
-	}
-	else
-	    vp->sample_offset += *countptr << FRACTION_BITS;
-	return vp->sample->data+ofs;
-    }
-
-    if (current_interpolation == 2)
-	 return resample_voice_lagrange(v, countptr);
-    else if (current_interpolation == 3)
-	 return resample_voice_filter(v, countptr);
 
     mode = vp->sample->modes;
     if((mode & MODES_LOOPING) &&
@@ -1014,197 +883,3 @@ sample_t *resample_voice(int v, uint32 *countptr)
     return normal_resample_voice(v, countptr, mode);
 }
 
-
-void do_lowpass(Sample *sample, uint32 srate, sample_t *buf, uint32 count, int32 freq, FLOAT_T resonance)
-{
-    double a0=0, a1=0, a2=0, b0=0, b1=0;
-    double x0=0, x1=0, y0=0, y1=0;
-    sample_t samp;
-    double outsamp, insamp, mod_amount=0;
-    int findex, cc;
-    int32 current_freq;
-
-    if (freq < 20) return;
-
-    if (freq > srate * 2) {
-    	ctl->cmsg(CMSG_ERROR, VERB_NORMAL,
-    		  "Lowpass: center must be < data rate*2");
-    	return;
-    }
-
-    current_freq = freq;
-
-    if (sample->modEnvToFilterFc)
-	mod_amount = sample->modEnvToFilterFc;
-
-    if (mod_amount < 0.02 && freq >= 13500) return;
-
-    voice[0].sample = sample;
-
-      /* Ramp up from 0 */
-    voice[0].modulation_stage=ATTACK;
-    voice[0].modulation_volume=0;
-    voice[0].modulation_delay=sample->modulation_rate[DELAY];
-    cc = voice[0].modulation_counter=0;
-    recompute_modulation(0);
-
-/* start modulation loop here */
-    while (count--) {
-
-	if (!cc) {
-	    if (mod_amount>0.02) {
-		if (update_modulation_signal(0)) mod_amount = 0;
-		else
-		current_freq = (int32)( (double)freq*(1.0 + (mod_amount - 1.0) *
-			 (voice[0].modulation_volume>>22) / 255.0) );
-	    }
-	    cc = control_ratio;
-	    findex = 1 + (current_freq+50) / 100;
-	    if (findex > 100) findex = 100;
-	    a0 = butterworth[findex][0];
-	    a1 = butterworth[findex][1];
-	    a2 = butterworth[findex][2];
-	    b0 = butterworth[findex][3];
-	    b1 = butterworth[findex][4];
-	}
-
-	if (mod_amount>0.02) cc--;
-
-    	samp = *buf;
-
-    	insamp = (double)samp;
-    	outsamp = a0 * insamp + a1 * x0 + a2 * x1 - b0 * y0 - b1 * y1;
-    	x1 = x0;
-    	x0 = insamp;
-    	y1 = y0;
-    	y0 = outsamp;
-    	if (outsamp > MAX_DATAVAL) {
-    		outsamp = MAX_DATAVAL;
-    	}
-    	else if (outsamp < MIN_DATAVAL) {
-    		outsamp = MIN_DATAVAL;
-    	}
-    	*buf++ = (sample_t)outsamp;
-    }
-}
-
-
-void pre_resample(Sample * sp)
-{
-  double a, xdiff;
-  int32 incr, ofs, newlen, count, overshoot;
-  int16 *newdata, *dest, *src = (int16 *)sp->data, *vptr, *endptr;
-  int32 v1, v2, v3, v4, i;
-  static const char note_name[12][3] =
-  {
-    "C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"
-  };
-
-  ctl->cmsg(CMSG_INFO, VERB_DEBUG, " * pre-resampling for note %d (%s%d)",
-	    sp->note_to_use,
-	    note_name[sp->note_to_use % 12], (sp->note_to_use & 0x7F) / 12);
-
-  if (sp->sample_rate == play_mode->rate && sp->root_freq == freq_table[(int)(sp->note_to_use)]) {
-	a = 1;
-  }
-  else a = ((double) (sp->sample_rate) * freq_table[(int) (sp->note_to_use)]) /
-    ((double) (sp->root_freq) * play_mode->rate);
-
-  /* if (a<1.0) return; */
-  if(sp->data_length / a >= 0x7fffffffL)
-  {
-      /* Too large to compute */
-      ctl->cmsg(CMSG_INFO, VERB_DEBUG, " *** Can't pre-resampling for note %d",
-		sp->note_to_use);
-      return;
-  }
-
-  endptr = src + (sp->data_length >> FRACTION_BITS) - 1;
-  overshoot = *endptr / OVERSHOOT_STEP;
-  if (overshoot < 0) overshoot = -overshoot;
-  if (overshoot < 2) overshoot = 0;
-
-  newlen = (int32)(sp->data_length / a);
-  count = (newlen >> FRACTION_BITS) - 1;
-  ofs = incr = (sp->data_length - (1 << FRACTION_BITS)) / count;
-
-  if((double)newlen + incr >= 0x7fffffffL)
-  {
-      /* Too large to compute */
-      ctl->cmsg(CMSG_INFO, VERB_DEBUG, " *** Can't pre-resampling for note %d",
-		sp->note_to_use);
-      return;
-  }
-
-  dest = newdata = (int16 *)safe_malloc((newlen >> (FRACTION_BITS - 1)) + 2 + 2*overshoot);
-
-  if (--count)
-    *dest++ = src[0];
-
-  /* Since we're pre-processing and this doesn't have to be done in
-     real-time, we go ahead and do the full sliding cubic interpolation. */
-  count--;
-  for(i = 0; i < count + overshoot; i++)
-    {
-#ifdef tplussliding
-      int32 v, v5;
-#endif
-      vptr = src + (ofs >> FRACTION_BITS);
-      if (i < count - 2 || !overshoot)
-	{
-          v1 = *(vptr - 1);
-          v2 = *vptr;
-          v3 = *(vptr + 1);
-          v4 = *(vptr + 2);
-	}
-      else
-	{
-	  if (i < count + 1) v1 = *(vptr - 1);
-	  else v1 = *endptr - (count-i+2) * *endptr / overshoot;
-	  if (i < count) v2 = *vptr;
-	  else v2 = *endptr - (count-i+1) * *endptr / overshoot;
-	  if (i < count - 1) v3 = *(vptr + 1);
-	  else v3 = *endptr - (count-i) * *endptr / overshoot;
-	  v4 = *endptr - (count-i-1) * *endptr / overshoot;
-	}
-#ifdef tplussliding
-      v5 = v2 - v3;
-      xdiff = FRSCALENEG((int32)(ofs & FRACTION_MASK), FRACTION_BITS);
-/* this looks a little strange: v1 - v2 - v5 = v1 + v3 */
-      v = (int32)(v2 + xdiff * (1.0/6.0) * (3 * (v3 - v5) - 2 * v1 - v4 +
-       xdiff * (3 * (v1 - v2 - v5) + xdiff * (3 * v5 + v4 - v1))));
-      if(v < -32768)
-	  *dest++ = -32768;
-      else if(v > 32767)
-	  *dest++ = 32767;
-      else
-	  *dest++ = (int16)v;
-#else
-      xdiff = FRSCALENEG((int32)(ofs & FRACTION_MASK), FRACTION_BITS);
-      *dest++ = v2 + (xdiff / 6.0) * (-2 * v1 - 3 * v2 + 6 * v3 - v4 +
-      xdiff * (3 * (v1 - 2 * v2 + v3) + xdiff * (-v1 + 3 * (v2 - v3) + v4)));
-#endif
-      ofs += incr;
-    }
-
- if (!overshoot)
-  {
-  if ((int32)(ofs & FRACTION_MASK))
-    {
-      v1 = src[ofs >> FRACTION_BITS];
-      v2 = src[(ofs >> FRACTION_BITS) + 1];
-      *dest++ = (int16)(v1 + ((int32)((v2 - v1) * (ofs & FRACTION_MASK)) >> FRACTION_BITS));
-    }
-  else
-    *dest++ = src[ofs >> FRACTION_BITS];
-  *dest++ = *(dest - 1) / 2;
-  *dest++ = *(dest - 1) / 2;
-  }
-
-  sp->data_length = newlen + (overshoot << FRACTION_BITS);
-  sp->loop_start = (int32)(sp->loop_start / a);
-  sp->loop_end = (int32)(sp->loop_end / a);
-  free(sp->data);
-  sp->data = (sample_t *) newdata;
-  sp->sample_rate = 0;
-}
