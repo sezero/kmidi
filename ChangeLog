@@ -1,3 +1,7 @@
+1999-12-22  Greg Lee  <lee@hawaii.edu>
+
+	* fix error messages
+
 1999-12-21  Greg Lee  <lee@hawaii.edu>
 
 	* disable qmultilineedit undo

@@ -224,6 +224,8 @@ public:
 	int		current_playlist_num;
 	QStrList	*listplaylists;
 
+	QStrList	*errorlist;
+
 	LogWindow 	*logwindow;
 	ConfigDlg       *configdlg;
 	PlaylistEdit    *playlistdlg;
@@ -256,6 +258,7 @@ public:
 	void		setDry(bool);
 	void		setReverb(int level);
 	void		setChorus(int level);
+	void		postError(const QString& s);
 
 signals:	
 	void		play();

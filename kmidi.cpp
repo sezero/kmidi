@@ -167,6 +167,7 @@ KMidi::KMidi( QWidget *parent, const char *name )
     setToolTips();
 
     playlist = new QStrList(TRUE);
+    errorlist = new QStrList(TRUE);
     listplaylists = new QStrList(TRUE);
 
     QStringList listf = KGlobal::dirs()->findAllResources("appdata", "*.plist");
@@ -1677,13 +1678,21 @@ void KMidi::PlayMOD(){
     // this is done to allow the user interface to settle a bit
     // before playing the mod
 
+    while (!errorlist->isEmpty()) {
+	  KMessageBox::sorry(this, QString( errorlist->first() ) );
+	  errorlist->removeFirst();
+    }
+
+    if (status == KPLAYING) return;
+
     if (!playlist->isEmpty())
 	playClicked();
-
-
 }
 
-
+void KMidi::postError(const QString& s){
+    errorlist->append(s.latin1());
+    if (!timer->isActive()) timer->start(200, TRUE);
+}
 
 void KMidi::aboutClicked()
 {
@@ -1755,18 +1764,7 @@ void KMidi::PlayCommandlineMods(){
   disconnect( timer, SIGNAL(timeout()),this, SLOT(PlayCommandlineMods()) );
   connect( timer, SIGNAL(timeout()),this, SLOT(PlayMOD()) );
 
-#if 0
-  thisapp->processEvents();
-  thisapp->flushX();
 
-  display_playmode();
-
-  thisapp->processEvents();
-  thisapp->flushX();
-#endif
-
-  //status = KSTOPPED; // is this right? --gl
-  //patchbox->setEnabled( TRUE );
   statusLA->setText(i18n("Ready"));
   volChanged(volume);
   //  readtimer->start(10);
@@ -1805,20 +1803,8 @@ void KMidi::PlayCommandlineMods(){
 
   Panel->max_patch_megs = max_patch_megs;
 
-#if 0
-  int lx;
-  for (lx = 30; lx > 0; lx--) if (Panel->cfg_names[lx-1][0]) break;
-  for (int sx = 0; sx < lx; sx++) if (Panel->cfg_names[sx][0]) {
-	fprintf(stderr,"%d=%s\n", sx, Panel->cfg_names[sx]);
-	//patchbox->insertItem( Panel->cfg_names[sx] );
-    }
-    else patchbox->insertItem( "(none)" );
-  patchbox->setCurrentItem(Panel->currentpatchset);
-#endif
-  //patchbox->setCurrentItem(Panel->currentpatchset);
-  //setPatch(Panel->currentpatchset);
-    pipe_int_write(  MOTIF_PATCHSET );
-    pipe_int_write( Panel->currentpatchset );
+  pipe_int_write(  MOTIF_PATCHSET );
+  pipe_int_write( Panel->currentpatchset );
 
   thisapp->processEvents();
   thisapp->flushX();
@@ -2048,15 +2034,10 @@ void KMidi::ReadPipe(){
 		    file.setFile(filename);
 		    if( file.isReadable()){
 		//better check if it's a midi file
-		      //playlist->append(filename);
 		      playlist->append(file.absFilePath());
 		      have_commandline_midis = 1;
 		    }
-		    //else{
-		    //  QString string = i18n("%1\nis not readable or doesn't exist.").arg(filename);
-		    //  KMessageBox::sorry(0, string);
-		    //
-		    //}
+		    else postError( i18n("%1\nis not readable or doesn't exist.").arg(filename) );
 		  }	
 		
 		if( !have_commandline_midis) {
@@ -2315,11 +2296,10 @@ void KMidi::ReadPipe(){
 
 	      	case CMSG_ERROR : {
 		char strmessage[2024];
-	
-		pipe_string_read(strmessage);
-		//logwindow->insertStr(strmessage);
-		logwindow->insertStr(QString(strmessage));
 
+		pipe_string_read(strmessage);
+		//logwindow->insertStr(QString(strmessage));
+		postError(QString(strmessage));
 
 		}
 
