@@ -1,5 +1,4 @@
 /*
-	$Id$
 
     TiMidity -- Experimental MIDI to WAVE converter
     Copyright (C) 1995 Tuukka Toivonen <toivonen@clinet.fi>
@@ -819,7 +818,7 @@ int main(int argc, char **argv)
 	 }
 #endif
 
-  command_cutoff_allowed = 1;
+  command_cutoff_allowed = 0;
 #ifdef CHANNEL_EFFECT
   init_effect() ;
 #endif /*CHANNEL_EFFECT*/
@@ -834,7 +833,7 @@ int main(int argc, char **argv)
 			))>0)
 	 switch(c)
 		{
-		case 'q': command_cutoff_allowed=0; break;
+		case 'q': command_cutoff_allowed=1; break;
 		case 'U': free_instruments_afterwards=1; break;
 		case 'L': add_to_pathlist(optarg); try_config_again=1; break;
 		case 'c':
