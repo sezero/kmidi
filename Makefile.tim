@@ -168,7 +168,8 @@ CFLAGS= $(DEBUGFLAGS) -DDEFAULT_PATH=\"$(TIMID_DIR)\" \
 CSRCS = timidity.c common.c readmidi.c playmidi.c resample.c mix.c instrum.c \
         tables.c controls.c output.c filter.c \
         wave_a.c raw_a.c dumb_c.c fffload.c \
-        sndfont.c readsbk.c
+        sndfont.c readsbk.c \
+	effects.c reverb_e.c chorus_e.c phaser_e.c celeste_e.c
 
 # ... except for dsp.o
 DSPCSRCS = common.c playmidi.c resample.c mix.c instrum.c \
