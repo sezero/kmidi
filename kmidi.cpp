@@ -56,8 +56,11 @@
 
 #include "config.h"
 #include "playlist.h"
-#include "constants.h"
 #include "output.h"
+#include "instrum.h"
+#include "playmidi.h"
+#include "constants.h"
+#include "ctl.h"
 #include <kiconloader.h>
 #include <kstddirs.h>
 #include <kglobal.h>
@@ -75,6 +78,9 @@ extern PlayMode *play_mode;
 extern int have_commandline_midis;
 extern int output_device_open;
 extern int32 control_ratio;
+extern char *cfg_names[];
+
+static int currplaytime = 0;
 
 enum midistatus{ KNONE, KPLAYING, KSTOPPED, KLOOPING, KFORWARD,
 		 KBACKWARD, KNEXT, KPREVIOUS,KPAUSED};
@@ -98,6 +104,11 @@ KMidi::KMidi( QWidget *parent, const char *name ) :
     starting_up = true;
 
     readconfig();
+  struct configstruct config;
+  config.background_color = background_color;
+  config.led_color = led_color;
+  config.tooltips = tooltips;
+
     drawPanel();
     loadBitmaps();
     setColors();
@@ -106,19 +117,20 @@ KMidi::KMidi( QWidget *parent, const char *name ) :
     playlist = new QStrList(TRUE);
 
     if ( !folder_pixmap.loadFromData(folder_bmp_data, folder_bmp_len) )
-	KMessageBox::error(this, i18n("Could not load folder.bmp"));
+	KMessageBox::error(this, i18n("Error"), i18n("Could not load folder.bmp"));
 
     if ( !cdup_pixmap.loadFromData(cdup_bmp_data, cdup_bmp_len) )
-	KMessageBox::error(this, i18n("Could not load cdup.bmp"));
+	KMessageBox::error(this, i18n("Error"), i18n("Could not load cdup.bmp"));
 
     if ( !file_pixmap.loadFromData(file_bmp_data, file_bmp_len) )
-	KMessageBox::error(this, i18n("Could not load file.bmp"));
+	KMessageBox::error(this, i18n("Error"), i18n("Could not load file.bmp"));
 
     timer = new QTimer( this );
     readtimer = new QTimer( this);
 
     logwindow = new LogWindow(NULL,"logwindow");
     logwindow->hide();
+    configdlg = new ConfigDlg(this,&config, "_configdlg");
 
     connect( timer, SIGNAL(timeout()),this, SLOT(PlayCommandlineMods()) );
     timer->start( 100, FALSE );
@@ -133,7 +145,8 @@ KMidi::KMidi( QWidget *parent, const char *name ) :
     connect( replayPB, SIGNAL(clicked()), SLOT(replayClicked()) );
     connect( ejectPB, SIGNAL(clicked()), SLOT(ejectClicked()) );
     connect( volSB, SIGNAL(valueChanged(int)), SLOT(volChanged(int)));
-    connect( aboutPB, SIGNAL(clicked()), SLOT(aboutClicked()));
+    //connect( aboutPB, SIGNAL(clicked()), SLOT(aboutClicked()));
+    connect( aboutPB, SIGNAL(clicked()), SLOT(logoClicked()));
     connect( configurebutton, SIGNAL(clicked()), SLOT(aboutClicked()));
     connect( shufflebutton, SIGNAL(clicked()), SLOT(randomClicked()));
     connect( infobutton, SIGNAL(clicked()), SLOT(speedupslot()));
@@ -143,11 +156,12 @@ KMidi::KMidi( QWidget *parent, const char *name ) :
 
     srandom(time(0L));
     adjustSize();
+    setMinimumSize( regularsize );
+    setMaximumSize( extendedsize );
 
+    resize( regularsize );
 
-    setFixedSize(this->width(),this->height());
-
-
+    //setFixedSize(this->width(),this->height());
 }
 
 
@@ -173,6 +187,17 @@ void KMidi::setToolTips()
 	QToolTip::add( infobutton, 	i18n("Show Info Window") );
 	QToolTip::add( shufflebutton, 	i18n("Random Play") );
 	QToolTip::add( volSB, 		i18n("Volume Control") );
+
+	QToolTip::add( patchbox,	i18n("Select Patch Set") );
+	//QToolTip::add( lbuttona,	i18n("unnassigned") );
+	//QToolTip::add( lbuttonb,	i18n("unnassigned") );
+	QToolTip::add( lbuttonc,	i18n("unnassigned") );
+	QToolTip::add( lbuttond,	i18n("unnassigned") );
+	QToolTip::add( lbuttone,	i18n("unnassigned") );
+	QToolTip::add( rbuttona,	i18n("unnassigned") );
+	QToolTip::add( rbuttonb,	i18n("Effects") );
+	QToolTip::add( rbuttonc,	i18n("unnassigned") );
+	QToolTip::add( rbuttond,	i18n("unnassigned") );
     }
     else{
 	QToolTip::remove( playPB);
@@ -190,6 +215,17 @@ void KMidi::setToolTips()
 	QToolTip::remove( shufflebutton );
 	QToolTip::remove( infobutton );
 	QToolTip::remove( volSB );
+
+	QToolTip::remove( patchbox );
+	//QToolTip::remove( lbuttona );
+	//QToolTip::remove( lbuttonb );
+	QToolTip::remove( lbuttonc );
+	QToolTip::remove( lbuttond );
+	QToolTip::remove( lbuttone );
+	QToolTip::remove( rbuttona );
+	QToolTip::remove( rbuttonb );
+	QToolTip::remove( rbuttonc );
+	QToolTip::remove( rbuttond );
     }
 
 }
@@ -213,6 +249,150 @@ void KMidi::volChanged( int vol )
 
 }
 
+/*
+#define MAX_MIDI_CHANNELS	16
+#define INT_CODE 214
+
+typedef struct {
+	int reset_panel;
+	int multi_part;
+
+	int32 last_time, cur_time;
+
+	char v_flags[MAX_MIDI_CHANNELS];
+	int16 cnote[MAX_MIDI_CHANNELS];
+	int16 cvel[MAX_MIDI_CHANNELS];
+	int16 ctotal[MAX_MIDI_CHANNELS];
+
+	char c_flags[MAX_MIDI_CHANNELS];
+	Channel channel[MAX_MIDI_CHANNELS];
+} PanelInfo;
+extern PanelInfo *Panel;
+*/
+
+
+
+#define BAR_WID 10
+#define BAR_HGT 58
+#define BAR_LM  12
+#define BAR_TM  10
+#define BAR_BOT (BAR_TM + BAR_HGT)
+#define WIN_WID 175
+#define WIN_HGT 80
+
+
+//#define DELTA_VEL	32
+#define DELTA_VEL	4
+//#define DELTA_VEL	16
+#define FLAG_NOTE_OFF	1
+#define FLAG_NOTE_ON	2
+
+#define FLAG_BANK	1
+#define FLAG_PROG	2
+#define FLAG_PAN	4
+#define FLAG_SUST	8
+
+void MeterWidget::remeter()
+{
+        QPainter paint( this );
+	QPen greenpen(green, 2);
+	QPen yellowpen(yellow, 2);
+	QPen erasepen(black, 2);
+	static int lastvol[16], meterpainttime = 0;
+	int ch, x1, y1, slot, amplitude, notetime;
+
+	if (currplaytime < meterpainttime || Panel->reset_panel) {
+		erase();
+		for (ch = 0; ch < 16; ch++) {
+			lastvol[ch] = 0;
+			//Panel->mindex[ch] = Panel->cindex[ch];
+		}
+		Panel->reset_panel = 0;
+	}
+	meterpainttime = currplaytime;
+
+	for (ch = 0; ch < 16; ch++) {
+		x1 = BAR_LM + ch * BAR_WID;
+		amplitude = -1;
+		slot = Panel->mindex[ch];
+		while ( 1 ) {
+		    notetime = Panel->ctime[slot][ch];
+		    if (notetime == -1 || notetime > currplaytime) break;
+		    if (Panel->v_flags[slot][ch]) {
+			if (Panel->v_flags[slot][ch] == FLAG_NOTE_OFF) {
+				//if (!Panel->notecount[slot][ch]) Panel->ctotal[slot][ch] -= DELTA_VEL;
+				Panel->ctotal[slot][ch] -= DELTA_VEL;
+				if (Panel->ctotal[slot][ch] <= 0) {
+					Panel->ctotal[slot][ch] = 0;
+					Panel->v_flags[slot][ch] = 0;
+				}
+			} else {
+				Panel->v_flags[slot][ch] = 0;
+			}
+			/*if (amplitude < Panel->ctotal[slot][ch])*/
+				amplitude = Panel->ctotal[slot][ch];
+		    }
+		    if (!Panel->notecount[slot][ch] && amplitude > 0) amplitude /= 2;
+		    Panel->ctime[slot][ch] = -1;
+		    slot++;
+		    if (slot == NQUEUE) slot = 0;
+		    if (slot == Panel->mindex[ch]) break;
+		}
+		Panel->mindex[ch] = slot;
+		if (amplitude == -1 && lastvol[ch]) amplitude = lastvol[ch];
+		if (amplitude != -1) {
+			y1 = (amplitude * BAR_HGT) / 127;
+			if (y1 > BAR_HGT) y1 = BAR_HGT;
+			if (y1 < lastvol[ch]) {
+				paint.setPen( erasepen );
+	    			paint.drawLine( x1, BAR_TM, x1, BAR_BOT - y1 );
+	    			//paint.drawLine( x1, 64 - lastvol[ch], x1, 64 - y1 );
+			}
+			else if (y1 > lastvol[ch]) {
+				if (Panel->c_flags[ch] & FLAG_PERCUSSION) paint.setPen( yellowpen );
+					else paint.setPen( greenpen );
+	    			paint.drawLine( x1, BAR_BOT - y1, x1, BAR_BOT );
+	    			//paint.drawLine( x1, 64 - y1, x1, 64 - lastvol[ch]);
+			}
+			lastvol[ch] = y1;
+		}
+#if 0
+		if (Panel->c_flags[i]) {
+			if (Panel->c_flags[i] & FLAG_PAN)
+				trace_panning(i, Panel->channel[i].panning);
+			if (Panel->c_flags[i] & FLAG_BANK)
+				trace_bank(i, Panel->channel[i].bank);
+			if (Panel->c_flags[i] & FLAG_PROG)
+				trace_prog(i, Panel->channel[i].program);
+			if (Panel->c_flags[i] & FLAG_SUST)
+				trace_sustain(i, Panel->channel[i].sustain);
+			Panel->c_flags[i] = 0;
+		}
+#endif
+	}
+}
+
+void MeterWidget::paintEvent( QPaintEvent * )
+{
+	remeter();
+}
+
+MeterWidget::MeterWidget( QDialog *parent, const char *name )
+    : QWidget( parent, name )
+{
+    setBackgroundColor( black );
+    
+
+    metertimer = new QTimer( this );
+    connect( metertimer, SIGNAL(timeout()), SLOT(remeter()) );
+    metertimer->start( 100, FALSE );
+}
+
+
+MeterWidget::~MeterWidget()
+{
+}
+
 
 
 QPushButton *KMidi::makeButton( int x, int y, int w, int h, const QString &n )
@@ -232,6 +412,7 @@ void KMidi::drawPanel()
     int HEIGHT = 27;
     //    int SBARWIDTH = 230;
     int SBARWIDTH = 220; //140
+    int totalwidth, regularheight, extendedheight;
 
     setCaption( i18n("kmidi") );
     aboutPB = makeButton( ix, iy, WIDTH, 2 * HEIGHT, "About" );
@@ -240,6 +421,7 @@ void KMidi::drawPanel()
     iy += 2 * HEIGHT;
     ejectPB = makeButton( ix, iy, WIDTH/2, HEIGHT, "Eject" );
     infobutton = makeButton( ix +WIDTH/2, iy, WIDTH/2, HEIGHT, "info" );
+
 
     iy += HEIGHT;
     quitPB = makeButton( ix, iy, WIDTH, HEIGHT, "Quit" );
@@ -300,6 +482,7 @@ void KMidi::drawPanel()
 
     shufflebutton = makeButton( WIDTH + 2*SBARWIDTH/3 ,
 				iy+ HEIGHT,SBARWIDTH/6 , HEIGHT, "F" );
+    shufflebutton->setToggleButton( TRUE );
 
     configurebutton = makeButton( WIDTH + 5*SBARWIDTH/6 ,
 				  iy+HEIGHT, SBARWIDTH/6 , HEIGHT, "S" );
@@ -366,12 +549,16 @@ void KMidi::drawPanel()
     ix = WIDTH + SBARWIDTH;
 
     playPB = makeButton( ix, iy, WIDTH, HEIGHT, i18n("Play/Pause") );
+    playPB->setToggleButton( TRUE );
+
+    totalwidth = ix + WIDTH;
 
     iy += HEIGHT;
     stopPB = makeButton( ix, iy, WIDTH/2 , HEIGHT, i18n("Stop") );
 
     ix += WIDTH/2 ;
     replayPB = makeButton( ix, iy, WIDTH/2 , HEIGHT, i18n("Replay") );
+    replayPB->setToggleButton( TRUE );
 
     ix = WIDTH + SBARWIDTH;
     iy += HEIGHT;
@@ -387,8 +574,153 @@ void KMidi::drawPanel()
     ix += WIDTH/2 ;
     nextPB = makeButton( ix, iy, WIDTH/2 , HEIGHT, i18n("Next") );
 
+
+    ix = WIDTH + WIDTH/2;
+    iy += HEIGHT;
+    regularheight = iy;
+    meter = new MeterWidget ( this, "soundmeter" );
+    meter->setGeometry(ix,iy,SBARWIDTH - WIDTH/2, 3* HEIGHT - 1);
+    metershown = FALSE;
+    meter->hide();
+    extendedheight = iy + 3*HEIGHT;
+
+    regularsize = QSize (totalwidth, regularheight);
+    extendedsize = QSize (totalwidth, extendedheight);
+
+    // Choose patch set
+    ix = 0;
+    iy = regularheight;
+    patchbox = new QComboBox( FALSE, this );
+    patchbox->setGeometry(ix, iy, WIDTH + WIDTH/2, HEIGHT);
+    patchbox->setFont( QFont( "helvetica", 10, QFont::Normal) );
+    int lx, sx;
+    for (lx = 30; lx > 0; lx--) if (cfg_names[lx-1]) break;
+    for (int sx = 0; sx < lx; sx++)
+	if (cfg_names[sx]) patchbox->insertItem( cfg_names[sx] );
+	else patchbox->insertItem( "(none)" );
+    patchbox->setCurrentItem(Panel->currentpatchset);
+    patchbox->setEnabled( FALSE );
+    connect( patchbox, SIGNAL(activated(int)), SLOT(setPatch(int)) );
+ 
+    iy += HEIGHT;
+    playbox = new QComboBox( FALSE, this, "song" );
+    playbox->setGeometry(ix, iy, WIDTH + WIDTH/2, HEIGHT);
+    playbox->setFont( QFont( "helvetica", 10, QFont::Normal) );
+    connect( playbox, SIGNAL(activated(int)), SLOT(setSong(int)) );
+
+    //lbuttona = makeButton( ix,          iy, WIDTH/2, HEIGHT, "L_A" );
+    //lbuttona->setToggleButton( TRUE );
+    //connect( lbuttona, SIGNAL(toggled(bool)), SLOT(setEffects(bool)) );
+    //lbuttona->setFont( QFont( "helvetica", 10, QFont::Normal) );
+
+    //lbuttonb = makeButton( ix +WIDTH/2, iy, WIDTH,   HEIGHT, "L_B" );
+    //lbuttonb->setFont( QFont( "helvetica", 10, QFont::Normal) );
+
+    iy += HEIGHT;
+    lbuttonc = makeButton( ix,          iy, WIDTH/2, HEIGHT, "L_C" );
+    lbuttonc->setFont( QFont( "helvetica", 10, QFont::Normal) );
+    lbuttond = makeButton( ix +WIDTH/2, iy, WIDTH/2, HEIGHT, "L_D" );
+    lbuttond->setFont( QFont( "helvetica", 10, QFont::Normal) );
+    lbuttone = makeButton( ix +WIDTH,   iy, WIDTH/2, HEIGHT, "L_E" );
+    lbuttone->setFont( QFont( "helvetica", 10, QFont::Normal) );
+
+    iy = regularheight;
+    ix = WIDTH + SBARWIDTH;
+    rbuttona = makeButton( ix,          iy, WIDTH,   HEIGHT, "R_A" );
+    rbuttona->setFont( QFont( "helvetica", 10, QFont::Normal) );
+
+    //iy += HEIGHT;
+    //rbuttonb = makeButton( ix,          iy, WIDTH/2, HEIGHT, "R_B" );
+    //rbuttonb->setFont( QFont( "helvetica", 10, QFont::Normal) );
+    iy += HEIGHT;
+    rbuttonb = makeButton( ix,          iy, WIDTH/2, HEIGHT, "eff" );
+    rbuttonb->setToggleButton( TRUE );
+    rbuttonb->setFont( QFont( "helvetica", 10, QFont::Normal) );
+    connect( rbuttonb, SIGNAL(toggled(bool)), SLOT(setEffects(bool)) );
+
+
+    rbuttonc = makeButton( ix +WIDTH/2, iy, WIDTH/2, HEIGHT, "R_C" );
+    rbuttonc->setFont( QFont( "helvetica", 10, QFont::Normal) );
+    iy += HEIGHT;
+    rbuttond = makeButton( ix,          iy, WIDTH,   HEIGHT, "R_D" );
+    rbuttond->setFont( QFont( "helvetica", 10, QFont::Normal) );
 }
 
+ 
+void KMidi::setPatch( int index )
+{
+    if (!cfg_names[index]) return;
+    if (status != KSTOPPED) return;
+    if (index == Panel->currentpatchset) return;
+
+    pipe_int_write(  MOTIF_PATCHSET );
+    pipe_int_write( index );
+}
+
+void KMidi::setSong( int number )
+{
+    if (!playlist->count()) return;
+    song_number = number + 1;
+	
+    fileName = playbox->text(number);
+    if(output_device_open)
+      updateUI();
+
+    if(status == KPLAYING)
+      setLEDs("OO:OO");
+
+    playPB->setOn( TRUE );
+    statusLA->setText(i18n("Playing"));
+
+    pipe_int_write(MOTIF_PLAY_FILE);
+    pipe_string_write(playlist->at(song_number-1));
+    status = KPLAYING;
+}
+
+void KMidi::redoplaybox()
+{
+    QString filenamestr;
+    int i, index;
+    int last = playlist->count();
+
+    playbox->clear();
+
+    for (i = 0; i < last; i++) {
+
+	filenamestr = playlist->at(i);
+	index = filenamestr.findRev('/',-1,TRUE);
+	if(index != -1)
+	    filenamestr = filenamestr.right(filenamestr.length() -index -1);
+	filenamestr = filenamestr.replace(QRegExp("_"), " ");
+
+	if(filenamestr.length() > 4){
+	if(filenamestr.right(4) == QString(".mid") ||filenamestr.right(4) == QString(".MID"))
+	    filenamestr = filenamestr.left(filenamestr.length()-4);
+	}
+	playbox->insertItem(filenamestr);
+
+    }
+}
+
+void KMidi::setEffects( bool down )
+{
+    pipe_int_write(  MOTIF_EFFECTS );
+    if (down) pipe_int_write( 1 );
+    else pipe_int_write( 0 );
+}
+
+void KMidi::logoClicked(){
+
+    if(metershown == TRUE){
+	metershown = FALSE;
+	resize( regularsize );
+	meter->hide();
+	return;
+    }
+    metershown = TRUE;
+    resize( extendedsize );
+    meter->show();
+}
 
 void KMidi::loadBitmaps() {
 
@@ -442,15 +774,22 @@ int KMidi::randomSong(){
 
 
 void KMidi::randomClicked(){
-    if(playlist->count() == 0)
-        return;
 
-    looping = FALSE;
-    if(randomplay == TRUE){
+    if(playlist->count() == 0) {
+	shufflebutton->setOn( FALSE );
+	randomplay = FALSE;
+        return;
+    }
+
+    //looping = FALSE;
+    ///if(randomplay == TRUE){
+    if (!shufflebutton->isOn()) {
 	randomplay = FALSE;
 	looplabel->setText("");
 	return;
     }
+    looping = FALSE;
+    replayPB->setOn( FALSE );
 
     randomplay = TRUE;
     updateUI();
@@ -460,9 +799,11 @@ void KMidi::randomClicked(){
 
     int index = randomSong() - 1;
     song_number = index + 1;
+    playbox->setCurrentItem(index);
     pipe_int_write(MOTIF_PLAY_FILE);
     pipe_string_write(playlist->at(index));
 
+    playPB->setOn( TRUE );
     status = KPLAYING;
 
 }
@@ -470,6 +811,7 @@ void KMidi::randomClicked(){
 void KMidi::randomPlay(){
 
     randomplay = TRUE;
+    shufflebutton->setOn( TRUE );
     updateUI();
     setLEDs("OO:OO");
     statusLA->setText(i18n("Playing"));
@@ -477,9 +819,11 @@ void KMidi::randomPlay(){
 
     int index = randomSong() - 1;
     song_number = index + 1;
+    playbox->setCurrentItem(index);
     pipe_int_write(MOTIF_PLAY_FILE);
     pipe_string_write(playlist->at(index));
 
+    playPB->setOn( TRUE );
     status = KPLAYING;
 
 }
@@ -488,14 +832,18 @@ void KMidi::playClicked()
 {
 
   if(!output_device_open){
+    playPB->setOn( FALSE );
     return;
   }
 
   int index;
   index = song_number -1;
 
+  patchbox->setEnabled( FALSE );
+
   if(status == KPLAYING){
     status = KPAUSED;
+    playPB->setOn( FALSE );
     pipe_int_write(MOTIF_PAUSE);
     statusLA->setText(i18n("Paused"));
     return;
@@ -503,10 +851,13 @@ void KMidi::playClicked()
 
   if(status == KPAUSED){
     status = KPLAYING;
+    playPB->setOn( TRUE );
     pipe_int_write(MOTIF_PAUSE);
     statusLA->setText(i18n("Playing"));
     return;
   }
+
+  if (!playPB->isOn()) return;
 
   if(((int)playlist->count()  > index) && (index >= 0)){
     setLEDs("OO:OO");
@@ -524,9 +875,14 @@ void KMidi::playClicked()
 void KMidi::stopClicked()
 {
      looping = false;
+     replayPB->setOn( FALSE );
      randomplay = false;
-     pipe_int_write(MOTIF_PAUSE);
+     shufflebutton->setOn( FALSE );
+     //pipe_int_write(MOTIF_PAUSE);
+     if (status != KPAUSED && status != KSTOPPED) pipe_int_write(MOTIF_PAUSE);
      status = KSTOPPED;
+     patchbox->setEnabled( TRUE );
+     playPB->setOn( FALSE );
      statusLA->setText(i18n("Ready"));
      looplabel->setText("");
      setLEDs("00:00");
@@ -541,9 +897,11 @@ void KMidi::prevClicked(){
     if (song_number < 1)
       song_number = playlist->count();
 
+    playbox->setCurrentItem(song_number-1);
     if(status == KPLAYING)
       setLEDs("OO:OO");
 
+    playPB->setOn( TRUE );
     statusLA->setText(i18n("Playing"));
 
     pipe_int_write(MOTIF_PLAY_FILE);
@@ -577,10 +935,12 @@ void KMidi::nextClicked(){
     song_number = (randomplay) ? randomSong() : song_number + 1;
     if(song_number > (int)playlist->count())
       song_number = 1;
+    playbox->setCurrentItem(song_number-1);
 
     if(status == KPLAYING)
       setLEDs("OO:OO");
 
+    playPB->setOn( TRUE );
     statusLA->setText(i18n("Playing"));
 
     pipe_int_write(MOTIF_PLAY_FILE);
@@ -630,9 +990,11 @@ void KMidi::replayClicked(){
     if(status != KPLAYING)
 	return;
 
-    if(looping == false){
+    if (replayPB->isOn()) {
+    //if(looping == false){
 	looping = true;
 	randomplay = false;
+        shufflebutton->setOn( FALSE );
 	looplabel->setText(i18n("Looping"));
     }
     else{
@@ -658,9 +1020,12 @@ void KMidi::ejectClicked(){
 
       updateUI();
       status = KSTOPPED;
+      patchbox->setEnabled( TRUE );
+      playPB->setOn( FALSE );
       timer->start( 200, TRUE );  // single shot
     }
 
+    redoplaybox();
 
 }
 
@@ -680,66 +1045,14 @@ void KMidi::PlayMOD(){
 
 void KMidi::aboutClicked()
 {
+  if(configdlg->exec() == QDialog::Accepted){
 
-  QTabDialog * tabdialog;
-
-  tabdialog = new QTabDialog(0,"tabdialog",TRUE);
-  tabdialog->setCaption( i18n("kmidi Configuraton") );
-  tabdialog->resize( 350, 350 );
-  tabdialog->setCancelButton( i18n("Cancel") );
-
-  QWidget *about = new QWidget(tabdialog,"about");
-
-  QGroupBox *box = new QGroupBox(about,"box");
-
-  QLabel  *label = new QLabel(box,"label");
-  box->setGeometry(10,10,320,260);
-
-  box->setTitle(i18n("About"));
-
-
-  label->setGeometry(140,40,160,170);
-
-  QString labelstring;
-  labelstring = i18n("KMidi %1\n"\
-		   "Copyright (c) 1997-98\nBernd Johannes Wuebben\n"\
-		   "wuebben@kde.org\n\n"\
-		   "KMidi contains code from:\n"
-		   "TiMidity version 0.2.i\n"
-		   "Copyright (c) \nTuukka Toivonen\n"\
-		   "toivonen@clinet.fi\n").arg(KMIDIVERSION);
-
-  label->setAlignment(AlignLeft|WordBreak|ExpandTabs);
-  label->setText(labelstring);
-
-  QPixmap pm = BarIcon("kmidilogo.xpm");
-  QLabel *logo = new QLabel(box);
-  logo->setPixmap(pm);
-  logo->setGeometry(30, 50, pm.width(), pm.height());
-
-  ConfigDlg* dlg;
-  struct configstruct config;
-  config.background_color = background_color;
-  config.led_color = led_color;
-  config.tooltips = tooltips;
-
-  dlg = new ConfigDlg(tabdialog,&config,"configdialg");
-
-  tabdialog->addTab(dlg,i18n("Configure"));
-  tabdialog->addTab(about,i18n("About"));
-
-  if(tabdialog->exec() == QDialog::Accepted){
-
-    background_color = dlg->getData()->background_color;
-    led_color = dlg->getData()->led_color;
-    tooltips = dlg->getData()->tooltips;
+    background_color = configdlg->getData()->background_color;
+    led_color = configdlg->getData()->led_color;
+    tooltips = configdlg->getData()->tooltips;
     setColors();
     setToolTips();
   }
-
-  delete dlg;
-  delete about;
-  delete tabdialog;
 }
 
 
@@ -800,7 +1113,8 @@ void KMidi::PlayCommandlineMods(){
   thisapp->processEvents();
   thisapp->flushX();
 
-
+  status = KSTOPPED; // is this right? --gl
+  patchbox->setEnabled( TRUE );
   statusLA->setText(i18n("Ready"));
 
   //  readtimer->start(10);
@@ -837,6 +1151,7 @@ void KMidi::loadplaylist(){
     }
 
     f.close();
+    redoplaybox();
 
 }
 
@@ -863,6 +1178,7 @@ void KMidi::ReadPipe(){
 
 	      output_device_open = 1;
 	      if(have_commandline_midis && output_device_open)
+                playPB->setOn( TRUE );
 		emit play();
 	      break;
 
@@ -938,6 +1254,7 @@ void KMidi::ReadPipe(){
 		    else{
 		      QString string = i18n("%1\nis not readable or doesn't exist.").arg(filename);
 		      KMessageBox::sorry(0, string);
+
 		    }
 		  }	
 		
@@ -946,6 +1263,8 @@ void KMidi::ReadPipe(){
 		  /*or none of them was readable */
 		    loadplaylist();
 		}
+
+    		redoplaybox();
 
 
 		if(playlist->count() > 0){
@@ -958,12 +1277,17 @@ void KMidi::ReadPipe(){
 		      updateUI();
 
 		}
-		if(have_commandline_midis && output_device_open)
+		if(have_commandline_midis && output_device_open) {
+                  playPB->setOn( TRUE );
 		  emit play();
+		}
 
 	    }
 	    break;
 	
+	    case PATCH_CHANGED_MESSAGE :
+	    break;
+
 	    case NEXT_FILE_MESSAGE :
 	    case PREV_FILE_MESSAGE :
 	    case TUNE_END_MESSAGE :{
@@ -991,6 +1315,7 @@ void KMidi::ReadPipe(){
 
 		if(looping){
 		    status = KNEXT;
+      		    playPB->setOn( TRUE );
 		    playClicked();
 		    return;
 		}
@@ -1020,11 +1345,14 @@ void KMidi::ReadPipe(){
 			song_count_label->setText(str);
 			modlabel->setText("");
 			totaltimelabel->setText("--:--");
+			playPB->setOn( FALSE );
+      			patchbox->setEnabled( TRUE );
 			status = KSTOPPED;
 			return;
 		    }
 		else{
 		    status = KPLAYING;
+      		    playPB->setOn( TRUE );
 		    nextClicked();
 		}
 	
@@ -1043,6 +1371,8 @@ void KMidi::ReadPipe(){
 		pipe_int_read(&nbvoice);
 	
 		sec=seconds=cseconds/100;
+
+		currplaytime = cseconds;
 	
 		/* To avoid blinking */
 		if (sec!=last_sec)
@@ -1164,7 +1494,8 @@ void KMidi::ReadPipe(){
 		char strmessage[2024];
 	
 		pipe_string_read(strmessage);
-		logwindow->insertStr(strmessage);
+		//logwindow->insertStr(strmessage);
+		logwindow->insertStr(QString(strmessage));
 
 
 		}
@@ -1192,6 +1523,8 @@ void KMidi::readconfig(){
     QString str;
 	
     config = thisapp->getConfig();
+//KConfig *config=KApplication::getKApplication()->getConfig();
+    config->setGroup("KMidi");
 
     str = config->readEntry("Volume");
     if ( !str.isNull() )
@@ -1229,10 +1562,12 @@ void KMidi::readconfig(){
 
 void KMidi::writeconfig(){
 
-		
+
     config = thisapp->getConfig();
 	
     ///////////////////////////////////////////////////
+
+    config->setGroup("KMidi");
 
     if(tooltips)
 	config->writeEntry("ToolTips", 1);
@@ -1258,6 +1593,7 @@ void KMidi::setColors(){
 
     backdrop->setBackgroundColor(background_color);
 
+/*			 foreground, button, light, dark, mid, text, base   */
     QColorGroup colgrp( led_color, background_color, yellow,yellow , yellow,
                         led_color, white );
 
@@ -1271,7 +1607,9 @@ void KMidi::setColors(){
     totaltimelabel->setPalette( QPalette(colgrp,colgrp,colgrp) );
     modlabel->setPalette( QPalette(colgrp,colgrp,colgrp) );
     song_count_label->setPalette( QPalette(colgrp,colgrp,colgrp) );
-
+				/* normal, disabled, active */
+    //patchbox->setPalette( QPalette(colgrp,colgrp,colgrp) );
+    //playbox->setPalette( QPalette(colgrp,colgrp,colgrp) );
 
     for (int u = 0; u<=4;u++){
 	trackTimeLED[u]->setLEDoffColor(background_color);
@@ -1327,6 +1665,21 @@ void KMidi::updateUI(){
 
     display_playmode();
 
+}
+
+void KMidi::resizeEvent(QResizeEvent *e){
+
+    int h = (e->size()).height();
+
+    if (h > extendedsize.height() - 10 && !metershown) {
+	meter->show();
+	metershown = TRUE;
+    }
+
+    if (h < regularsize.height() + 10 && metershown) {
+	meter->hide();
+	metershown = FALSE;
+    }
 }
 
 void KMidi::cdMode(){

@@ -27,6 +27,7 @@
 #include <qsplitter.h>
 #include <qtextstream.h>
 
+#include <kconfig.h>
 #include <klocale.h>
 #include <kstddirs.h>
 #include <kmessagebox.h>
@@ -81,6 +82,13 @@ PlaylistDialog::PlaylistDialog(QWidget *parent, const char *name,QStrList *playl
   connect(listbox, SIGNAL(selected(int)), this, 
 	    SLOT(removeEntry()));
 
+  filterButton = new QPushButton(this,"filterButton");
+  filterButton->setText(i18n("Filter"));
+  showmidisonly = TRUE;
+  filterButton->setToggleButton( TRUE );
+  filterButton->setOn( TRUE );
+  connect(filterButton,SIGNAL(clicked()),this,SLOT(setFilter()));
+
   addButton = new QPushButton(this,"addButton");
   addButton->setText(i18n("Add"));
   connect(addButton,SIGNAL(clicked()),this,SLOT(addEntry()));
@@ -107,7 +115,12 @@ PlaylistDialog::PlaylistDialog(QWidget *parent, const char *name,QStrList *playl
   local_list->insertItem("Local Directory", -1);
   connect(local_list, SIGNAL(selected(int )), this, SLOT(local_file_selected(int )));
   
-  set_local_dir(QString(""));    
+  QString str;
+  KConfig *config = thisapp->getConfig();
+  config->setGroup("KMidi");
+  str = config->readEntry("Directory");
+  if ( !str.isNull() ) set_local_dir(str);
+  else set_local_dir(QString(""));    
 
   this->resize(PLAYLIST_WIDTH,PLAYLIST_HEIGHT);
 
@@ -120,7 +133,7 @@ PlaylistDialog::PlaylistDialog(QWidget *parent, const char *name,QStrList *playl
   
   current_playlist = "default";
 
-
+//fprintf(stderr, "old dir [%s]\n", savelastdir);
 };
 
 
@@ -226,6 +239,11 @@ void PlaylistDialog::set_local_dir(const QString &dir){
   }
 
    cur_local_dir  = QDir::current();
+   KConfig *config = thisapp->getConfig();
+   config->setGroup("KMidi");
+   config->writeEntry("Directory", cur_local_dir.filePath("."));
+   //config->sync();
+
    cur_local_dir.setSorting( cur_local_dir.sorting() | QDir::DirsFirst );  
 
   qApp ->setOverrideCursor( waitCursor );
@@ -275,16 +293,29 @@ void PlaylistDialog::set_local_dir(const QString &dir){
       
       fi = ++it;
     }
-    while ( fi ) {
+    for ( ; fi ; fi = ++it ) {
       QString displayline;
-
+      char mbuff[5];
+      QFile f(fi->filePath());
+      if (showmidisonly) {
+          if (!f.open( IO_ReadOnly )) continue;
+          if (f.readBlock(mbuff, 4) != 4) {
+		f.close();
+		continue;
+          }
+          mbuff[4] = '\0';
+          if (strcmp(mbuff, "MThd")) {
+		f.close();
+		continue;
+          }
+          f.close();
+      }
       MyListBoxItem* mylistboxitem2 = new MyListBoxItem(fi->fileName()
 							,kmidi->file_pixmap);
       parse_fileinfo(fi,mylistboxitem2);
       local_list->insertItem( mylistboxitem2 );
       cur_local_fileinfo.append(fi);
       //printf("file:%s\n",fi->fileName().data());
-      fi = ++it;
     }
   } else {
     qApp->restoreOverrideCursor();
@@ -299,6 +330,11 @@ void PlaylistDialog::set_local_dir(const QString &dir){
   qApp->restoreOverrideCursor();
   
   //  printf("Current Dir Path: %s\n",QDir::currentDirPath().data());
+}
+
+void PlaylistDialog::setFilter(){
+
+	showmidisonly = filterButton->isOn();
 }
 
 void PlaylistDialog::addEntry(){
@@ -351,9 +387,11 @@ void PlaylistDialog::resizeEvent(QResizeEvent *e){
   panner->setGeometry( BORDER_WIDTH, menu->height() + BORDER_WIDTH ,
   	       w - 2*BORDER_WIDTH, h - 37 -  menu->height());
 
-  okButton->setGeometry(BORDER_WIDTH + 70 + 7 ,h - 28 ,70,25);  
-  removeButton->setGeometry(w - 70 -70 - 10 - BORDER_WIDTH ,h - 28, 70,25);
   cancelButton->setGeometry(BORDER_WIDTH +2 ,h -28,70,25);  
+  okButton->setGeometry(BORDER_WIDTH + 70 + 7 ,h - 28 ,70,25);  
+  filterButton->setGeometry(BORDER_WIDTH + 70 + 7 + 70 + 7,h - 28, 70,25);
+
+  removeButton->setGeometry(w - 70 -70 - 10 - BORDER_WIDTH ,h - 28, 70,25);
   addButton->setGeometry(w - 73 - BORDER_WIDTH  ,h - 28,70,25);
 
 } 

@@ -2527,7 +2527,7 @@ int play_midi_file(char *fn)
   
   free(event);
 #ifdef KMIDI
-if (rc==RC_PATCHCHANGE) fprintf(stderr,"kernel returning PATCHCHANGE\n");
+/*if (rc==RC_PATCHCHANGE) fprintf(stderr,"kernel returning PATCHCHANGE\n");*/
 #endif
   return rc;
 }

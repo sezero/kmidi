@@ -1,4 +1,6 @@
 #
+#	$Id$
+#
 #                           KMidi Makefile
 #
 #  Copyright 1997 Bernd Johannes Wuebben, wuebben@math.cornell.edu
@@ -23,12 +25,13 @@ kmidi_SOURCES = kmidi.cpp  playlist.cpp bwlednum.cpp configdlg.cpp log.cpp\
 	timidity.c common.c readmidi.c playmidi.c resample.c mix.c instrum.c \
 	tables.c controls.c output.c filter.c wave_a.c raw_a.c dumb_c.c \
 	sndfont.c readsbk.c linux_a.c ctl.c dec_a.c sun_a.c hpux_a.c \
-	b_out.c fffload.c
+	b_out.c fffload.c \
+	effects.c reverb_e.c chorus_e.c phaser_e.c celeste_e.c
 
 noinst_HEADERS = kmidi.h  playlist.h bwlednum.h configdlg.h\
 	config.h common.h readmidi.h playmidi.h resample.h mix.h instrum.h \
 	tables.h controls.h output.h filter.h log.h version.h filepic.h \
-	cduppic.h constants.h folderpic.h sbk.h sflayer.h
+	cduppic.h constants.h folderpic.h sbk.h sflayer.h ctl.h
 
 METASOURCES = kmidi.moc  playlist.moc bwlednum.moc configdlg.moc log.moc
 
@@ -47,8 +50,13 @@ EXTRA_DIST = $(apps_DATA) $(kde_icon_DATA) $(pics_DATA) kmidi-mini.xpm
 
 install-data-local:
 	$(mkinstalldirs) $(TIMID_DIR)/patch
-	if [ ! -f $(TIMID_DIR)/patch/acpiano.pat ]; then $(INSTALL_DATA) $(srcdir)/patch/acpiano.pat $(DESTDIR)$(TIMID_DIR)/patch ; fi
-	if [ ! -f $(TIMID_DIR)/patch/nylongt2.pat ]; then $(INSTALL_DATA) $(srcdir)/patch/nylongt2.pat $(DESTDIR)$(TIMID_DIR)/patch ;fi
+	if [ ! -f $(TIMID_DIR)/patch/sologrnd.pat ]; then $(INSTALL_DATA) $(srcdir)/patch/sologrnd.pat $(DESTDIR)$(TIMID_DIR)/patch ; fi
+	if [ ! -f $(TIMID_DIR)/patch/nylongt2.pat ]; then $(INSTALL_DATA) $(srcdir)/patch/nylongt2.pat $(DESTDIR)$(TIMID_DIR)/patch ; fi
+	if [ ! -f $(TIMID_DIR)/patch/kick2.pat ]; then $(INSTALL_DATA) $(srcdir)/patch/kick2.pat $(DESTDIR)$(TIMID_DIR)/patch ; fi
+	if [ ! -f $(TIMID_DIR)/patch/kick1.pat ]; then $(INSTALL_DATA) $(srcdir)/patch/kick1.pat $(DESTDIR)$(TIMID_DIR)/patch ; fi
+	if [ ! -f $(TIMID_DIR)/patch/hihatcl.pat ]; then $(INSTALL_DATA) $(srcdir)/patch/hihatcl.pat $(DESTDIR)$(TIMID_DIR)/patch ; fi
+	if [ ! -f $(TIMID_DIR)/patch/cymride1.pat ]; then $(INSTALL_DATA) $(srcdir)/patch/cymride1.pat $(DESTDIR)$(TIMID_DIR)/patch ; fi
+	if [ ! -f $(TIMID_DIR)/patch/acbass.pat ]; then $(INSTALL_DATA) $(srcdir)/patch/acbass.pat $(DESTDIR)$(TIMID_DIR)/patch ; fi
 
 	$(mkinstalldirs) $(DESTDIR)$(kde_minidir)
 	$(INSTALL_DATA) $(srcdir)/kmidi-mini.xpm $(DESTDIR)$(kde_minidir)/kmidi.xpm
@@ -73,8 +81,13 @@ install-data-local:
 
 
 uninstall:
-	rm -f $(TIMID_DIR)/patch/acpiano.pat
+	rm -f $(TIMID_DIR)/patch/acbass.pat
+	rm -f $(TIMID_DIR)/patch/cymride1.pat
+	rm -f $(TIMID_DIR)/patch/hihatcl.pat
+	rm -f $(TIMID_DIR)/patch/kick1.pat
+	rm -f $(TIMID_DIR)/patch/kick2.pat
 	rm -f $(TIMID_DIR)/patch/nylongt2.pat
+	rm -f $(TIMID_DIR)/patch/sologrnd.pat
 
 
 messages:

@@ -93,6 +93,7 @@ private slots:
   void deletePlaylist();
   void removeEntry();
   void addEntry();
+  void setFilter();
   void checkList();
   void local_file_selected(int index);
   void loadPlaylist(const QString &name);
@@ -108,6 +109,7 @@ public:
 private:
 
     bool starting_up;  
+    bool showmidisonly;  
     QDir cur_local_dir;
     QList<QFileInfo> cur_local_fileinfo;
     QListBox *local_list;
@@ -116,6 +118,7 @@ private:
 
     QMenuBar *menu;    
     QListBox* listbox;
+    QPushButton* filterButton;
     QPushButton* addButton;
     QPushButton* okButton;
     QPushButton* removeButton;

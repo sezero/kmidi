@@ -45,6 +45,8 @@
 #include <qtooltip.h>
 #include <qregexp.h>
 #include <qgroupbox.h>
+#include <qwidget.h>
+#include <qpainter.h>
 
 #include <pwd.h>
 #include <stdlib.h>
@@ -71,7 +73,26 @@
 #include "log.h"
 
 class PlaylistDialog;
+class ConfigDlg;
 
+//
+// MeterWidget - draws meter
+//
+
+class MeterWidget : public QWidget
+{
+	Q_OBJECT
+public:
+    MeterWidget( QDialog *parent=0, const char *name=0 );
+   ~MeterWidget();
+    QTimer     *metertimer;
+public slots:
+    void	remeter();
+protected:
+    void	paintEvent( QPaintEvent * );
+private:
+
+};
 
 
 class KMidi : public QDialog {
@@ -99,6 +120,22 @@ public:
 	QTabDialog      *tabdialog;
 	QPushButton 	*infobutton;
 	BW_LED_Number	*trackTimeLED[9];
+
+	QComboBox	*patchbox;
+	QComboBox	*playbox;
+	//QPushButton 	*lbuttona;
+	//QPushButton 	*lbuttonb;
+	QPushButton 	*lbuttonc;
+	QPushButton 	*lbuttond;
+	QPushButton 	*lbuttone;
+	QPushButton 	*rbuttona;
+	QPushButton 	*rbuttonb;
+	QPushButton 	*rbuttonc;
+	QPushButton 	*rbuttond;
+	MeterWidget	*meter;
+	bool 		metershown;
+	QSize		regularsize;
+	QSize		extendedsize;
     
 	QPixmap folder_pixmap;
 	QPixmap file_pixmap;
@@ -168,6 +205,8 @@ private:
 	void		initMixer( const char *mixer = "/dev/mixer" );
 	void 		playtime();
 	void 	        playthemod(QString );
+        void		resizeEvent(QResizeEvent *e);
+	void 		redoplaybox();
 
 
 public:
@@ -204,7 +243,11 @@ public slots:
 	void 		cdMode();
 	void		ejectClicked();
 	void		aboutClicked();
+	void		logoClicked();
 	void		volChanged( int );
+	void		setPatch( int );
+	void		setEffects( bool );
+	void		setSong( int );
 };
 
 

@@ -51,6 +51,7 @@
 #include "controls.h"
 
 #include "constants.h"
+#include "ctl.h"
 
 static void ctl_refresh(void);
 static void ctl_total_time(int tt);
@@ -79,6 +80,10 @@ int 	pipe_gets(char *str, int maxlen);
 */
 
 extern int output_device_open;
+extern int cfg_select;
+extern int read_config_file(char *name);
+extern void clear_config(void);
+extern void effect_activate( int iSwitch );
 void pipe_int_write(int c);
 void pipe_int_read(int *c);
 void pipe_string_write(char *str);
@@ -114,24 +119,6 @@ static void shm_free(int sig);
 static void start_panel(void);
 */
 
-#define MAX_MIDI_CHANNELS	16
-#define INT_CODE 214
-
-typedef struct {
-	int reset_panel;
-	int multi_part;
-
-	int32 last_time, cur_time;
-
-	char v_flags[MAX_MIDI_CHANNELS];
-	int16 cnote[MAX_MIDI_CHANNELS];
-	int16 cvel[MAX_MIDI_CHANNELS];
-	int16 ctotal[MAX_MIDI_CHANNELS];
-
-	char c_flags[MAX_MIDI_CHANNELS];
-	Channel channel[MAX_MIDI_CHANNELS];
-} PanelInfo;
-
 
 /**********************************************/
 
@@ -148,15 +135,8 @@ ControlMode ctl=
   ctl_expression, ctl_panning, ctl_sustain, ctl_pitch_bend
 };
 
-#define FLAG_NOTE_OFF	1
-#define FLAG_NOTE_ON	2
-
-#define FLAG_BANK	1
-#define FLAG_PROG	2
-#define FLAG_PAN	4
-#define FLAG_SUST	8
-
-static PanelInfo *Panel;
+PanelInfo *Panel;
+static int songoffset = 0;
 
 static int shmid;	/* shared memory id */
 static int child_killed = 0;
@@ -260,12 +240,22 @@ static void ctl_file_name(char *name)
     pipe_string_write(name);
 }
 
+#if defined(linux) || defined(__FreeBSD__)
+extern current_sample_count();
+#endif
 static void ctl_current_time(int ct)
 {
 
     int i,v;
+#if defined(linux) || defined(__FreeBSD__)
+    int centisecs, realct;
+    realct = current_sample_count();
+    if (realct < 0) realct = ct;
+    else realct += songoffset;
+    centisecs = realct / (play_mode->rate/100);
+#else
     int centisecs=ct/(play_mode->rate/100);
-
+#endif
 
     if (!ctl.trace_playing) 
 	return;
@@ -281,44 +271,84 @@ static void ctl_current_time(int ct)
 }
 
 
-static void ctl_channel_note(int ch, int note, int vel)
+static void ctl_channel_note(int ch, int note, int vel, int start)
 {
+	int slot = Panel->cindex[ch];
+	if (start != -1 && start > Panel->ctime[slot][ch]) {
+		int i = slot;
+		while (i < NQUEUE && Panel->ctime[i][ch] != -1) i++;
+		if (i == NQUEUE) {
+			i = 0;
+			while (i < NQUEUE && Panel->ctime[i][ch] != -1) i++;
+		}
+		if (i == NQUEUE) {
+			/*fprintf(stderr," D");*/
+			return;
+		}
+		Panel->cindex[ch] = slot = i;
+		Panel->ctime[slot][ch] = start;
+	}
 	if (vel == 0) {
 		if (note == Panel->cnote[ch])
-			Panel->v_flags[ch] = FLAG_NOTE_OFF;
+			Panel->v_flags[slot][ch] = FLAG_NOTE_OFF;
 		Panel->cvel[ch] = 0;
 	} else if (vel > Panel->cvel[ch]) {
 		Panel->cvel[ch] = vel;
 		Panel->cnote[ch] = note;
-		Panel->ctotal[ch] = vel * Panel->channel[ch].volume *
+		Panel->ctotal[slot][ch] = vel * Panel->channel[ch].volume *
 			Panel->channel[ch].expression / (127*127);
-		Panel->v_flags[ch] = FLAG_NOTE_ON;
+		Panel->v_flags[slot][ch] = FLAG_NOTE_ON;
 	}
+	if (channel[ch].kit) Panel->c_flags[ch] |= FLAG_PERCUSSION;
 }
 
 static void ctl_note(int v)
 {
-	int ch, note, vel;
+	int ch, note, vel, start;
+	int slot;
 
 	if (!ctl.trace_playing) 
 		return;
 
+	start = voice[v].starttime/(play_mode->rate/100);
 	ch = voice[v].channel;
-	if (ch < 0 || ch >= MAX_MIDI_CHANNELS) return;
+	slot = Panel->cindex[ch];
+	if (ch < 0 || ch >= MAXCHAN) return;
 
 	note = voice[v].note;
-	if (voice[v].status != VOICE_ON)
-		vel = 0;
-	else
-		vel = voice[v].velocity;
-	ctl_channel_note(ch, note, vel);
+	vel = voice[v].velocity;
+	/*vel = 0;*/
+	switch(voice[v].status)
+	{
+	    case VOICE_DIE:
+	      /*vel = voice[v].velocity / 2;*/
+	      vel = 0;
+	      /*start = -1;*/
+	      if (Panel->notecount[slot][ch]) Panel->notecount[slot][ch]--;
+	      break;
+	    case VOICE_FREE: 
+	      vel = 0;
+	      start = -1;
+	      if (Panel->notecount[slot][ch]) Panel->notecount[slot][ch]--;
+	      break;
+	    case VOICE_ON:
+	      Panel->notecount[slot][ch]++;
+	      break;
+	    case VOICE_OFF:
+	    case VOICE_SUSTAINED:
+	      /*vel = 0;*/
+	      start = -1;
+	      if (Panel->notecount[slot][ch]) Panel->notecount[slot][ch]--;
+	      break;
+	}
+	ctl_channel_note(ch, note, vel, start);
 }
 
 static void ctl_program(int ch, int val)
 {
 	if (!ctl.trace_playing) 
 		return;
-	if (ch < 0 || ch >= MAX_MIDI_CHANNELS) return;
+	if (ch < 0 || ch >= MAXCHAN) return;
 	Panel->channel[ch].program = val;
 	Panel->c_flags[ch] |= FLAG_PROG;
 }
@@ -328,7 +358,7 @@ static void ctl_volume(int ch, int val)
 	if (!ctl.trace_playing)
 		return;
 	Panel->channel[ch].volume = val;
-	ctl_channel_note(ch, Panel->cnote[ch], Panel->cvel[ch]);
+	ctl_channel_note(ch, Panel->cnote[ch], Panel->cvel[ch], -1);
 }
 
 static void ctl_expression(int ch, int val)
@@ -336,7 +366,7 @@ static void ctl_expression(int ch, int val)
 	if (!ctl.trace_playing)
 		return;
 	Panel->channel[ch].expression = val;
-	ctl_channel_note(ch, Panel->cnote[ch], Panel->cvel[ch]);
+	ctl_channel_note(ch, Panel->cnote[ch], Panel->cvel[ch], -1);
 }
 
 static void ctl_panning(int ch, int val)
@@ -361,22 +391,29 @@ static void ctl_pitch_bend(int channel, int val)
 
 static void ctl_reset(void)
 {
-	int i;
+	int i, j;
 
 	/*	pipe_int_write(TOTALTIME_MESSAGE);*/ /* This is crap */
 	/*	pipe_int_write( ctl.trace_playing);*/
 
 	if (!ctl.trace_playing)
 		return;
-	for (i = 0; i < MAX_MIDI_CHANNELS; i++) {
+	for (i = 0; i < MAXCHAN; i++) {
 		ctl_program(i, channel[i].program);
 		ctl_volume(i, channel[i].volume);
 		ctl_expression(i, channel[i].expression);
 		ctl_panning(i, channel[i].panning);
 		ctl_sustain(i, channel[i].sustain);
 		ctl_pitch_bend(i, channel[i].pitchbend);
-		ctl_channel_note(i, Panel->cnote[i], 0);
+		ctl_channel_note(i, Panel->cnote[i], 0, -1);
+		Panel->cindex[i] = 0;
+		Panel->mindex[i] = 0;
+		for (j = 0; j < NQUEUE; j++) {
+			Panel->ctime[j][i] = -1;
+			Panel->notecount[j][i] = 0;
+		}
 	}
+	Panel->reset_panel = 1;
 }
 
 /***********************************************************************/
@@ -426,6 +463,7 @@ static int ctl_blocking_read(int32 *valp)
   int command;
   int new_volume;
   int new_centiseconds;
+  int arg;
 
   pipe_int_read(&command);
   
@@ -442,31 +480,55 @@ static int ctl_blocking_read(int32 *valp)
 		  
 	      case MOTIF_CHANGE_LOCATOR:
 		  pipe_int_read(&new_centiseconds);
+		  songoffset =
 		  *valp= new_centiseconds*(play_mode->rate / 100) ;
+		  ctl_reset();
 		  return RC_JUMP;
 		  
 	      case MOTIF_QUIT:
 		  return RC_QUIT;
 		
 	      case MOTIF_PLAY_FILE:
+		  songoffset = 0;
+		  ctl_reset();
 		  return RC_LOAD_FILE;		  
 		  
 	      case MOTIF_NEXT:
+		  songoffset = 0;
+		  ctl_reset();
 		  return RC_NEXT;
 		  
 	      case MOTIF_PREV:
+		  songoffset = 0;
+		  ctl_reset();
 		  return RC_REALLY_PREVIOUS;
 		  
 	      case MOTIF_RESTART:
+		  songoffset = 0;
+		  ctl_reset();
 		  return RC_RESTART;
-		  
+/* not used
 	      case MOTIF_FWD:
 		  *valp=play_mode->rate;
+		  ctl_reset();
 		  return RC_FORWARD;
 		  
 	      case MOTIF_RWD:
 		  *valp=play_mode->rate;
+		  ctl_reset();
 		  return RC_BACK;
+*/
+	      case MOTIF_PATCHSET:
+		  pipe_int_read(&arg);
+		  cfg_select = arg;
+/*fprintf(stderr,"ctl_blocking_read set #%d\n", cfg_select);*/
+		  return RC_PATCHCHANGE;
+
+	      case MOTIF_EFFECTS:
+		  pipe_int_read(&arg);
+		  *valp= arg;
+		  effect_activate(arg);
+		  return RC_NONE;
 
 	      case TRY_OPEN_DEVICE:
 		  return RC_TRY_OPEN_DEVICE;
@@ -475,6 +537,7 @@ static int ctl_blocking_read(int32 *valp)
 	  
 	  if (command==MOTIF_PAUSE)
 	      {
+		  ctl_reset();
 		  pipe_int_read(&command); /* Blocking reading => Sleep ! */
 		  if (command==MOTIF_PAUSE)
 		      return RC_NONE; /* Resume where we stopped */
@@ -510,6 +573,8 @@ static void ctl_pass_playing_list(int number_of_files, char *list_of_files[])
     char file_to_play[1000];
     int command;
     int32 val;
+
+    Panel->currentpatchset = cfg_select;
 
     /* Pass the list to the interface */
 
@@ -571,6 +636,18 @@ static void ctl_pass_playing_list(int number_of_files, char *list_of_files[])
 			    break;
 			case RC_TUNE_END:
 			    pipe_int_write(TUNE_END_MESSAGE);
+			    break;
+			case RC_PATCHCHANGE:
+/*fprintf(stderr,"Changing to patch #%d\n", cfg_select);*/
+		  	    free_instruments();
+		  	    end_soundfont();
+		  	    clear_config();
+			/* what if read_config fails?? */
+	          	    if (!read_config_file(CONFIG_FILE))
+		  	        Panel->currentpatchset = cfg_select;
+			    pipe_int_write(PATCH_CHANGED_MESSAGE);
+			    break;
+			case RC_NONE:
 			    break;
 			default:
 			    printf("PANIC: UNKNOWN COMMAND ERROR: %i\n",command);
@@ -844,7 +921,9 @@ static int AppInit(Tcl_Interp *interp)
 			  (ClientData)NULL, (Tcl_CmdDeleteProc*)NULL);
 	return TCL_OK;
 }
+*/
 
+/*
 static int ExitAll(ClientData clientData, Tcl_Interp *interp,
 		   int argc, char *argv[])
 {
@@ -881,14 +960,17 @@ static char *v_get2(char *v1, char *v2)
 /*
 #define FRAME_WIN	".body.trace"
 #define CANVAS_WIN	FRAME_WIN ".c"
+*/
 
+/*
 #define BAR_WID 20
 #define BAR_HGT 130
 #define WIN_WID (BAR_WID * 16)
 #define WIN_HGT (BAR_HGT + 11 + 17)
 #define BAR_HALF_HGT (WIN_HGT / 2 - 11 - 17)
+*/
 
-
+/*
 static int TraceCreate(ClientData clientData, Tcl_Interp *interp,
 		       int argc, char *argv[])
 {
@@ -950,7 +1032,9 @@ static void trace_prog_init(int ch)
 	y = bar + 11 + yofs;
 	v_eval("%s coords prog%d %d %d", CANVAS_WIN, item, x, y);
 }
+*/
 
+/*
 static void trace_volume(int ch, int val)
 {
 	int item, bar, yofs, x1, y1, x2, y2;
@@ -970,7 +1054,9 @@ static void trace_volume(int ch, int val)
 	v_eval("%s coords bar%d %d %d %d %d", CANVAS_WIN,
 	       item, x1, y1, x2, y2);
 }
+*/
 
+/*
 static void trace_panning(int ch, int val)
 {
 	int item, bar, yofs;
@@ -1017,9 +1103,9 @@ static int TraceReset(ClientData clientData, Tcl_Interp *interp,
 
 	return TCL_OK;
 }
+*/
 
-
-
+/*
 #define DELTA_VEL	32
 
 static void update_notes(void)
@@ -1039,7 +1125,7 @@ static void update_notes(void)
 			}
 			trace_volume(i, Panel->ctotal[i]);
 		}
-
+#if 0
 		if (Panel->c_flags[i]) {
 			if (Panel->c_flags[i] & FLAG_PAN)
 				trace_panning(i, Panel->channel[i].panning);
@@ -1051,9 +1137,12 @@ static void update_notes(void)
 				trace_sustain(i, Panel->channel[i].sustain);
 			Panel->c_flags[i] = 0;
 		}
+#endif
 	}
 }
+*/
 
+/*
 static int TraceUpdate(ClientData clientData, Tcl_Interp *interp,
 		    int argc, char *argv[])
 {

@@ -1,5 +1,6 @@
-
 /*
+ *
+ * $Id$
  *
  * kscd -- A simple CD player for the KDE project           
  *
@@ -28,6 +29,9 @@
 #ifndef _CONFIG_DLG_H_
 #define _CONFIG_DLG_H_
 
+#include <qwidget.h>
+#include <kaboutdialog.h>
+
 #include <qgroupbox.h> 
 #include <qdialog.h>
 #include <qlineedit.h>
@@ -36,7 +40,9 @@
 #include <qlabel.h>
 #include <qframe.h>
 #include <qcheckbox.h>
+#include <qlayout.h>
 #include <kcolordlg.h>
+#include <kbuttonbox.h>
 
 struct configstruct{
   QColor led_color;
@@ -44,18 +50,28 @@ struct configstruct{
   bool   tooltips;
 };
 
+class KTabCtl;
+class QPushButton;
+class KAboutWidget;
 
-class ConfigDlg : public QDialog {
-
-Q_OBJECT
-
+class ConfigDlg : public QDialog
+{
+    Q_OBJECT
 public:
 
-  ConfigDlg(QWidget *parent=0, struct configstruct * data=0,const char *name=0);
-  ~ConfigDlg() {}
+    ConfigDlg( QWidget *parent=0, struct configstruct * data=0, const char *name=0 );
+   ~ConfigDlg() {}
 
+    struct configstruct * getData();
 
-  struct configstruct * getData();
+protected:
+    void resizeEvent(QResizeEvent *);
+    KTabCtl *test;
+    KAboutWidget *about;
+    QWidget *pages[3];
+public slots:
+    //void okPressed();
+    void tabChanged(int);
 
 private slots:
   void cancelbutton();
@@ -70,14 +86,18 @@ signals:
 
 public:
   bool colors_changed;
-  
+  QSize configsize, aboutsize;
+
 private:
 
   struct configstruct configdata;
   QGroupBox *box;
-  
+
+  KButtonBox *bbox;
+  QVBoxLayout *tl;
   QPushButton *ok;
   QPushButton *cancel;
+  QPushButton *helpbutton;
 
   QLabel *label1;
   QFrame *qframe1;
@@ -89,7 +109,7 @@ private:
 
   QLabel *label3;
   QFrame *qframe3;
-  QPushButton *button3;
+  //QPushButton *button3;
 
   QLabel *label4;
   QFrame *qframe4;
@@ -97,6 +117,7 @@ private:
 
   QLabel *tooltipslabel;
   QCheckBox *ttcheckbox;
-
+ 
 };
+
 #endif
