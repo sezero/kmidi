@@ -21,6 +21,7 @@
 #define RC_TUNE_END 14		/* The tune is over, play it again sam? */
 #define RC_TRY_OPEN_DEVICE 15
 #define RC_PATCHCHANGE 16
+#define RC_CHANGE_VOICES 17
 
 #define CMSG_INFO	0
 #define CMSG_WARNING	1
@@ -80,4 +81,5 @@
 #define TRY_OPEN_DEVICE 11
 #define MOTIF_PATCHSET 12
 #define MOTIF_EFFECTS 13
+#define MOTIF_CHANGE_VOICES 14
 

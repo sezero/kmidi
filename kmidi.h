@@ -42,6 +42,7 @@
 #include <qgroupbox.h>
 #include <qcombobox.h>
 #include <qscrollbar.h>
+#include <qspinbox.h>
 #include <qtooltip.h>
 #include <qregexp.h>
 #include <qgroupbox.h>
@@ -74,7 +75,6 @@
 
 class PlaylistDialog;
 class ConfigDlg;
-
 //
 // MeterWidget - draws meter
 //
@@ -86,6 +86,8 @@ public:
     MeterWidget( QDialog *parent=0, const char *name=0 );
    ~MeterWidget();
     QTimer     *metertimer;
+    QColor	led_color;
+    QColor	background_color;
 public slots:
     void	remeter();
 protected:
@@ -123,14 +125,12 @@ public:
 
 	QComboBox	*patchbox;
 	QComboBox	*playbox;
-	//QPushButton 	*lbuttona;
-	//QPushButton 	*lbuttonb;
 	QPushButton 	*lbuttonc;
 	QPushButton 	*lbuttond;
 	QPushButton 	*lbuttone;
 	QPushButton 	*rbuttona;
-	QPushButton 	*rbuttonb;
-	QPushButton 	*rbuttonc;
+	QPushButton 	*effectbutton;
+	QSpinBox 	*voicespin;
 	QPushButton 	*rbuttond;
 	MeterWidget	*meter;
 	bool 		metershown;
@@ -173,6 +173,7 @@ public:
 	bool 		starting_up;
 	bool 		looping;
 	int		volume;
+	int		current_voices;
 	int 		max_sec;
 	int 		song_number;
 	int 		last_sec;
@@ -248,6 +249,7 @@ public slots:
 	void		setPatch( int );
 	void		setEffects( bool );
 	void		setSong( int );
+	void		voicesChanged( int );
 };
 
 

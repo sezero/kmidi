@@ -61,9 +61,9 @@
 #include "playmidi.h"
 #include "constants.h"
 #include "ctl.h"
-#include <kiconloader.h>
+//#include <kiconloader.h>
 #include <kstddirs.h>
-#include <kglobal.h>
+//#include <kglobal.h>
 
 extern "C" {
 
@@ -101,13 +101,15 @@ KMidi::KMidi( QWidget *parent, const char *name ) :
     driver_error = false;
     status = KNONE;
     song_number = 1;
+    current_voices = DEFAULT_VOICES;
     starting_up = true;
 
     readconfig();
-  struct configstruct config;
-  config.background_color = background_color;
-  config.led_color = led_color;
-  config.tooltips = tooltips;
+
+    struct configstruct config;
+    config.background_color = background_color;
+    config.led_color = led_color;
+    config.tooltips = tooltips;
 
     drawPanel();
     loadBitmaps();
@@ -189,14 +191,13 @@ void KMidi::setToolTips()
 	QToolTip::add( volSB, 		i18n("Volume Control") );
 
 	QToolTip::add( patchbox,	i18n("Select Patch Set") );
-	//QToolTip::add( lbuttona,	i18n("unnassigned") );
-	//QToolTip::add( lbuttonb,	i18n("unnassigned") );
+	QToolTip::add( playbox,		i18n("Select Song") );
 	QToolTip::add( lbuttonc,	i18n("unnassigned") );
 	QToolTip::add( lbuttond,	i18n("unnassigned") );
 	QToolTip::add( lbuttone,	i18n("unnassigned") );
 	QToolTip::add( rbuttona,	i18n("unnassigned") );
-	QToolTip::add( rbuttonb,	i18n("Effects") );
-	QToolTip::add( rbuttonc,	i18n("unnassigned") );
+	QToolTip::add( effectbutton,	i18n("Effects") );
+	QToolTip::add( voicespin,	i18n("Set Polyphony") );
 	QToolTip::add( rbuttond,	i18n("unnassigned") );
     }
     else{
@@ -217,14 +218,13 @@ void KMidi::setToolTips()
 	QToolTip::remove( volSB );
 
 	QToolTip::remove( patchbox );
-	//QToolTip::remove( lbuttona );
-	//QToolTip::remove( lbuttonb );
+	QToolTip::remove( playbox );
 	QToolTip::remove( lbuttonc );
 	QToolTip::remove( lbuttond );
 	QToolTip::remove( lbuttone );
 	QToolTip::remove( rbuttona );
-	QToolTip::remove( rbuttonb );
-	QToolTip::remove( rbuttonc );
+	QToolTip::remove( effectbutton );
+	QToolTip::remove( voicespin );
 	QToolTip::remove( rbuttond );
     }
 
@@ -273,7 +273,8 @@ extern PanelInfo *Panel;
 
 
 #define BAR_WID 10
-#define BAR_HGT 58
+//#define BAR_HGT 58
+#define BAR_HGT 62
 #define BAR_LM  12
 #define BAR_TM  10
 #define BAR_BOT (BAR_TM + BAR_HGT)
@@ -281,9 +282,7 @@ extern PanelInfo *Panel;
 #define WIN_HGT 80
 
 
-//#define DELTA_VEL	32
-#define DELTA_VEL	4
-//#define DELTA_VEL	16
+#define DELTA_VEL	1
 #define FLAG_NOTE_OFF	1
 #define FLAG_NOTE_ON	2
 
@@ -291,13 +290,14 @@ extern PanelInfo *Panel;
 #define FLAG_PROG	2
 #define FLAG_PAN	4
 #define FLAG_SUST	8
+#define METERFUDGE	0
 
 void MeterWidget::remeter()
 {
         QPainter paint( this );
-	QPen greenpen(green, 2);
-	QPen yellowpen(yellow, 2);
-	QPen erasepen(black, 2);
+	QPen greenpen(led_color, 3);
+	QPen yellowpen(yellow, 3);
+	QPen erasepen(background_color, 3);
 	static int lastvol[16], meterpainttime = 0;
 	int ch, x1, y1, slot, amplitude, notetime;
 
@@ -309,7 +309,7 @@ void MeterWidget::remeter()
 		}
 		Panel->reset_panel = 0;
 	}
-	meterpainttime = currplaytime;
+	meterpainttime = currplaytime - METERFUDGE;
 
 	for (ch = 0; ch < 16; ch++) {
 		x1 = BAR_LM + ch * BAR_WID;
@@ -317,7 +317,7 @@ void MeterWidget::remeter()
 		slot = Panel->mindex[ch];
 		while ( 1 ) {
 		    notetime = Panel->ctime[slot][ch];
-		    if (notetime == -1 || notetime > currplaytime) break;
+		    if (notetime == -1 || notetime > meterpainttime) break;
 		    if (Panel->v_flags[slot][ch]) {
 			if (Panel->v_flags[slot][ch] == FLAG_NOTE_OFF) {
 				//if (!Panel->notecount[slot][ch]) Panel->ctotal[slot][ch] -= DELTA_VEL;
@@ -332,7 +332,7 @@ void MeterWidget::remeter()
 			/*if (amplitude < Panel->ctotal[slot][ch])*/
 				amplitude = Panel->ctotal[slot][ch];
 		    }
-		    if (!Panel->notecount[slot][ch] && amplitude > 0) amplitude /= 2;
+		    if (!Panel->notecount[slot][ch] && amplitude > 0) amplitude--;
 		    Panel->ctime[slot][ch] = -1;
 		    slot++;
 		    if (slot == NQUEUE) slot = 0;
@@ -380,12 +380,13 @@ void MeterWidget::paintEvent( QPaintEvent * )
 MeterWidget::MeterWidget( QDialog *parent, const char *name )
     : QWidget( parent, name )
 {
-    setBackgroundColor( black );
-    
+    //setBackgroundColor( background_color );
 
     metertimer = new QTimer( this );
     connect( metertimer, SIGNAL(timeout()), SLOT(remeter()) );
-    metertimer->start( 100, FALSE );
+    //metertimer->start( 100, FALSE );
+    //metertimer->start( 50, FALSE );
+    metertimer->start( 80, FALSE );
 }
 
 
@@ -579,6 +580,9 @@ void KMidi::drawPanel()
     iy += HEIGHT;
     regularheight = iy;
     meter = new MeterWidget ( this, "soundmeter" );
+    meter->setBackgroundColor( background_color );
+    meter->led_color = led_color;
+    meter->background_color = background_color;
     meter->setGeometry(ix,iy,SBARWIDTH - WIDTH/2, 3* HEIGHT - 1);
     metershown = FALSE;
     meter->hide();
@@ -608,14 +612,6 @@ void KMidi::drawPanel()
     playbox->setFont( QFont( "helvetica", 10, QFont::Normal) );
     connect( playbox, SIGNAL(activated(int)), SLOT(setSong(int)) );
 
-    //lbuttona = makeButton( ix,          iy, WIDTH/2, HEIGHT, "L_A" );
-    //lbuttona->setToggleButton( TRUE );
-    //connect( lbuttona, SIGNAL(toggled(bool)), SLOT(setEffects(bool)) );
-    //lbuttona->setFont( QFont( "helvetica", 10, QFont::Normal) );
-
-    //lbuttonb = makeButton( ix +WIDTH/2, iy, WIDTH,   HEIGHT, "L_B" );
-    //lbuttonb->setFont( QFont( "helvetica", 10, QFont::Normal) );
-
     iy += HEIGHT;
     lbuttonc = makeButton( ix,          iy, WIDTH/2, HEIGHT, "L_C" );
     lbuttonc->setFont( QFont( "helvetica", 10, QFont::Normal) );
@@ -629,24 +625,37 @@ void KMidi::drawPanel()
     rbuttona = makeButton( ix,          iy, WIDTH,   HEIGHT, "R_A" );
     rbuttona->setFont( QFont( "helvetica", 10, QFont::Normal) );
 
-    //iy += HEIGHT;
-    //rbuttonb = makeButton( ix,          iy, WIDTH/2, HEIGHT, "R_B" );
-    //rbuttonb->setFont( QFont( "helvetica", 10, QFont::Normal) );
     iy += HEIGHT;
-    rbuttonb = makeButton( ix,          iy, WIDTH/2, HEIGHT, "eff" );
-    rbuttonb->setToggleButton( TRUE );
-    rbuttonb->setFont( QFont( "helvetica", 10, QFont::Normal) );
-    connect( rbuttonb, SIGNAL(toggled(bool)), SLOT(setEffects(bool)) );
+    effectbutton = makeButton( ix,          iy, WIDTH/2, HEIGHT, "eff" );
+    effectbutton->setToggleButton( TRUE );
+    effectbutton->setFont( QFont( "helvetica", 10, QFont::Normal) );
+    connect( effectbutton, SIGNAL(toggled(bool)), SLOT(setEffects(bool)) );
 
 
-    rbuttonc = makeButton( ix +WIDTH/2, iy, WIDTH/2, HEIGHT, "R_C" );
-    rbuttonc->setFont( QFont( "helvetica", 10, QFont::Normal) );
+    // Create a spin box
+
+    voicespin = new QSpinBox( 1, MAX_VOICES, 1, this, "spin" );
+    voicespin->setValue(current_voices);
+    voicespin->setGeometry( ix +WIDTH/2, iy, WIDTH/2, HEIGHT );
+    connect( voicespin, SIGNAL( valueChanged(int) ),
+	     SLOT( voicesChanged(int) ) );
+    voicespin->setFont( QFont( "helvetica", 10, QFont::Normal) );
+
     iy += HEIGHT;
     rbuttond = makeButton( ix,          iy, WIDTH,   HEIGHT, "R_D" );
     rbuttond->setFont( QFont( "helvetica", 10, QFont::Normal) );
 }
 
  
+void KMidi::voicesChanged( int newvoices )
+{
+    if (newvoices < 1 || newvoices > MAX_VOICES) return;
+    current_voices = newvoices;
+    if (status != KSTOPPED) stopClicked();
+    pipe_int_write(MOTIF_CHANGE_VOICES);
+    pipe_int_write(newvoices);
+}
+
 void KMidi::setPatch( int index )
 {
     if (!cfg_names[index]) return;
@@ -1048,14 +1057,21 @@ void KMidi::PlayMOD(){
 
 void KMidi::aboutClicked()
 {
-  if(configdlg->exec() == QDialog::Accepted){
+   QColor old_background_color = background_color;
 
-    background_color = configdlg->getData()->background_color;
-    led_color = configdlg->getData()->led_color;
-    tooltips = configdlg->getData()->tooltips;
-    setColors();
-    setToolTips();
-  }
+   if (configdlg->exec() == QDialog::Accepted) {
+	background_color = configdlg->getData()->background_color;
+	led_color = configdlg->getData()->led_color;
+	meter->led_color = led_color;
+	meter->background_color = background_color;
+	if (old_background_color != background_color) {
+	    meter->setBackgroundColor(background_color);
+	    Panel->reset_panel = 1;
+	}
+	tooltips = configdlg->getData()->tooltips;
+	setColors();
+	setToolTips();
+   }
 }
 
 
@@ -1527,21 +1543,12 @@ void KMidi::readconfig(){
 
     //////////////////////////////////////////
 
-//    QString str;
-	
-//    config = thisapp->getConfig();
     config=KApplication::getKApplication()->getConfig();
-//KConfig *config=KApplication::getKApplication()->getConfig();
     config->setGroup("KMidi");
 
-//    str = config->readEntry("Volume");
-//    if ( !str.isNull() )
-//	volume = str.toInt();
     volume = config->readNumEntry("Volume", 40);
+    current_voices = config->readNumEntry("Polyphony", DEFAULT_VOICES);
 
-//    str = config->readEntry("ToolTips");
-//    if ( !str.isNull() )
-//	tooltipsint =  str.toInt();
     tooltipsint = config->readNumEntry("ToolTips", 1);
 
     if (tooltipsint == 1)
@@ -1573,7 +1580,6 @@ void KMidi::readconfig(){
 void KMidi::writeconfig(){
 
 
-//    config = thisapp->getConfig();
     config=KApplication::getKApplication()->getConfig();
 	
     ///////////////////////////////////////////////////
@@ -1592,6 +1598,7 @@ void KMidi::writeconfig(){
 	*/
 
     config->writeEntry("Volume", volume);
+    config->writeEntry("Polyphony", current_voices);
     config->writeEntry("BackColor",background_color);
     config->writeEntry("LEDColor",led_color);
     config->sync();

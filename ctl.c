@@ -227,6 +227,7 @@ static void ctl_total_time(int tt)
 }
 
 static int change_in_volume = 0;
+static int change_in_voices;
 
 static void ctl_master_volume(int mv)
 {
@@ -324,9 +325,10 @@ static void ctl_note(int v)
 	{
 	    case VOICE_DIE:
 	      /*vel = voice[v].velocity / 2;*/
-	      vel = 0;
-	      /*start = -1;*/
-	      if (Panel->notecount[slot][ch]) Panel->notecount[slot][ch]--;
+	      /*vel = 0;*/
+	      vel /= 2;
+	      start = -1;
+	      //if (Panel->notecount[slot][ch]) Panel->notecount[slot][ch]--;
 	      break;
 	    case VOICE_FREE: 
 	      vel = 0;
@@ -340,7 +342,7 @@ static void ctl_note(int v)
 	    case VOICE_SUSTAINED:
 	      /*vel = 0;*/
 	      start = -1;
-	      if (Panel->notecount[slot][ch]) Panel->notecount[slot][ch]--;
+	      //if (Panel->notecount[slot][ch]) Panel->notecount[slot][ch]--;
 	      break;
 	}
 	ctl_channel_note(ch, note, vel, start);
@@ -531,6 +533,13 @@ static int ctl_blocking_read(int32 *valp)
 		  effect_activate(arg);
 		  return RC_NONE;
 
+	      case MOTIF_CHANGE_VOICES:
+		  pipe_int_read(&arg);
+		  change_in_voices =
+		    *valp= arg;
+		  return RC_CHANGE_VOICES;
+		  
+
 	      case TRY_OPEN_DEVICE:
 		  return RC_TRY_OPEN_DEVICE;
 	      }
@@ -648,6 +657,9 @@ static void ctl_pass_playing_list(int number_of_files, char *list_of_files[])
 	          	    if (!read_config_file(CONFIG_FILE))
 		  	        Panel->currentpatchset = cfg_select;
 			    pipe_int_write(PATCH_CHANGED_MESSAGE);
+			    break;
+		  	case RC_CHANGE_VOICES:
+			    voices = change_in_voices;
 			    break;
 			case RC_NONE:
 			    break;
