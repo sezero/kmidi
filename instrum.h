@@ -95,9 +95,9 @@ typedef struct _InstrumentLayer {
 #define FONT_SBK    2
 
 typedef struct {
-  char *name;
+  const char *name;
   InstrumentLayer *layer;
-  int font_type, sf_ix, last_used;
+  int font_type, sf_ix, last_used, tuning;
 #ifndef ADAGIO
   int note, amp, pan, strip_loop, strip_envelope, strip_tail;
 #else /* ADAGIO */
@@ -116,7 +116,7 @@ typedef struct {
 #define SFXDRUM2 (MAXBANK-1)
 
 typedef struct {
-  char *name;
+  const char *name;
 #ifndef ADAGIO
   ToneBankElement tone[MAXPROG];
 #else /* ADAGIO */
@@ -152,10 +152,10 @@ extern int32 convert_vibrato_rate(uint8 rate);
 
 extern void init_soundfont(char *fname, int oldbank, int newbank, int level);
 #ifdef FFF_HAS_BEEN_FIXED
-extern InstrumentLayer *load_fff_patch(char *name, int gm_num, int bank, int percussion,
+extern InstrumentLayer *load_fff_patch(const char *name, int gm_num, int bank, int percussion,
  int panning, int amp, int note_to_use, int strip_loop, int strip_envelope, int strip_tail);
 #endif
-extern InstrumentLayer *load_sbk_patch(char *name, int gm_num, int bank, int percussion,
+extern InstrumentLayer *load_sbk_patch(const char *name, int gm_num, int bank, int percussion,
  int panning, int amp, int note_to_use, int sf_ix);
 extern int current_tune_number;
 extern int max_patch_memory;

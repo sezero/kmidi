@@ -1252,6 +1252,24 @@ void KMidi::setChorus( int level )
     pipe_int_write(  MOTIF_CHORUS );
     pipe_int_write(level);
 }
+void KMidi::setExpressionCurve( int curve )
+{
+    evs_state = (curve << 8) + (evs_state & 0xff);
+    pipe_int_write(  MOTIF_EVS );
+    pipe_int_write(evs_state);
+}
+void KMidi::setVolumeCurve( int curve )
+{
+    evs_state = (curve << 4) + (evs_state & 0xf0f);
+    pipe_int_write(  MOTIF_EVS );
+    pipe_int_write(evs_state);
+}
+void KMidi::setSurround( int yesno )
+{
+    evs_state = yesno + (evs_state & 0xff0);
+    pipe_int_write(  MOTIF_EVS );
+    pipe_int_write(evs_state);
+}
 
 void KMidi::logoClicked(){
 
@@ -1582,8 +1600,8 @@ void KMidi::fwdReleased(){
 
     if (status != KPLAYING) return;
     fastforward = 0;
-    timestopped = 5;
-    settletime = 5;
+    timestopped = 10;
+    settletime = 10;
     pipe_int_write(MOTIF_CHANGE_LOCATOR);
     pipe_int_write( currplaytime );
 }
@@ -1600,8 +1618,8 @@ void KMidi::bwdReleased(){
 
     if (status != KPLAYING) return;
     fastrewind = 0;
-    timestopped = 5;
-    settletime = 5;
+    timestopped = 10;
+    settletime = 10;
     pipe_int_write(MOTIF_CHANGE_LOCATOR);
     pipe_int_write( currplaytime );
 }
@@ -1802,6 +1820,9 @@ void KMidi::PlayCommandlineMods(){
   setDry(dry_state);
   setReverb(reverb_state);
   setChorus(chorus_state);
+
+  pipe_int_write(  MOTIF_EVS );
+  pipe_int_write(evs_state);
 
   Panel->max_patch_megs = max_patch_megs;
 
@@ -2434,6 +2455,7 @@ void KMidi::ReadPipe(){
 
 
 void KMidi::readconfig(){
+    int e_state, v_state, s_state;
 
     // let's set the defaults
 
@@ -2463,6 +2485,10 @@ void KMidi::readconfig(){
     detune_state = config->readNumEntry("DetuneNotes", 1);
     chorus_state = config->readNumEntry("Chorus", 1);
     dry_state = config->readBoolEntry("Dry", FALSE);
+    e_state = config->readNumEntry("ExpressionCurve", 1);
+    v_state = config->readNumEntry("VolumeCurve", 1);
+    s_state = config->readNumEntry("Surround", 1);
+    evs_state = (e_state << 8) + (v_state << 4) + s_state;
     verbosity_state = config->readNumEntry("Verbosity", 1);
     Panel->currentpatchset = config->readNumEntry("Patchset", 0);
 
@@ -2475,6 +2501,7 @@ void KMidi::readconfig(){
 }
 
 void KMidi::writeconfig(){
+    int e_state, v_state, s_state;
 
 
     config=KApplication::kApplication()->config();
@@ -2507,6 +2534,12 @@ void KMidi::writeconfig(){
     config->writeEntry("DetuneNotes", detune_state);
     config->writeEntry("Chorus", chorus_state);
     config->writeEntry("Dry", dry_state);
+    e_state = (evs_state >> 8) & 0x0f;
+    config->writeEntry("ExpressionCurve", e_state);
+    v_state = (evs_state >> 4) & 0x0f;
+    config->writeEntry("VolumeCurve", v_state);
+    s_state = evs_state & 0x0f;
+    config->writeEntry("Surround", s_state);
     config->writeEntry("Verbosity", verbosity_state);
     config->writeEntry("Patchset", Panel->currentpatchset);
     config->sync();

@@ -48,17 +48,7 @@
 char *program_name, current_filename[1024];
 int current_filedescriptor;
 
-#ifdef KMIDI
-    static PathList *pathlist=0;
-#else
-#ifdef DEFAULT_PATH
-    /* The paths in this list will be tried whenever we're reading a file */
-    static PathList defaultpathlist={DEFAULT_PATH,0, 0};
-    static PathList *pathlist=&defaultpathlist; /* This is a linked list */
-#else
-    static PathList *pathlist=0;
-#endif
-#endif
+static PathList *pathlist=0;
 
 #ifdef __WIN32__
 #define R_OPEN_MODE O_RDONLY | O_BINARY
@@ -252,19 +242,38 @@ void *safe_malloc(size_t count)
 /* This adds a directory to the path list */
 void add_to_pathlist(char *s, int level)
 {
+  int l;
   PathList *plp=(PathList *)safe_malloc(sizeof(PathList));
-  strcpy((plp->path=(char *)safe_malloc(strlen(s)+1)),s);
+
+  if (s[0] == PATH_SEP)
+	strcpy((plp->path=(char *)safe_malloc(strlen(s)+1)),s);
+  else {
+	PathList *pnp = pathlist;
+	while (pnp && pnp->next && ((PathList *)(pnp->next))->level == level)
+		pnp = (PathList *)pnp->next;
+	if (!pnp || !pnp->path) return;
+	l=strlen(pnp->path);
+	plp->path = (char *)safe_malloc(l + strlen(s) + 2);
+	if(l)
+	  {
+	    strcpy(plp->path, pnp->path);
+	    if(plp->path[l-1]!=PATH_SEP)
+	      strcat(plp->path, PATH_STRING);
+	  }
+	else plp->path[0] = '\0';
+	strcat( plp->path, s);
+  }
   plp->next=pathlist;
   plp->level=level;
   pathlist=plp;
 }
-/* This clears the path list of all paths added from read_config_file. */
-void clear_pathlist()
+/* This clears the path list of paths added from read_config_file. */
+void clear_pathlist(int level)
 {
   PathList *nlp, *plp=pathlist, *prev=0;
   while (plp) {
     nlp = (PathList *)plp->next;
-    if (plp->level > 0)
+    if (plp->level > level)
       {
 	if (plp == pathlist) pathlist = nlp;
 	free(plp->path);

@@ -109,7 +109,7 @@ typedef struct {
 
   char
     transpose;
-  char *name;
+  const char *name;
 } Channel;
 
 /* Causes the instrument's default panning to be used. */
@@ -235,6 +235,9 @@ extern void recompute_freq(int v);
 extern int dont_cspline;
 #endif
 extern int opt_dry;
+extern int opt_expression_curve;
+extern int opt_volume_curve;
+extern int opt_stereo_surround;
 extern int dont_filter_melodic;
 extern int dont_filter_drums;
 extern int command_cutoff_allowed;
@@ -255,9 +258,9 @@ extern int XG_System_variation_type;
 
 #ifndef ADAGIO
 extern int play_midi(MidiEvent *el, uint32 events, uint32 samples);
-extern int play_midi_file(char *fn);
+extern int play_midi_file(const char *fn);
 #endif
-extern void dumb_pass_playing_list(int number_of_files, char *list_of_files[]);
+extern void dumb_pass_playing_list(int number_of_files, const char *list_of_files[]);
 #ifdef ADAGIO
 extern int play_midi(unsigned char *, unsigned char *, int);
 #endif /* ADAGIO */

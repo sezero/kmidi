@@ -77,7 +77,7 @@ static void ctl_master_volume(int mv);
 static void ctl_file_name(char *name);
 static void ctl_current_time(uint32 ct);
 static void ctl_note(int v);
-static void ctl_program( int ch, int val, char *name);
+static void ctl_program( int ch, int val, const char *name);
 static void ctl_volume( int ch, int val );
 static void ctl_expression( int ch, int val );
 static void ctl_panning( int ch, int val );
@@ -88,12 +88,12 @@ static int ctl_open(int using_stdin, int using_stdout);
 static void ctl_close(void);
 static int ctl_read(int32 *valp);
 static int cmsg(int type, int verbosity_level, const char *fmt, ...);
-static void ctl_pass_playing_list(int number_of_files, char *list_of_files[]);
+static void ctl_pass_playing_list(int number_of_files, const char *list_of_files[]);
 static int ctl_blocking_read(int32 *valp);
 
 void pipe_int_write(int c);
 void pipe_int_read(int *c);
-void pipe_string_write(char *str);
+void pipe_string_write(const char *str);
 void pipe_string_read(char *str);
 
 void 	pipe_open(void);
@@ -386,7 +386,7 @@ static void ctl_note(int v)
 	ctl_channel_note(ch, /* note, vel,*/ start);
 }
 
-static void ctl_program( int ch, int val, char *name)
+static void ctl_program( int ch, int val, const char *name)
 {
 	char noname[2];
 
@@ -714,6 +714,15 @@ static int ctl_blocking_read(int32 *valp)
 		  if (!pausing) return RC_NONE;
 		  break;
 
+	      case MOTIF_EVS:
+		  pipe_int_read(&arg);
+		  *valp= arg;
+		  opt_stereo_surround = arg & 0x0f;
+		  opt_volume_curve = (arg>>4) & 0x0f;
+		  opt_expression_curve = (arg>>8) & 0x0f;
+		  if (!pausing) return RC_NONE;
+		  break;
+
 	      case MOTIF_INTERPOLATION:
 		  pipe_int_read(&arg);
 		  *valp= arg;
@@ -810,7 +819,7 @@ static int ctl_read(int32 *valp)
 	return(ctl_blocking_read(valp));
 }
 
-static void ctl_pass_playing_list(int number_of_files, char *list_of_files[])
+static void ctl_pass_playing_list(int number_of_files, const char *list_of_files[])
 {
 
     int i=0;
@@ -1038,7 +1047,7 @@ void pipe_int_read(int *c)
  *              STRINGS                  *
  *****************************************/
 
-void pipe_string_write(char *str)
+void pipe_string_write(const char *str)
 {
    uint32 len, slen;
 

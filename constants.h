@@ -93,4 +93,5 @@
 #define MOTIF_CHORUS 19
 #define MOTIF_DRY 20
 #define MOTIF_STOP 21
+#define MOTIF_EVS 22
 

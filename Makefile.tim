@@ -31,10 +31,9 @@ major := $(basename $(basename $(rel)))
 CC = g++
 #DEBUGFLAGS = -Wall -O2 -D__USE_FIXED_PROTOTYPES__
 #DEBUGFLAGS = -Wall -gstabs3 -O -D__USE_FIXED_PROTOTYPES__
-#DEBUGFLAGS = -Wall -gstabs3 -O
 #DEBUGFLAGS = -O2 -gstabs3 -Wall -pedantic -W -Wpointer-arith -Wmissing-prototypes -Wwrite-strings -Wconversion
-DEBUGFLAGS = -O2 -gstabs3 -Wall -W -Wpointer-arith -Wmissing-prototypes
-#DEBUGFLAGS = -O3 -Wall -W -Wpointer-arith -Wmissing-prototypes -Wwrite-strings -Wconversion
+#DEBUGFLAGS = -O2 -gstabs3 -Wall -W -Wpointer-arith -Wmissing-prototypes
+DEBUGFLAGS = -O3 -Wall -W -Wpointer-arith -Wmissing-prototypes -Wwrite-strings -Wno-long-long -fomit-frame-pointer -ffast-math -march=i586 -malign-double
 
 ########### Install.
 INSTALL = /usr/bin/install
@@ -186,7 +185,7 @@ CSRCS = timidity.cpp common.cpp readmidi.cpp playmidi.cpp resample.cpp mix.cpp i
         wave_a.cpp raw_a.cpp dumb_c.cpp fffload.cpp \
         sndfont.cpp readsbk.cpp \
 	effects.cpp reverb_e.cpp chorus_e.cpp phaser_e.cpp celeste_e.cpp \
-	resample_l.cpp resample_f.cpp
+	resample_l.cpp resample_f.cpp cfg.cpp
 
 # ... except for dsp.o
 DSPCSRCS = common.cpp playmidi.cpp resample.cpp mix.cpp instrum.cpp \
@@ -294,6 +293,10 @@ sbktext: sbktext.cpp gentxt.o readsbk.o
 
 sf2cfg: sf2cfg.cpp readsbk.o
 	$(CC) $(CFLAGS) -o sf2cfg sf2cfg.cpp readsbk.o
+
+cfg.cpp: cfg.l
+	rm -f cfg.cpp
+	flex -t -B cfg.l >cfg.cpp
 
 depends depend dep:
 	$(CC) $(CFLAGS) -MM $(CSRCS) $(OPTSRCS) $(TOOLSRCS) > depends

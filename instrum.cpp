@@ -304,8 +304,8 @@ static void reverse_data(int16 *sp, int32 ls, int32 le)
    undefined.
 
    TODO: do reverse loops right */
-static InstrumentLayer *load_instrument(char *name, int font_type, int percussion,
-				   int panning, int amp, int note_to_use,
+static InstrumentLayer *load_instrument(const char *name, int font_type, int percussion,
+				   int panning, int amp, int cfg_tuning, int note_to_use,
 				   int strip_loop, int strip_envelope,
 #ifndef ADAGIO
 				   int strip_tail, int bank, int gm_num, int sf_ix)
@@ -498,6 +498,13 @@ static InstrumentLayer *load_instrument(char *name, int font_type, int percussio
       sp->keyToModEnvDecay=0;
       sp->keyToVolEnvHold=0;
       sp->keyToVolEnvDecay=0;
+
+      if (cfg_tuning)
+	{
+	  double tune_factor = (double)(cfg_tuning)/1200.0;
+	  tune_factor = pow(2.0, tune_factor);
+	  sp->root_freq = (uint32)( tune_factor * (double)sp->root_freq );
+	}
 
       /* envelope, tremolo, and vibrato */
       if (18 != fread(tmp, 1, 18, fp)) goto fail; 
@@ -1004,6 +1011,7 @@ static int fill_bank(int b)
 				     (dr) ? 1 : 0,
 				     bank->tone[i].pan,
 				     bank->tone[i].amp,
+				     bank->tone[i].tuning,
 				     (bank->tone[i].note!=-1) ? 
 				     bank->tone[i].note :
 				#ifndef ADAGIO
@@ -1125,9 +1133,9 @@ int set_default_instrument(char *name)
 {
   InstrumentLayer *lp;
 #ifndef ADAGIO
-  if (!(lp=load_instrument(name, FONT_NORMAL, 0, -1, -1, -1, -1, -1, -1, 0, -1, -1)))
+  if (!(lp=load_instrument(name, FONT_NORMAL, 0, -1, -1, 0, -1, -1, -1, -1, 0, -1, -1)))
 #else /* ADAGIO */
-  if (!(lp=load_instrument(name, FONT_NORMAL, 0, -1, -1, -1, 0, 0, 0, 0, 0, 0, 0)))
+  if (!(lp=load_instrument(name, FONT_NORMAL, 0, -1, -1, 0, -1, 0, 0, 0, 0, 0, 0, 0)))
 #endif /* ADAGIO */
     return -1;
   if (default_instrument)

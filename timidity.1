@@ -223,6 +223,9 @@ The S-Lang full\-screen interface with interactive controls.
 .B \-iq
 The KMidi KDE interface with interactive controls.
 .TP
+.B \-ia
+The XAW X Window interface with interactive controls.
+.TP
 .B "Interface options"
 Option characters may be added immediately after the interface
 identifier.  The following options are recognized:
@@ -335,6 +338,11 @@ the Note On event triggering it has. For percussion instruments, if no
 value is specified in the configuration file, the default in the patch
 file will be used.
 .TP
+\fBtuning=\fP\fIcents\fP
+Changes the pitch of the instrument. \fIcents\fP is a signed quantity in
+units of 1/100th of a semitone, so, e.g., specify "+1200" to go up
+an octave.  The number must begin with a "+" or a "-".
+.TP
 \fBpan=\fP\fIpanning\fP
 Sets the instrument's default panning. 
 \fIpanning\fP may be \fBleft\fP, \fBright\fP, \fBcenter\fP, or an
@@ -371,6 +379,8 @@ indicate that a MIDI file should be read from stdin.
 .P
 .SH COPYRIGHT
 Copyright (C) 1995 Tuukka Toivonen.
+.br
+See AUTHORS below for additional copyrights.
 .P
 TiMidity is free software; you can redistribute it
 and/or modify it under the terms of the \fIGNU General Public
@@ -419,3 +429,29 @@ URL \fIhttp://www.geocities.com/SiliconValley/Lab/6307/\fP).
 Portamento, mod wheel, and other enhancements from TiMidity++
 Copyright (C) 1999 Masanao Izumo <mo@goice.co.jp>.  See
 URL \fIhttp://www.goice.co.jp/member/mo/hack-progs/timidity.html\fP.
+.br
+alsa driver Copyright (C) 1999 Masanao Izumo <mo@goice.co.jp>
+.br
+bsd20 driver Written by Yamate Keiichiro <keiich-y@is.aist-nara.ac.jp>
+.br
+esd driver by Avatar <avatar@deva.net>
+.br
+hpux_d driver Copyright 1997 Lawrence T. Hoff
+.br
+nas driver Copyright (C) 1999 Michael Haardt <michael@moria.de>
+.br
+XAW Interface from Tomokazu Harada <harada@prince.pe.u-tokyo.ac.jp>
+and Yoshishige Arai <ryo2@on.rim.or.jp>
+.br
+The autoconf script is (C)Copyright 1998 by Hiroshi Takekawa <t80679@hongo.ecc.u-tokyo.ac.jp>,
+modified for automake by Isaku Yamahata <yamahata@kusm.kyoto-u.ac.jp>,
+modified for automake by Masanao Izumo <mo@goice.co.jp> (1998.11).
+.br
+The m4 autoconf definitions: Configure paths for ESD
+by Manish Singh 98-9-30, stolen back from Frank Belew,
+stolen from Manish Singh, Shamelessly stolen from Owen Taylor.
+.br
+Configure Paths for Alsa by
+Christopher Lansdown (lansdoct@cs.alfred.edu), 29/10/1998,
+modified for TiMidity++ by Isaku Yamahata(yamahata@kusm.kyoto-u.ac.jp),
+16/12/1998.

@@ -1,3 +1,13 @@
+2000-01-02  Greg Lee  <lee@hawaii.edu>
+
+	* cfg.l: replace read_config_file()
+	* adjust tuning in cfg files
+	* add vol/expression curve to menus
+	* add "surround" option
+	* fix drum vol bug
+	* add some credits to timidity.1
+	  document tuning adjustment
+
 1999-12-26  Greg Lee  <lee@hawaii.edu>
 
 	* changed more float to double

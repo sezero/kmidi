@@ -332,12 +332,12 @@ void clear_config(void)
 		if (tonebank[i])
 		{
 			bank = tonebank[i];
-			if (bank->name) free(bank->name);
+			if (bank->name) free((void *)bank->name);
 			bank->name = 0;
 			for (j = 0; j < MAXPROG; j++)
 			  if (bank->tone[j].name)
 			  {
-			     free(bank->tone[j].name);
+			     free((void *)bank->tone[j].name);
 			     bank->tone[j].name = 0;
 			  }
 			if (i > 0)
@@ -349,12 +349,12 @@ void clear_config(void)
 		if (drumset[i])
 		{
 			bank = drumset[i];
-			if (bank->name) free(bank->name);
+			if (bank->name) free((void *)bank->name);
 			bank->name = 0;
 			for (j = 0; j < MAXPROG; j++)
 			  if (bank->tone[j].name)
 			  {
-			     free(bank->tone[j].name);
+			     free((void *)bank->tone[j].name);
 			     bank->tone[j].name = 0;
 			  }
 			if (i > 0)
@@ -367,480 +367,9 @@ void clear_config(void)
 
     memset(drumset[0], 0, sizeof(ToneBank));
     memset(tonebank[0], 0, sizeof(ToneBank));
-    clear_pathlist();
+    clear_pathlist(0);
 }
 
-#define MAXWORDS 10
-
-char *current_config_file = 0;
-
-int read_config_file(const char *name, int prescanning)
-{
-  FILE *fp;
-  char tmp[1024], *w[MAXWORDS], *cp;
-  static ToneBank *bank=0;
-  static int banknum=0;
-  int i, j, k, line=0, words;
-  static int rcf_count=1;
-  static int font_type=FONT_NORMAL;
-  static int cfg_condition = -1;
-
-  if (rcf_count>50)
-	 {
-    		ctl->cmsg(CMSG_ERROR, VERB_NORMAL, "Probable source loop in configuration files");
-		return (-1);
-	 }
-
-  if (!(fp=open_file(name, 1, OF_VERBOSE, 0)))
-	 return -1;
-
-  if (prescanning) {
-	 current_config_file = (char *)safe_malloc(strlen(name)+1);
-	 strcpy(current_config_file, name);
-  }
-
-  while (fgets(tmp, sizeof(tmp), fp))
-	 {
-      line++;
-		w[words=0]=strtok(tmp, " \t\r\n\240");
-		if (!w[0] || (*w[0]=='#')) continue;
-      while (w[words] && (words < MAXWORDS) && (*w[words]!='#'))
-	w[++words]=strtok(0," \t\r\n\240");
-
-      /******* dir ********/
-		if (!strcmp(w[0], "dir"))
-	{
-	  if (words < 2)
-		 {
-    	      ctl->cmsg(CMSG_ERROR, VERB_NORMAL, "%s: line %d: No directory given\n", name, line);
-	      return -2;
-		 }
-	  for (i=1; i<words; i++)
-	    add_to_pathlist(w[i], rcf_count);
-	}
-      /******* if ********/
-		else if(!strcmp(w[0], "if"))
-	{
-	  if (words < 2)
-		 {
-    	      ctl->cmsg(CMSG_ERROR, VERB_NORMAL, "%s: line %d: No patchset number given\n", name, line);
-	      return -2;
-		 }
-	  cfg_condition=atoi(w[1]);
-	}
-      /******* else ********/
-		else if(!strcmp(w[0], "else"))
-	{
-	  cfg_condition=0;
-	}
-      /******* source ********/
-		else if (!strcmp(w[0], "source"))
-	{
-#ifdef KMIDI
-	 if (prescanning && cfg_condition >= 0 && cfg_condition < 30 && words == 2
-		&& (rcf_count==1) && !cfg_names[cfg_condition])
-	  {
-	    cfg_names[cfg_condition] = (char *)safe_malloc(strlen(w[1])+1);
-	    strcpy(cfg_names[cfg_condition], w[1]);
-	  }
-#endif
-	 if (prescanning) cfg_condition = -1;
-	 else if (cfg_condition < 0 || cfg_condition == cfg_select)
-	  {
-	  if (words < 2)
-	         {
-    	      ctl->cmsg(CMSG_ERROR, VERB_NORMAL, "%s: line %d: No patchset number given\n", name, line);
-	      return -2;
-		 }
-	  for (i=1; i<words; i++)
-	    {
-#ifdef tplus
-	      int status;
-#endif
-	      rcf_count++;
-	      cfg_condition = -1;
-#ifdef tplus
-	      status = read_config_file(w[i], 0);
- 	      rcf_count--;
-	      if(status != 0)
-		return status;
-#else
-			read_config_file(w[i], 0);
-	      rcf_count--;
-#endif
-	    }
-	  }
-	  cfg_condition = -1;
-	}
-      /******* end of prescan ****/
-		else if (prescanning) continue;
-      /******* voices ********/
-		else if(!strcmp(w[0], "voices"))
-	{
-	  if (words < 2)
-		 {
-    	      ctl->cmsg(CMSG_ERROR, VERB_NORMAL, "%s: line %d: No number given after \"voices\"\n", name, line);
-	      return -2;
-		 }
-	  voices=atoi(w[1]);
-	  if (voices > MAX_VOICES) voices = MAX_VOICES;
-	}
-
-      /******* default ********/
-		else if (!strcmp(w[0], "default"))
-	{
-	  if (words != 2)
-	    {
-    	      ctl->cmsg(CMSG_ERROR, VERB_NORMAL, "%s: line %d: Must specify exactly one patch name\n",
-		      name, line);
-	      return -2;
-	    }
-	  strncpy(def_instr_name, w[1], 255);
-	  def_instr_name[255]='\0';
-	}
-      /******* drumset ********/
-		else if (!strcmp(w[0], "drumset"))
-	{
-	  if (words < 2)
-	    {
-    	      ctl->cmsg(CMSG_ERROR, VERB_NORMAL, "%s: line %d: No drum set number given\n", 
-		      name, line);
-			return -2;
-	    }
-	  i=atoi(w[1]);
-	  if (i<0 || i>127)
-		 {
-    	      ctl->cmsg(CMSG_ERROR, VERB_NORMAL,
-		      "%s: line %d: Drum set must be between 0 and 127\n",
-				name, line);
-	      return -2;
-		 }
-	  if (!drumset[i])
-	         {
-	      		drumset[i]=(ToneBank *)safe_malloc(sizeof(ToneBank));
-			memset(drumset[i], 0, sizeof(ToneBank));
-		 }
-	  banknum=i;
-	  bank=drumset[i];
-	  font_type=FONT_NORMAL;
-	  if (words > 2)
-		{
-			if (!strcmp(w[2], "sbk")) font_type = FONT_SBK;
-			else if (!strcmp(w[2], "sf")) font_type = FONT_SBK;
-			else if (!strcmp(w[2], "fff")) font_type = FONT_FFF;
-			else if (!bank->name)
-			  strcpy((bank->name=(char *)safe_malloc(strlen(w[2])+1)),w[2]);
-			if (words > 3 && !bank->name)
-			  strcpy((bank->name=(char *)safe_malloc(strlen(w[3])+1)),w[3]);
-		}
-	}
-      /******* bank ********/
-		else if (!strcmp(w[0], "bank"))
-	{
-	  if (words < 2)
-		 {
-    	      ctl->cmsg(CMSG_ERROR, VERB_NORMAL,
-	      		"%s: line %d: No bank number given\n", 
-				name, line);
-	      return -2;
-		 }
-	  i=atoi(w[1]);
-	  if (i<0 || i>127)
-	    {
-    	      ctl->cmsg(CMSG_ERROR, VERB_NORMAL,
-		      "%s: line %d: Tone bank must be between 0 and 127\n",
-				name, line);
-	      return -2;
-	    }
-	  if (!tonebank[i])
-		 {
-			tonebank[i]=(ToneBank *)safe_malloc(sizeof(ToneBank));
-	      		memset(tonebank[i], 0, sizeof(ToneBank));
-	         }
-	  banknum=i;
-	  bank=tonebank[i];
-	  font_type=FONT_NORMAL;
-	  if (words > 2)
-		{
-			if (!strcmp(w[2], "sbk")) font_type = FONT_SBK;
-			else if (!strcmp(w[2], "sf")) font_type = FONT_SBK;
-			else if (!strcmp(w[2], "fff")) font_type = FONT_FFF;
-			else if (!bank->name)
-			  strcpy((bank->name=(char *)safe_malloc(strlen(w[2])+1)),w[2]);
-			if (words > 3 && !bank->name)
-			  strcpy((bank->name=(char *)safe_malloc(strlen(w[3])+1)),w[3]);
-		}
-	}
-      /******* sfx ********/
-		else if (!strcmp(w[0], "sfx"))
-	{
-	  i=SFXBANK;
-	  if (!tonebank[i])
-		 {
-			tonebank[i]=(ToneBank *)safe_malloc(sizeof(ToneBank));
-	      		memset(tonebank[i], 0, sizeof(ToneBank));
-	         }
-	  banknum=i;
-	  bank=tonebank[i];
-	  font_type=FONT_NORMAL;
-	  if (words > 1)
-		{
-			if (!strcmp(w[1], "sbk")) font_type = FONT_SBK;
-			else if (!strcmp(w[1], "sf")) font_type = FONT_SBK;
-			else if (!strcmp(w[1], "fff")) font_type = FONT_FFF;
-			else if (!bank->name)
-			  strcpy((bank->name=(char *)safe_malloc(strlen(w[1])+1)),w[1]);
-			if (words > 2 && !bank->name)
-			  strcpy((bank->name=(char *)safe_malloc(strlen(w[2])+1)),w[2]);
-		}
-	}
-      /******* drumsfx1 ********/
-		else if (!strcmp(w[0], "drumsfx1"))
-	{
-	  i=SFXDRUM1;
-	  if (!drumset[i])
-		 {
-			drumset[i]=(ToneBank *)safe_malloc(sizeof(ToneBank));
-	      		memset(drumset[i], 0, sizeof(ToneBank));
-	         }
-	  banknum=i;
-	  bank=drumset[i];
-	  font_type=FONT_NORMAL;
-	  if (words > 1)
-		{
-			if (!strcmp(w[1], "sbk")) font_type = FONT_SBK;
-			else if (!strcmp(w[1], "sf")) font_type = FONT_SBK;
-			else if (!strcmp(w[1], "fff")) font_type = FONT_FFF;
-			else if (!bank->name)
-			  strcpy((bank->name=(char *)safe_malloc(strlen(w[1])+1)),w[1]);
-			if (words > 2 && !bank->name)
-			  strcpy((bank->name=(char *)safe_malloc(strlen(w[2])+1)),w[2]);
-		}
-	}
-      /******* drumsfx2 ********/
-		else if (!strcmp(w[0], "drumsfx2"))
-	{
-	  i=SFXDRUM2;
-	  if (!drumset[i])
-		 {
-			drumset[i]=(ToneBank *)safe_malloc(sizeof(ToneBank));
-	      		memset(drumset[i], 0, sizeof(ToneBank));
-	         }
-	  banknum=i;
-	  bank=drumset[i];
-	  font_type=FONT_NORMAL;
-	  if (words > 1)
-		{
-			if (!strcmp(w[1], "sbk")) font_type = FONT_SBK;
-			else if (!strcmp(w[1], "sf")) font_type = FONT_SBK;
-			else if (!strcmp(w[1], "fff")) font_type = FONT_FFF;
-			else if (!bank->name)
-			  strcpy((bank->name=(char *)safe_malloc(strlen(w[1])+1)),w[1]);
-			if (words > 2 && !bank->name)
-			  strcpy((bank->name=(char *)safe_malloc(strlen(w[2])+1)),w[2]);
-		}
-	}
-#ifdef FFF_HAS_BEEN_FIXED
-      /******* fff ********/
-		else if (!strcmp(w[0], "fff"))
-	{
-	  extern int loadfff(char *, int, int);
-	  if (words < 2)
-		 {
-    	      ctl->cmsg(CMSG_ERROR, VERB_NORMAL,
-	      		"%s: line %d: No fff filename given\n", 
-				name, line);
-	      return -2;
-		 }
-	  if (words > 2) loadfff(w[1], banknum, atoi(w[2]));
-	  else loadfff(w[1], banknum, -1);
-	}
-#endif
-      /******* glib ********/
-		else if (!strcmp(w[0], "glib"))
-	{
-	  /* not implemented: this is just for Adagio --gl */ ;
-	}
-      /******* map ********/
-		else if (!strcmp(w[0], "map"))
-	{
-	  /* not implemented: this is just for TiMidity++ --gl */ ;
-	}
-      /******* sf/soundfont ********/
-		else if (!strcmp(w[0], "soundfont") || !strcmp(w[0], "sbk") || !strcmp(w[0], "sf"))
-	{
-	      int sf_oldbank, sf_newbank = banknum;
-	      if (bank && bank == drumset[banknum]) sf_newbank += 256;
-	      sf_oldbank = sf_newbank;
-	      if (words < 2) {
-    	      	      ctl->cmsg(CMSG_ERROR, VERB_NORMAL,
-			 "%s: line %d: No soundfont file given\n", 
-			      name, line);
-		      return -2;
-	      }
-	      for (j = 2; j < words; j++) {
-		      if (!(cp = strchr(w[j], '='))) {
-    	      	      ctl->cmsg(CMSG_ERROR, VERB_NORMAL,
-			      "%s: line %d: bad patch option %s\n",
-				      name, line, w[j]);
-			      return -2;
-		      }
-		      *cp++=0;
-		      if (!strcmp(w[j], "oldbank")) {
-			      k = atoi(cp);
-			      if (k < 0 || (*cp < '0' || *cp > '9')) {
-    	      	      		      ctl->cmsg(CMSG_ERROR, VERB_NORMAL,
-					      "%s: line %d: oldbank must be a number", name, line);
-				      return -2;
-			      }
-			      sf_oldbank = k;
-		      }
-
-	      }
-	      init_soundfont(w[1], sf_oldbank, sf_newbank, rcf_count);
-	}
-      /******* patch declaration ********/
-		else
-	{
-	if ((words < 2) || (*w[0] < '0' || *w[0] > '9'))
-	  {
-    	      	 ctl->cmsg(CMSG_ERROR, VERB_NORMAL,
-		 		"%s: line %d: syntax error\n", name, line);
-		 return -2;
-	  }
-	i=atoi(w[0]);
-	if (i<0 || i>127)
-	  {
-    	    ctl->cmsg(CMSG_ERROR, VERB_NORMAL,
-	    		"%s: line %d: Program must be between 0 and 127\n",
-		    name, line);
-	    return -2;
-	  }
-	if (!bank)
-	  {
-    	    ctl->cmsg(CMSG_ERROR, VERB_NORMAL,
-			 "%s: line %d: Must specify tone bank or drum set "
-		    "before assignment\n",
-		    name, line);
-		 return -2;
-	  }
-	if (bank->tone[i].name) continue;
-	
-	strcpy((bank->tone[i].name=(char *)safe_malloc(strlen(w[1])+1)),w[1]);
-	bank->tone[i].note=bank->tone[i].amp=bank->tone[i].pan=
-	  bank->tone[i].strip_loop=bank->tone[i].strip_envelope=
-	    bank->tone[i].sf_ix=
-	    bank->tone[i].strip_tail=bank->tone[i].last_used=-1;
-	bank->tone[i].font_type=font_type;
-	bank->tone[i].layer=0;
-
-	for (j=2; j<words; j++)
-	  {
-	    if (!(cp=strchr(w[j], '=')))
-	      {
-    	        ctl->cmsg(CMSG_ERROR, VERB_NORMAL,
-			"%s: line %d: bad patch option %s\n",
-			name, line, w[j]);
-		return -2;
-	      }
-	  
-	    *cp++=0;
-	    
-	    if (!strcmp(w[j], "amp"))
-			{
-		k=atoi(cp);
-		if ((k<0 || k>MAX_AMPLIFICATION) || (*cp < '0' || *cp > '9'))
-		  {
-    	        	 ctl->cmsg(CMSG_ERROR, VERB_NORMAL,
-			    "%s: line %d: amplification must be between "
-				 "0 and %d\n", name, line, MAX_AMPLIFICATION);
-			 return -2;
-		  }
-		bank->tone[i].amp=k;
-	      }
-	    else if (!strcmp(w[j], "note"))
-	      {
-		k=atoi(cp);
-		if ((k<0 || k>127) || (*cp < '0' || *cp > '9'))
-		  {
-    	        	 ctl->cmsg(CMSG_ERROR, VERB_NORMAL,
-				 "%s: line %d: note must be between 0 and 127\n",
-			    name, line);
-		    return -2;
-		  }
-		bank->tone[i].note=k;
-	      }
-	    else if (!strcmp(w[j], "pan"))
-	      {
-		if (!strcmp(cp, "center"))
-		  k=64;
-		else if (!strcmp(cp, "left"))
-		  k=0;
-		else if (!strcmp(cp, "right"))
-		  k=127;
-		else
-		  k=((atoi(cp)+100) * 100) / 157;
-		if ((k<0 || k>127) ||
-			 (k==0 && *cp!='-' && (*cp < '0' || *cp > '9')))
-		  {
-    	        	 ctl->cmsg(CMSG_ERROR, VERB_NORMAL,
-				 "%s: line %d: panning must be left, right, "
-				 "center, or between -100 and 100\n",
-				 name, line);
-			 return -2;
-		  }
-		bank->tone[i].pan=k;
-	      }
-	    else if (!strcmp(w[j], "keep"))
-	      {
-		if (!strcmp(cp, "env"))
-		  bank->tone[i].strip_envelope=0;
-		else if (!strcmp(cp, "loop"))
-		  bank->tone[i].strip_loop=0;
-		else
-		  {
-    	        	 ctl->cmsg(CMSG_ERROR, VERB_NORMAL,
-			 	"%s: line %d: keep must be env or loop\n",
-				 name, line);
-			 return -2;
-		  }
-	      }
-	    else if (!strcmp(w[j], "strip"))
-			{
-		if (!strcmp(cp, "env"))
-		  bank->tone[i].strip_envelope=1;
-		else if (!strcmp(cp, "loop"))
-		  bank->tone[i].strip_loop=1;
-		else if (!strcmp(cp, "tail"))
-		  bank->tone[i].strip_tail=1;
-		else
-		  {
-    	        	 ctl->cmsg(CMSG_ERROR, VERB_NORMAL,
-			 	"%s: line %d: strip must be env, loop, or tail\n",
-				 name, line);
-			 return -2;
-		  }
-			}
-		 else
-			{
-    	        ctl->cmsg(CMSG_ERROR, VERB_NORMAL,
-			"%s: line %d: bad patch option %s\n",
-			name, line, w[j]);
-		return -2;
-			}
-	  }
-		}
-	 }
-  if (ferror(fp))
-	 {
-    	        ctl->cmsg(CMSG_ERROR, VERB_NORMAL,
-			"Can't read %s: %s\n", name, sys_errlist[errno]);
-		close_file(fp);
-		return -2;
-	 }
-  close_file(fp);
-  return 0;
-}
 
 int reverb_options=7;
 int global_reverb = 0;
@@ -902,8 +431,13 @@ int main(int argc, char **argv)
      kmidi_config = (char *)safe_malloc(strlen(KDEdir)+strlen(KMIDI_CONFIG_SUBDIR)+1);
      strcpy(kmidi_config, KDEdir);
      strcat(kmidi_config, KMIDI_CONFIG_SUBDIR); 
-     add_to_pathlist(kmidi_config, 0);
+     /* add_to_pathlist(kmidi_config, 0); */
    }
+   add_to_pathlist(kmidi_config, 0);
+#else
+#ifdef DEFAULT_PATH
+   add_to_pathlist(DEFAULT_PATH, 0);
+#endif
 #endif
 
 
@@ -1173,7 +707,8 @@ int main(int argc, char **argv)
 	read_config_file(current_config_file, 0);
 #endif
  
-	ctl->pass_playing_list(argc-optind, &argv[orig_optind]);
+	/* ctl->pass_playing_list(argc-optind, &argv[orig_optind]); */
+	ctl->pass_playing_list(argc-optind, (const char **)&argv[orig_optind]);
 
 	play_mode->close_output();
 	ctl->close();

@@ -10,7 +10,7 @@ VERSION = 0.2i
 
 INCLUDES = $(all_includes)
 AM_CPPFLAGS = -DDEFAULT_PATH=\"$(TIMID_DIR)\" -DKMIDI $(EXTRADEFS) $(CPPFLAGS)
-CFLAGS = -O -Wall -W -Wpointer-arith -Wmissing-prototypes -Wwrite-strings -Wconversion $(CPPFLAGS)
+#KDE_CXXFLAGS += -O3 -fomit-frame-pointer -ffast-math -malign-double -march=i586
 LDFLAGS = $(all_libraries) $(KDE_RPATH)
 LDADD = $(LIB_KDEUI) $(LIBALIB) $(LIBAUDIO) $(LIBMME) $(LIB_KFILE) $(EXTRALIBS)
 
@@ -32,7 +32,7 @@ kmidi_SOURCES = kmidi.cpp  playlist.cpp bwlednum.cpp configdlg.cpp log.cpp \
 	docking.cpp table.cpp \
 	timidity.cpp common.cpp readmidi.cpp playmidi.cpp resample.cpp mix.cpp instrum.cpp \
 	tables.cpp controls.cpp output.cpp filter.cpp wave_a.cpp raw_a.cpp dumb_c.cpp \
-	sndfont.cpp readsbk.cpp ctl.cpp \
+	sndfont.cpp readsbk.cpp ctl.cpp cfg.cpp \
 	linux_a.cpp dec_a.cpp sun_a.cpp hpux_a.cpp hpux_d_a.cpp alsa_a.cpp \
 	bsd20_a.cpp esd_a.cpp nas_a.cpp \
 	b_out.cpp fffload.cpp \
@@ -64,6 +64,10 @@ pics_DATA = kmidilogo.png mini-kmidi.png
 
 EXTRA_DIST = $(apps_DATA) $(pics_DATA) 
 
+
+cfg.cpp: cfg.l
+	rm -f cfg.cpp
+	flex -t -B cfg.l >cfg.cpp
 
 install-data-local:
 	$(mkinstalldirs) $(TIMID_DIR)/patch

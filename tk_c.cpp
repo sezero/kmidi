@@ -38,7 +38,7 @@ static void ctl_master_volume(int mv);
 static void ctl_file_name(char *name);
 static void ctl_current_time(uint32 ct);
 static void ctl_note(int v);
-static void ctl_program(int ch, int val, char *name);
+static void ctl_program(int ch, int val, const char *name);
 static void ctl_volume(int ch, int val);
 static void ctl_expression(int ch, int val);
 static void ctl_panning(int ch, int val);
@@ -49,10 +49,10 @@ static int ctl_open(int using_stdin, int using_stdout);
 static void ctl_close(void);
 static int ctl_read(int32 *valp);
 static int cmsg(int type, int verbosity_level, char *fmt, ...);
-static void ctl_pass_playing_list(int number_of_files, char *list_of_files[]);
+static void ctl_pass_playing_list(int number_of_files, const char *list_of_files[]);
 static int ctl_blocking_read(int32 *valp);
 
-static void pipe_printf(char *fmt, ...);
+static void pipe_printf(const char *fmt, ...);
 static void pipe_puts(char *str);
 static int pipe_gets(char *str, int maxlen);
 static void pipe_open();
@@ -230,7 +230,7 @@ static void ctl_note(int v)
 	ctl_channel_note(ch, note, vel);
 }
 
-static void ctl_program(int ch, int val, char *name)
+static void ctl_program(int ch, int val, const char *name)
 {
 	if (!ctl.trace_playing) 
 		return;
@@ -419,7 +419,7 @@ static int ctl_read(int32 *valp)
 	return(ctl_blocking_read(valp));
 }
 
-static void ctl_pass_playing_list(int number_of_files, char *list_of_files[])
+static void ctl_pass_playing_list(int number_of_files, const char *list_of_files[])
 {
 	int i=0;
 	char local[1000];
@@ -561,7 +561,7 @@ static void pipe_error(char *st)
 }
 
 
-static void pipe_printf(char *fmt, ...)
+static void pipe_printf(const char *fmt, ...)
 {
 	char buf[256];
 	va_list ap;
@@ -697,7 +697,7 @@ static int ExitAll(ClientData clientData, Tcl_Interp *interp,
 }
 
 /* evaluate Tcl script */
-static char *v_eval(char *fmt, ...)
+static char *v_eval(const char *fmt, ...)
 {
 	char buf[256];
 	va_list ap;
@@ -708,7 +708,7 @@ static char *v_eval(char *fmt, ...)
 	return my_interp->result;
 }
 
-static char *v_get2(char *v1, char *v2)
+static char *v_get2(const char *v1, const char *v2)
 {
 	return Tcl_GetVar2(my_interp, v1, v2, 0);
 }

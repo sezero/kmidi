@@ -69,7 +69,7 @@ typedef struct {
   int verbosity, trace_playing, opened;
 
   int (*open)(int using_stdin, int using_stdout);
-  void (*pass_playing_list)(int number_of_files, char *list_of_files[]);
+  void (*pass_playing_list)(int number_of_files, const char *list_of_files[]);
   void (*close)(void);
   int (*read)(int32 *valp);
   int (*cmsg)(int type, int verbosity_level, const char *fmt, ...);
@@ -82,7 +82,7 @@ typedef struct {
 
   void (*note)(int v);
   void (*master_volume)(int mv);
-  void (*program)(int channel, int val, char *name);
+  void (*program)(int channel, int val, const char *name);
   void (*volume)(int channel, int val);
   void (*expression)(int channel, int val);
   void (*panning)(int channel, int val);

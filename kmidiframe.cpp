@@ -38,12 +38,7 @@
 
 #include "kmidi.h"
 
-//#include "playlist.h"
-//#include "midiapplication.h"
 #include "kmidiframe.h"
-//#include <kstddirs.h>
-//#include <kglobal.h>
-//#include <kwm.h>
 
 
 int menubarheight = 0;
@@ -65,6 +60,9 @@ KMidiFrame::KMidiFrame( const char *name ) :
 {
 
     menuBar = new KMenuBar(this);
+    menuBar->enableMoving(false);
+    menuBar->enableFloating(false);
+
     QPopupMenu *fileMenu = new QPopupMenu;
     menuBar->insertItem("&File", fileMenu);
 
@@ -155,6 +153,11 @@ KMidiFrame::KMidiFrame( const char *name ) :
 				"For other instruments, position is<br>\n"
 				"made a function of note<br>\n"
 				"velocity.") );
+	stereo_options->insertSeparator();
+	stereo_options->insertItem(  i18n("Surround stereo") , 113);
+	stereo_options->setWhatsThis(112, i18n("Extra stereo, echo, and<br>" \
+				"detuned notes are spread out more<br>" \
+				"to left and right.") );
 
     reverb_options = new QPopupMenu();
     CHECK_PTR( reverb_options );
@@ -292,6 +295,42 @@ KMidiFrame::KMidiFrame( const char *name ) :
     connect( detune_level, SIGNAL(activated(int)), this, SLOT(doDetuneLevel(int)) );
     connect( detune_level, SIGNAL(aboutToShow()), this, SLOT(fixDetuneLevelItems()) );
 
+    volume_options = new QPopupMenu();
+    CHECK_PTR( volume_options );
+    //volume_options->setCheckable( TRUE );
+    menuBar->insertItem( i18n("Volume"), volume_options );
+    //connect( volume_options, SIGNAL(activated(int)), this, SLOT(doVolumeMenuItem(int)) );
+    volume_curve = new QPopupMenu();
+    CHECK_PTR( volume_curve );
+    volume_curve->setCheckable( TRUE );
+    volume_options->insertItem( i18n("Volume Curve"), volume_curve);
+    connect( volume_curve, SIGNAL(activated(int)), this, SLOT(doVolumeCurve(int)) );
+    connect( volume_curve, SIGNAL(aboutToShow()), this, SLOT(fixVolumeCurveItems()) );
+        volume_curve->insertItem( i18n("linear") , 180);
+	volume_curve->setWhatsThis(180, i18n("The midi volume controller<br>" \
+				"changes the volume linearly." ) );
+        volume_curve->insertItem( i18n("exp 4") , 181);
+	volume_curve->setWhatsThis(181, i18n("The midi volume controller<br>" \
+				"changes the volume exponentially." ) );
+        volume_curve->insertItem( i18n("exp 6") , 182);
+	volume_curve->setWhatsThis(182, i18n("The midi volume controller<br>" \
+				"changes the volume exponentially." ) );
+    volume_options->insertSeparator();
+    expression_curve = new QPopupMenu();
+    CHECK_PTR( expression_curve );
+    expression_curve->setCheckable( TRUE );
+    volume_options->insertItem( i18n("Expression Curve"), expression_curve);
+    connect( expression_curve, SIGNAL(activated(int)), this, SLOT(doExpressionCurve(int)) );
+    connect( expression_curve, SIGNAL(aboutToShow()), this, SLOT(fixExpressionCurveItems()) );
+        expression_curve->insertItem( i18n("linear") , 190);
+	expression_curve->setWhatsThis(190, i18n("The midi expression controller<br>" \
+				"changes the expression linearly." ) );
+        expression_curve->insertItem( i18n("exp 4") , 191);
+	expression_curve->setWhatsThis(191, i18n("The midi expression controller<br>" \
+				"changes the expression exponentially." ) );
+        expression_curve->insertItem( i18n("exp 6") , 192);
+	expression_curve->setWhatsThis(192, i18n("The midi expression controller<br>" \
+				"changes the expression exponentially." ) );
 
     menuBar->insertSeparator();
 
@@ -426,11 +465,16 @@ void KMidiFrame::doStereoMenuItem(int id) {
 	else if (id == 112) kmidi->rcb1->setChecked(true);
 	kmidi->updateRChecks(0);
     }
+    else if (id == 113) {
+        if (( kmidi->evs_state  & 0x0f ) == 1) kmidi->setSurround(0);
+	else kmidi->setSurround(1);
+    }
 }
 void KMidiFrame::fixStereoItems() {
     stereo_options->setItemChecked( 110, kmidi->stereo_state == 0);
     stereo_options->setItemChecked( 111, kmidi->stereo_state == 1);
     stereo_options->setItemChecked( 112, kmidi->stereo_state == 2);
+    stereo_options->setItemChecked( 113, ( kmidi->evs_state  & 0x0f ) == 1);
 }
 void KMidiFrame::doReverbMenuItem(int id) {
     if (id == 119) kmidi->setDry(!kmidi->dry_state);
@@ -512,6 +556,24 @@ void KMidiFrame::fixDetuneLevelItems() {
     detune_level->setItemChecked( 152, kmidi->detune_state == 3);
     detune_level->setItemChecked( 153, kmidi->detune_state == 4);
     detune_level->setItemChecked( 154, kmidi->detune_state == 5);
+}
+void KMidiFrame::doVolumeCurve(int id) {
+    kmidi->setVolumeCurve(id - 180);
+}
+void KMidiFrame::fixVolumeCurveItems() {
+    int v_state = (kmidi->evs_state >> 4) & 0x0f;
+    volume_curve->setItemChecked( 180, v_state == 0);
+    volume_curve->setItemChecked( 181, v_state == 1);
+    volume_curve->setItemChecked( 182, v_state == 2);
+}
+void KMidiFrame::doExpressionCurve(int id) {
+    kmidi->setExpressionCurve(id - 190);
+}
+void KMidiFrame::fixExpressionCurveItems() {
+    int e_state = (kmidi->evs_state >> 8) & 0x0f;
+    expression_curve->setItemChecked( 190, e_state == 0);
+    expression_curve->setItemChecked( 191, e_state == 1);
+    expression_curve->setItemChecked( 192, e_state == 2);
 }
 
 #include "kmidiframe.moc"

@@ -86,16 +86,12 @@ static unsigned max_polyphony = 0;
 #endif
 
 #ifdef tplus
-#if 0
-int opt_realtime_playing = 0;
-int opt_modulation_wheel = 1;
-int opt_portamento = 1;
-int opt_channel_pressure = 1;
-int opt_overlap_voice_allow = 1;
-#endif
 int dont_cspline=0;
 #endif
 int opt_dry = 0;
+int opt_expression_curve = 1;
+int opt_volume_curve = 1;
+int opt_stereo_surround = 1;
 int dont_filter_melodic=1;
 int dont_filter_drums=1;
 int dont_chorus=0;
@@ -488,20 +484,27 @@ static void recompute_amp(int v)
   int32 tempamp;
   int chan = voice[v].channel;
   int vol = channel[chan].volume;
+  int expr = channel[chan].expression;
   int vel = vcurve[voice[v].velocity];
-
+  FLOAT_T curved_expression, curved_volume;
 
   /* TODO: use fscale */
 
   if (channel[chan].kit)
    {
     int note = voice[v].sample->note_to_use;
-    if (note && drumvolume[chan][note]>=0) vol = drumvolume[chan][note];
+    if (note>0 && drumvolume[chan][note]>=0) vol = drumvolume[chan][note];
    }
 
-  tempamp= (int32)((FLOAT_T)vel *
-	    127.0 * expr_table[vol] * 
-	    127.0 * expr_table[channel[chan].expression] ); /* 21 bits */
+  if (opt_expression_curve == 2) curved_expression = 127.0 * def_vol_table[expr];
+  else if (opt_expression_curve == 1) curved_expression = 127.0 * expr_table[expr];
+  else curved_expression = (FLOAT_T)expr;
+
+  if (opt_volume_curve == 2) curved_volume = 127.0 * def_vol_table[vol];
+  else if (opt_volume_curve == 1) curved_volume = 127.0 * expr_table[vol];
+  else curved_volume = (FLOAT_T)vol;
+
+  tempamp= (int32)((FLOAT_T)vel * curved_volume * curved_expression); /* 21 bits */
 
   if (!(play_mode->encoding & PE_MONO))
     {
@@ -739,24 +742,28 @@ static void clone_voice(Instrument *ip, int v, MidiEvent *e, uint8 clone_type, i
 	  right = w;
 	}
 	if (panrequest < 64) {
-#if 0
-	  if (voice[left].sample->panning < panrequest)
+	  if (opt_stereo_surround) {
+	    voice[left].panning = 0;
+	    voice[right].panning = panrequest;
+	  }
+	  else {
+	    if (voice[left].sample->panning < panrequest)
 		voice[left].panning = voice[left].sample->panning;
-	  else voice[left].panning = panrequest;
-	  voice[right].panning = (voice[right].sample->panning + panrequest + 32) / 2;A
-#endif
-	  voice[left].panning = 0;
-	  voice[right].panning = panrequest;
+	    else voice[left].panning = panrequest;
+	    voice[right].panning = (voice[right].sample->panning + panrequest + 32) / 2;
+	  }
 	}
 	else {
-#if 0
-	  if (voice[right].sample->panning > panrequest)
+	  if (opt_stereo_surround) {
+	    voice[left].panning = panrequest;
+	    voice[right].panning = 127;
+	  }
+	  else {
+	    if (voice[right].sample->panning > panrequest)
 		voice[right].panning = voice[right].sample->panning;
-	  else voice[right].panning = panrequest;
-	  voice[left].panning = (voice[left].sample->panning + panrequest - 32) / 2;A
-#endif
-	  voice[left].panning = panrequest;
-	  voice[right].panning = 127;
+	    else voice[right].panning = panrequest;
+	    voice[left].panning = (voice[left].sample->panning + panrequest - 32) / 2;
+	  }
 	}
     }
 #ifdef DEBUG_CLONE_NOTES
@@ -782,12 +789,14 @@ fprintf(stderr,"STEREO_CLONE v%d vol%f pan%d\n", w, voice[w].volume, voice[w].pa
 	if (voice[w].panning < 64) voice[w].panning = 127;
 	else voice[w].panning = 0;
 #endif
-#if 0
-	if (voice[v].panning < 64) voice[w].panning = 64 + reverb/2;
-	else voice[w].panning = 64 - reverb/2;
-#endif
+    if (opt_stereo_surround) {
 	if (voice[w].panning > 64) voice[w].panning = 127;
 	else voice[w].panning = 0;
+    }
+    else {
+	if (voice[v].panning < 64) voice[w].panning = 64 + reverb/2;
+	else voice[w].panning = 64 - reverb/2;
+    }
 
 #ifdef DEBUG_REVERBERATION
 printf("r=%d vol %f", reverb, voice[w].volume);
@@ -873,8 +882,10 @@ fprintf(stderr,"REVERB_CLONE v%d vol=%f pan=%d reverb=%d delay=%dms\n", w, voice
 /*fprintf(stderr, "voice %d v sweep from %ld (cr %d, depth %d)", w, voice[w].vibrato_sweep,
 	 voice[w].vibrato_control_ratio, voice[w].vibrato_depth);*/
 
-	if (voice[v].panning < 64) voice[w].panning = voice[v].panning + 32;
-	else voice[w].panning = voice[v].panning - 32;
+	if (opt_stereo_surround) {
+	  if (voice[v].panning < 64) voice[w].panning = voice[v].panning + 32;
+	  else voice[w].panning = voice[v].panning - 32;
+	}
 
 	if (!voice[w].vibrato_control_ratio) {
 		voice[w].vibrato_control_ratio = 100;
@@ -3023,7 +3034,7 @@ static void read_seq(unsigned char *from, unsigned char *to)
 
 
 #ifndef ADAGIO
-int play_midi_file(char *fn)
+int play_midi_file(const char *fn)
 {
   MidiEvent *event;
   uint32 events, samples;
@@ -3076,7 +3087,7 @@ int play_midi_file(char *fn)
 }
 #endif
 
-void dumb_pass_playing_list(int number_of_files, char *list_of_files[])
+void dumb_pass_playing_list(int number_of_files, const char *list_of_files[])
 {
 #ifndef ADAGIO
     int i=0;

@@ -176,6 +176,9 @@ ConfigDlg::ConfigDlg(QWidget *parent, struct configstruct *data, const char *nam
     about->addContributor("Masanao Izumo", "mo@goice.co.jp",
 			"http://www.goice.co.jp/member/mo/timidity.html",
 		       i18n("mod wheel, portamento ..."));
+    about->addContributor("see the timidity.1 man page", "for authors of",
+			"", 
+		       i18n("drivers, interfaces, configure scripts"));
 
     connect(about, SIGNAL( sendEmail(const QString& , const QString& ) ),
 	this, SLOT ( sendEmailSlot(const QString& , const QString& ) ) );

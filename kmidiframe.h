@@ -25,34 +25,6 @@
 
 #include "version.h"
 
-//#include <qfileinfo.h>
-//#include <qdatastream.h> 
-//#include <qfile.h> 
-//#include <qtabdialog.h> 
-//#include <qfiledialog.h>
-//#include <qpushbutton.h>
-//#include <qradiobutton.h>
-//#include <qlabel.h>
-//#include <qdialog.h>
-//#include <qapplication.h>
-//#include <qpopupmenu.h>
-//#include <qtimer.h>
-//#include <qbitmap.h>
-//#include <qslider.h>
-//#include <qgroupbox.h>
-//#include <qcombobox.h>
-//#include <qscrollbar.h>
-//#include <qspinbox.h>
-//#include <qbuttongroup.h>
-//#include <qcheckbox.h>
-//#include <qtooltip.h>
-//#include <qregexp.h>
-//#include <qgroupbox.h>
-//#include <qwidget.h>
-//#include <qpainter.h>
-//#include <qdragobject.h>
-//#include <qwhatsthis.h>
-
 #include <pwd.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -67,9 +39,7 @@
 #include <fcntl.h>
 #include <sys/ioctl.h>
 
-//#include <kapp.h>
 #include <ktmainwindow.h>
-//#include <kled.h>
 #include <kmenubar.h>
 
 
@@ -113,6 +83,12 @@ protected slots:
 	void		fixEchoLevelItems();
 	void		fixDetuneLevelItems();
 
+	//void		doVolumeMenuItem(int);
+	void		doVolumeCurve(int);
+	void		doExpressionCurve(int);
+	void		fixVolumeCurveItems();
+	void		fixExpressionCurveItems();
+
 private:
 	int		m_on_id, m_off_id, i_on_id, i_off_id;
 	QPopupMenu	*view_options;
@@ -124,6 +100,10 @@ private:
 	QPopupMenu	*reverb_options;
 	QPopupMenu	*echo_level;
 	QPopupMenu	*reverb_level;
+
+	QPopupMenu	*volume_options;
+	QPopupMenu	*expression_curve;
+	QPopupMenu	*volume_curve;
 
 };
 

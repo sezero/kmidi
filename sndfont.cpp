@@ -102,7 +102,7 @@ static int search_sample(Layer *lay);
 static void append_layer(Layer *dst, Layer *src, SFInfo *sf);
 static void make_inst(SFInsts *rec, Layer *lay, SFInfo *sf, int pr_idx, int in_idx, int inum,
 	uint16 pk_range, uint16 pv_range, int num_i, int program);
-static int32 calc_root_pitch(Layer *lay, SFInfo *sf, SampleList *sp);
+static int32 calc_root_pitch(Layer *lay, SFInfo *sf, SampleList *sp, int32 cfg_tuning);
 static void convert_volume_envelope(Layer *lay, SFInfo *sf, SampleList *sp, int banknum, int preset);
 static void convert_modulation_envelope(Layer *lay, SFInfo *sf, SampleList *sp, int banknum, int preset);
 static uint32 to_offset(uint32 offset);
@@ -149,7 +149,11 @@ static SFInfo sfinfo;
 #ifdef READ_WHOLE_SF_FILE
 static int sf_size_of_contents;
 
+#ifndef USE_POSIX_MAPPED_FILES
 static unsigned char *read_whole_sf(FILE *fd) {
+#else
+static unsigned char *read_whole_sf() {
+#endif
     struct stat info;
     unsigned char *sf_contents;
 
@@ -277,7 +281,11 @@ void init_soundfont(char *fname, int oldbank, int newbank, int level)
 
 
 #ifdef READ_WHOLE_SF_FILE
+#ifndef USE_POSIX_MAPPED_FILES
 	sf_contents = read_whole_sf(sfrec[current_sf_index].fd);
+#else
+	sf_contents = read_whole_sf();
+#endif
 	for (ip = sfrec[current_sf_index].instlist; ip; ip = ip->next) {
 	    if (!ip->already_loaded) {
 		ip->contents = sf_contents;
@@ -377,7 +385,7 @@ InstrumentLayer *load_sbk_patch(int gm_num, int tpgm, int reverb, int main_volum
     char *name;
     int percussion, amp=-1, keynote, strip_loop, strip_envelope, strip_tail, bank, newmode;
 #else
-InstrumentLayer *load_sbk_patch(char *name, int gm_num, int bank, int percussion,
+InstrumentLayer *load_sbk_patch(const char *name, int gm_num, int bank, int percussion,
 			   int panning, int amp, int keynote, int sf_ix) {
 #endif
 	int preset;
@@ -1012,10 +1020,11 @@ static void make_inst(SFInsts *rec, Layer *lay, SFInfo *sf, int pr_idx, int in_i
 	int sub_banknum = sf->presethdr[pr_idx].sub_bank;
 	int sub_preset = sf->presethdr[pr_idx].sub_preset;
 	int keynote, truebank, note_to_use, velrange;
-	int strip_loop = 0, strip_envelope = 0, strip_tail = 0, panning = 0;
+	int strip_loop = 0, strip_envelope = 0,
+		strip_tail = 0, panning = 0, cfg_tuning = 0;
 #ifndef ADAGIO
 	ToneBank *bank=0;
-	char **namep;
+	const char **namep;
 #endif
 	InstList *ip;
 	tsampleinfo *sample;
@@ -1115,6 +1124,7 @@ fprintf(stderr,"Adding keynote #%d preset %d to %s (%d), bank %d (=? %d).\n", ke
 	strip_envelope = bank->tone[program].strip_envelope;
 	strip_tail = bank->tone[program].strip_tail;
 	note_to_use = bank->tone[program].note;
+	cfg_tuning = bank->tone[program].tuning;
 	/*if (!strip_envelope) strip_envelope = (banknum == 128);*/
 #endif
 
@@ -1428,7 +1438,7 @@ if (strip_loop == 1) {
 /**  **/
 
 	/* root pitch */
-	sp->v.root_freq = calc_root_pitch(lay, sf, sp);
+	sp->v.root_freq = calc_root_pitch(lay, sf, sp, cfg_tuning);
 /* *
 if (banknum < 128 && (preset == 11 || preset == 42))
 fprintf(stderr, "preset %d, root_freq %ld (scale tune %d, freq scale %d, center %d)\n", preset, sp->v.root_freq,
@@ -1592,7 +1602,7 @@ printf("bank %d, program %d, f= %d (%d)\n", banknum, program, sp->cutoff_freq, l
 }
 
 /* calculate root pitch */
-static int32 calc_root_pitch(Layer *lay, SFInfo *sf, SampleList *sp)
+static int32 calc_root_pitch(Layer *lay, SFInfo *sf, SampleList *sp, int32 cfg_tuning)
 {
 	int32 root, tune;
 	tsampleinfo *sample;
@@ -1633,8 +1643,10 @@ static int32 calc_root_pitch(Layer *lay, SFInfo *sf, SampleList *sp)
 			+ lay->val[SF_fineTune];
 #endif
 	}
-	/* it's too high.. */
 
+	tune += cfg_tuning;
+
+	/* it's too high.. */
 	if (lay->set[SF_keyRange] &&
 	    root >= HI_VAL(lay->val[SF_keyRange]) + 60)
 		root -= 60;

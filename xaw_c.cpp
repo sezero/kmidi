@@ -72,7 +72,7 @@ static void ctl_event(CtlEvent *e);
 #else
 static int cmsg(int type, int verbosity_level, const char *fmt, ...);
 #endif
-static void ctl_pass_playing_list(int number_of_files, char *list_of_files[]);
+static void ctl_pass_playing_list(int number_of_files, const char *list_of_files[]);
 
 static void a_pipe_open(void);
 static int a_pipe_ready(void);
@@ -98,7 +98,7 @@ static void ctl_total_time(uint32 tt);
 static void ctl_file_name(char *name);
 static void ctl_xaw_note(int status, int ch, int note, int velocity);
 static void ctl_note(int v);
-static void ctl_program( int ch, int val, char *name);
+static void ctl_program( int ch, int val, const char *name);
 #endif
 static void ctl_volume(int ch, int val);
 static void ctl_expression(int ch, int val);
@@ -595,7 +595,7 @@ static void shuffle(int n,int *a) {
 }
 
 static void ctl_pass_playing_list(int init_number_of_files,
-                  char *init_list_of_files[]) {
+                  const char *init_list_of_files[]) {
   int current_no,command=RC_NONE,i,j;
   int32 val;
   char *p;
@@ -936,7 +936,7 @@ static void ctl_note(int v)
 #ifdef ORIG_XAW
 static void ctl_program(int ch, int val, void *comm)
 #else
-static void ctl_program( int ch, int val, char *name)
+static void ctl_program( int ch, int val, const char *name)
 #endif
 {
   if(ch >= MAX_XAW_MIDI_CHANNELS) return;

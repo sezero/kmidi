@@ -39,7 +39,7 @@ typedef struct {
 
 extern FILE *open_file(const char *name, int decompress, int noise_mode, int level);
 extern void add_to_pathlist(char *s, int level);
-extern void clear_pathlist(void);
+extern void clear_pathlist(int level);
 extern void close_file(FILE *fp);
 extern void skip(FILE *fp, size_t len);
 extern void *safe_malloc(size_t count);

@@ -218,6 +218,7 @@ public:
 	bool		dry_state;
 	int		detune_state;
 	int		verbosity_state;
+	int		evs_state;
 
 	QString		fileName;
 	QStrList	*playlist;
@@ -258,6 +259,9 @@ public:
 	void		setDry(bool);
 	void		setReverb(int level);
 	void		setChorus(int level);
+	void		setExpressionCurve( int curve );
+	void		setVolumeCurve( int curve );
+	void		setSurround( int yesno );
 	void		postError(const QString& s);
 
 signals:	
