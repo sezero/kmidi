@@ -621,6 +621,14 @@ static InstrumentLayer *load_instrument(char *name, int font_type, int percussio
 	}
       sp->envelope_rate[DELAY] = sp->envelope_offset[DELAY] = 0;
 
+      for (j=ATTACK; j<DELAY; j++)
+	{
+	  sp->modulation_rate[j]=0;
+	  sp->modulation_offset[j]=0;
+	}
+      sp->modulation_rate[DELAY] = sp->modulation_offset[DELAY] = 0;
+      sp->modEnvToFilterFc=0;
+
 #ifdef EXAMINE_SOME_ENVELOPES
 if (percussion /* && (gm_num >= 42 && gm_num <= 51) */) {
 	printf("\nPRESET %d:\n", gm_num);

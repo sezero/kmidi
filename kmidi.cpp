@@ -166,7 +166,7 @@ KMidi::KMidi( QWidget *parent, const char *name ) :
     connect( shufflebutton, SIGNAL(clicked()), SLOT(randomClicked()));
     connect( infobutton, SIGNAL(clicked()), SLOT(speedupslot()));
 
-    connect(thisapp,SIGNAL(kdisplayPaletteChanged()),this,SLOT(setColors()));
+    //connect(thisapp,SIGNAL(kdisplayPaletteChanged()),this,SLOT(setColors()));
     connect(this,SIGNAL(play()),this,SLOT(playClicked()));
 
     redoplaylistbox();
@@ -180,8 +180,8 @@ KMidi::KMidi( QWidget *parent, const char *name ) :
 
     setAcceptDrops(TRUE);
 
-    if (showmeterrequest) logoClicked();
-    if (showinforequest) speedupslot();
+    //if (showmeterrequest) logoClicked();
+    //if (showinforequest) speedupslot();
 }
 
 void KMidi::dropEvent( QDropEvent * e )
@@ -1354,11 +1354,13 @@ void KMidi::PlayCommandlineMods(){
   thisapp->processEvents();
   thisapp->flushX();
 
-  status = KSTOPPED; // is this right? --gl
+  //status = KSTOPPED; // is this right? --gl
   patchbox->setEnabled( TRUE );
   statusLA->setText(i18n("Ready"));
   volChanged(volume);
   //  readtimer->start(10);
+  if (showmeterrequest) logoClicked();
+  if (showinforequest) speedupslot();
 
 }
 

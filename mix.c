@@ -116,8 +116,11 @@ void apply_envelope_to_amp(int v)
 	ra=MAX_AMP_VALUE;
 
 #ifdef tplus
-      if ((voice[v].status == VOICE_OFF || voice[v].status == VOICE_SUSTAINED)
-	 && (la | ra) <= MIN_AMP_VALUE)
+      if ((voice[v].status == VOICE_OFF ||
+		 voice[v].status == VOICE_DIE ||
+		 voice[v].status == VOICE_FREE ||
+		 voice[v].status == VOICE_SUSTAINED) &&
+	 (la | ra) <= MIN_AMP_VALUE)
       {
 	  voice[v].status = VOICE_FREE;
 	  ctl->note(v);
@@ -141,7 +144,10 @@ void apply_envelope_to_amp(int v)
 	la=MAX_AMP_VALUE;
 
 #ifdef tplus
-      if ((voice[v].status == VOICE_OFF || voice[v].status == VOICE_SUSTAINED) &&
+      if ((voice[v].status == VOICE_OFF ||
+		 voice[v].status == VOICE_DIE ||
+		 voice[v].status == VOICE_FREE ||
+		 voice[v].status == VOICE_SUSTAINED) &&
 	 la <= MIN_AMP_VALUE)
       {
 	  voice[v].status = VOICE_FREE;

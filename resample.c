@@ -176,7 +176,7 @@ static int dont_cspline = 0;
 	if (lastsample < 0 && newsample >= 0) zero_cross = ofs; \
 	else if (lastsample > 0 && newsample <= 0) zero_cross = ofs; \
 	lastsample = newsample;
-#define REMEMBER_FILTER STATE \
+#define REMEMBER_FILTER_STATE \
 	vp->current_x0=x0; \
 	vp->current_x1=x1; \
 	vp->current_y0=y0; \
@@ -428,7 +428,7 @@ static sample_t *rs_loop(int v, Voice *vp, uint32 *countptr)
 	  *countptr-=count+1;
 	  break;
 	}
-      if (ofs>=le && vp->status != VOICE_OFF && vp->status != VOICE_DIE)
+      if (ofs>=le && vp->status != VOICE_OFF && vp->status != VOICE_FREE)
 	ofs -= ll; /* Hopefully the loop is longer than an increment. */
     }
 
@@ -481,7 +481,7 @@ static sample_t *rs_bidir(int v, Voice *vp, uint32 count)
       {
 	RESAMPLATION;
 	ofs += incr;
-	/* if (ofs>=le && vp->status == VOICE_DIE) continue; */
+	/* if (ofs>=le && vp->status == VOICE_FREE) continue; */
 	if (ofs>=le)
 	  {
 	    /* fold the overshoot back in */
@@ -753,7 +753,7 @@ static sample_t *rs_vib_loop(int v, Voice *vp, uint32 *countptr)
 	  *countptr-=count+1;
 	  break;
 	}
-      if (ofs>=le && vp->status != VOICE_OFF && vp->status != VOICE_DIE)
+      if (ofs>=le && vp->status != VOICE_OFF && vp->status != VOICE_FREE)
 	ofs -= ll; /* Hopefully the loop is longer than an increment. */
     }
 
@@ -815,7 +815,7 @@ static sample_t *rs_vib_bidir(int v, Voice *vp, uint32 count)
 	  }
 	RESAMPLATION;
 	ofs += incr;
-	/* if (ofs>=le && vp->status == VOICE_DIE) continue; */
+	/* if (ofs>=le && vp->status == VOICE_FREE) continue; */
 	if (ofs>=le)
 	  {
 	    /* fold the overshoot back in */
@@ -982,7 +982,8 @@ static sample_t *porta_resample_voice(int v, uint32 *countptr, int mode)
 	resampler(v, &i, mode);
 	resample_buffer_offset += i;
 
-	if(!loop && vp->status == VOICE_FREE)
+	/* if(!loop && vp->status == VOICE_FREE) */
+	if(vp->status == VOICE_FREE)
 	    break;
 	cc -= i;
     }

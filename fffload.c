@@ -652,6 +652,13 @@ sp->sample_rate, sp->low_freq, sp->high_freq, sp->root_freq);
 
     sp->panning = l->pan;
 
+      for (v=ATTACK; v<DELAY; v++)
+	{
+	  sp->modulation_rate[v]=0;
+	  sp->modulation_offset[v]=0;
+	}
+      sp->modulation_rate[DELAY] = sp->modulation_offset[DELAY] = 0;
+      sp->modEnvToFilterFc=0;
       sp->resonance=0;
       sp->cutoff_freq=0;
       sp->reverberation=0;
