@@ -137,15 +137,17 @@ ConfigDlg::ConfigDlg(QWidget *parent, struct configstruct *data, const char *nam
 			       "when cursor is left over a<br>\n"
 			       "object on the screen"));
 
+    str = i18n("Try to stop KMidi from<br>\nusing up too much of your ram.");
+    label3 = new QLabel(w);
+    label3->setGeometry(60,200,135,25);
+    label3->setText("Patch Mem Max:");
+    what->add(label3, str);
     meg = new KIntNumInput(configdata.max_patch_megs, w, 10, "hex_with_slider" );
     meg->setRange(0, 255);
-    meg->setLabel("Limit megabytes of patch memory");
-    //meg = new KIntNumInput("Limit megabytes of patch memory",
-    //                      0, 255, 1, configdata.max_patch_megs, "megs", 10, true, w, "hex_with_slider");
     meg->setSpecialValueText("no limit");
-    meg->move(30, 200);
+    meg->move(205, 200);
     connect(meg,SIGNAL(valueChanged(int)),this,SLOT(megChanged(int)));
-    what->add(meg, i18n("Try to stop KMidi from<br>\nusing up too much of your ram."));
+    what->add(meg, str);
 
     w->resize(320, 260);
     test->addTab(w, "Configure");

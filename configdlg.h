@@ -114,6 +114,8 @@ private:
   QLabel *label2;
   KColorButton *button2;
 
+  QLabel *label3;
+
   QLabel *tooltipslabel;
   QCheckBox *ttcheckbox;
  
