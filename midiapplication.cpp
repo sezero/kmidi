@@ -35,7 +35,6 @@
 
 #include <kstddirs.h>
 #include <kglobal.h>
-#include <kwm.h>
 #include <klocale.h>
 #include <kaboutdata.h>
 #include <kcmdlineargs.h>
@@ -212,7 +211,7 @@ int Launch_KMidi_Process(int _pipenumber) {
 	}
 	else {
 	   kmidiframe = new KMidiFrame( "_kmidiframe" );
-	   KWM::setWmCommand(kmidiframe->winId(),"_kmidiframe");
+	   //// KWM::setWmCommand(kmidiframe->winId(),"_kmidiframe");
 	   kmidiframe->setCaption( i18n("Midi Player") );
 	   //kmidiframe->setCaption( QString::null );
 	   //kmidiframe->setFontPropagation( QWidget::AllChildren );

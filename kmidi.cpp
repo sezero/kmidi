@@ -83,7 +83,6 @@ const char * whatsthis_image[] = {
 #include "midiapplication.h"
 #include <kstddirs.h>
 #include <kglobal.h>
-#include <kwm.h>
 #include "kmidiframe.h"
 
 
