@@ -436,6 +436,7 @@ static int set_playback_info (void* handle__,
 
   playback_params.start_mode = SND_PCM_START_FULL;
   playback_params.stop_mode = SND_PCM_STOP_STOP;
+  //playback_params.stop_mode = SND_PCM_STOP_ROLLOVER;
 
   tmp = snd_pcm_channel_params (handle__, &playback_params);
 
@@ -502,7 +503,9 @@ static int open_output(void)
 
 //fprintf(stderr,"using card %d, device %d\n", card, device);
   /* Open the audio device */
-  ret = snd_pcm_open (&handle, card, device, SND_PCM_OPEN_PLAYBACK);
+  ret = snd_pcm_open (&handle, card, device,
+  	SND_PCM_OPEN_PLAYBACK|SND_PCM_OPEN_NONBLOCK);
+//  ret = snd_pcm_open (&handle, card, device, SND_PCM_OPEN_PLAYBACK);
 //fprintf(stderr,"ret was %d\n", ret);
 
   if (ret != 0)
@@ -585,7 +588,8 @@ void playback_write_error(void)
 		}
 		return;		/* ok, data should be accepted again */
 	}
-	fprintf(stderr, "write error\n");
+	if (status.status == SND_PCM_STATUS_RUNNING) return;
+	fprintf(stderr, "write error: status %d\n", status.status);
 	exit(1);
 }
 
@@ -597,8 +601,8 @@ static int driver_output_data(unsigned char *buf, uint32 count) {
 //		count, AUDIO_BUFFER_SIZE);
   if (count < (uint32)setup_frag_size ) return 0;
   ret_value = snd_pcm_plugin_write(handle, buf, setup_frag_size);
-//fprintf(stderr,"ret_value = %d\n", ret_value);
   if (ret_value < 0) {
+//fprintf(stderr,"ret_value = %d\n", ret_value);
     playback_write_error();	  
     ret_value = 0;
   }
@@ -663,6 +667,13 @@ static void purge_output(void)
 {
   b_out(dpm.id_character, dpm.fd, 0, -1);
   snd_pcm_plugin_playback_drain(handle);
+
+  if (snd_pcm_plugin_prepare(handle, SND_PCM_CHANNEL_PLAYBACK) < 0) {
+      fprintf(stderr, "unable to prepare channel\n");
+      exit (1);
+  } 
+
+//fprintf(stderr, "setup frags = %d\n", setup.buf.block.frags);
 }
 
 #endif

@@ -144,13 +144,17 @@ void b_out(char id, int fd, int *buf, int ocount)
 	if (fragsize) ret = bbcount;
 	else ret = WRITEDRIVER(fd, bbuf + bboffset, bbcount);
     }
+    if (bboffset) {
+	memcpy(bbuf, bbuf + bboffset, bbcount);
+	bboffset = 0;
+    }
     if (ret < 0) {
 	if (errno == EINTR) continue;
 	else if (errno == EWOULDBLOCK) {
-	    if (bboffset) {
-		memcpy(bbuf, bbuf + bboffset, bbcount);
-		bboffset = 0;
-	    }
+//	    if (bboffset) {
+//		memcpy(bbuf, bbuf + bboffset, bbcount);
+//		bboffset = 0;
+//	    }
 	/* fprintf(stderr, "BLOCK %d ", bbcount); */
 	    if (ucount && bboffset + bbcount + ucount <= BB_SIZE && !flushing) break;
 	    ctl->refresh();
@@ -201,7 +205,8 @@ void b_out(char id, int fd, int *buf, int ocount)
   if (ret >= 0) while (bbcount) {
     if (outchunk && bbcount >= outchunk)
         ret = WRITEDRIVER(fd, bbuf + bboffset, outchunk);
-    else if (fragsize)  ret = bbcount;
+    //else if (fragsize)  ret = bbcount;
+    else if (fragsize)  { ret = 0; break; }
     else
         ret = WRITEDRIVER(fd, bbuf + bboffset, bbcount);
     ctl->refresh();
