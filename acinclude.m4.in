@@ -1023,7 +1023,7 @@ AC_DEFUN(SC_PATH_TCLXCONFIG, [
 	if test x"${ac_cv_c_tclxconfig}" = x ; then
 	    TCLX_BIN_DIR="# no Tcl configs found"
 	    AC_MSG_WARN(Can't find Tcl configuration definitions)
-	    exit 0
+	    no_tclx=true
 	else
 	    no_tcl=
 	    TCLX_BIN_DIR=${ac_cv_c_tclxconfig}

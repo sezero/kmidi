@@ -143,7 +143,7 @@
 #define DEFAULT_CHORUS 1
 #endif
 
-#define XAW_UPDATE_TIME 0.1
+#define XAW_UPDATE_TIME 10
 
 #if 0
 #ifndef ORIG_XAW

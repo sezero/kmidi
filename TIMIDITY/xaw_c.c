@@ -24,16 +24,7 @@
 */
 #ifdef IA_XAW
 
-#ifdef ORIG_XAW
-#ifdef HAVE_CONFIG_H
 #include "config.h"
-#endif /* HAVE_CONFIG_H */
-#else
-#include "config.h"
-/*
-#define HAVE_UNISTD_H
-*/
-#endif
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -49,9 +40,6 @@
 #include <unistd.h>
 #endif /* HAVE_UNISTD_H */
 
-#ifdef ORIG_XAW
-#include "timidity.h"
-#endif
 
 #include "common.h"
 #include "instrum.h"
@@ -59,49 +47,28 @@
 #include "readmidi.h"
 #include "output.h"
 #include "controls.h"
-#ifdef ORIG_XAW
-#include "miditrace.h"
-#include "timer.h"
-#endif
 #include "xaw.h"
 static void ctl_lyric(int lyricid);
 static int ctl_open(int using_stdin, int using_stdout);
 static void ctl_close(void);
 static int ctl_read(int32 *valp);
-#ifdef ORIG_XAW
-static int cmsg(int type, int verbosity_level, char *fmt, ...);
-static void ctl_event(CtlEvent *e);
-#else
 static int cmsg(int type, int verbosity_level, const char *fmt, ...);
-#endif
 static void ctl_pass_playing_list(int number_of_files, const char *list_of_files[]);
 
 static void a_pipe_open(void);
 static int a_pipe_ready(void);
 static void ctl_master_volume(int);
 int a_pipe_read(char *,int);
-#ifdef ORIG_XAW
-void a_pipe_write(char *);
-static void a_pipe_write_msg(char *msg);
-#else
 void a_pipe_write(const char *);
 static void a_pipe_write_msg(char *msg, int lyric);
-#endif
 
 static void ctl_refresh(void);
-#ifdef ORIG_XAW
-static void ctl_current_time(int secs, int v);
-static void ctl_total_time(int tt);
-static void ctl_note(int status, int ch, int note, int velocity);
-static void ctl_program(int ch, int val, void *vp);
-#else
 static void ctl_current_time(uint32 ct);
 static void ctl_total_time(uint32 tt);
 static void ctl_file_name(char *name);
 static void ctl_xaw_note(int status, int ch, int note, int velocity);
 static void ctl_note(int v);
 static void ctl_program( int ch, int val, const char *name);
-#endif
 static void ctl_volume(int ch, int val);
 static void ctl_expression(int ch, int val);
 static void ctl_panning(int ch, int val);
@@ -117,7 +84,7 @@ static int ctl_blocking_read(int32 *valp);
 static void shuffle(int n,int *a);
 static int check_midi_file(char *path);
 
-static double indicator_last_update = 0;
+static int indicator_last_update = 0;
 #define EXITFLG_QUIT 1
 #define EXITFLG_AUTOQUIT 2
 static int exitflag=0,randomflag=0,repeatflag=0,selectflag=0;
@@ -129,7 +96,6 @@ static int *file_table;
 extern int amplitude;
 
 
-#ifndef ORIG_XAW
 extern MidiEvent *current_event;
 
 typedef struct {
@@ -141,27 +107,12 @@ static OldVoice old_note[MAX_OLD_NOTES];
 static int leading_pointer=0, trailing_pointer=0;
 static uint32 current_centiseconds = 0;
 static int songoffset = 0, current_voices = 0;
-#endif
 
 /**********************************************/
 /* export the interface functions */
 
 #define ctl xaw_control_mode
 
-#ifdef ORIG_XAW
-ControlMode ctl=
-{
-    "XAW interface", 'a',
-    1,0,0,
-    0,
-    ctl_open,
-    ctl_close,
-    ctl_pass_playing_list,
-    ctl_read,
-    cmsg,
-    ctl_event
-};
-#else
 
 ControlMode ctl= 
 {
@@ -173,8 +124,6 @@ ControlMode ctl=
   ctl_master_volume, ctl_program, ctl_volume, 
   ctl_expression, ctl_panning, ctl_sustain, ctl_pitch_bend
 };
-
-#endif
 
 
 static int check_midi_file(char *path)
@@ -205,51 +154,31 @@ static char local_buf[300];
 /***********************************************************************/
 #define CMSG_MESSAGE 16
 
-#ifdef ORIG_XAW
-static int cmsg(int type, int verbosity_level, char *fmt, ...) {
-  char *buff;
-  MBlockList pool;
-#else
 static int cmsg(int type, int verbosity_level, const char *fmt, ...) {
   char buff[2048];
   int flagnl = 1;
-#endif
   va_list ap;
 
   if ((type==CMSG_TEXT || type==CMSG_INFO || type==CMSG_WARNING) &&
       ctl.verbosity<verbosity_level)
     return 0;
-#ifndef ORIG_XAW
   if (*fmt == '~')
    {
      flagnl = 0;
      fmt++;
    }
-#endif
   va_start(ap, fmt);
 
   if(!xaw_ready) {
     vfprintf(stderr, fmt, ap);
-#ifdef ORIG_XAW
-    fprintf(stderr, NLS);
-#else
     fprintf(stderr, "\n");
-#endif
     va_end(ap);
     return 0;
   }
 
-#ifdef ORIG_XAW
-  init_mblock(&pool);
-  buff = (char *)new_segment(&pool, MIN_MBLOCK_SIZE);
-  vsnprintf(buff, MIN_MBLOCK_SIZE, fmt, ap);
-  a_pipe_write_msg(buff);
-  reuse_mblock(&pool);
-#else
   vsprintf(buff, fmt, ap);
   if (flagnl) a_pipe_write_msg(buff, 0);
   else a_pipe_write_msg(buff, 1);
-#endif
 
   va_end(ap);
   return 0;
@@ -258,11 +187,6 @@ static int cmsg(int type, int verbosity_level, const char *fmt, ...) {
 /*ARGSUSED*/
 static int tt_i;
 
-#ifdef ORIG_XAW
-static void ctl_current_time(int sec, int v) {
-  static int previous_sec=-1,last_voices=-1;
-  static int last_v=-1, last_time=-1;
-#else
 
 static void ctl_current_time(uint32 ct)
 {
@@ -282,7 +206,6 @@ static void ctl_current_time(uint32 ct)
     i=voices;
     while (i--)
 	if (voice[i].status!=VOICE_FREE) v++;
-#endif
 
 
   if (sec!=previous_sec) {
@@ -295,11 +218,7 @@ static void ctl_current_time(uint32 ct)
     sprintf(local_buf, "T %d", tt_i);
     a_pipe_write(local_buf);
   }
-#ifdef ORIG_XAW
-  if(!ctl.trace_playing || midi_trace.flush_flag) return;
-#else
   if(!ctl.trace_playing) return;
-#endif
   if(last_voices!=voices) {
     last_voices=voices;
     snprintf(local_buf,sizeof(local_buf),"vL%d",voices);
@@ -316,15 +235,10 @@ static void ctl_current_time(uint32 ct)
 static void ctl_total_time(uint32 tt)
 {
     tt_i = (int)tt / play_mode->rate;
-#ifdef ORIG_XAW
-    ctl_current_time(0, 0);
-    sprintf(local_buf,"m%d",play_system_mode);
-#else
     ctl_current_time(0);
     sprintf(local_buf,"m%d",9);
     songoffset = 0;
     current_centiseconds = 0;
-#endif
     a_pipe_write(local_buf);
 }
 
@@ -383,54 +297,13 @@ static void ctl_lyric(int lyricid)
     static int lyric_col = 0;
     static char lyric_buf[300];
 
-#ifdef ORIG_XAW
-    lyric = event2string(lyricid);
-    if(lyric != NULL)
-    {
-        if(lyric[0] == ME_KARAOKE_LYRIC)
-        {
-            if(lyric[1] == '/' || lyric[1] == '\\')
-            {
-                strcpy(lyric_buf, lyric + 2);
-                a_pipe_write_msg(lyric_buf);
-                lyric_col = strlen(lyric_buf);
-            }
-            else if(lyric[1] == '@')
-            {
-                if(lyric[2] == 'L')
-                    snprintf(lyric_buf, sizeof(lyric_buf), "Language: %s", lyric + 3);
-                else if(lyric[2] == 'T')
-                    snprintf(lyric_buf, sizeof(lyric_buf), "Title: %s", lyric + 3);
-                else
-                    strncpy(lyric_buf, lyric + 1, sizeof(lyric_buf) - 1);
-                a_pipe_write_msg(lyric_buf);
-                lyric_col = 0;
-            }
-            else
-            {
-                strncpy(lyric_buf + lyric_col, lyric + 1, sizeof(lyric_buf) - lyric_col - 1);
-                a_pipe_write_msg(lyric_buf);
-                lyric_col += strlen(lyric + 1);
-            }
-        }
-        else
-        {
-            lyric_col = 0;
-            a_pipe_write_msg(lyric + 1);
-        }
-    }
-#endif
 }
 
 /*ARGSUSED*/
 static int ctl_open(int using_stdin, int using_stdout) {
   ctl.opened=1;
 
-#ifdef ORIG_XAW
-  set_trace_loop_hook(update_indicator);
-#else
   ctl.trace_playing = 1;
-#endif
   /* The child process won't come back from this call  */
   a_pipe_open();
 
@@ -447,21 +320,12 @@ static void ctl_close(void)
 }
 
 static void xaw_add_midi_file(char *additional_path) {
-#ifdef ORIG_XAW
-    char *files[1],**ret,**tmp;
-#else
     char *files[1],**tmp;
-#endif
     int i,nfiles,nfit;
     char *p;
 
     files[0] = additional_path;
     nfiles = 1;
-#ifdef ORIG_XAW
-    ret = expand_file_archives(files, &nfiles);
-    if(ret == NULL)
-      return;
-#endif
 
     tmp = list_of_files;
     titles=(char **)realloc(titles,(number_of_files+nfiles)*sizeof(char *));
@@ -489,10 +353,6 @@ static void xaw_add_midi_file(char *additional_path) {
         for (i=0;i<nfit;i++)
             a_pipe_write(titles[number_of_files-nfit+i]);
     }
-#ifdef ORIG_XAW
-    free(ret[0]);
-    free(ret);
-#endif
 }
 
 static void xaw_delete_midi_file(int delete_num) {
@@ -505,11 +365,7 @@ static void xaw_delete_midi_file(int delete_num) {
             free(titles[i]);
         }
         list_of_files = NULL; titles = NULL;
-#ifdef ORIG_XAW
-        file_table=(int *)safe_realloc(file_table,1*sizeof(int));
-#else
         file_table=(int *)realloc(file_table,1*sizeof(int));
-#endif
         file_table[0] = 0;
         number_of_files = 0;
     } else {
@@ -524,8 +380,6 @@ static void xaw_delete_midi_file(int delete_num) {
     }
 }
 
-#ifndef ORIG_XAW
-
 static void ctl_file_name(char *name)
 {
 #if 0
@@ -533,7 +387,6 @@ static void ctl_file_name(char *name)
     pipe_string_write(name);
 #endif
 }
-#endif
 
 static void xaw_output_flist(void) {
     int i;
@@ -633,6 +486,13 @@ static int ctl_blocking_read(int32 *valp) {
 	a_pipe_read(local_buf,sizeof(local_buf));
         xaw_add_midi_file(local_buf + 2);
         return RC_NONE;
+      case '#':
+	n=atoi(local_buf+2) - 1;
+	if (n >= 0 && n < 30 && cfg_names[n]) {
+	    cfg_select = n;
+	    return RC_PATCHCHANGE;
+	}
+        else return RC_NONE;
       case 's':
         xaw_output_flist();
 	return RC_NONE;
@@ -674,11 +534,7 @@ static void shuffle(int n,int *a) {
   int i,j,tmp;
 
   for (i=0;i<n;i++) {
-#ifdef ORIG_XAW
-    j=int_rand(n);
-#else
     j=(int) (((double)n) *rand()/(RAND_MAX+1.0));
-#endif
     tmp=a[i];
     a[i]=a[j];
     a[j]=tmp;
@@ -821,6 +677,13 @@ static void ctl_pass_playing_list(int init_number_of_files,
         if (current_no>0) current_no--;
         command=RC_LOAD_FILE;
         continue;
+      } else if (command==RC_PATCHCHANGE) {
+	free_instruments();
+	end_soundfont();
+	clear_config();
+	read_config_file(current_config_file, 0);
+        command=RC_NONE;
+        continue;
       }
       command=ctl_blocking_read(&val);
     }
@@ -892,65 +755,32 @@ int a_pipe_nread(char *buf, int n)
     return j;
 }
 
-#ifdef ORIG_XAW
-static void a_pipe_write_msg(char *msg)
-#else
 static void a_pipe_write_msg(char *msg, int lyric)
-#endif
 {
     int msglen;
     char buf[2 + sizeof(int)], *p, *q;
 
-#ifdef ORIG_XAW
-    /* strip '\r' */
-    p = q = msg;
-    while(*q) {
-    if(*q != '\r')
-        *p++ = *q;
-    q++;
-    }
-    *p = '\0';
-#endif
-
-#ifdef ORIG_XAW
-    msglen = strlen(msg) + 1; /* +1 for '\n' */
-#else
     msglen = strlen(msg);
     if (~lyric) msglen++;
-#endif
     buf[0] = 'L';
     buf[1] = '\n';
 
     memcpy(buf + 2, &msglen, sizeof(int));
     write(pipe_out_fd, buf, sizeof(buf));
-#ifdef ORIG_XAW
-    write(pipe_out_fd, msg, msglen - 1);
-    write(pipe_out_fd, "\n", 1);
-#else
     if (lyric) write(pipe_out_fd, msg, msglen);
     else {
         write(pipe_out_fd, msg, msglen - 1);
         write(pipe_out_fd, "\n", 1);
     }
-#endif
 }
 
-#ifdef ORIG_XAW
-static void
-ctl_note(int status, int ch, int note, int velocity)
-#else
 static void
 ctl_xaw_note(int status, int ch, int note, int velocity)
-#endif
 {
   char c;
 
   if(ch >= MAX_XAW_MIDI_CHANNELS) return;
-#ifdef ORIG_XAW
-  if(!ctl.trace_playing || midi_trace.flush_flag) return;
-#else
   if(!ctl.trace_playing) return;
-#endif
  
     c = '.';
     switch(status) {
@@ -970,7 +800,6 @@ ctl_xaw_note(int status, int ch, int note, int velocity)
     a_pipe_write(local_buf);
 }
 
-#ifndef ORIG_XAW
 static void ctl_note(int v)
 {
   int i, n;
@@ -1011,110 +840,25 @@ static void ctl_note_display(void)
   trailing_pointer = v;
 }
 
-#endif
 
-#ifdef ORIG_XAW
-static void ctl_program(int ch, int val, void *comm)
-#else
 static void ctl_program( int ch, int val, const char *name)
-#endif
 {
   if(ch >= MAX_XAW_MIDI_CHANNELS) return;
   if(!ctl.trace_playing) return;
 
-#ifdef ORIG_XAW
-  if(channel[ch].special_sample)
-    val = channel[ch].special_sample;
-  else
-    val += progbase;
-#endif
-  sprintf(local_buf, "PP%c%d", ch+'A', val);
+  sprintf(local_buf, "PP%c%c%d", ch+'A', channel[ch].kit? 'd' : 'i', val);
   a_pipe_write(local_buf);
-#ifdef ORIG_XAW
-  if (comm != NULL) {
-    sprintf(local_buf, "I%c%s", ch+'A', (char *)comm);
-    if (ISDRUMCHANNEL(ch))
-      sprintf(local_buf, "I%c%s", ch+'A',
-              (!strlen((char *)comm))? "<drum>":(char *)comm);
-    a_pipe_write(local_buf);
-  }
-#else
   if (name) sprintf(local_buf, "I%c%s", ch+'A', name);
   else sprintf(local_buf, "I%c%s", ch+'A', "");
     a_pipe_write(local_buf);
-#endif
 }
 
-#ifdef ORIG_XAW
-static void ctl_event(CtlEvent *e)
-{
-    switch(e->type)
-    {
-    case CTLE_LOADING_DONE:
-      break;
-    case CTLE_CURRENT_TIME:
-      ctl_current_time((int)e->v1, (int)e->v2);
-      break;
-    case CTLE_PLAY_START:
-      ctl_total_time((int)e->v1);
-      break;
-    case CTLE_PLAY_END:
-      break;
-    case CTLE_TEMPO:
-      break;
-    case CTLE_METRONOME:
-      break;
-    case CTLE_NOTE:
-      ctl_note((int)e->v1, (int)e->v2, (int)e->v3, (int)e->v4);
-      break;
-    case CTLE_PROGRAM:
-      ctl_program((int)e->v1, (int)e->v2, (char *)e->v3);
-      break;
-    case CTLE_VOLUME:
-      ctl_volume((int)e->v1, (int)e->v2);
-      break;
-    case CTLE_EXPRESSION:
-      ctl_expression((int)e->v1, (int)e->v2);
-      break;
-    case CTLE_PANNING:
-      ctl_panning((int)e->v1, (int)e->v2);
-      break;
-    case CTLE_SUSTAIN:
-      ctl_sustain((int)e->v1, (int)e->v2);
-      break;
-    case CTLE_PITCH_BEND:
-      ctl_pitch_bend((int)e->v1, (int)e->v2);
-      break;
-    case CTLE_MOD_WHEEL:
-      ctl_pitch_bend((int)e->v1, e->v2 ? -1 : 0x2000);
-      break;
-    case CTLE_CHORUS_EFFECT:
-      set_otherinfo((int)e->v1, (int)e->v2, 'c');
-      break;
-    case CTLE_REVERB_EFFECT:
-      set_otherinfo((int)e->v1, (int)e->v2, 'r');
-      break;
-    case CTLE_LYRIC:
-      ctl_lyric((int)e->v1);
-      break;
-    case CTLE_MASTER_VOLUME:
-      ctl_master_volume((int)e->v1);
-      break;
-    case CTLE_REFRESH:
-      ctl_refresh();
-      break;
-    case CTLE_RESET:
-      ctl_reset();
-      break;
-
-    }
-}
-#endif
 
 static void ctl_refresh(void)
 {
        ctl_current_time(0);
        ctl_note_display();
+	update_indicator();
 }
 
 static void set_otherinfo(int ch, int val, char c) {
@@ -1130,53 +874,20 @@ static void ctl_reset(void)
 
   if(!ctl.trace_playing) return;
 
-#ifdef ORIG_XAW
-  indicator_last_update = get_current_calender_time();
-#else
   indicator_last_update = 0;
-#endif
   for (i=0; i<MAX_XAW_MIDI_CHANNELS; i++) {
-#ifdef ORIG_XAW
-    if(ISDRUMCHANNEL(i)) {
-      ctl_program(i, channel[i].bank, channel_instrum_name(i));
-#else
     if (channel[i].kit) {
       ctl_program(i, channel[i].bank, channel[i].name);
-#endif
-#ifdef ORIG_XAW
-      if (opt_reverb_control)
-        set_otherinfo(i, get_reverb_level(i), 'r');
-#else
         set_otherinfo(i, channel[i].reverberation, 'r');
-#endif
     } else {
       ToneBank *bank;
       int b;
 
-#ifdef ORIG_XAW
-      ctl_program(i, channel[i].program, channel_instrum_name(i));
-#else
       ctl_program(i, channel[i].program, channel[i].name);
-#endif
       b = channel[i].bank;
-#ifdef ORIG_XAW
-      if((bank = tonebank[b]) == NULL
-         || bank->tone[channel[i].program].instrument == NULL)  {
-          b = 0;
-          bank = tonebank[0];
-      }
-#endif
       set_otherinfo(i, channel[i].bank, 'b');
-#ifdef ORIG_XAW
-      if (opt_reverb_control)
-        set_otherinfo(i, get_reverb_level(i), 'r');
-
-      if(opt_chorus_control)
-        set_otherinfo(i, get_chorus_level(i), 'c');
-#else
         set_otherinfo(i, channel[i].reverberation, 'r');
         set_otherinfo(i, channel[i].chorusdepth, 'c');
-#endif
     }
     ctl_volume(i, channel[i].volume);
     ctl_expression(i, channel[i].expression);
@@ -1187,35 +898,28 @@ static void ctl_reset(void)
     else
       ctl_pitch_bend(i, channel[i].pitchbend);
   }
-#ifndef ORIG_XAW
   for (i=0; i<MAX_OLD_NOTES; i++)
     {
       old_note[i].time = 0;
     }
   leading_pointer = trailing_pointer = current_voices = 0;
-#endif
   sprintf(local_buf, "R");
   a_pipe_write(local_buf);  
 }
 
 static void update_indicator(void)
 {
-    double t, diff;
+    int diff;
 
     if(!ctl.trace_playing)
         return;
-#ifdef ORIG_XAW
-    t = get_current_calender_time();
-#else
-    t = indicator_last_update + 1;
-#endif
 
-    diff = t - indicator_last_update;
+    diff = current_centiseconds - indicator_last_update;
     if(diff > XAW_UPDATE_TIME)
     {
        sprintf(local_buf, "U");
        a_pipe_write(local_buf);
-       indicator_last_update = t;
+       indicator_last_update = current_centiseconds;
     }
 }
 

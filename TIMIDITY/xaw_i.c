@@ -97,13 +97,16 @@
 #include "playmidi.h"
 #include "readmidi.h"
 #include "controls.h"
+#include "output.h"
 
 #ifdef ORIG_XAW
 #include "timer.h"
 #include "strtab.h"
 #endif
 
+
 #ifndef ORIG_XAW
+#define XAW_PATCHSET
 #define GM_SYSTEM_MODE 1
 #define GS_SYSTEM_MODE 2
 #define XG_SYSTEM_MODE 3
@@ -242,6 +245,9 @@ static void optionsdestroyCB(Widget w,XtPointer data,XtPointer dummy);
 static void quitCB(Widget w,XtPointer data,XtPointer dummy);
 static void sndspecCB(Widget w,XtPointer data,XtPointer dummy);
 static void playCB(Widget w,XtPointer data,XtPointer dummy);
+#ifdef XAW_PATCHSET
+static void psetCB(Widget w,XtPointer data,XtPointer dummy);
+#endif
 /* static void pauseCB(void); */
 static void pauseCB(Widget w,XtPointer data,XtPointer dummy);
 static void stopCB(Widget w,XtPointer data,XtPointer dummy);
@@ -319,6 +325,10 @@ static void xaw_vendor_setup(void);
 static void safe_getcwd(char *cwd, int maxlen);
 
 static Widget title_mb,title_sm,time_l,popup_load,popup_load_f,load_d,load_t;
+#ifdef XAW_PATCHSET
+static Widget pset_mb, pset_sm;
+static void addPatchset(char *pname);
+#endif
 static Widget load_vport,load_flist,cwd_l,load_info, lyric_t;
 static Dimension lyric_height, base_height, text_height;
 static GC gc,gcs,gct;
@@ -327,6 +337,7 @@ static Pixel bgcolor,menubcolor,textcolor,textbgcolor,text2bgcolor,buttonbgcolor
   boxcolor,suscolor,playcolor,revcolor,chocolor;
 static Pixel black,white;
 static Pixel barcol[MAX_XAW_MIDI_CHANNELS];
+static Pixel barperccolor;
 
 static Widget toplevel,m_box,base_f,file_mb,file_sm,bsb,
   quit_b,play_b,pause_b,stop_b,prev_b,next_b,fwd_b,back_b,
@@ -385,6 +396,7 @@ static void a_saveconfig (char *file);
 #define FLAG_PAN        8
 #define FLAG_SUST       16
 #define FLAG_BENDT		32
+#define FLAG_PERCUSSION		64
 typedef struct {
   int reset_panel;
   int multi_part;
@@ -470,6 +482,9 @@ static unsigned int bm_height[MAXBITMAP], bm_width[MAXBITMAP];
 static int x_hot,y_hot, root_height, root_width;
 static Pixmap bm_Pixmap[MAXBITMAP];
 static int max_files, init_options = 0, init_chorus = 0;
+#ifdef XAW_PATCHSET
+static int num_patchsets = 0;
+#endif
 static char basepath[PATH_MAX];
 #ifdef ORIG_XAW
 static String *dirlist = NULL, dirlist_top, *flist = NULL;
@@ -840,6 +855,19 @@ static void playCB(Widget w,XtPointer data,XtPointer dummy) {
   a_pipe_write("P");
 }
 
+#ifdef XAW_PATCHSET
+/*ARGSUSED*/
+static void psetCB(Widget w,XtPointer data,XtPointer dummy) {
+  int which;
+  which = (int)data - 1;
+  if (!num_patchsets || which < 0 || which > 29 || !cfg_names[which]) return;
+  stopCB(NULL,NULL,NULL);
+  sprintf(local_buf,"# %d",which+1);
+  a_pipe_write(local_buf);
+  XtVaSetValues(pset_mb,XtNlabel,cfg_names[which],NULL);
+}
+#endif
+
 /*ARGSUSED*/
 static void pauseAction(Widget w,XEvent *e,String *v,Cardinal *n) {
   Boolean s;
@@ -1045,7 +1073,7 @@ static void tunesetCB(Widget w,XtPointer data,XtPointer call_data)
 #endif
 
 static void tunesetAction(Widget w,XEvent *e,String *v,Cardinal *n) {
-  static float tmpval;
+  static float tmpval = 0;
   char s[16];
   int value;
   float l_thumb;
@@ -1516,8 +1544,11 @@ static void handle_input(XtPointer data,int *source,XtInputId *id) {
         Panel->c_flags[ch] |= FLAG_SUST;
         break;
       case  'P':        /* program */
+        n= atoi(local_buf+4);
         Panel->channel[ch].program = n;
         Panel->c_flags[ch] |= FLAG_PROG;
+        if ( *(local_buf+3) == 'd' ) Panel->c_flags[ch] |= FLAG_PERCUSSION;
+        else Panel->c_flags[ch] &= ~FLAG_PERCUSSION;
         drawProg(ch,n,4,pl[plane].ofs[CL_PR],True);
         break;
       case  'E':        /* expression */
@@ -1872,8 +1903,6 @@ static void setDirList(Widget list, Widget label, XawListReturnStruct *lrs) {
     qsort (dirlist, i, sizeof (char *), dirlist_cmp);
     snprintf(local_buf, sizeof(local_buf), "%d Directories, %d Files", d_num, f_num);
     XawListChange(list,dirlist,0,0,True);
-    //XawListChange(list,dirlist,i,0,True);
-    //XawListChange(list,dirlist,i,0,False);
   }
   else
 #else
@@ -1977,7 +2006,8 @@ static void drawPan(int ch,int val,Boolean setcolor) {
 
 static void draw1Chan(int ch,int val,char cmd) {
   if (cmd == '*' || cmd == '&')
-    drawBar(ch, (int)(val*BARSCALE2), pl[plane].ofs[CL_VE], CL_VE, barcol[ch]);
+    drawBar(ch, (int)(val*BARSCALE2), pl[plane].ofs[CL_VE], CL_VE,
+	 (Panel->c_flags[ch]&FLAG_PERCUSSION)? barperccolor : barcol[ch]);
 }
 
 static void drawVol(int ch,int val) {
@@ -2003,7 +2033,8 @@ static void drawPitch(int ch,int val) {
   XFillRectangle(XtDisplay(trace),XtWindow(trace),gct,
                  pl[plane].ofs[CL_PI]+2,TRACEV_OFS+BAR_SPACE*ch+2,
                  pl[plane].w[CL_PI] -4,BAR_HEIGHT);
-  XSetForeground(disp, gct, barcol[9]);
+  /*XSetForeground(disp, gct, barcol[9]);*/
+  XSetForeground(disp, gct, barperccolor);
   if (val != 0) {
     if (val<0) {
       sprintf(s, "=");
@@ -2662,6 +2693,26 @@ static void addOneFile(int max_files,int curr_num,char *fname,Boolean update_fli
     addFlist(fname, curr_num);
 }
 
+static void addPatchset(char *pname) {
+  static Dimension tmpi;
+  static int menu_height;
+  char sbuf[256];
+
+  if(num_patchsets == 0) {
+    tmpi = 0; menu_height = 0;
+  }
+  num_patchsets++;
+  /*bsb=XtVaCreateManagedWidget(pname,smeBSBObjectClass,pset_sm,NULL);*/
+  bsb=XtVaCreateManagedWidget(pname,smeBSBObjectClass,pset_sm,
+        XtNlabel,pname,
+        XtNforeground,textcolor, XtNbackground,textbgcolor,
+        XtNwidth,210,XtNheight,28,
+	NULL);
+  XtAddCallback(bsb,XtNcallback,psetCB,(XtPointer)num_patchsets);
+  XtVaGetValues(bsb, XtNheight, &tmpi, NULL);
+  menu_height += tmpi;
+}
+
 static void createOptions(void) {
   if(!(popup_shell_exist & OPTIONS_WINDOW)) {
     popup_opt= XtVaCreatePopupShell("popup_option",transientShellWidgetClass,
@@ -2961,6 +3012,9 @@ void a_start_interface(int pipe_in) {
     {"do-dialog-button",(XtActionProc)popdownLoad},
     {"do-load",(XtActionProc)popupLoad},
     {"do-play",(XtActionProc)playCB},
+#ifdef XAW_PATCHSET
+    {"do-pset",(XtActionProc)psetCB},
+#endif
     {"do-sndspec",(XtActionProc)sndspecCB},
     {"do-pause",(XtActionProc)pauseAction},
     {"do-stop",(XtActionProc)stopCB},
@@ -2997,6 +3051,9 @@ void a_start_interface(int pipe_in) {
 #ifdef I18N
     "*Command*international: True",
     "*file_simplemenu*international: True",
+#ifdef XAW_PATCHSET
+    "*pset_simplemenu*international: True",
+#endif
     "*Label*fontSet: -adobe-helvetica-bold-o-*-*-14-*-*-*-*-*-*-*",
     "*MenuButton*fontSet: -adobe-helvetica-bold-r-*-*-14-*-*-*-*-*-*-*",
     "*Command*fontSet: -adobe-helvetica-bold-r-*-*-12-*-*-*-*-*-*-*",
@@ -3038,9 +3095,15 @@ void a_start_interface(int pipe_in) {
 #ifdef I18N
     "*file_menubutton.file_simplemenu*fontSet: -*--14-*",
     "*title_menubutton.title_simplemenu*fontSet: -adobe-helvetica-medium-r-*-*-12-*-*-*-*-*-*-*",
+#ifdef XAW_PATCHSET
+    "*pset_menubutton.pset_simplemenu*fontSet: -adobe-helvetica-medium-r-*-*-12-*-*-*-*-*-*-*",
+#endif
 #else
     "*file_menubutton.file_simplemenu*font: -adobe-helvetica-medium-r-*-*-12-*-*-*-*-*-*-*",
     "*title_menubutton.title_simplemenu*font: -adobe-helvetica-medium-r-*-*-12-*-*-*-*-*-*-*",
+#ifdef XAW_PATCHSET
+    "*pset_menubutton.pset_simplemenu*font: -adobe-helvetica-medium-r-*-*-12-*-*-*-*-*-*-*",
+#endif
 #endif
     "*title_menubutton*SmeBSB.font: -adobe-helvetica-medium-r-*-*-12-*-*-*-*-*-*-*",
     "*title_menubutton.menuName: title_simplemenu",
@@ -3058,6 +3121,17 @@ void a_start_interface(int pipe_in) {
     "*time_label.horizDistance: 1",
     "*time_label.vertDistance: 4",
     "*time_label.label: time / mode",
+#ifdef XAW_PATCHSET
+    "*pset_menubutton.menuName: pset_simplemenu",
+    "*pset_menubutton*SmeBSB.font: -adobe-helvetica-medium-r-*-*-12-*-*-*-*-*-*-*",
+/*    "*popup_pbox.OK.label: OK", */
+    "*pset_menubutton.width: 210",
+    "*pset_menubutton.height: 28",
+    "*pset_menubutton.resize: false",
+    "*pset_menubutton.horizDistance: 6",
+    "*pset_menubutton.vertDistance: 4",
+    "*pset_menubutton.fromHoriz: time_label",
+#endif
     "*button_box.height: 40",
     "*play_button.width: 32",
     "*play_button.height: 32",
@@ -3425,6 +3499,34 @@ void a_start_interface(int pipe_in) {
 #endif
     gcs = XCreateGC(disp, RootWindow(disp, screen), gcmask, &gcval);
   }
+
+/*
+	toplevel
+	   |
+	base_f -----------------------------------------------------------------
+	   |                      \       \               \                     \
+	m_box -------------        b_box  v_box ------     t_box -------------  trace_vport
+	   |    \	   \         |      |  \      \        \       \      \          \
+	file_mb  title_mb  time_l    |    vol_l0 vol_l vol_bar  tune_l0 tune_l tune_bar  trace
+	   |	    | [filemenuAction]|
+	file_sm  title_sm	   play_b ... repeat_b
+
+
+	toplevel
+	   |
+	popup_load
+	   |
+	popup_load_f -------------------------
+	   |   \                  \           \
+	load_d  cwd_l            load_vport  load_info
+        /  |  \  [setDirList]        |
+       OK Add Cancel             load_flist
+
+set patchset:
+	pset_mb is sister of time_l and is similar to title_mb
+
+*/
+
   base_f=XtVaCreateManagedWidget("base_form",boxWidgetClass,toplevel,
             XtNbackground,bgcolor,
             XtNwidth,rotatewidth[currwidth], NULL);
@@ -3453,6 +3555,15 @@ void a_start_interface(int pipe_in) {
   time_l=XtVaCreateManagedWidget("time_label",commandWidgetClass,m_box,
             XtNfont,labelfont,
             XtNbackground,menubcolor,NULL);
+#ifdef XAW_PATCHSET
+  snprintf(cbuf,sizeof(cbuf),"patchset");
+  pset_mb=XtVaCreateManagedWidget("pset_menubutton",menuButtonWidgetClass,m_box,
+            XtNforeground,textcolor, XtNbackground,menubcolor,XtNlabel,cbuf,
+            XtNfont,labelfont, NULL);
+  pset_sm=XtVaCreatePopupShell("pset_simplemenu",simpleMenuWidgetClass,pset_mb,
+            XtNforeground,textcolor, XtNbackground,textbgcolor,
+            XtNbackingStore,NotUseful, XtNsaveUnder,False, NULL);
+#endif
   b_box=XtVaCreateManagedWidget("button_box",boxWidgetClass,base_f,
             XtNorientation,XtorientHorizontal,
             XtNwidth,rotatewidth[currwidth]-10,
@@ -3641,9 +3752,10 @@ void a_start_interface(int pipe_in) {
     Panel = (PanelInfo *)safe_malloc(sizeof(PanelInfo));
     gct = XCreateGC(disp, RootWindow(disp, screen), 0, NULL);
     gc = XCreateGC(disp, RootWindow(disp, screen), 0, NULL);
+    barperccolor=app_resources.drumvelocity_color;
     for(i=0; i<MAX_XAW_MIDI_CHANNELS; i++) {
       if(ISDRUMCHANNEL(i))
-        barcol[i]=app_resources.drumvelocity_color;
+        barcol[i]=barperccolor;
       else
         barcol[i]=app_resources.velocity_color;
       inst_name[i] = (char *)safe_malloc(sizeof(char) * INST_NAME_SIZE);
@@ -3748,6 +3860,14 @@ void a_start_interface(int pipe_in) {
   }
   free(dotfile_flist);
  }
+#ifdef XAW_PATCHSET
+  bsb=XtVaCreateManagedWidget("dummypset",smeLineObjectClass,pset_sm,NULL);
+    for (j = 30; j > 0; j--) if (cfg_names[j-1]) break;
+    for (i = 0; i < j; i++)
+	if (cfg_names[i]) addPatchset(cfg_names[i]);
+	else addPatchset( "(none)" );
+  XtVaSetValues(pset_mb,XtNlabel,cfg_names[cfg_select],NULL);
+#endif
   for (i = 0; i < XtNumber(file_menu); i++) {
     bsb=XtVaCreateManagedWidget(file_menu[i].name,
             (file_menu[i].trap ? smeBSBObjectClass:smeLineObjectClass),

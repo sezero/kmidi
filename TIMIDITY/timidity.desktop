@@ -1,0 +1,27 @@
+[Desktop Entry]
+BinaryPattern=kmidi;
+Protocols=file;ftp;http;tar;cgi;
+MimeType=audio/x-midi;audio/x-karaoke;
+Comment=A Midi Player
+Comment[cs]=Přehrávač Midi souborů
+Comment[de]=Ein Midi-Abspieler
+Comment[eo]=Ludilo por Midi-dosieroj
+Comment[fi]=Midisoittaja
+Comment[hu]=Egy MIDI zenelejátszó
+Comment[no]=En Midi-avspiller
+Comment[sl]=Predvajalnik datotek MIDI
+Name=TiMidity synth
+Name[cs]=Přehrávač Midi souborů
+Name[de]=KMidi
+Name[eo]=Midi-ludilo
+Name[fi]=Midisoittaja
+Name[hu]=Midi lejátszó
+Name[no]=Midi-spiller
+Name[sl]=Predvajalnik MIDI
+DocPath=kmidi/index.html
+Exec=timidity -iatv
+Icon=kmidi
+TerminalOptions=
+Path=
+Type=Application
+Terminal=0
