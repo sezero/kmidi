@@ -1265,14 +1265,14 @@ fprintf(stderr,"Adding keynote #%d preset %d to %s (%d), bank %d (=? %d).\n", ke
 			stereo_chan = 1;
 			new_kvec(stereo_chan);
 		    }
-		    #if 0
+#if 0
 		    else {
 			ctl->cmsg(CMSG_INFO, VERB_NOISY,
 		  	"sndfont: invalid preset key range in bank %d preset %d: low %d, high %d",
 				banknum, preset, LO_VAL(pk_range), HI_VAL(pk_range));
 			return;
 		    }
-		    #endif
+#endif
 		    laststereo_chan = stereo_chan;
 		    lastpk_range = pk_range;
 		    union_kvec(stereo_chan, pk_range);

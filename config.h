@@ -409,21 +409,21 @@ typedef char int8;
 
 #if defined(hpux) || defined(__hpux)
   extern char *sys_errlist[];
-  #define PI 3.14159265358979323846
+#define PI 3.14159265358979323846
 #endif
 
 #ifdef sun
-  #ifdef HAVE_SYS_STDTYPES_H
-    #include <sys/stdtypes.h>
-  #endif
-  #include <errno.h>
+#ifdef HAVE_SYS_STDTYPES_H
+#include <sys/stdtypes.h>
+#endif
+#include <errno.h>
   extern char *sys_errlist[];
   extern int opterr;
   extern int optind;
   extern int optopt;
   extern char *optarg;
-  #define PI 3.14159265358979323846
-  #define rindex(s,c) strrchr(s,c)
+#define PI 3.14159265358979323846
+#define rindex(s,c) strrchr(s,c)
 #endif
 
 #ifdef _UNIXWARE
@@ -451,8 +451,8 @@ extern char *sys_errlist[];
 #endif
 
 #ifdef __osf__
-  #include <errno.h>
-  #define PI 3.14159265358979323846
+#include <errno.h>
+#define PI 3.14159265358979323846
 #endif
 
 #ifdef __FreeBSD__

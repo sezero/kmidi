@@ -232,11 +232,11 @@ void *safe_malloc(size_t count)
   ctl->close();
   play_mode->purge_output();
   play_mode->close_output();
-    #ifdef ADAGIO
+#ifdef ADAGIO
     X_EXIT
-    #else
+#else
     exit(10);
-    #endif
+#endif
   return 0;
 }
 

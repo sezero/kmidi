@@ -1009,7 +1009,7 @@ msetup(str, n)
 }
 
 static void
-mcatch()
+mcatch(int sig)
 {
 	siglongjmp(bail, 1);
 }
@@ -1029,16 +1029,7 @@ mcleanup(str, n, p)
 	free(curobj);
 }
 
-int
-#if __STDC__
-vsnprintf(char *str, size_t n, char const *fmt, va_list ap)
-#else
-vsnprintf(str, n, fmt, ap)
-	char *str;
-	size_t n;
-	char *fmt;
-	char *ap;
-#endif
+int vsnprintf(char *str, size_t n, char const *fmt, va_list ap)
 {
 	struct sigaction osa, nsa;
 	char *p;
@@ -1065,16 +1056,7 @@ vsnprintf(str, n, fmt, ap)
 	return (ret);
 }
 
-int
-#if __STDC__
-snprintf(char *str, size_t n, char const *fmt, ...)
-#else
-snprintf(str, n, fmt, va_alist)
-	char *str;
-	size_t n;
-	char *fmt;
-	va_dcl
-#endif
+int snprintf(char *str, size_t n, char const *fmt, ...)
 {
 	va_list ap;
 #if __STDC__

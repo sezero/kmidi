@@ -3385,10 +3385,10 @@ void a_start_interface(int pipe_in) {
   float thumb, l_thumb, l_thumbj;
   char *argv=APP_NAME, *filetext;
 #ifdef I18N
-  #define XtNfontDEF XtNfontSet
+#define XtNfontDEF XtNfontSet
   XFontSet textfont;
 #else
-  #define XtNfontDEF XtNfont
+#define XtNfontDEF XtNfont
   XFontStruct *textfont;
 #endif
   XawListReturnStruct lrs;
