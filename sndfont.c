@@ -1,4 +1,5 @@
 /*================================================================
+ *	$Id$
  * SoundFont file extension
  *	written by Takashi Iwai <iwai@dragon.mm.t.u-tokyo.ac.jp>
  *================================================================*/
@@ -148,7 +149,7 @@ static char *getname(p)
 
 static SFInfo sfinfo;
 
-void init_soundfont(char *fname, int order, int oldbank, int newbank)
+void init_soundfont(char *fname, int oldbank, int newbank)
 {
 	/*static SFInfo sfinfo;*/
 	int i;
@@ -181,7 +182,7 @@ void init_soundfont(char *fname, int order, int oldbank, int newbank)
 			}
 			else if (bank == oldbank) bank = sfinfo.presethdr[i].sub_bank = newbank;
 		}
-		parse_preset(&sfrec, &sfinfo, i, order);
+		parse_preset(&sfrec, &sfinfo, i, 0);
 	}
 
 	/* copy header info */
@@ -259,12 +260,12 @@ void end_soundfont(void)
  *----------------------------------------------------------------*/
 
 #ifdef ADAGIO
-Instrument *load_sbk_patch(int order, int gm_num, int tpgm, int reverb, int main_volume) {
+Instrument *load_sbk_patch(int gm_num, int tpgm, int reverb, int main_volume) {
     extern int next_wave_prog;
     char *name;
     int percussion, amp=-1, keynote, strip_loop, strip_envelope, strip_tail, bank, newmode;
 #else
-Instrument *load_sbk_patch(int order, char *name, int gm_num, int bank, int percussion,
+Instrument *load_sbk_patch(char *name, int gm_num, int bank, int percussion,
 			   int panning, int amp, int keynote,
 			   int strip_loop, int strip_envelope,
 			   int strip_tail, int brightness, int harmoniccontent) {
@@ -317,7 +318,7 @@ printf("but bank %d voice %d is already loaded\n", bank, preset);
 	for (ip = sfrec.instlist; ip; ip = ip->next) {
 		if (ip->bank == bank && ip->preset == preset &&
 		    (keynote < 0 || keynote == ip->keynote) &&
-		    ip->order == order)
+		    ip->order == 0)
 			break;
 	}
 	if (ip && ip->samples) {
@@ -330,9 +331,6 @@ printf("but bank %d voice %d is already loaded\n", bank, preset);
 		sfrec.fname = ip->fname;
 		inst = load_from_file(&sfrec, ip, amp, brightness, harmoniccontent);
 	}
-	else if (order) ctl->cmsg(CMSG_INFO, VERB_NORMAL, "Can't find %s %s[%d,%d] in %s.",
-			(percussion)? "drum":"instrument", name,
-			(percussion)? keynote : preset, (percussion)? preset : bank, sfrec.fname);
 
 
 #ifdef SF_CLOSE_EACH_FILE
@@ -615,14 +613,14 @@ static void free_exclude(void)
  * ordered samples
  *----------------------------------------------------------------*/
 
-void order_soundfont(int bank, int preset, int keynote, int order)
+void order_soundfont(int bank, int preset, int keynote)
 {
 	SFOrder *rec;
 	rec = (SFOrder*)safe_malloc(sizeof(SFOrder));
 	rec->bank = bank;
 	rec->preset = preset;
 	rec->keynote = keynote;
-	rec->order = order;
+	rec->order = 0;
 	rec->next = sforder;
 	sforder = rec;
 }
