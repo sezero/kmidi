@@ -1,3 +1,7 @@
+1999-10-29  Greg Lee  <lee@hawaii.edu>
+
+	* get docking and resizing to work better
+
 1999-10-28  Greg Lee  <lee@hawaii.edu>
 
 	* kmidi.cpp: try to straighten out resizing;

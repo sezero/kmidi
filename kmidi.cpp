@@ -89,6 +89,7 @@ static midistatus status, last_status;
 static int nbvoice = 0;
 
 KApplication * thisapp;
+KMidiFrame *kmidiframe;
 KMidi *kmidi;
 int pipenumber;
 
@@ -96,20 +97,77 @@ DockWidget*     dock_widget;
 bool dockinginprogress = 0;
 bool quitPending = 0;
 
-KMidi::KMidi( const char *name ) :
+KMidiFrame::KMidiFrame( const char *name ) :
     KTMainWindow( name )
 {
-
+    kmidi = new KMidi(this, "_kmidi" );
     setView(kmidi,TRUE);
-    playlistdlg = NULL;
-    randomplay = false;
-    looping = false;
-    driver_error = false;
+    quitPending = false;
     docking = true;
     //autodock = false;
     autodock = true;
     dockinginprogress = false;
-    quitPending = false;
+    dock_widget = new DockWidget("dockw");
+        if(docking){
+        dock_widget->dock();
+    }
+    setAcceptDrops(TRUE);
+
+}
+
+KMidiFrame::~KMidiFrame(){
+
+}
+
+
+bool KMidiFrame::event( QEvent *e ){
+    if(e->type() == QEvent::Hide && autodock && docking){
+        if(dockinginprogress || quitPending)
+            return(FALSE);
+        sleep(1); // give kwm some time..... ugly I know.
+        if (!KWM::isIconified(winId())) // maybe we are just on another desktop
+            return FALSE;
+        dock_widget->setToggled(true);
+        // a trick to remove the window from the taskbar (Matthias)
+        recreate(0, 0, QPoint(x(), y()), FALSE);
+        kapp->setTopWidget( this );
+        return TRUE;
+    }
+    return QWidget::event(e);
+}
+
+void KMidiFrame::closeEvent( QCloseEvent *e ){
+
+    quitPending = true;
+    kmidi->quitClicked();
+    e->accept();
+}
+
+void KMidiFrame::dropEvent( QDropEvent * e )
+{
+    kmidi->dropEvent(e);
+}
+
+void KMidiFrame::dragEnterEvent( QDragEnterEvent *e )
+{
+    if ( QUrlDrag::canDecode( e ) )
+    {
+	e->accept();
+    }
+}
+
+void KMidiFrame::resizeEvent(QResizeEvent *e){
+//fprintf(stderr,"fram size %d x %d\n", (e->size()).width(), (e->size()).height() );
+}
+
+KMidi::KMidi( QWidget *parent, const char *name )
+    : QWidget( parent, name )
+{
+
+    playlistdlg = NULL;
+    randomplay = false;
+    looping = false;
+    driver_error = false;
     last_status = status = KNONE;
     song_number = 1;
     current_voices = DEFAULT_VOICES;
@@ -177,11 +235,6 @@ KMidi::KMidi( const char *name ) :
     redoplaylistbox();
     playlistbox->setCurrentItem(current_playlist_num);
 
-    dock_widget = new DockWidget("dockw");
-        if(docking){
-        dock_widget->dock();
-    }
-
     srandom(time(0L));
     adjustSize();
     setMinimumSize( regularsize );
@@ -192,22 +245,6 @@ KMidi::KMidi( const char *name ) :
 
 }
 
-
-bool KMidi::event( QEvent *e ){
-    if(e->type() == QEvent::Hide && autodock && docking){
-        if(dockinginprogress || quitPending)
-            return(FALSE);
-        sleep(1); // give kwm some time..... ugly I know.
-        if (!KWM::isIconified(winId())) // maybe we are just on another desktop
-            return FALSE;
-        dock_widget->setToggled(true);
-        // a trick to remove the window from the taskbar (Matthias)
-        recreate(0, 0, QPoint(x(), y()), FALSE);
-        kapp->setTopWidget( this );
-        return TRUE;
-    }
-    return QWidget::event(e);
-}
 
 void KMidi::dropEvent( QDropEvent * e )
 {
@@ -238,14 +275,6 @@ void KMidi::dropEvent( QDropEvent * e )
     if (newones) {
         redoplaybox();
 	setSong(0);
-    }
-}
-
-void KMidi::dragEnterEvent( QDragEnterEvent *e )
-{
-    if ( QUrlDrag::canDecode( e ) )
-    {
-	e->accept();
     }
 }
 
@@ -467,7 +496,7 @@ void MeterWidget::paintEvent( QPaintEvent * )
 	remeter();
 }
 
-MeterWidget::MeterWidget( KTMainWindow *parent, const char *name )
+MeterWidget::MeterWidget( QWidget *parent, const char *name )
     : QWidget( parent, name )
 {
     metertimer = new QTimer( this );
@@ -969,6 +998,14 @@ void KMidi::logoClicked(){
     else resize( extendedsize );
 }
 
+void KMidi::check_meter_visible(){
+
+    if (patchbox->isVisible()) {
+// this doesn't work
+	meter->show();
+    }
+}
+
 void KMidi::loadBitmaps() {
 
     QBitmap playBmp( playpause_width, playpause_height, playpause_bits,
@@ -1250,23 +1287,6 @@ void KMidi::quitClicked(){
 //    quitClicked();
 //}
 
-void KMidi::closeEvent( QCloseEvent *e ){
-
-    quitPending = true;
-    setLEDs("--:--");
-    statusLA->setText("");
-
-    writeconfig();
-    pipe_int_write(MOTIF_QUIT);
-
-    if(output_device_open == 0){
-      thisapp->processEvents();
-      thisapp->flushX();
-      usleep(100000);
-      thisapp->quit();
-    }
-    e->accept();
-}
 
 void KMidi::replayClicked(){
 
@@ -2088,6 +2108,8 @@ void KMidi::resizeEvent(QResizeEvent *e){
     int h = (e->size()).height();
     int lwheight;
 
+    if (kmidiframe->size() != e->size()) kmidiframe->resize( e->size() );
+
     if (meter->isVisible()) lwheight = h - extendedsize.height();
     else lwheight = h - regularsize.height();
 
@@ -2137,15 +2159,15 @@ extern "C" {
 
 	pipenumber = _pipenumber;
 
-	kmidi = new KMidi;
+	kmidiframe = new KMidiFrame( "_kmidiframe" );
        	/* thisapp->enableSessionManagement(true); */
-	KWM::setWmCommand(kmidi->winId(),"kmidi");
+	KWM::setWmCommand(kmidiframe->winId(),"_kmidiframe");
 	//thisapp->setTopWidget(kmidi);
 	//kmidi->setCaption(kapp->makeStdCaption( i18n("Midi Player") ));
-	kmidi->setCaption( i18n("Midi Player") );
+	kmidiframe->setCaption( i18n("Midi Player") );
 	// it's hard to drag the window around with no bar
 	//KWM::setDecoration(kmidi->winId(), KWM::tinyDecoration);
-	kmidi->show();
+	kmidiframe->show();
 	thisapp->exec();
 
 	return 0;

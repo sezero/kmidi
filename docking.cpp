@@ -34,6 +34,7 @@
 
 
 extern KMidi *kmidi;
+extern KMidiFrame *kmidiframe;
 
 extern bool dockinginprogress;
 
@@ -62,6 +63,7 @@ DockWidget::DockWidget(const char *name)
   popup_m->insertSeparator();
   toggleID = popup_m->insertItem(i18n("Restore"),
 				 this, SLOT(toggle_window_state()));
+  popup_m->insertItem(i18n("Quit"), this, SLOT(kquit()));
 
 
 
@@ -141,18 +143,18 @@ void DockWidget::timeclick() {
 
 void DockWidget::mousePressEvent(QMouseEvent *e) {
 
-  // open/close connect-window on right mouse button
+  // open popup menu on left mouse button
   if ( e->button() == LeftButton ) {
     toggle_window_state();
   }
 
-  // open popup menu on left mouse button
+  // open/close connect-window on right mouse button
   if ( e->button() == RightButton  || e->button() == MidButton) {
     int x = e->x() + this->x();
     int y = e->y() + this->y();
 
     QString text;
-    if(kmidi->isVisible())
+    if(kmidiframe->isVisible())
       text = i18n("Minimize");
     else
       text = i18n("Restore");
@@ -166,20 +168,21 @@ void DockWidget::mousePressEvent(QMouseEvent *e) {
 
 void DockWidget::toggle_window_state() {
   // restore/hide connect-window
-    if(kmidi != 0L)  {
-        if (kmidi->isVisible()){
+    if(kmidiframe != 0L)  {
+        if (kmidiframe->isVisible()){
             dockinginprogress = true;
             toggled = true;
-            kmidi->hide();
-            kmidi->recreate(0, 0, QPoint(kmidi->x(), kmidi->y()), FALSE);
-            kapp->setTopWidget( kmidi );
+            kmidiframe->hide();
+            kmidiframe->recreate(0, 0, QPoint(kmidiframe->x(), kmidiframe->y()), FALSE);
+            kapp->setTopWidget( kmidiframe );
 
         }
         else {
             toggled = false;
-            kmidi->show();
+            kmidiframe->show();
             dockinginprogress = false;
-            KWM::activate(kmidi->winId());
+            KWM::activate(kmidiframe->winId());
+	    kmidi->check_meter_visible();
         }
     }
 }
@@ -235,6 +238,12 @@ void DockWidget::forward() {
 void DockWidget::backward() {
 
   kmidi->bwdClicked();
+
+}
+
+void DockWidget::kquit() {
+
+  kmidi->quitClicked();
 
 }
 

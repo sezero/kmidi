@@ -59,6 +59,7 @@ private slots:
     void prev();
     void eject();
     void stop();
+    void kquit();
     void mousePressEvent(QMouseEvent *e);
 
 public slots:

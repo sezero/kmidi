@@ -85,11 +85,11 @@ class ConfigDlg;
 // MeterWidget - draws meter
 //
 
-class MeterWidget : public QWidget
-{
+class MeterWidget : public QWidget {
+
 	Q_OBJECT
 public:
-    MeterWidget( KTMainWindow *parent=0, const char *name=0 );
+    MeterWidget( QWidget *parent=0, const char *name=0 );
    ~MeterWidget();
     QTimer     *metertimer;
     QColor	led_color;
@@ -103,7 +103,32 @@ private:
 };
 
 
-class KMidi : public KTMainWindow {
+class KMidiFrame : public KTMainWindow {
+
+	Q_OBJECT
+public:
+
+	KMidiFrame( const char *name = 0 );
+
+	~KMidiFrame();
+
+	bool		docking;
+	bool		autodock;
+
+public slots:
+
+	void		dropEvent( QDropEvent * );
+	void		dragEnterEvent( QDragEnterEvent *e );
+
+protected:
+	void		closeEvent( QCloseEvent *e );  
+	bool		event( QEvent *e );
+        void		resizeEvent(QResizeEvent *e);
+
+};
+
+
+class KMidi : public QWidget {
 
 	Q_OBJECT
 public:
@@ -172,9 +197,6 @@ public:
 	QWidget 	*backdrop;
 	QPushButton     *makeButton( int, int, int, int, const QString & );
 
-	bool		docking;
-	bool		autodock;
-
 	int		mixerFd;
         bool            StopRequested;
 	bool 		loop;
@@ -217,10 +239,6 @@ public:
 	PlaylistDialog  *playlistdlg;
 	KConfig 	*config;
 
-protected:
-	void		closeEvent( QCloseEvent *e );  
-	bool		event( QEvent *e );
-
 private:
 	void 		display_playmode();
 	int		randomSong();
@@ -231,21 +249,21 @@ private:
 	void		loadBitmaps();
 	void		initMixer( const char *mixer = "/dev/mixer" );
 	void 	        playthemod(QString );
-        void		resizeEvent(QResizeEvent *e);
 	void 		redoplaybox();
 	void 		redoplaylistbox();
 
+protected:
+        void		resizeEvent(QResizeEvent *e);
+
 
 public:
-
-	KMidi( const char *name = 0 );
+	KMidi( QWidget *parent=0, const char *name=0 );
 
 
 signals:	
 	void		play();
 
 public slots:
-
 	void 		loadplaylist(int);
 	void 		randomPlay();
 	void 		updateUI();
@@ -269,6 +287,7 @@ public slots:
 	void		ejectClicked();
 	void		aboutClicked();
 	void		logoClicked();
+	void		check_meter_visible();
 	void		volChanged( int );
 	void		setPatch( int );
 	void		setEffects( bool );
@@ -278,7 +297,6 @@ public slots:
 	void		meterfudgeChanged( int );
 	void		updateRChecks( int );
 	void		dropEvent( QDropEvent * );
-	void		dragEnterEvent( QDragEnterEvent *e );
 	void		plActivated( int );
 };
 
