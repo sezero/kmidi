@@ -100,6 +100,7 @@ int dont_filter_drums=1;
 int dont_chorus=0;
 int dont_reverb=0;
 int current_interpolation=1;
+int dont_keep_looping=0;
 static int voice_reserve=0;
 
 #ifndef ADAGIO
@@ -1468,6 +1469,9 @@ debug_count--;
 
   if (obf < 8) dont_chorus = 1;
   else if (obf > 20) dont_chorus = 0;
+
+  if (obf < 6) dont_keep_looping = 1;
+  else if (obf > 12) dont_keep_looping = 0;
 
 /*
   if (obf < 20) dont_filter = 1;

@@ -2,6 +2,9 @@
 
 	* Makefile.am: change -O2 to -O to avoid
 	  core dumps (egcs-1.1.2)
+	* kmidi.cpp: made kmidi a unique application;
+	  registered with dcop; added stuff about
+	  restoring (untested)
 
 1999-11-22  Greg Lee  <lee@hawaii.edu>
 

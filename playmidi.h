@@ -240,6 +240,7 @@ extern int command_cutoff_allowed;
 extern int dont_chorus;
 extern int dont_reverb;
 extern int current_interpolation;
+extern int dont_keep_looping;
 
 extern int GM_System_On;
 extern int XG_System_On;

@@ -28,9 +28,14 @@
 #include <unistd.h>
 #include <math.h>
 
+#include <kuniqueapp.h>
+#include <dcopclient.h>
 #include <kconfig.h>
 #include <klocale.h>
 #include <kmessagebox.h>
+
+//#include <kmenubar.h>
+#include <khelpmenu.h>
 
 #include "kmidi.h"
 
@@ -75,13 +80,7 @@ static const char * whatsthis_image[] = {
 "     ooo        ",
 "     ooo        "};
 
-//#include "config.h"
 #include "playlist.h"
-//#include "output.h"
-//#include "instrum.h"
-//#include "playmidi.h"
-//#include "constants.h"
-//#include "ctl.h"
 #include <kstddirs.h>
 #include <kglobal.h>
 #include <kwm.h>
@@ -104,7 +103,6 @@ void pipe_string_write(char *str);
 }
 
 extern PlayMode *play_mode;
-//extern int have_commandline_midis;
 extern int output_device_open;
 extern int32 control_ratio;
 extern char *cfg_names[];
@@ -118,10 +116,14 @@ enum midistatus{ KNONE, KPLAYING, KSTOPPED, KLOOPING, KFORWARD,
 static midistatus status, last_status;
 static int nbvoice = 0;
 static int settletime = 0;
+#if 0
+static int menubarheight;
+static bool menubarisvisible;
+#endif
 
 //QFont default_font("Helvetica", 10, QFont::Bold);
 
-KApplication * thisapp;
+KUniqueApplication * thisapp;
 KMidiFrame *kmidiframe;
 KMidi *kmidi;
 
@@ -134,8 +136,28 @@ bool quitPending = 0;
 KMidiFrame::KMidiFrame( const char *name ) :
     KTMainWindow( name )
 {
+
+#if 0
+    menuBar = new KMenuBar(this);
+    QPopupMenu *fileMenu = new QPopupMenu;
+    menuBar->insertItem("&File", fileMenu);
+
+    menuBar->enableFloating(true);
+    menuBar->enableMoving(true);
+
+    setMenu(menuBar);
+
+    //menuBar->hide();
+    menubarheight = heightForWidth(90+220+90);
+fprintf(stderr, "menubar %d tall\n", menubarheight);
+//Whoops -- height is 0
+    menubarisvisible = true;
+#endif
+
     kmidi = new KMidi(this, "_kmidi" );
     setView(kmidi,TRUE);
+
+
     quitPending = false;
     docking = true;
     //autodock = false;
@@ -853,6 +875,10 @@ void KMidi::drawPanel()
     logwindow->resize(totalwidth, infowindowheight);
     logwindow->hide();
 
+#if 0
+    if (menubarisvisible) regularheight += menubarheight;
+#endif
+
     regularsize = QSize (totalwidth, regularheight);
     setFixedWidth(totalwidth);
 
@@ -1197,6 +1223,7 @@ void KMidi::logoClicked(){
 
     if(meter->isVisible()){
 	meter->hide();
+	//kmidiframe->menuBar->hide();
 	patchbox->hide();
 	playbox->hide();
 	playlistbox->hide();
@@ -1215,6 +1242,9 @@ void KMidi::logoClicked(){
 	else resize( regularsize );
 	return;
     }
+
+    //kmidiframe->menuBar->show();
+
     meter->show();
     patchbox->show();
     playbox->show();
@@ -2501,6 +2531,7 @@ void KMidi::resizeEvent(QResizeEvent *e){
     if (h < regularsize.height() + 10) {
 	if (logwindow->isVisible()) logwindow->hide();
 	if (meter->isVisible()) {
+	    //kmidiframe->menuBar->hide();
 	    meter->hide();
 	    patchbox->hide();
 	    playbox->hide();
@@ -2532,24 +2563,38 @@ void KMidi::resizeEvent(QResizeEvent *e){
 extern "C" {
 
     void createKApplication(int *argc, char **argv){
-	thisapp = new KApplication(*argc, argv, "kmidi");
+	thisapp = new KUniqueApplication(*argc, argv, "kmidi");
+	//thisapp->dcopClient()->attach();
+	//thisapp->dcopClient()->registerAs("kmidi");
+
+//this doesn't seem to do anything
+	//QCString fun, replyType;
+	//QByteArray data, replyData;
+	//if (thisapp->process(fun, data, replyType, replyData))
+	//	printf("fun[%s] replyType[%s]\n", fun.data(), replyType.data());
     }
     
     int Launch_KMidi_Process(int _pipenumber){
 
 	pipenumber = _pipenumber;
 
+	if (thisapp->isRestored()) {
+	   int n = 1;
+	   while (KTMainWindow::canBeRestored(n)) {
+	      (new KMidiFrame)->restore(n);
+	      n++;
+	   }
+	}
+	else {
+
 	kmidiframe = new KMidiFrame( "_kmidiframe" );
-       	/* thisapp->enableSessionManagement(true); */
 	KWM::setWmCommand(kmidiframe->winId(),"_kmidiframe");
-	//thisapp->setTopWidget(kmidi);
-	//kmidi->setCaption(kapp->makeStdCaption( i18n("Midi Player") ));
 	///kmidiframe->setCaption( i18n("Midi Player") );
-	// it's hard to drag the window around with no bar
-	//KWM::setDecoration(kmidi->winId(), KWM::tinyDecoration);
 	//kmidiframe->setFontPropagation( QWidget::AllChildren );
         //thisapp->setFont(default_font, TRUE);
         //kmidiframe->setFont(default_font, TRUE);
+	}
+
 	kmidiframe->show();
 	thisapp->exec();
 

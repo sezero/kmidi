@@ -71,6 +71,7 @@
 #include <kapp.h>
 #include <ktmainwindow.h>
 #include <kled.h>
+//#include <kmenubar.h>
 
 #define PLAYLIST_WIDTH  550
 #define PLAYLIST_HEIGHT 440
@@ -116,11 +117,10 @@ public:
 
 	bool		docking;
 	bool		autodock;
-
+//	KMenuBar	*menuBar;
 
 protected:
 	void		closeEvent( QCloseEvent *e );  
-//	bool		event( QEvent *e );
 
 };
 

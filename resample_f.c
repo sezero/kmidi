@@ -283,6 +283,14 @@ static sample_t *rs_loop(int v, Voice *vp, uint32 *countptr)
   uint32
     se=vp->sample->data_length,
     count = *countptr;
+  int
+    flag_exit_loop;
+
+
+  flag_exit_loop =
+	(vp->status & (VOICE_FREE | VOICE_DIE)) ||
+	((vp->status & VOICE_OFF) && (vp->sample->modes & MODES_FAST_RELEASE) ) ||
+	((vp->status & VOICE_OFF) && dont_keep_looping ) ;
 
   overshoot = src[(se>>FRACTION_BITS)-1] / OVERSHOOT_STEP;
   if (overshoot < 0) overshoot = -overshoot;
@@ -372,9 +380,7 @@ static sample_t *rs_loop(int v, Voice *vp, uint32 *countptr)
       ofs += incr;
       if (ofs>=le)
 	{
-	  /** if (vp->status & (VOICE_OFF | VOICE_FREE | VOICE_DIE)) **/
-	  if ( (vp->status & (VOICE_FREE | VOICE_DIE)) ||
-		 ((vp->status & VOICE_OFF)&&(vp->sample->modes & MODES_FAST_RELEASE) ) )
+	  if (flag_exit_loop)
 	    {
 	    	vp->echo_delay -= ll >> FRACTION_BITS;
 	  	if (vp->echo_delay >= 0) ofs -= ll;
@@ -932,7 +938,14 @@ static sample_t *rs_vib_loop(int v, Voice *vp, uint32 *countptr)
     count = *countptr;
   uint32
     cc=vp->vibrato_control_counter;
+  int
+    flag_exit_loop;
 
+
+  flag_exit_loop =
+	(vp->status & (VOICE_FREE | VOICE_DIE)) ||
+	((vp->status & VOICE_OFF) && (vp->sample->modes & MODES_FAST_RELEASE) ) ||
+	((vp->status & VOICE_OFF) && dont_keep_looping ) ;
 
   overshoot = src[(se>>FRACTION_BITS)-1] / OVERSHOOT_STEP;
   if (overshoot < 0) overshoot = -overshoot;
@@ -1026,9 +1039,7 @@ static sample_t *rs_vib_loop(int v, Voice *vp, uint32 *countptr)
       ofs += incr;
       if (ofs>=le)
 	{
-	  /** if (vp->status & (VOICE_OFF | VOICE_FREE | VOICE_DIE)) **/
-	  if ( (vp->status & (VOICE_FREE | VOICE_DIE)) ||
-		 ((vp->status & VOICE_OFF)&&(vp->sample->modes & MODES_FAST_RELEASE) ) )
+	  if (flag_exit_loop)
 	    {
 	    	vp->echo_delay -= ll >> FRACTION_BITS;
 	  	if (vp->echo_delay >= 0) ofs -= ll;
