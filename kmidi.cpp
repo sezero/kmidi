@@ -97,7 +97,7 @@ void pipe_string_write(char *str);
 }
 
 extern PlayMode *play_mode;
-extern int have_commandline_midis;
+//extern int have_commandline_midis;
 extern int output_device_open;
 extern int32 control_ratio;
 extern char *cfg_names[];
@@ -1815,7 +1815,7 @@ void KMidi::ReadPipe(){
 	    case DEVICE_OPEN:
 
 	      output_device_open = 1;
-	      if(have_commandline_midis && output_device_open) {
+	      if(have_commandline_midis>0 && output_device_open) {
                 playPB->setOn( TRUE );
 		volChanged(volume);
 		emit play();
@@ -1886,7 +1886,7 @@ void KMidi::ReadPipe(){
 
 		
 		QFileInfo file;
-		have_commandline_midis = false;
+		have_commandline_midis = 0;
 
 		for (i=0;i<number_of_files;i++)
 		  {
@@ -1894,7 +1894,7 @@ void KMidi::ReadPipe(){
 		    file.setFile(filename);
 		    if( file.isReadable()){
 		      playlist->append(filename);
-		      have_commandline_midis = true;
+		      have_commandline_midis = 1;
 		    }
 		    else{
 		      QString string = i18n("%1\nis not readable or doesn't exist.").arg(filename);
@@ -1920,7 +1920,7 @@ void KMidi::ReadPipe(){
 		      updateUI();
 
 		}
-		if(have_commandline_midis && output_device_open) {
+		if(have_commandline_midis>0 && output_device_open) {
                   playPB->setOn( TRUE );
 		  volChanged(volume);
 		  emit play();

@@ -449,7 +449,12 @@ static sample_t *rs_bidir(int v, Voice *vp, uint32 count)
   while(count)
     {
       /* Precalc how many times we should go through the loop */
+#if 1
       i = ((incr > 0 ? le : ls) - ofs) / incr + 1;
+#else
+/* fix from M. Izumo */
+      i = ((incr > 0 ? le : ls) - ofs + incr - 1) / incr;
+#endif
       if (i > count)
 	{
 	  i = count;
@@ -827,7 +832,12 @@ static sample_t *rs_vib_bidir(int v, Voice *vp, uint32 count)
   while (count)
     {
       /* Precalc how many times we should go through the loop */
+#if 1
       i = ((incr > 0 ? le : ls) - ofs) / incr + 1;
+#else
+/* fix from M. Izumo */
+      i = ((incr > 0 ? le : ls) - ofs + incr - 1) / incr;
+#endif
       if(i > count) i = count;
       if(i > cc)
 	{

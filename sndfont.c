@@ -186,6 +186,10 @@ static unsigned char *read_whole_sf(FILE *fd) {
     unsigned char *sf_contents;
 
     sf_size_of_contents = 0;
+
+#ifndef KMIDI
+    if (have_commandline_midis < 3) return 0;
+#endif
     if (stat(current_filename, &info)) {
 	/* fprintf(stderr,"can't stat\n"); */
     	return 0;
@@ -597,7 +601,7 @@ static int load_one_side(SFInsts *rec, SampleList *sp, int sample_count, Sample 
 	}
 #endif
 
-#ifdef SF_ADJUST_SAMPLE_VOLUMES
+#ifdef ADJUST_SAMPLE_VOLUMES
       if (amp!=-1)
 	sample->volume=(double)(amp) / 100.0;
       else

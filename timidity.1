@@ -116,6 +116,12 @@ Select interpolation algorithm for resampling: 0 for linear interpolation,
 1 for cspline interpolation, 2 for LaGrange interpolation, 3 for
 cspline interpolation with low-pass filtering.
 .TP
+.B \-r " number"
+Set maximum of ram in megabytes to use up keeping patches from previously
+played midi files.  This should presumably be less than your total ram
+plus disk cache size.  The default is 60 megabytes.  It probably doesn't
+matter unless you're using big sf2 soundfont patchsets.
+.TP
 .B \-f
 Toggles fast envelopes. Some MIDI files sound better when notes decay
 slower -- it gives the impression of reverb, which TiMidity doesn't

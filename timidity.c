@@ -58,8 +58,8 @@ extern void effect_activate( int iSwitch ) ;
 extern int init_effect(void) ;
 #endif /*CHANNEL_EFFECT*/
 
-#ifdef KMIDI
 int have_commandline_midis = 0;
+#ifdef KMIDI
 int output_device_open = 1;
 #endif /* KMIDI */
 #ifdef tplusdontuse
@@ -142,8 +142,10 @@ static void help(void)
 	 "  -P file Use patch file for all programs\n"
 	 "  -D n    Play drums on channel n\n"
 	 "  -Q n    Ignore channel n\n"
-	 "  -R n    Reverb options (1)(+2)(+4)\n"
-	 "  -k n    Resampling interpolation option (0-3)\n"
+	 "  -R n    Reverb options (1)(+2)(+4) [7]\n"
+	 "  -k n    Resampling interpolation option (0-3) [1]\n"
+	 "  -r n    Max ram to hold patches in megabytes [60]\n"
+
 	 "  -F      Enable fast panning\n"
 	 "  -U      Unload instruments from memory between MIDI files\n"
 	 "\n"
@@ -897,7 +899,7 @@ int main(int argc, char **argv)
   init_effect() ;
 #endif /*CHANNEL_EFFECT*/
 
-  while ((c=getopt(argc, argv, "UI:P:L:c:A:C:ap:fo:O:s:Q:R:FD:hi:#:qEmk:"
+  while ((c=getopt(argc, argv, "UI:P:L:c:A:C:ap:fo:O:s:Q:R:FD:hi:#:qEmk:r:"
 #if defined(AU_LINUX) || defined(AU_WIN32)
 			"B:" /* buffer fragments */
 #endif
@@ -911,11 +913,7 @@ int main(int argc, char **argv)
 		case 'U': free_instruments_afterwards=1; break;
 		case 'L': add_to_pathlist(optarg); try_config_again=1; break;
 		case 'c':
-#ifdef KMIDI
 	if (read_config_file(optarg, 1)) cmderr++;
-#else
-	if (read_config_file(optarg, 0)) cmderr++;
-#endif
 	else got_a_configuration=1;
 	break;
 #ifdef CHANNEL_EFFECT
@@ -932,6 +930,10 @@ int main(int argc, char **argv)
 
 		case 'k':
 	current_interpolation = atoi(optarg);
+	break;
+
+		case 'r':
+	max_patch_memory = atoi(optarg) * 1000000;
 	break;
 
 		case 'R': reverb_options = atoi(optarg); break;
@@ -1028,11 +1030,7 @@ int main(int argc, char **argv)
 /* don't use unnecessary memory until we're a child process */
   if (!got_a_configuration)
 	 {
-#ifdef KMIDI
 		if (!try_config_again || read_config_file(CONFIG_FILE, 1))
-#else
-		if (!try_config_again || read_config_file(CONFIG_FILE, 0))
-#endif
 	cmderr++;
 	 }
 
@@ -1077,6 +1075,9 @@ int main(int argc, char **argv)
 	  need_stdin=1;
 		optind=orig_optind;
 
+	if(argc-optind > 0 ) have_commandline_midis = argc - optind;
+	else have_commandline_midis = 0;
+ 
 #ifndef KMIDI
 		if (ctl->open(need_stdin, need_stdout))
 	{
@@ -1133,24 +1134,24 @@ int main(int argc, char **argv)
 #endif
 
 		/* Return only when quitting */
-#ifdef KMIDI
-
-	if(argc-optind > 0 ) have_commandline_midis = 1;
+/*
+	if(argc-optind > 0 ) have_commandline_midis = argc - optind;
 	else have_commandline_midis = 0;
+*/
+#ifndef KMIDI
+	read_config_file(current_config_file, 0);
+#endif
  
-#endif /* KMIDI */
-		ctl->pass_playing_list(argc-optind, &argv[orig_optind]);
+	ctl->pass_playing_list(argc-optind, &argv[orig_optind]);
 
-		play_mode->close_output();
-		ctl->close();
+	play_mode->close_output();
+	ctl->close();
+
 #ifdef __WIN32__
 			DeleteCriticalSection (&critSect);
 #endif
 #ifndef KMIDI
-		return 0;
-#endif /* not KMIDI */
-
-#ifndef KMIDI
+	return 0;
 	 }
 #endif /* not KMIDI */
   return 0;

@@ -1,4 +1,4 @@
-/*	$Id:$	*/
+/*	$Id$	*/
 
 
 #ifdef LOOKUP_HACK
@@ -66,7 +66,7 @@
 		ofs=ofsd; \
 	}
 #else
-# define INTERPVARS      int32   ofsd, v0, v1, v2, v3, temp, overshoot; \
+# define INTERPVARS      int32   v0, v1, v2, v3, temp, overshoot; \
 			float insamp, outsamp, a0, a1, a2, b0, b1, \
 			    x0=vp->current_x0, x1=vp->current_x1, y0=vp->current_y0, y1=vp->current_y1; \
 			uint32 cc_count=vp->modulation_counter, bw_index=vp->bw_index, ofsdu; \

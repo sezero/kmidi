@@ -265,3 +265,4 @@ extern int reverb_options;
 extern int cfg_select;
 extern void clear_config(void);
 extern void effect_activate( int iSwitch );
+extern int have_commandline_midis;
