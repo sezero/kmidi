@@ -308,12 +308,10 @@ static int set_playback_info (void* handle__,
   pcm_format.rate = *rate__;
 
   /*check channels*/
-#if 0
-  if ((*encoding__ & PE_MONO) != 0 && playback_info.min_channels > 1)
+  if ((*encoding__ & PE_MONO) != 0 && playback_info.min_voices > 1)
     *encoding__ &= ~PE_MONO;
-  if ((*encoding__ & PE_MONO) == 0 && playback_info.max_channels < 2)
+  if ((*encoding__ & PE_MONO) == 0 && playback_info.max_voices < 2)
     *encoding__ |= PE_MONO;
-#endif
 
   if ((*encoding__ & PE_MONO) != 0)
     pcm_format.voices = 1;/*mono*/
@@ -329,7 +327,6 @@ static int set_playback_info (void* handle__,
 	  pcm_format.format = SND_PCM_SFMT_S16_LE;
 	  *encoding__ |= PE_SIGNED;
 	}
-#if 0
       else if ((playback_info.formats & SND_PCM_FMT_U16_LE) != 0)
 	{
 	  pcm_format.format = SND_PCM_SFMT_U16_LE;
@@ -345,7 +342,6 @@ static int set_playback_info (void* handle__,
 	  pcm_format.format = SND_PCM_SFMT_U16_LE;
 	  *encoding__ &= ~PE_SIGNED;
 	}
-#endif
       else
 	{
 	  ctl->cmsg(CMSG_ERROR, VERB_NORMAL,
@@ -361,13 +357,11 @@ static int set_playback_info (void* handle__,
 	  pcm_format.format = SND_PCM_SFMT_U8;
 	  *encoding__ &= ~PE_SIGNED;
 	}
-#if 0
       else if ((playback_info.formats & SND_PCM_FMT_S8) != 0)
 	{
 	  pcm_format.format = SND_PCM_SFMT_U16_LE;
 	  *encoding__ |= PE_SIGNED;
 	}
-#endif
       else
 	{
 	  ctl->cmsg(CMSG_ERROR, VERB_NORMAL,
@@ -474,16 +468,14 @@ static int set_playback_info (void* handle__,
 
   if(snd_pcm_plugin_status(handle__, &playback_status) == 0)
     {
-#if 0
-      if (playback_status.rate != orig_rate)
+      if (setup.format.rate != orig_rate)
 	{
 	  ctl->cmsg(CMSG_WARNING, VERB_VERBOSE,
 		    "Output rate adjusted to %d Hz (requested %d Hz)",
-		    playback_status.rate, orig_rate);
-	  dpm.rate = playback_status.rate;
+		    setup.format.rate, orig_rate);
+	  dpm.rate = setup.format.rate;
 	  ret_val = 1;
 	}
-#endif
       total_bytes = playback_status.count;
     }
   else

@@ -1,3 +1,15 @@
+2000-08-23  Greg Lee  <lee@hawaii.edu>
+
+	* TIMIDITY/makelinks must be run at compile time
+	* change name of "About" button on main menu bar to "Help"
+	* change names of buttons in file dialog (again)
+	* current QT no longer works with insert(0, ...) for
+	  QStringList -- change to prepend(...)
+	* copy of argv pointers made in midiapplication.cpp can
+	  no longer be deleted, since it's later used by the
+	  crashhandler
+	* fix the alsa_a.cpp driver
+
 2000-07-15  Greg Lee  <lee@hawaii.edu>
 
 	* TIMIDITY/gtk_i.c: implement load playlist
