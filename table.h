@@ -18,7 +18,7 @@ class Table : public QTableView
 {
     Q_OBJECT
 public:
-    Table( int width, int height, QWidget* parent=0, const char* name=0 );
+    Table( int width, int height, QWidget* parent=0, const char* name=0, WFlags f=0 );
     ~Table();
     
     const char* cellContent( int row, int col ) const;

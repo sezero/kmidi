@@ -843,7 +843,7 @@ void KMidi::drawPanel()
     iy += 3*HEIGHT;
 
     int CHHEIGHT = 17 * (HEIGHT/2);
-    channelwindow = new Table( totalwidth, CHHEIGHT, this, "channels" );
+    channelwindow = new Table( totalwidth, CHHEIGHT, this, "channels", Qt::WRepaintNoErase );
     channelwindow->setFont( QFont( "helvetica", 10, QFont::Normal) );
 
     channelwindow->move(ix, iy);

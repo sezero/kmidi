@@ -25,8 +25,8 @@ static const int NUMROWS = 17;
   Constructs a Table widget.
 */
 
-Table::Table( int width, int height, QWidget *parent, const char *name )
-    : QTableView(parent,name)
+Table::Table( int width, int height, QWidget *parent, const char *name, WFlags f)
+    : QTableView(parent,name,f)
 {
     int n;
 
@@ -135,7 +135,7 @@ void Table::setExpression( int chan, int val )
 
     contents[indexOf( chan+1, 3 )].setNum(wid);
     t_expression[chan] = wid;
-	updateCell( chan+1, 3 );
+	updateCell( chan+1, 3, false );
 }
 
 void Table::setPanning( int chan, int val )
@@ -144,7 +144,7 @@ void Table::setPanning( int chan, int val )
     int wid = (cell_width[4]/2 - 4)*(val - 64)/64;
     contents[indexOf( chan+1, 4 )].setNum(wid);
     t_panning[chan] = wid;
-	updateCell( chan+1, 4 );
+	updateCell( chan+1, 4, false );
 }
 
 void Table::setReverberation( int chan, int val )
@@ -153,7 +153,7 @@ void Table::setReverberation( int chan, int val )
     int wid = (cell_width[5]-8)*val/128;
     contents[indexOf( chan+1, 5 )].setNum(wid);
     t_reverberation[chan] = wid;
-	updateCell( chan+1, 5 );
+	updateCell( chan+1, 5, false );
 }
 
 void Table::setChorusDepth( int chan, int val )
@@ -162,7 +162,7 @@ void Table::setChorusDepth( int chan, int val )
     int wid = (cell_width[6]-8)*val/128;
     contents[indexOf( chan+1, 6 )].setNum(wid);
     t_chorusdepth[chan] = wid;
-	updateCell( chan+1, 6 );
+	updateCell( chan+1, 6, false );
 }
 
 void Table::setVolume( int chan, int val )
@@ -171,7 +171,7 @@ void Table::setVolume( int chan, int val )
     int wid = (cell_width[7]-8)*val/128;
     contents[indexOf( chan+1, 7 )].setNum(wid);
     t_volume[chan] = wid;
-	updateCell( chan+1, 7 );
+	updateCell( chan+1, 7, false );
 }
 
 /*
@@ -215,22 +215,6 @@ void Table::paintCell( QPainter* p, int row, int col )
 
     if (!row) p->drawLine( 0,  0, x2,  0 );		// horiz. at top
     if (!col) p->drawLine( 0,  0,  0, y2 );		// vert. on left
-    /*
-      Draw extra frame inside if this is the current cell.
-    */
-    //p->drawRect( 0, 0, x2, y2 );	// draw rect. along cell edges
-#if 0
-    if ( (row == curRow) && (col == curCol) ) {	// if we are on current cell,
-	if ( hasFocus() ) {
-	    p->drawRect( 0, 0, x2, y2 );	// draw rect. along cell edges
-	}
-	else {					// we don't have focus, so
-	    p->setPen( DotLine );		// use dashed line to
-	    p->drawRect( 0, 0, x2, y2 );	// draw rect. along cell edges
-	    p->setPen( SolidLine );		// restore to normal
-	}
-    }
-#endif
 
     /*
       Draw cell content (text)
@@ -244,6 +228,7 @@ void Table::paintCell( QPainter* p, int row, int col )
 
     else if (col==3) {
 	int wid = t_expression[chan];
+	if (wid < w-8) p->fillRect(4+wid,4,w-8-wid,h-8, backgroundColor());
 	if (wid > 0) {
 	    if (c_flags[chan] & FLAG_PERCUSSION)
 		p->fillRect(4,4,wid,h-8, QColor("yellow"));
@@ -252,23 +237,35 @@ void Table::paintCell( QPainter* p, int row, int col )
     }
     else if (col==4) {
 	int wid = t_panning[chan];
-	if (wid > 0) p->fillRect(w/2,4,wid,h-8, QColor("green"));
-	else if (wid < 0) p->fillRect(w/2 + wid,4,-wid,h-8, QColor("blue"));
+	if (wid > 0) {
+	    p->fillRect(4,4,(w-8)/2,h-8, backgroundColor());
+	    if (wid < w/2-4) p->fillRect(w/2+wid,4,w/2-4-wid,h-8, backgroundColor());
+	    p->fillRect(w/2,4,wid,h-8, QColor("green"));
+	}
+	else if (wid < 0) {
+	    p->fillRect(w/2,4,(w-8)/2,h-8, backgroundColor());
+	    if (-wid < w/2-4) p->fillRect(4,4,w/2-4+wid,h-8, backgroundColor());
+	    p->fillRect(w/2 + wid,4,-wid,h-8, QColor("blue"));
+	}
+	else p->fillRect(4,4,w-8,h-8, backgroundColor());
     }
     else if (col==5) {
 	int wid = t_reverberation[chan];
+	if (wid < w-8) p->fillRect(4+wid,4,w-8-wid,h-8, backgroundColor());
 	if (wid > 0) {
 	    p->fillRect(4,4,wid,h-8, QColor("SlateBlue2"));
 	}
     }
     else if (col==6) {
 	int wid = t_chorusdepth[chan];
+	if (wid < w-8) p->fillRect(4+wid,4,w-8-wid,h-8, backgroundColor());
 	if (wid > 0) {
 	    p->fillRect(4,4,wid,h-8, QColor("coral2"));
 	}
     }
     else if (col==7) {
 	int wid = t_volume[chan];
+	if (wid < w-8) p->fillRect(4+wid,4,w-8-wid,h-8, backgroundColor());
 	if (wid > 0) {
 	    if (c_flags[chan] & FLAG_PERCUSSION)
 		p->fillRect(4,4,wid,h-8, QColor("yellow"));
