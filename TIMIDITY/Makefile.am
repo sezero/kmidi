@@ -47,196 +47,201 @@ noinst_HEADERS = config.h common.h readmidi.h playmidi.h resample.h mix.h instru
 # Ok, anything that gets linked in here, we make it depend on BITMAPS
 # since that's the last file we link in.
 
-BITMAPS: 
+CLEANFILES = buildhack
+
+buildhack:
 	$(srcdir)/makelinks $(srcdir)/..
+	touch buildhack
 
-alsa_a.c: BITMAPS
+BITMAPS: buildhack
 
+alsa_a.c: buildhack
 
-arts_a.c: BITMAPS
 
+arts_a.c: buildhack
 
-b_out.c: BITMAPS
 
+b_out.c: buildhack
 
-bag.c: BITMAPS
 
+bag.c: buildhack
 
-bsd20_a.c: BITMAPS
 
+bsd20_a.c: buildhack
 
-celeste_e.c: BITMAPS
 
+celeste_e.c: buildhack
 
-cfg.c: BITMAPS
 
+cfg.c: buildhack
 
-cfg.l: BITMAPS
 
+cfg.l: buildhack
 
-chorus_e.c: BITMAPS
 
+chorus_e.c: buildhack
 
-common.c: BITMAPS
 
+common.c: buildhack
 
-common.h: BITMAPS
 
+common.h: buildhack
 
-config.h: BITMAPS
 
+config.h: buildhack
 
-controls.c: BITMAPS
 
+controls.c: buildhack
 
-controls.h: BITMAPS
 
+controls.h: buildhack
 
-ctl.c: BITMAPS
 
+ctl.c: buildhack
 
-ctl.h: BITMAPS
 
+ctl.h: buildhack
 
-dec_a.c: BITMAPS
 
+dec_a.c: buildhack
 
-dumb_c.c: BITMAPS
 
+dumb_c.c: buildhack
 
-effects.c: BITMAPS
 
+effects.c: buildhack
 
-effects.h: BITMAPS
 
+effects.h: buildhack
 
-esd_a.c: BITMAPS
 
+esd_a.c: buildhack
 
-fffload.c: BITMAPS
 
+fffload.c: buildhack
 
-filter.c: BITMAPS
 
+filter.c: buildhack
 
-filter.h: BITMAPS
 
+filter.h: buildhack
 
-gentxt.c: BITMAPS
 
+gentxt.c: buildhack
 
-getopt.c: BITMAPS
 
+getopt.c: buildhack
 
-hpux_a.c: BITMAPS
 
+hpux_a.c: buildhack
 
-hpux_d_a.c: BITMAPS
 
+hpux_d_a.c: buildhack
 
-instrum.c: BITMAPS
 
+instrum.c: buildhack
 
-instrum.h: BITMAPS
 
+instrum.h: buildhack
 
-linux_a.c: BITMAPS
 
+linux_a.c: buildhack
 
-linux_a2.c: BITMAPS
 
+linux_a2.c: buildhack
 
-mix.c: BITMAPS
 
+mix.c: buildhack
 
-mix.h: BITMAPS
 
+mix.h: buildhack
 
-nas_a.c: BITMAPS
 
+nas_a.c: buildhack
 
-ncurs_c.c: BITMAPS
 
+ncurs_c.c: buildhack
 
-output.c: BITMAPS
 
+output.c: buildhack
 
-output.h: BITMAPS
 
+output.h: buildhack
 
-phaser_e.c: BITMAPS
 
+phaser_e.c: buildhack
 
-playmidi.c: BITMAPS
 
+playmidi.c: buildhack
 
-playmidi.h: BITMAPS
 
+playmidi.h: buildhack
 
-raw_a.c: BITMAPS
 
+raw_a.c: buildhack
 
-readmidi.c: BITMAPS
 
+readmidi.c: buildhack
 
-readmidi.h: BITMAPS
 
+readmidi.h: buildhack
 
-readsbk.c: BITMAPS
 
+readsbk.c: buildhack
 
-resample.c: BITMAPS
 
+resample.c: buildhack
 
-resample.h: BITMAPS
 
+resample.h: buildhack
 
-resample_f.c: BITMAPS
 
+resample_f.c: buildhack
 
-resample_l.c: BITMAPS
 
+resample_l.c: buildhack
 
-reverb_e.c: BITMAPS
 
+reverb_e.c: buildhack
 
-sbk.h: BITMAPS
 
+sbk.h: buildhack
 
-sbktext.c: BITMAPS
 
+sbktext.c: buildhack
 
-sf2cfg.c: BITMAPS
 
+sf2cfg.c: buildhack
 
-sflayer.h: BITMAPS
 
+sflayer.h: buildhack
 
-slang_c.c: BITMAPS
 
+slang_c.c: buildhack
 
-sndfont.c: BITMAPS
 
+sndfont.c: buildhack
 
-sun_a.c: BITMAPS
 
+sun_a.c: buildhack
 
-tables.c: BITMAPS
 
+tables.c: buildhack
 
-tables.h: BITMAPS
 
+tables.h: buildhack
 
-timidity.c: BITMAPS
 
+timidity.c: buildhack
 
-version.h: BITMAPS
 
+version.h: buildhack
 
-wav2pat.c: BITMAPS
 
+wav2pat.c: buildhack
 
-wave_a.c: BITMAPS
+
+wave_a.c: buildhack
 
 
 
