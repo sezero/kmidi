@@ -499,9 +499,9 @@ static void recompute_amp(int v)
     if (note && drumvolume[chan][note]>=0) vol = drumvolume[chan][note];
    }
 
-  tempamp= (vel *
-	    vol * 
-	    channel[chan].expression); /* 21 bits */
+  tempamp= (int32)((FLOAT_T)vel *
+	    127.0 * def_vol_table[vol] * 
+	    127.0 * def_vol_table[channel[chan].expression] ); /* 21 bits */
 
   if (!(play_mode->encoding & PE_MONO))
     {
@@ -551,51 +551,6 @@ static void recompute_amp(int v)
     }
 }
 
-#if 0
-/* If I use this (from tplus), I have to rebalance my pseudo-reverb. --gl */
-static void recompute_amp(int v)
-{
-    FLOAT_T tempamp;
-
-    tempamp = ((FLOAT_T)master_volume *
-	       voice[v].velocity *
-	       voice[v].volume *
-	       channel[voice[v].channel].volume *
-	       channel[voice[v].channel].expression); /* 21 bits */
-
-    if(!(play_mode->encoding & PE_MONO))
-    {
-	if(voice[v].panning > 60 && voice[v].panning < 68)
-	{
-	    voice[v].panned = PANNED_CENTER;
-	    voice[v].left_amp = FRSCALENEG(tempamp, 21);
-	}
-	else if (voice[v].panning < 5)
-	{
-	    voice[v].panned = PANNED_LEFT;
-	    voice[v].left_amp = FRSCALENEG(tempamp, 20);
-	}
-	else if(voice[v].panning > 123)
-	{
-	    voice[v].panned = PANNED_RIGHT;
-	    /* left_amp will be used */
-	    voice[v].left_amp =  FRSCALENEG(tempamp, 20);
-	}
-	else
-	{
-	    voice[v].panned = PANNED_MYSTERY;
-	    voice[v].left_amp = FRSCALENEG(tempamp, 27);
-	    voice[v].right_amp = voice[v].left_amp * voice[v].panning;
-	    voice[v].left_amp *= (FLOAT_T)(127 - voice[v].panning);
-	}
-    }
-    else
-    {
-	voice[v].panned = PANNED_CENTER;
-	voice[v].left_amp = FRSCALENEG(tempamp, 21);
-    }
-}
-#endif
 
 static int current_polyphony = 0;
 
@@ -921,7 +876,8 @@ fprintf(stderr,"REVERB_CLONE v%d vol=%f pan=%d reverb=%d delay=%dms\n", w, voice
 	voice[w].volume = (voice[w].volume * chorus) / (128+96);
 	voice[v].volume = voice[w].volume;
 #endif
-	voice[w].volume *= 0.9;
+	/* voice[w].volume *= 0.9; */
+	voice[w].volume *= 0.40;
 	voice[v].volume = voice[w].volume;
 	recompute_amp(v);
         apply_envelope_to_amp(v);
@@ -1468,10 +1424,10 @@ debug_count--;
   else if (obf > 40) dont_cspline = 0;
 
   if (obf < 5) dont_reverb = 1;
-  else if (obf > 15) dont_reverb = 0;
+  else if (obf > 25) dont_reverb = 0;
 
   if (obf < 8) dont_chorus = 1;
-  else if (obf > 30) dont_chorus = 0;
+  else if (obf > 60) dont_chorus = 0;
 
   if (opt_dry || obf < 6) dont_keep_looping = 1;
   else if (obf > 22) dont_keep_looping = 0;

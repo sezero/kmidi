@@ -1906,6 +1906,7 @@ void KMidi::ReadPipe(){
     static int last_various_flags = 0;
     static int last_rcheck_flags = 0;
     static int last_loading_blink = 0;
+    static int diff_currplaytime = 0;
     int rcheck_flags;
     static int last_nbvoice=0;
     int message;
@@ -1914,15 +1915,26 @@ void KMidi::ReadPipe(){
 	fixframesizecount--;
 	if (!fixframesizecount) {
 	    if (kmidiframe->size() != requestedframesize) {
-//printf("resize frame to %d x %d\n", requestedframesize.width(), requestedframesize.height());
-	        if (requestedframesize != QSize(0,0)) kmidiframe->resize(requestedframesize);
-		fixframesizecount = 25;
+	        if (requestedframesize != QSize(0,0)) {
+		    kmidiframe->resize(requestedframesize);
+		    fixframesizecount = 25;
+		}
 	    }
 	}
     }
 
     if (status == KPLAYING) {
-	if (currplaytime) currplaytime++;
+	if (currplaytime) {
+	    if (diff_currplaytime < 0) diff_currplaytime++;
+	    else {
+	        currplaytime++;
+		if (diff_currplaytime > 0) diff_currplaytime--;
+		if (diff_currplaytime > 2) {
+	            currplaytime++;
+		    diff_currplaytime--;
+		}
+	    }
+	}
 	else {
 	    last_loading_blink++;
 	    if (!last_loading_blink) last_loading_blink++;
@@ -2177,7 +2189,8 @@ void KMidi::ReadPipe(){
 		pipe_int_read(&nbvoice);
 
 		if (!settletime && !fastforward && !fastrewind)
-			currplaytime = cseconds + 1;
+		    diff_currplaytime = cseconds - currplaytime;
+		if (!currplaytime) currplaytime++;
 	    }
 	    break;
 	    /*	

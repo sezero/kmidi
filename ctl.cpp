@@ -265,6 +265,21 @@ static void ctl_current_time(uint32 ct)
     pipe_int_write(v);
 }
 
+static int vcurve[128] = {
+0,0,18,29,36,42,47,51,55,58,
+60,63,65,67,69,71,73,74,76,77,
+79,80,81,82,83,84,85,86,87,88,
+89,90,91,92,92,93,94,95,95,96,
+97,97,98,99,99,100,100,101,101,102,
+103,103,104,104,105,105,106,106,106,107,
+107,108,108,109,109,109,110,110,111,111,
+111,112,112,112,113,113,114,114,114,115,
+115,115,116,116,116,116,117,117,117,118,
+118,118,119,119,119,119,120,120,120,120,
+121,121,121,122,122,122,122,123,123,123,
+123,123,124,124,124,124,125,125,125,125,
+126,126,126,126,126,127,127,127
+};
 
 static void ctl_channel_note(int ch, /*int note, int vel,*/ int start)
 {
@@ -316,8 +331,8 @@ static void ctl_channel_note(int ch, /*int note, int vel,*/ int start)
 
 	Panel->notecount[slot][ch] = (int16)v;
 
-	Panel->ctotal[slot][ch] = (uint8)totalvel;
-	Panel->ctotal_sustain[slot][ch] = (uint8)total_sustain;
+	Panel->ctotal[slot][ch] = (uint8)vcurve[totalvel];
+	Panel->ctotal_sustain[slot][ch] = (uint8)vcurve[total_sustain];
 
 	if (channel[ch].kit) Panel->c_flags[ch] |= FLAG_PERCUSSION;
 	else Panel->c_flags[ch] &= ~FLAG_PERCUSSION;
