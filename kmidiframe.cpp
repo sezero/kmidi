@@ -57,7 +57,7 @@ KMidiFrame *kmidiframe;
 DockWidget*     dock_widget;
 
 KMidiFrame::KMidiFrame( const char *name ) :
-    KTMainWindow( name )
+    KMainWindow( 0, name )
 {
 
     menuBar = new KMenuBar(this);
@@ -341,14 +341,12 @@ KMidiFrame::KMidiFrame( const char *name ) :
     QPopupMenu *about = helpMenu(aboutapp);
     menuBar->insertItem( i18n("&Help"), about);
 
-    setMenu(menuBar);
-
     menuBar->hide();
     menubarheight = menuBar->heightForWidth(90+220+90);
     menubarisvisible = false;
 
     //kmidi = new KMidi(this, "_kmidi" );
-    setView(kmidi,TRUE);
+    setCentralWidget(kmidi);
 
     docking = true;
     dock_widget = new DockWidget(this, "dockw");

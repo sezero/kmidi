@@ -212,7 +212,7 @@ int Launch_KMidi_Process(int _pipenumber) {
 //fprintf(stderr,"Launch\n");
 	if (thisapp->isRestored()) {
 	   int n = 1;
-	   while (KTMainWindow::canBeRestored(n)) {
+	   while (KMidiFrame::canBeRestored(n)) {
 //fprintf(stderr,"restoring\n");
 	      (new KMidiFrame)->restore(n);
 	      n++;

@@ -67,7 +67,6 @@
 #include <sys/ioctl.h>
 
 #include <kapp.h>
-#include <ktmainwindow.h>
 #include <kled.h>
 #include <kmenubar.h>
 #include <krandomsequence.h>

@@ -44,7 +44,7 @@
 #include <kmenubar.h> 
 //#include <qlineedit.h> 
 #include <qframe.h> 
-#include <ktmainwindow.h>
+#include <kmainwindow.h>
 
 #include "kmidi.h"
 
@@ -75,7 +75,7 @@ public:
 };
 
 
-class PlaylistEdit : public KTMainWindow {
+class PlaylistEdit : public KMainWindow {
 
 Q_OBJECT
 

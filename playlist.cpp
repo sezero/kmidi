@@ -52,7 +52,7 @@ extern KMidi *kmidi;
 
 PlaylistEdit::PlaylistEdit(const char *name, QStringList *playlist,
 	int *current_playlist_ptr, QStringList *listplaylists)
-  : KTMainWindow(name){
+  : KMainWindow(0, name){
 
   setCaption(i18n("Compose Play List"));
 
@@ -196,8 +196,7 @@ PlaylistEdit::PlaylistEdit(const char *name, QStringList *playlist,
 
   redoLists();
 
-  setView(vpanner);
-  setMenu (menu);
+  setCentralWidget(vpanner);
 };
 
 

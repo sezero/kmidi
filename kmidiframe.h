@@ -39,13 +39,13 @@
 #include <fcntl.h>
 #include <sys/ioctl.h>
 
-#include <ktmainwindow.h>
+#include <kmainwindow.h>
 #include <kmenubar.h>
 
 #include "docking.h"
 
 
-class KMidiFrame : public KTMainWindow {
+class KMidiFrame : public KMainWindow {
 
 	Q_OBJECT
 public:
