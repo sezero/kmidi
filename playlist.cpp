@@ -145,7 +145,7 @@ PlaylistDialog::PlaylistDialog(QWidget *parent, const char *name, QStrList *play
   connect(local_list, SIGNAL(selected(int )), this, SLOT(local_file_selected(int )));
   
   QString str;
-  KConfig *config = thisapp->getConfig();
+  KConfig *config = thisapp->config();
   config->setGroup("KMidi");
   str = config->readEntry("Directory");
   if ( !str.isNull() ) set_local_dir(str);
@@ -379,7 +379,7 @@ void PlaylistDialog::set_local_dir(const QString &dir){
   }
 
    cur_local_dir  = QDir::current();
-   KConfig *config = thisapp->getConfig();
+   KConfig *config = thisapp->config();
    config->setGroup("KMidi");
    config->writeEntry("Directory", cur_local_dir.filePath("."));
    //config->sync();

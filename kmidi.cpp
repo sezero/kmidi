@@ -1792,7 +1792,7 @@ void KMidi::readconfig(){
 
     //////////////////////////////////////////
 
-    config=KApplication::getKApplication()->getConfig();
+    config=KApplication::kApplication()->config();
     config->setGroup("KMidi");
 
     volume = config->readNumEntry("Volume", 40);
@@ -1825,7 +1825,7 @@ void KMidi::readconfig(){
 void KMidi::writeconfig(){
 
 
-    config=KApplication::getKApplication()->getConfig();
+    config=KApplication::kApplication()->config();
 	
     ///////////////////////////////////////////////////
 
@@ -2024,7 +2024,7 @@ extern "C" {
        	/* thisapp->enableSessionManagement(true); */
 	/* thisapp->setWmCommand("kmidi"); */
 	thisapp->setTopWidget(kmidi);
-	kmidi->setCaption(kapp->getCaption());
+	kmidi->setCaption(kapp->caption());
 	kmidi->show();
 	thisapp->exec();
 
