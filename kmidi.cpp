@@ -110,6 +110,7 @@ enum midistatus{ KNONE, KPLAYING, KSTOPPED, KLOOPING, KFORWARD,
 
 static midistatus status, last_status;
 static int nbvoice = 0;
+static int settletime = 0;
 
 //QFont default_font("Helvetica", 10, QFont::Bold);
 
@@ -144,24 +145,6 @@ KMidiFrame::~KMidiFrame(){
 }
 
 
-#if 0
-bool KMidiFrame::event( QEvent *e ){
-    if(e->type() == QEvent::Hide && autodock && docking){
-        if(dockinginprogress || quitPending)
-            return(FALSE);
-        sleep(1); // give kwm some time..... ugly I know.
-        if (!KWM::isIconified(winId())) // maybe we are just on another desktop
-            return FALSE;
-        dock_widget->setToggled(true);
-        // a trick to remove the window from the taskbar (Matthias)
-        recreate(0, 0, QPoint(x(), y()), FALSE);
-        kapp->setTopWidget( this );
-        return TRUE;
-    }
-    return QWidget::event(e);
-}
-#endif
-
 void KMidiFrame::closeEvent( QCloseEvent *e ){
 
     quitPending = true;
@@ -183,6 +166,8 @@ KMidi::KMidi( QWidget *parent, const char *name )
     song_number = 1;
     max_sec = 0;
     timestopped = 0;
+    fastrewind = 0;
+    fastforward = 0;
     current_voices = DEFAULT_VOICES;
     stereo_state = reverb_state = chorus_state = verbosity_state = 1;
     starting_up = true;
@@ -234,8 +219,10 @@ KMidi::KMidi( QWidget *parent, const char *name )
     connect( stopPB, SIGNAL(clicked()), SLOT(stopClicked()) );
     connect( prevPB, SIGNAL(clicked()), SLOT(prevClicked()) );
     connect( nextPB, SIGNAL(clicked()), SLOT(nextClicked()) );
-    connect( fwdPB, SIGNAL(clicked()), SLOT(fwdClicked()) );
-    connect( bwdPB, SIGNAL(clicked()), SLOT(bwdClicked()) );
+    connect( fwdPB, SIGNAL(pressed()), SLOT(fwdPressed()) );
+    connect( fwdPB, SIGNAL(released()), SLOT(fwdReleased()) );
+    connect( bwdPB, SIGNAL(pressed()), SLOT(bwdPressed()) );
+    connect( bwdPB, SIGNAL(released()), SLOT(bwdReleased()) );
     connect( quitPB, SIGNAL(clicked()), SLOT(quitClicked()) );	
     connect( whatbutton, SIGNAL(clicked()), SLOT(invokeWhatsThis()) );	
     connect( replayPB, SIGNAL(clicked()), SLOT(replayClicked()) );
@@ -323,8 +310,8 @@ void KMidi::setToolTips()
 	QToolTip::add( playPB, 		i18n("Play/Pause") );
 	QToolTip::add( stopPB, 		i18n("Stop") );
 	QToolTip::add( replayPB, 	i18n("Loop Song") );
-	QToolTip::add( fwdPB, 		i18n("15 Secs Forward") );
-	QToolTip::add( bwdPB, 		i18n("15 Secs Backward") );
+	QToolTip::add( fwdPB, 		i18n("Fast Forward") );
+	QToolTip::add( bwdPB, 		i18n("Rewind") );
 	QToolTip::add( nextPB, 		i18n("Next Midi") );
 	QToolTip::add( prevPB, 		i18n("Previous Midi") );
 	QToolTip::add( quitPB, 		i18n("Exit Kmidi") );
@@ -744,11 +731,11 @@ void KMidi::drawPanel()
     ix = WIDTH + SBARWIDTH;
     iy += HEIGHT;
     bwdPB = makeButton( ix, iy, WIDTH/2 , HEIGHT, i18n("Bwd") );
-    what->add(bwdPB, i18n("Jump backwards 15 seconds."));
+    what->add(bwdPB, i18n("Go backwards to play<br>an earlier part of the song."));
 
     ix += WIDTH/2;
     fwdPB = makeButton( ix, iy, WIDTH/2 , HEIGHT, i18n("Fwd") );
-    what->add(fwdPB, i18n("Jump forward 15 seconds."));
+    what->add(fwdPB, i18n("Go forwards to play<br>a later part of the song."));
 
     ix = WIDTH + SBARWIDTH;
     iy += HEIGHT;
@@ -1125,7 +1112,7 @@ void KMidi::setSong( int number )
 
     if(status == KPLAYING)
       setLEDs("OO:OO");
-    nbvoice = currplaytime = 0;
+    settletime = fastforward = fastrewind = nbvoice = currplaytime = 0;
 
     playPB->setOn( TRUE );
     statusLA->setText(i18n("Playing"));
@@ -1321,7 +1308,7 @@ void KMidi::randomClicked(){
     last_status = KNONE;
     updateUI();
     setLEDs("OO:OO");
-    nbvoice = currplaytime = 0;
+    settletime = fastforward = fastrewind = nbvoice = currplaytime = 0;
     statusLA->setText(i18n("Playing"));
     looplabel->setText(i18n("Random"));
 
@@ -1342,7 +1329,7 @@ void KMidi::randomPlay(){
     shufflebutton->setOn( TRUE );
     updateUI();
     setLEDs("OO:OO");
-    nbvoice = currplaytime = 0;
+    settletime = fastforward = fastrewind = nbvoice = currplaytime = 0;
     statusLA->setText(i18n("Playing"));
     looplabel->setText(i18n("Random"));
 
@@ -1392,7 +1379,7 @@ void KMidi::playClicked()
 
   if(((int)playlist->count()  > index) && (index >= 0)){
     setLEDs("OO:OO");
-    nbvoice = currplaytime = 0;
+    settletime = fastforward = fastrewind = nbvoice = currplaytime = 0;
     statusLA->setText(i18n("Playing"));
 
     pipe_int_write(MOTIF_PLAY_FILE);
@@ -1419,7 +1406,7 @@ void KMidi::stopClicked()
      statusLA->setText(i18n("Ready"));
      looplabel->setText("");
      setLEDs("00:00");
-     currplaytime = nbvoice = 0;
+     settletime = fastforward = fastrewind = currplaytime = nbvoice = 0;
 }
 
 
@@ -1436,7 +1423,7 @@ void KMidi::prevClicked(){
     playbox->setCurrentItem(song_number-1);
     if(status == KPLAYING)
       setLEDs("OO:OO");
-    currplaytime = nbvoice = 0;
+    settletime = fastforward = fastrewind = currplaytime = nbvoice = 0;
 
     playPB->setOn( TRUE );
     statusLA->setText(i18n("Playing"));
@@ -1485,7 +1472,7 @@ void KMidi::nextClicked(){
 
     if(status == KPLAYING)
       setLEDs("OO:OO");
-    currplaytime = nbvoice = 0;
+    settletime = fastforward = fastrewind = currplaytime = nbvoice = 0;
 
     playPB->setOn( TRUE );
     statusLA->setText(i18n("Playing"));
@@ -1495,29 +1482,41 @@ void KMidi::nextClicked(){
     status = KPLAYING;
 }
 
-void KMidi::fwdClicked(){
+void KMidi::fwdPressed(){
 
     if (status != KPLAYING) return;
+    settletime = 5;
+    fastforward = 1;
+}
 
+void KMidi::fwdReleased(){
+
+    if (status != KPLAYING) return;
+    fastforward = 0;
+    timestopped = 5;
+    settletime = 5;
     pipe_int_write(MOTIF_CHANGE_LOCATOR);
-    pipe_int_write((last_sec + 15) * 100);
-
+    pipe_int_write( currplaytime );
 }
 
-void KMidi::bwdClicked(){
+
+void KMidi::bwdPressed(){
 
     if (status != KPLAYING) return;
-
-    if( (last_sec -15 ) >= 0){
-	pipe_int_write(MOTIF_CHANGE_LOCATOR);
-	pipe_int_write((last_sec -15) * 100);
-    }
-    else{
-	pipe_int_write(MOTIF_CHANGE_LOCATOR);
-	pipe_int_write(0);
-
-    }
+    settletime = 5;
+    fastrewind = 1;
 }
+
+void KMidi::bwdReleased(){
+
+    if (status != KPLAYING) return;
+    fastrewind = 0;
+    timestopped = 5;
+    settletime = 5;
+    pipe_int_write(MOTIF_CHANGE_LOCATOR);
+    pipe_int_write( currplaytime );
+}
+
 
 void KMidi::invokeWhatsThis(){
 
@@ -1862,7 +1861,7 @@ void KMidi::ReadPipe(){
 		totaltimelabel->setText(local_string);
 		/*		printf("GUI: TOTALTIME %s\n",local_string);*/
 		max_sec=cseconds;
-		nbvoice = currplaytime = 0;
+		settletime = fastforward = fastrewind = nbvoice = currplaytime = 0;
      		timeSB->setValue(0);
 		for (int l=0; l<LYRBUFL; l++) lyric_time[l] = -1;
 		lyric_head = 0; lyric_tail = 0;
@@ -1957,7 +1956,7 @@ void KMidi::ReadPipe(){
 	    break;
 	
 	    case PATCH_CHANGED_MESSAGE :
-		nbvoice = currplaytime = 0;
+		settletime = fastforward = fastrewind = nbvoice = currplaytime = 0;
 	    break;
 
 	    case NEXT_FILE_MESSAGE :
@@ -1971,7 +1970,7 @@ void KMidi::ReadPipe(){
 			    !XmToggleButtonGetState(auto_next_option))
 			    return;
 			    */
-		nbvoice = currplaytime = 0;
+		settletime = fastforward = fastrewind = nbvoice = currplaytime = 0;
 		for (int l=0; l<LYRBUFL; l++) lyric_time[l] = -1;
 		lyric_head = 0; lyric_tail = 0;
                 led[LYRICS_LED]->setColor(Qt::black);
@@ -2021,7 +2020,7 @@ void KMidi::ReadPipe(){
 			setLEDs("--:--");
 			looplabel->setText("");
 			statusLA->setText(i18n("Ready"));
-    			nbvoice = currplaytime = 0;
+    			settletime = fastforward = fastrewind = nbvoice = currplaytime = 0;
 			QString str;
 			str.sprintf(i18n("Song: --/%02d"),playlist->count());
 			song_count_label->setText(str);
@@ -2041,6 +2040,11 @@ void KMidi::ReadPipe(){
 	    }
 	    break;
 
+	    case JUMP_MESSAGE : {
+		// fprintf(stderr,"RECEIVED: JUMP MESSAGE\n");
+	    }
+	    break;
+
 	    case CURTIME_MESSAGE : {
 		int cseconds;
 
@@ -2048,8 +2052,8 @@ void KMidi::ReadPipe(){
 		pipe_int_read(&cseconds);
 		pipe_int_read(&nbvoice);
 
-
-		currplaytime = cseconds + 1;
+		if (!settletime && !fastforward && !fastrewind)
+			currplaytime = cseconds + 1;
 	    }
 	    break;
 	    /*	
@@ -2200,10 +2204,27 @@ void KMidi::ReadPipe(){
 			setLEDs(local_string);
 			if (timestopped) timestopped--;
 			else timeSB->setValue(100*cseconds/max_sec);
+
+			last_sec=sec;
+
+			if (settletime) settletime--;
 	
 		    }
 
-		last_sec=sec;
+		if (fastforward == 1)
+		  {
+			fastforward = 10;
+			if (currplaytime + 220 < max_sec)
+				currplaytime += 200;
+		  }
+		else if (fastforward) fastforward--;
+		if (fastrewind == 1)
+		  {
+			fastrewind = 10;
+			if (currplaytime > 221) currplaytime -= 200;
+		  }
+		else if (fastrewind) fastrewind--;
+
 
 		while (lyric_head != lyric_tail && lyric_time[lyric_tail] >= currplaytime+meterfudge) {
 			logwindow->insertStr(QString(lyric_buffer[lyric_tail]));
@@ -2227,7 +2248,7 @@ void KMidi::ReadPipe(){
 	    case KPAUSED:	c = Qt::yellow; break;
 	    default:		c = led_color; break;
 	}
-	if (status != KPLAYING) nbvoice = 0;
+	if (status != KPLAYING) settletime = fastforward = fastrewind = nbvoice = 0;
 	else if (looping) c = Qt::blue;
 	else if (randomplay) c = Qt::magenta;
 	last_status = status;

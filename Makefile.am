@@ -10,7 +10,7 @@ VERSION = 0.2i
 
 INCLUDES = $(all_includes)
 AM_CFLAGS = -DDEFAULT_PATH=\"$(TIMID_DIR)\" -DKMIDI
-CFLAGS = -O3 -Wall -W -Wpointer-arith -Wmissing-prototypes -Wwrite-strings -Wconversion
+CFLAGS = -O2 -Wall -W -Wpointer-arith -Wmissing-prototypes -Wwrite-strings -Wconversion
 LDFLAGS = $(all_libraries) $(KDE_RPATH)
 LDADD =  $(LIB_KDEUI) $(LIBALIB) $(LIBAUDIO) $(LIBMME) 
 
@@ -20,7 +20,7 @@ LDADD =  $(LIB_KDEUI) $(LIBALIB) $(LIBAUDIO) $(LIBMME)
 TIMID_DIR = $(kde_datadir)/kmidi/config
 
 
-bin_PROGRAMS = kmidi
+bin_PROGRAMS = kmidi sf2cfg
 
 kmidi_SOURCES = kmidi.cpp  playlist.cpp bwlednum.cpp configdlg.cpp log.cpp \
 	docking.cpp \
@@ -30,6 +30,8 @@ kmidi_SOURCES = kmidi.cpp  playlist.cpp bwlednum.cpp configdlg.cpp log.cpp \
 	b_out.c fffload.c \
 	effects.c reverb_e.c chorus_e.c phaser_e.c celeste_e.c \
 	resample_l.c resample_f.c
+
+sf2cfg_SOURCES = sf2cfg.c readsbk.c
 
 noinst_HEADERS = kmidi.h  playlist.h bwlednum.h configdlg.h \
 	docking.h \
@@ -64,19 +66,16 @@ install-data-local:
 	if [ ! -f $(TIMID_DIR)/patch/acbass.pat ]; then $(INSTALL_DATA) $(srcdir)/patch/acbass.pat $(DESTDIR)$(TIMID_DIR)/patch ; fi
 
 	@echo ""
-	@echo "Important:"
-	@echo "=========="	
 	@echo "Midis:"
 	@echo "I have included a couple of nice midis in the kmidi/midis directory."
 	@echo "These are installed in KDEDIR/share/apps/kmidi."
 	@echo ""
 	@echo "Sound Patches:"
 	@echo "Only a simple  piano and guitar sound patch and 3 drum patches come with "
-	@echo "this distribution. This  means that you can only play guitar or piano midis "
-	@echo "midis such as the included cavatina.mid, malaguena.mid, or \"Take The A Train\""
-	@echo "until you get yourself a full set of general midi (or GS or XG) patches." 
-	@echo "Read the html docs for more info on how to obtain more patches."
-	@echo ""
+	@echo "this distribution.  For normal playing of midis, you'll need a full patch"
+	@echo "set -- either a sf2 SoundFont (preferably) or a set of GUS .pat files.  For"
+	@echo "more info look at kmidi's configure window, or read the KMidi Manual or the"
+	@echo "README file."
 	@echo ""
 	@echo "Have fun with kmidi -- Bernd Wuebben <wuebben@kde.org>, Greg Lee <lee@hawaii.edu>"
 

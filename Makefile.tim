@@ -188,7 +188,7 @@ OPTSRCS = hpux_a.c linux_a.c sun_a.c dec_a.c win_a.c \
 	motif_c.c motif_i.c motif_p.c
 
 # External utility sources
-TOOLSRCS = bag.c wav2pat.c sbk2cfg.c
+TOOLSRCS = bag.c wav2pat.c sf2cfg.c
 
 # Tcl interface sources
 TCLSRCS = tkmidity.ptcl tkpanel.tcl browser.tcl misc.tcl
@@ -279,8 +279,8 @@ wav2pat: wav2pat.c
 sbktext: sbktext.c gentxt.o readsbk.o
 	$(CC) $(CFLAGS) -o sbktext sbktext.c gentxt.o readsbk.o
 
-sbk2cfg: sbk2cfg.c readsbk.o
-	$(CC) $(CFLAGS) -o sbk2cfg sbk2cfg.c readsbk.o
+sf2cfg: sf2cfg.c readsbk.o
+	$(CC) $(CFLAGS) -o sf2cfg sf2cfg.c readsbk.o
 
 depends depend dep:
 	$(CC) $(CFLAGS) -MM $(CSRCS) $(OPTSRCS) $(TOOLSRCS) > depends

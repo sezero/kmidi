@@ -295,12 +295,6 @@ The options allowed are:
 The bank number given in the first preceding
 "bank"/"drumset" statement is to be used in place of
 the bank \fIbanknumber\fP given in the SoundFont itself.
-.TP
-\fBorder=\fP\fInumber\fP
-This option is essentially obsolete.  It assigns a searching order
-to decide which patch should be used when one can be found both
-from among the GUS patches and SoundFont patches.  See
-the file "README.sf" if you really want to use this.
 .RE
 .TP
 .BI bank " number [option]"
@@ -350,13 +344,12 @@ If no value is specified, the default in the patch file will be used.
 Note that panning controls in MIDI files will override this value.
 .TP
 \fBkeep=\fP{\fBloop\fP|\fBenv\fP}
-By default, percussion instruments have their loop and envelope
-information stripped. Strangely shaped envelopes are removed
-automatically from melodic instruments as well. \fBkeep\fP can be used
-to prevent stripping envelope or loop data. For example, the Short and
-Long Whistle percussion instruments (General Midi numbers 71 and 72)
-need to have ``\fBkeep=loop keep=env\fP'' specified in the configuration
-file.
+Strangely shaped envelopes are removed
+automatically from melodic instruments in GUS patches. \fBkeep\fP can be used
+to prevent stripping envelope or loop data.  (Stripping envelopes was
+originally the default for TiMidity, but in this version it's not.  So
+these options are no longer useful -- they are kept for compatibility.
+G.L.)
 .TP
 \fBstrip=\fP{\fBloop\fP|\fBenv\fP|\fBtail\fP}
 Force removal of loop or envelope information from all patches in the

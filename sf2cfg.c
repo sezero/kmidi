@@ -37,7 +37,7 @@ int main(int argc, char **argv)
 	FILE *fp;
 
 	if (argc < 2) {
-		fprintf(stderr, "usage: sbk2cfg SoundFontFile [textfile]\n");
+		fprintf(stderr, "usage: sf2cfg SoundFontFile [> textfile]\n");
 		exit(1);
 	}
 

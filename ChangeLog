@@ -1,3 +1,9 @@
+1999-11-21  Greg Lee  <lee@hawaii.edu>
+
+	* got a core dump (mix.c) using -O3, so
+	  it's back to -O2
+	* added the utility sf2cfg
+
 1999-11-20  Greg Lee  <lee@hawaii.edu>
 
 	* sndfont.c: adjust sample volumes

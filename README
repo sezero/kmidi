@@ -48,7 +48,7 @@ New:
      o support for stereo or linked instruments in sound fonts
      o strict checking of patch declarations for soundfonts
        (no need to use "order" or "font" statements in cfg files)
-     o sbk2cfg utility constructs cfg files for AWE soundfonts
+     o sf2cfg utility constructs cfg files for AWE soundfonts
      o use patches in bank 8, etc. (bugfix)
      o buffered output to /dev/dsp0 (Linux/FreeBSD) or /dev/audio (Sun)
      o select patch set from command line with "-#<n>"
@@ -245,7 +245,7 @@ Takashi Iwai and described in README.sf.
 When the same patch of the same bank or drumset is declared more than once,
 only the first declaration counts.  So put your best fonts first.
 
-There is a utility sbk2cfg to construct a cfg file for a sbk/sf2 sound font,
+There is a utility sf2cfg to construct a cfg file for a sbk/sf2 sound font,
 which spits out all the patches that are present in the font.  Also, I've
 included sample cfg files for chaos8m.sf2 and chaos12m.sf2.
 

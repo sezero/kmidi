@@ -2167,7 +2167,7 @@ static int apply_controls(void)
 	break;
       }
   while (rc!= RC_NONE);
- 
+
   /* Advertise the skip so that we stop computing the audio buffer */
   if (did_skip)
     return RC_JUMP; 

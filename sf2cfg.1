@@ -1,0 +1,27 @@
+.TH sf2cfg 1 "11 Nov 1999" \" -*-nroff-*-
+.SH NAME
+sf2cfg \- contruct TiMidity/KMidi cfg files for SoundFonts
+.P
+.SH SYNOPSIS
+.B sf2cfg
+sffilename [> cfgname]
+.P
+.SH DESCRIPTION
+sf2cfg is a utility program which constructs a TiMidity configure
+file, with a list instrument patch names by bank, for an AWE
+SoundFont file.  Just give it the name of the SoundFont file, either
+an old style .sbk font or a .sf1 or .sf2 font.  Capture the output
+in a file, edit it if you want, then edit TiMidity's main
+configure file (timidity.cfg) to refer to the new cfg file by
+adding, e.g., lines:
+.br
+if 0
+.br
+source cfgname
+.br
+.SH COPYRIGHT
+Copyright (C) 1998 Takashi Iwai
+.SH AUTHORS
+Greg Lee <lee@hawaii.edu>
+.br
+adapted from a program by Takashi Iwai.

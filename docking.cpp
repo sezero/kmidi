@@ -45,8 +45,8 @@ DockWidget::DockWidget( KMidiFrame* parent, const char *name)
 
   popup_m->insertItem(i18n("Play/Pause"), kmidi, SLOT(playClicked()));
   popup_m->insertItem(i18n("Stop"), kmidi, SLOT(stopClicked()));
-  popup_m->insertItem(i18n("Forward"), kmidi, SLOT(fwdClicked()));
-  popup_m->insertItem(i18n("Backward"), kmidi, SLOT(bwdClicked()));
+  //popup_m->insertItem(i18n("Forward"), kmidi, SLOT(fwdClicked()));
+  //popup_m->insertItem(i18n("Backward"), kmidi, SLOT(bwdClicked()));
   popup_m->insertItem(i18n("Next"), kmidi, SLOT(nextClicked()));
   popup_m->insertItem(i18n("Previous"), kmidi, SLOT(prevClicked()));
   popup_m->insertItem(i18n("Eject"), kmidi, SLOT(ejectClicked()));

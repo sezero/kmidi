@@ -821,9 +821,11 @@ if (percussion /* && (gm_num >= 42 && gm_num <= 51) */) {
 	  /* Try to determine a volume scaling factor for the sample.
 	     This is a very crude adjustment, but things sound more
 	     balanced with it. Still, this should be a runtime option. */
-	  int32 i=sp->data_length/2;
+	  uint32 i, numsamps=sp->data_length/2;
+	  uint32 higher=0, highcount=0;
 	  int16 maxamp=0,a;
 	  int16 *tmp=(int16 *)sp->data;
+	  i = numsamps;
 	  while (i--)
 	    {
 	      a=*tmp++;
@@ -831,7 +833,21 @@ if (percussion /* && (gm_num >= 42 && gm_num <= 51) */) {
 	      if (a>maxamp)
 		maxamp=a;
 	    }
-	  sp->volume=32768.0 / (double)(maxamp);
+	  tmp=(int16 *)sp->data;
+	  i = numsamps;
+	  while (i--)
+	    {
+	      a=*tmp++;
+	      if (a<0) a=-a;
+	      if (a > 3*maxamp/4)
+		{
+		   higher += a;
+		   highcount++;
+		}
+	    }
+	  if (highcount) higher /= highcount;
+	  else higher = 10000;
+	  sp->volume = (32768.0 * 0.875) /  (double)higher ;
 	  ctl->cmsg(CMSG_INFO, VERB_DEBUG, " * volume comp: %f", sp->volume);
 	}
 #else

@@ -213,6 +213,8 @@ public:
 	int 		max_sec;
 	int 		song_number;
 	int 		last_sec;
+	int 		fastforward;
+	int 		fastrewind;
 
 	bool		randomplay;
 	QColor		background_color;
@@ -284,8 +286,10 @@ public slots:
 	void 		infoslot();
 	void		prevClicked();
 	void		nextClicked();
-	void		fwdClicked();
-	void		bwdClicked();
+	void		fwdPressed();
+	void		bwdPressed();
+	void		fwdReleased();
+	void		bwdReleased();
 	void		quitClicked();
 	void		replayClicked();
 	void		ejectClicked();

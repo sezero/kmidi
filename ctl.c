@@ -77,12 +77,12 @@ static void ctl_master_volume(int mv);
 static void ctl_file_name(char *name);
 static void ctl_current_time(uint32 ct);
 static void ctl_note(int v);
-static void ctl_program(int ch, int val);
-static void ctl_volume(int channel, int val);
-static void ctl_expression(int channel, int val);
-static void ctl_panning(int channel, int val);
-static void ctl_sustain(int channel, int val);
-static void ctl_pitch_bend(int channel, int val);
+static void ctl_program( int ch, int val );
+static void ctl_volume( int ch, int val );
+static void ctl_expression( int ch, int val );
+static void ctl_panning( int ch, int val );
+static void ctl_sustain( int ch, int val );
+static void ctl_pitch_bend( int ch, int val );
 static void ctl_reset(void);
 static int ctl_open(int using_stdin, int using_stdout);
 static void ctl_close(void);
@@ -399,7 +399,7 @@ static void ctl_note(int v)
 	ctl_channel_note(ch, note, vel, start);
 }
 
-static void ctl_program(int ch, int val)
+static void ctl_program( int ch, int val )
 {
 #ifdef MISC_PANEL_UPDATE
 	if (!ctl.trace_playing) 
@@ -408,10 +408,12 @@ static void ctl_program(int ch, int val)
 	if (ch < 0 || ch >= MAXCHAN) return;
 	/*Panel->channel[ch].program = val;*/
 	Panel->c_flags[ch] |= FLAG_PROG;
+#else
+	ch=val=0;
 #endif
 }
 
-static void ctl_volume(int ch, int val)
+static void ctl_volume( int ch, int val )
 {
 #ifdef MISC_PANEL_UPDATE
 	if (!ctl.trace_playing)
@@ -419,10 +421,12 @@ static void ctl_volume(int ch, int val)
 	ch &= 0x1f;
 	/* Panel->channel[ch].volume = val; */
 	ctl_channel_note(ch, Panel->cnote[ch], Panel->cvel[ch], -1);
+#else
+	ch=val=0;
 #endif
 }
 
-static void ctl_expression(int ch, int val)
+static void ctl_expression( int ch, int val )
 {
 #ifdef MISC_PANEL_UPDATE
 	if (!ctl.trace_playing)
@@ -430,10 +434,12 @@ static void ctl_expression(int ch, int val)
 	ch &= 0x1f;
 	/* Panel->channel[ch].expression = val; */
 	ctl_channel_note(ch, Panel->cnote[ch], Panel->cvel[ch], -1);
+#else
+	ch=val=0;
 #endif
 }
 
-static void ctl_panning(int ch, int val)
+static void ctl_panning( int ch, int val )
 {
 #ifdef MISC_PANEL_UPDATE
 	if (!ctl.trace_playing) 
@@ -441,10 +447,12 @@ static void ctl_panning(int ch, int val)
 	ch &= 0x1f;
 	/* Panel->channel[ch].panning = val; */
 	Panel->c_flags[ch] |= FLAG_PAN;
+#else
+	ch=val=0;
 #endif
 }
 
-static void ctl_sustain(int ch, int val)
+static void ctl_sustain( int ch, int val )
 {
 #ifdef MISC_PANEL_UPDATE
 	if (!ctl.trace_playing)
@@ -452,11 +460,14 @@ static void ctl_sustain(int ch, int val)
 	ch &= 0x1f;
 	/* Panel->channel[ch].sustain = val; */
 	Panel->c_flags[ch] |= FLAG_SUST;
+#else
+	ch=val=0;
 #endif
 }
 
-static void ctl_pitch_bend(int channel, int val)
+static void ctl_pitch_bend( int ch, int val )
 {
+	ch=val=0;
 }
 
 static void ctl_reset(void)
@@ -475,12 +486,14 @@ static void ctl_reset(void)
 
 
 	for (i = 0; i < MAXDISPCHAN; i++) {
+	#if 0
 		ctl_program(i, channel[i].program);
 		ctl_volume(i, channel[i].volume);
 		ctl_expression(i, channel[i].expression);
 		ctl_panning(i, channel[i].panning);
 		ctl_sustain(i, channel[i].sustain);
 		ctl_pitch_bend(i, channel[i].pitchbend);
+	#endif
 		ctl_channel_note(i, Panel->cnote[i], 0, -1);
 		Panel->cindex[i] = 0;
 		/* Panel->mindex[i] = 0; */
@@ -499,8 +512,6 @@ static void ctl_reset(void)
 static int ctl_open(int using_stdin, int using_stdout)
 {
 	int tcount = 30;
-	extern char *cfg_names[30];
-	int i;
 
 	shm_alloc();
         Panel->currentpatchset = cfg_select;
@@ -580,6 +591,18 @@ static int ctl_blocking_read(int32 *valp)
 		  *valp= new_centiseconds*(play_mode->rate / 100) ;
 		  ctl_reset();
 		  return RC_JUMP;
+		  
+	      case MOTIF_FWD:
+		  pipe_int_read(&new_centiseconds);
+		  songoffset +=
+		  *valp= new_centiseconds*(play_mode->rate / 100) ;
+		  return RC_FORWARD;
+		  
+	      case MOTIF_RWD:
+		  pipe_int_read(&new_centiseconds);
+		  songoffset -=
+		  *valp= new_centiseconds*(play_mode->rate / 100) ;
+		  return RC_BACK;
 		  
 	      case MOTIF_QUIT:
 		  return RC_QUIT;
@@ -698,7 +721,7 @@ static int ctl_blocking_read(int32 *valp)
 	  if (pausing) pipe_int_read(&command);
 	  else 
 	      {
-		  fprintf(stderr,"UNKNOWN RC_MESSAGE %i\n",command);
+		  fprintf(stderr,"UNKNOWN  KMIDI MESSAGE %i\n",command);
 		  return RC_NONE;
 	      }
       }
@@ -793,6 +816,9 @@ static void ctl_pass_playing_list(int number_of_files, char *list_of_files[])
 			case RC_TUNE_END:
 			    pipe_int_write(TUNE_END_MESSAGE);
 			    break;
+			case RC_JUMP:
+			    pipe_int_write(JUMP_MESSAGE);
+			    break;
 			case RC_PATCHCHANGE:
 			/* fprintf(stderr,"Changing to patch #%d\n", cfg_select); */
 		  	    free_instruments();
@@ -807,10 +833,12 @@ static void ctl_pass_playing_list(int number_of_files, char *list_of_files[])
 		  	case RC_CHANGE_VOICES:
 			    voices = change_in_voices;
 			    break;
+			case RC_FORWARD:
+			case RC_BACK:
 			case RC_NONE:
 			    break;
 			default:
-			    printf("PANIC: UNKNOWN COMMAND ERROR: %i\n",command);
+			    printf("UNKNOWN COMMAND ERROR: %i\n",command);
 			}
 		    
 		    command = ctl_blocking_read(&val);
