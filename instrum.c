@@ -399,6 +399,7 @@ static Instrument *load_instrument(char *name, int font_type, int percussion,
       sp->cutoff_freq=0;
       sp->reverberation=0;
       sp->chorusdepth=0;
+      sp->exclusiveClass=0;
 
       /* envelope, tremolo, and vibrato */
       if (18 != fread(tmp, 1, 18, fp)) goto fail; 

@@ -432,6 +432,7 @@ static int ctl_open(int using_stdin, int using_stdout)
 {
 	int tcount = 10;
 	shm_alloc();
+        Panel->currentpatchset = cfg_select;
 	pipe_open();
 
 	/*	if (child_pid == 0)
@@ -536,7 +537,7 @@ static int ctl_blocking_read(int32 *valp)
 	      case MOTIF_PATCHSET:
 		  pipe_int_read(&arg);
 		  cfg_select = arg;
-	/*fprintf(stderr,"ctl_blocking_read set #%d\n", cfg_select);*/
+	/* fprintf(stderr,"ctl_blocking_read set #%d\n", cfg_select); */
 		  return RC_PATCHCHANGE;
 
 	      case MOTIF_EFFECTS:
@@ -692,13 +693,14 @@ static void ctl_pass_playing_list(int number_of_files, char *list_of_files[])
 			    pipe_int_write(TUNE_END_MESSAGE);
 			    break;
 			case RC_PATCHCHANGE:
-/*fprintf(stderr,"Changing to patch #%d\n", cfg_select);*/
+			/* fprintf(stderr,"Changing to patch #%d\n", cfg_select); */
 		  	    free_instruments();
 		  	    end_soundfont();
 		  	    clear_config();
 			/* what if read_config fails?? */
 	          	    if (!read_config_file(CONFIG_FILE))
 		  	        Panel->currentpatchset = cfg_select;
+			/* else fprintf(stderr,"couldn't read config file\n"); */
 			    pipe_int_write(PATCH_CHANGED_MESSAGE);
 			    break;
 		  	case RC_CHANGE_VOICES:

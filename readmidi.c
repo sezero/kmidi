@@ -43,6 +43,7 @@
 #include "readmidi.h"
 #include "output.h"
 #include "controls.h"
+#include "tables.h"
 
 int32 quietchannels=0;
 
@@ -248,6 +249,9 @@ static int sysex(int32 len, uint8 *syschan, uint8 *sysa, uint8 *sysb)
 	  {
       	    ctl->cmsg(CMSG_TEXT, VERB_VERBOSE, "XG System On", len);
 	    XG_System_On=1;
+	    #ifdef tplus
+	    vol_table = xg_vol_table;
+	    #endif
 	  }
 	else if (adhi == 2 && adlo == 1)
 	 {
@@ -322,6 +326,9 @@ static int sysex(int32 len, uint8 *syschan, uint8 *sysa, uint8 *sysb)
 	  {
       	    ctl->cmsg(CMSG_TEXT, VERB_VERBOSE, "GS System On", len);
 	    GS_System_On=1;
+	    #ifdef tplus
+	    vol_table = gs_vol_table;
+	    #endif
 	  }
 	else if (dta==0x15 && (cd&0xf0)==0x10)
 	  {
@@ -1053,6 +1060,7 @@ MidiEvent *read_midi_file(FILE *mfp, int32 *count, int32 *sp)
   evlist=0;
   free_metatext();
   GM_System_On=GS_System_On=XG_System_On=0;
+  vol_table = def_vol_table;
   XG_System_reverb_type=XG_System_chorus_type=XG_System_variation_type=-1;
   memset(&drumvolume,-1,sizeof(drumvolume));
   memset(&drumchorusdepth,-1,sizeof(drumchorusdepth));

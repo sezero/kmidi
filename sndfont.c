@@ -23,6 +23,9 @@
  * compile flags
  *----------------------------------------------------------------*/
 
+/* use some modifications from TiMidity++ */
+#define tplussbkuse
+
 /*#define GREGSTEST*/
 
 /*#define SF_CLOSE_EACH_FILE*/
@@ -33,7 +36,6 @@
 #endif
 /*#define SF_SUPPRESS_CUTOFF*/
 
-/* sounds crappy -- 2mbgmgs.sf2 has them */
 #define DO_LINKED_WAVES
 
 /*----------------------------------------------------------------
@@ -51,6 +53,19 @@ typedef struct _SampleList {
 	int32 startsample, endsample;
 	int32 cutoff_freq;
 	FLOAT_T resonance;
+#ifdef tplussbk
+	int16 scaleTuning;	/* pitch scale tuning(%), normally 100 */
+	int16 root, tune;
+	char low, high;		/* key note range */
+
+	/* Depend on play_mode->rate */
+	int32 vibrato_freq;
+	double attack;
+	double hold;
+	int sustain;
+	double decay;
+	double release;
+#endif
 } SampleList;
 
 typedef struct _InstList {
@@ -92,7 +107,11 @@ static int32 calc_root_pitch(Layer *lay, SFInfo *sf, SampleList *sp);
 static void convert_volume_envelope(Layer *lay, SFInfo *sf, SampleList *sp);
 #endif
 static int32 to_offset(int offset);
+#ifdef tplussbkuse
+static int32 calc_rate(int diff, double msec);
+#else
 static int32 calc_rate(int diff, int time);
+#endif
 static int32 to_msec(Layer *lay, SFInfo *sf, int index);
 static FLOAT_T calc_volume(Layer *lay, SFInfo *sf);
 static int32 calc_sustain(Layer *lay, SFInfo *sf);
@@ -129,6 +148,48 @@ static char *getname(p)
 
 static SFInfo sfinfo;
 
+#ifdef tplussbk
+/* add blank loop for each data */
+int auto_add_blank = 0;
+void correct_samples(SFInfo *sf)
+{
+	int i;
+	SFSampleInfo *sp;
+	int prev_end;
+
+	prev_end = 0;
+	for (sp = sf->sample, i = 0; i < sf->nsamples; i++, sp++) {
+		/* correct sample positions for SBK file */
+		if (sf->version == 1) {
+			sp->startloop++;
+			sp->endloop += 2;
+		}
+
+		/* calculate sample data size */
+		if (sp->sampletype & 0x8000)
+			sp->size = 0;
+		else if (sp->startsample < prev_end && sp->startsample != 0)
+			sp->size = 0;
+		else {
+			sp->size = -1;
+			if (!auto_add_blank && i != sf->nsamples-1)
+				sp->size = sp[1].startsample - sp->startsample;
+			if (sp->size < 0)
+				sp->size = sp->endsample - sp->startsample + 48;		}
+		prev_end = sp->endsample;
+
+		/* calculate short-shot loop size */
+		if (auto_add_blank || i == sf->nsamples-1)
+			sp->loopshot = 48;
+		else {
+			sp->loopshot = sp[1].startsample - sp->endsample;
+			if (sp->loopshot < 0 || sp->loopshot > 48)
+				sp->loopshot = 48;
+		}
+	}
+}
+#endif
+
 void init_soundfont(char *fname, int oldbank, int newbank)
 {
 	/*static SFInfo sfinfo;*/
@@ -152,7 +213,10 @@ void init_soundfont(char *fname, int oldbank, int newbank)
 	}
 	sfrec.fname = strcpy((char*)safe_malloc(strlen(fname)+1), fname);
 	load_sbk(sfrec.fd, &sfinfo);
-
+#ifdef tplussbk
+	correct_samples(&sfinfo);
+	current_sfrec = rec;
+#endif
 	for (i = 0; i < sfinfo.nrpresets-1; i++) {
 		int bank = sfinfo.presethdr[i].bank;
 		int preset = sfinfo.presethdr[i].preset;
@@ -233,6 +297,7 @@ void end_soundfont(void)
 **/
 		free(ip);
 	}
+
 	sfrec.version =
 	sfrec.minorversion =
 	sfrec.samplepos =
@@ -311,7 +376,11 @@ printf("but bank %d voice %d is already loaded\n", bank, preset);
 	if (ip && ip->samples) {
 		sfrec.fname = ip->fname;
     		ctl->cmsg(CMSG_INFO, VERB_NOISY, "Loading %s%s %s[%d,%d] from %s.",
-			(ip->rsamples)? "linked " : "",
+#ifdef DO_LINKED_WAVES
+			(ip->rsamples)? "stereo " : "",
+#else
+			"",
+#endif
 			(percussion)? "drum":"instrument", name,
 			(percussion)? keynote : preset, (percussion)? preset : bank, sfrec.fname);
 		sfrec.fd = ip->fd;
@@ -949,6 +1018,8 @@ if (strip_loop == 1) {
 		sp->v.low_freq = freq_table[0];
 		sp->v.high_freq = freq_table[127];
 	}
+	if (lay->set[SF_keyExclusiveClass]) sp->v.exclusiveClass = lay->val[SF_keyExclusiveClass];
+	else sp->v.exclusiveClass = 0;
 
 	/* scale tuning: 0  - 100 */
 	sp->v.scale_tuning = 100;
@@ -1004,10 +1075,22 @@ if (strip_loop == 1) {
 	/* panning position: 0 to 127 */
 	if (panning != -1) sp->v.panning=(uint8)(panning & 0x7F);
 	else if (lay->set[SF_panEffectsSend]) {
+#ifdef tplussbk
+		    int val;
+		    /* panning position: 0 to 127 */
+		    val = (int)tbl->val[SF_panEffectsSend];
+		    if(val < -500)
+			sp->v.panning = 0;
+		    else if(val > 500)
+			sp->v.panning = 127;
+		    else
+			sp->v.panning = (int8)((val + 500) * 127 / 1000);
+#else
 		if (sf->version == 1)
 			sp->v.panning = (int8)lay->val[SF_panEffectsSend];
 		else
 			sp->v.panning = (int8)(((int)lay->val[SF_panEffectsSend] + 500) * 127 / 1000);
+#endif
 	}
 	else sp->v.panning = 64;
 
@@ -1096,12 +1179,18 @@ static int32 calc_root_pitch(Layer *lay, SFInfo *sf, SampleList *sp)
 		tune += lay->val[SF_coarseTune] * sp->v.scale_tuning +
 			lay->val[SF_fineTune] * sp->v.scale_tuning / 100;
 	} else {
+
 		/* orverride root key */
 		if (lay->set[SF_rootKey])
 			root = lay->val[SF_rootKey];
 		/* tuning */
+#ifdef tplussbkuse
+		tune += lay->val[SF_coarseTune] * sp->v.scale_tuning
+			+ (int)lay->val[SF_fineTune] * (int)sp->v.scale_tuning / 100;
+#else
 		tune += lay->val[SF_coarseTune] * 100
 			+ lay->val[SF_fineTune];
+#endif
 	}
 	/* it's too high.. */
 	if (lay->set[SF_keyRange] &&
@@ -1116,7 +1205,23 @@ static int32 calc_root_pitch(Layer *lay, SFInfo *sf, SampleList *sp)
 		root--;
 		tune -= 100;
 	}
+#ifdef tplussbkuse
+
+    /* -100 < tune <= 0 */
+    tune = (-tune * 256) / 100;
+
+    if(root > 127)
+	return (int32)((FLOAT_T)freq_table[127] *
+				  bend_coarse[root - 127] * bend_fine[tune]);
+				  
+    else if(root < 0)
+	return (int32)((FLOAT_T)freq_table[0] /
+				  bend_coarse[-root] * bend_fine[tune]);
+    else
+	return (int32)((FLOAT_T)freq_table[root] * bend_fine[tune]);
+#else
 	return (int32)((double)freq_table[root] * bend_fine[(-tune*255)/100]);
+#endif
 }
 
 /*#define EXAMINE_SOME_ENVELOPES*/
@@ -1149,6 +1254,9 @@ if (!no_shown) {
 }
 #endif
 
+#ifdef tplussbkuse
+	if(sustain > 250) sustain = 250;
+#endif
 	sp->v.envelope_offset[ATTACK] = to_offset(255);
 if (fast_decay)
 	sp->v.envelope_rate[ATTACK] = calc_rate(255, attack) * 2;
@@ -1199,6 +1307,22 @@ static int32 to_offset(int offset)
 /* calculate ramp rate in fractional unit;
  * diff = 8bit, time = msec
  */
+#ifdef tplussbkuse
+static int32 calc_rate(int diff, double msec)
+{
+    double rate;
+
+    if(msec < 6)
+	msec = 6;
+    if(diff == 0)
+	diff = 255;
+    diff <<= (7+15);
+    rate = ((double)diff / play_mode->rate) * control_ratio * 1000.0 / msec;
+    if(fast_decay)
+	rate *= 2;
+    return (int32)rate;
+}
+#else
 static int32 calc_rate(int diff, int time)
 {
 	int32 rate;
@@ -1212,13 +1336,18 @@ static int32 calc_rate(int diff, int time)
 
 	return rate;
 }
+#endif
 
+#ifdef tplussbk
+#define TO_VOLUME(level)  (uint8)(255.0 - (level) * (255.0/1000.0))
 
+#else
 #define TO_MSEC(tcents) (int32)(1000 * pow(2.0, (double)(tcents) / 1200.0))
 #define TO_MHZ(abscents) (int32)(8176.0 * pow(2.0,(double)(abscents)/1200.0))
 #define TO_HZ(abscents) (int32)(8.176 * pow(2.0,(double)(abscents)/1200.0))
 #define TO_LINEAR(centibel) pow(10.0, -(double)(centibel)/200.0)
 #define TO_VOLUME(centibel) (uint8)(255 * (1.0 - (centibel) / (1200.0 * log10(2.0))));
+#endif
 
 /* convert the value to milisecs */
 static int32 to_msec(Layer *lay, SFInfo *sf, int index)
@@ -1236,15 +1365,44 @@ static int32 to_msec(Layer *lay, SFInfo *sf, int index)
 /* convert peak volume to linear volume (0-255) */
 static FLOAT_T calc_volume(Layer *lay, SFInfo *sf)
 {
+#ifdef tplussbkuse
+    int v;
+    if(!lay->set[SF_instVol] || lay->val[SF_instVol] == 0)
+	return (FLOAT_T)1.0;
+    v = lay->val[SF_instVol];
+    if(v < 0)
+	return (FLOAT_T)1.0;
+    if(v > 956)
+	return (FLOAT_T)0.0;
+
+    v = v * 127 / 956;		/* 0..127 */
+
+    return vol_table[127 - v];
+#else
 	if (sf->version == 1)
 		return (FLOAT_T)(lay->val[SF_instVol] * 2) / 255.0;
 	else
 		return TO_LINEAR((double)lay->val[SF_instVol] / 10.0);
+#endif
 }
 
 /* convert sustain volume to linear volume */
 static int32 calc_sustain(Layer *lay, SFInfo *sf)
 {
+#ifdef tplussbk
+/*
+ * Sustain level
+ * sf: centibels
+ * parm: 0x7f - sustain_level(dB) * 0.75
+ */
+    double level;
+    if(!lay->set[SF_sustainEnv2])
+	return 255;
+    level = (double)lay->val[SF_sustainEnv2];
+    if(level >= 1000)
+	return 1;
+    return TO_VOLUME(level);
+#else
 	int32 level;
 	if (!lay->set[SF_sustainEnv2])
 		return 250;
@@ -1256,6 +1414,7 @@ static int32 calc_sustain(Layer *lay, SFInfo *sf)
 			return 0;
 	}
 	return TO_VOLUME(level);
+#endif
 }
 
 

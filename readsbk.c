@@ -36,20 +36,22 @@ static int READW(uint16 *vp, FILE *fd)
 	return 1;
 }
 
-/* #define READSTR(var,fd)	fread(var, 20, 1, fd) */
+#define READSTR(var,fd)	fread(var, 20, 1, fd)
 
+#if 0
 static int READSTR(char *str, FILE *fd)
 {
     int n;
 
     if(fread(str, 20, 1, fd) != 1) return -1;
-    str[19] = '\0';
+    str[20] = '\0';
     n = strlen(str);
     while(n > 0 && str[n - 1] == ' ')
 	n--;
     str[n] = '\0';
     return n;
 }
+#endif
 
 #define READID(var,fd)	fread(var, 1, 4, fd)
 #define READB(var,fd)	fread(var, 1, 1, fd)
@@ -174,6 +176,9 @@ static int getchunk(char *id)
 		int id;
 	} idlist[] = {
 		{"LIST", LIST_ID},
+#ifdef tplussbk
+		{"sfbk", SFBK_ID},
+#endif
 		{"INFO", INFO_ID},
 		{"sdta", SDTA_ID},
 		{"snam", SNAM_ID},
@@ -195,6 +200,12 @@ static int getchunk(char *id)
 		{"INAM", INAM_ID},
 		{"IPRD", IPRD_ID},
 		{"ICOP", ICOP_ID},
+#ifdef tplussbk
+		{"ICRD", ICRD_ID},
+		{"IENG", IENG_ID},
+		{"ISFT", ISFT_ID},
+		{"ICMT", ICMT_ID},
+#endif
 	};
 
 	int i;

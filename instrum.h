@@ -44,7 +44,7 @@ typedef struct {
     tremolo_depth, vibrato_depth,
     modes;
   uint8
-    panning, note_to_use;
+    panning, note_to_use, exclusiveClass;
   int16
     scale_tuning;
   uint8

@@ -649,6 +649,7 @@ sp->sample_rate, sp->low_freq, sp->high_freq, sp->root_freq);
       sp->cutoff_freq=0;
       sp->reverberation=0;
       sp->chorusdepth=0;
+      sp->exclusiveClass=0;
 
       if (!l->tremolo.freq || !l->tremolo.depth)
 	{

@@ -149,6 +149,8 @@ static int32 sample_count, current_sample;
 static void update_portamento_controls(int ch);
 #endif
 
+static void kill_note(int i);
+
 static void adjust_amplification(void)
 { 
   master_volume = (double)(amplification) / 100.0L;
@@ -567,6 +569,30 @@ static int vc_alloc(int j)
   return -1;
 }
 
+static void kill_others(MidiEvent *e, int i)
+{
+  int j=voices; 
+
+  /*if (!voice[i].sample->exclusiveClass) return; */
+
+  while (j--)
+    {
+      if (voice[j].status == VOICE_FREE) continue;
+      if (voice[j].status == VOICE_OFF) continue;
+      if (voice[j].status == VOICE_DIE) continue;
+      if (i == j) continue;
+      if (voice[i].channel != voice[j].channel) continue;
+      if (voice[j].sample->note_to_use)
+      {
+    	/* if (voice[j].sample->note_to_use != voice[i].sample->note_to_use) continue; */
+	if (!voice[i].sample->exclusiveClass) continue;
+    	if (voice[j].sample->exclusiveClass != voice[i].sample->exclusiveClass) continue;
+      }
+      else if (voice[j].note != (e->a &0x07f)) continue;
+      kill_note(j);
+    }
+}
+
 extern int reverb_options;
 
 static void clone_voice(Instrument *ip, int v, MidiEvent *e, uint8 clone_type)
@@ -728,6 +754,7 @@ static void clone_voice(Instrument *ip, int v, MidiEvent *e, uint8 clone_type)
 #endif
     played_note = ( (played_note - voice[w].sample->freq_center) * voice[w].sample->freq_scale ) / 1024 +
 		voice[w].sample->freq_center;
+  voice[w].note = played_note;
   voice[w].orig_frequency = freq_table[played_note];
   if (chorus) {
 	/*voice[w].orig_frequency += (voice[w].orig_frequency/128) * chorus;*/
@@ -860,6 +887,8 @@ static void start_note(MidiEvent *e, int i)
     } /* not drum channel */
 #endif
 
+    kill_others(e, i);
+
     voice[i].starttime = e->time;
     played_note = voice[i].sample->note_to_use;
     if (!played_note) played_note = e->a & 0x7f;
@@ -870,6 +899,7 @@ static void start_note(MidiEvent *e, int i)
 #endif
     played_note = ( (played_note - voice[i].sample->freq_center) * voice[i].sample->freq_scale ) / 1024 +
 		voice[i].sample->freq_center;
+    voice[i].note = played_note;
     voice[i].orig_frequency = freq_table[played_note];
 
   if (voice[i].sample->modes & MODES_FAST_RELEASE) voice[i].status=VOICE_OFF;

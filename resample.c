@@ -128,34 +128,6 @@ static sample_t *normal_resample_voice(int, int32 *, int);
 
 /*************** resampling with fixed increment *****************/
 
-static sample_t *rs_plain_c(int v, int32 *countptr)
-{
-    Voice *vp=&voice[v];
-    sample_t
-	*dest=resample_buffer+resample_buffer_offset,
-	*src=vp->sample->data;
-    int32 ofs, le, count = *countptr, i;
-
-    le = (vp->sample->loop_end >> FRACTION_BITS);
-    ofs = (vp->sample_offset >> FRACTION_BITS);
-
-    i = ofs + count;
-    if(i > le)
-	i = le;
-    count = i - ofs;
-
-    memcpy(dest, src + ofs, count * sizeof(sample_t));
-    ofs += count;
-    if(ofs == le)
-    {
-	vp->status=VOICE_FREE;
-	ctl->note(v);
-	*countptr = count;
-    }
-    vp->sample_offset = (ofs << FRACTION_BITS);
-    return resample_buffer+resample_buffer_offset;
-}
-
 static sample_t *rs_plain(int v, int32 *countptr)
 {
   /* Play sample until end, then free the voice. */
@@ -178,9 +150,6 @@ static sample_t *rs_plain(int v, int32 *countptr)
 #endif
 
   if (!incr) return resample_buffer; /* --gl */
-
-  if(/* vp->cache && */ incr == (1 << FRACTION_BITS))
-      return rs_plain_c(v, countptr);
 
 #ifdef PRECALC_LOOPS
   if (incr<0) incr = -incr; /* In case we're coming out of a bidir loop */
@@ -229,37 +198,6 @@ static sample_t *rs_plain(int v, int32 *countptr)
   return resample_buffer+resample_buffer_offset;
 }
 
-static sample_t *rs_loop_c(Voice *vp, int32 count)
-{
-  int32
-    ofs=vp->sample_offset,
-    le=vp->sample->loop_end,
-    ll=le - vp->sample->loop_start;
-  sample_t
-    *dest=resample_buffer+resample_buffer_offset,
-    *src=vp->sample->data;
-  int32 i;
-
-  ofs >>= FRACTION_BITS;
-  le >>= FRACTION_BITS;
-  ll >>= FRACTION_BITS;
-  while(count)
-  {
-      while(ofs >= le)
-	  ofs -= ll;
-      /* Precalc how many times we should go through the loop */
-      i = le - ofs;
-      if(i > count)
-	  i = count;
-      count -= i;
-      memcpy(dest, src + ofs, i * sizeof(sample_t));
-      dest += i;
-      ofs += i;
-  }
-  vp->sample_offset = (ofs << FRACTION_BITS);
-  return resample_buffer+resample_buffer_offset;
-}
-
 static sample_t *rs_loop(Voice *vp, int32 count)
 {
   /* Play sample until end-of-loop, skip back and continue. */
@@ -278,9 +216,6 @@ static sample_t *rs_loop(Voice *vp, int32 count)
 #ifdef PRECALC_LOOPS
   int32 i, j;
 #endif
-
-  if(/* vp->cache && */ incr == (1 << FRACTION_BITS))
-      return rs_loop_c(vp, count);
 
 #ifdef PRECALC_LOOPS
   if (incr < 1) incr = 1; /* fixup --gl */
@@ -930,7 +865,7 @@ void pre_resample(Sample * sp)
   double a, xdiff;
   int32 incr, ofs, newlen, count;
   int16 *newdata, *dest, *src = (int16 *)sp->data, *vptr;
-  int32 v1, v2, v3, v4, v5, i;
+  int32 v1, v2, v3, v4, i;
   static const char note_name[12][3] =
   {
     "C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"
@@ -974,7 +909,7 @@ void pre_resample(Sample * sp)
   for(i = 0; i < count; i++)
     {
 #ifdef tplussliding
-      int32 v;
+      int32 v, v5;
 #endif
       vptr = src + (ofs >> FRACTION_BITS);
       v1 = *(vptr - 1);

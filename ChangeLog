@@ -1,3 +1,10 @@
+1999-09-11  Greg Lee  <lee@hawaii.edu>
+
+	* tables.c: GS volumes from TiMidity++
+	* resample.c: fix core dumps
+	* playmidi.c: implement exclusive instruments
+	* sndfont.c: volume & pitch computations
+
 1999-09-08  Greg Lee  <lee@hawaii.edu>
 
 	* remove config/sndfont.cfg: obsolete

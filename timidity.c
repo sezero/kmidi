@@ -368,7 +368,6 @@ int read_config_file(char *name)
   static int font_type=FONT_NORMAL;
   static int cfg_condition = -1;
 
-
   if (rcf_count>50)
 	 {
     		ctl->cmsg(CMSG_ERROR, VERB_NORMAL, "Probable source loop in configuration files");

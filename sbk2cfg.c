@@ -69,7 +69,10 @@ static char *getname(p)
 	static char buf[21];
 	strncpy(buf, p, 20);
 	buf[20] = 0;
-	for (i = 0; i < 20; i++) {
+	for (i = 19; i > 4 && buf[i]==' '; i--) {
+	  buf[i] = 0;
+	}
+	for (i = 0; buf[i]; i++) {
 	  if (buf[i] == ' ') buf[i] = '_';
 	  if (buf[i] == '#') buf[i] = '@';
 	}
